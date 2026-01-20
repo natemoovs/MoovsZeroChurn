@@ -18,10 +18,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global url."https://${{ secrets.MOOVS_FACTORY_PAT }}@github.com/".insteadOf "https://github.com/"
 
       - name: Sync upstream subtree
         run: |
-          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://${{ secrets.MOOVS_FACTORY_PAT }}@github.com/natemoovs/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || true
+          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/natemoovs/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || true
 
       - name: Push if changes
         run: |
