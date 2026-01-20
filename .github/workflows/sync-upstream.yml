@@ -1,0 +1,38 @@
+name: Sync moovs-factory upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Every Sunday at midnight UTC
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history needed for subtree
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync upstream subtree
+        id: sync
+        run: |
+          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/theswoopapp/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || echo "already_up_to_date=true" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: steps.sync.outputs.already_up_to_date != 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/sync-upstream
+          title: "chore: sync moovs-factory upstream"
+          body: |
+            Automated sync of moovs-factory upstream changes.
+
+            This PR was created automatically by the sync-upstream workflow.
+          labels: dependencies, automated
