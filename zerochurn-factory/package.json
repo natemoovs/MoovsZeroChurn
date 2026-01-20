@@ -7,11 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync-upstream": "cd .. && git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/theswoopapp/moovs-factory.git main --squash"
+    "sync-upstream": "cd .. && git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/natemoovs/moovs-factory.git main --squash"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "gray-matter": "^4.0.3",
     "lucide-react": "^0.562.0",
     "next": "16.1.4",
     "react": "19.2.3",
