@@ -21,7 +21,7 @@ jobs:
 
       - name: Sync upstream subtree
         run: |
-          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/natemoovs/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || true
+          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://${{ secrets.MOOVS_FACTORY_PAT }}@github.com/natemoovs/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || true
 
       - name: Push if changes
         run: |
