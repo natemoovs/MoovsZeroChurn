@@ -12,26 +12,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history needed for subtree
+          fetch-depth: 0
 
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Test PAT access
-        env:
-          PAT: ${{ secrets.MOOVS_FACTORY_PAT }}
-        run: |
-          echo "Testing PAT access to moovs-factory..."
-          git ls-remote "https://x-access-token:${PAT}@github.com/natemoovs/moovs-factory.git" HEAD
-
       - name: Sync upstream subtree
-        env:
-          PAT: ${{ secrets.MOOVS_FACTORY_PAT }}
         run: |
-          REPO_URL="https://x-access-token:${PAT}@github.com/natemoovs/moovs-factory.git"
-          git subtree pull --prefix=zerochurn-factory/.factory-upstream "$REPO_URL" main --squash -m "chore: sync moovs-factory upstream"
+          git subtree pull --prefix=zerochurn-factory/.factory-upstream "https://x-access-token:${{ secrets.MOOVS_FACTORY_PAT }}@github.com/natemoovs/moovs-factory.git" main --squash -m "chore: sync moovs-factory upstream"
 
       - name: Push if changes
         run: |
