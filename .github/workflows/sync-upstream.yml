@@ -8,7 +8,18 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      MOOVS_PAT: ${{ secrets.MOOVS_FACTORY_PAT }}
     steps:
+      - name: Check secret exists
+        run: |
+          if [ -z "$MOOVS_PAT" ]; then
+            echo "ERROR: MOOVS_FACTORY_PAT secret is empty or not set!"
+            exit 1
+          else
+            echo "Secret is set (length: ${#MOOVS_PAT} chars)"
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -18,11 +29,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global url."https://${{ secrets.MOOVS_FACTORY_PAT }}@github.com/".insteadOf "https://github.com/"
 
       - name: Sync upstream subtree
         run: |
-          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/natemoovs/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || true
+          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://${MOOVS_PAT}@github.com/natemoovs/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream"
 
       - name: Push if changes
         run: |
