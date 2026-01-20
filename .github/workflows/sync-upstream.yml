@@ -2,7 +2,7 @@ name: Sync moovs-factory upstream
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Every Sunday at midnight UTC
+    - cron: '0 0 * * *'  # Every night at midnight UTC
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
@@ -23,6 +23,11 @@ jobs:
         run: |
           git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/theswoopapp/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || true
 
-      - name: Push changes
+      - name: Push if changes
         run: |
-          git push origin main
+          if [ -n "$(git log origin/main..HEAD)" ]; then
+            echo "Changes detected, pushing..."
+            git push origin main
+          else
+            echo "No changes to push"
+          fi
