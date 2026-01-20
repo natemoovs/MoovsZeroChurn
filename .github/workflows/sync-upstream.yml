@@ -1,0 +1,33 @@
+name: Sync moovs-factory upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Every night at midnight UTC
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history needed for subtree
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync upstream subtree
+        run: |
+          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/theswoopapp/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || true
+
+      - name: Push if changes
+        run: |
+          if [ -n "$(git log origin/main..HEAD)" ]; then
+            echo "Changes detected, pushing..."
+            git push origin main
+          else
+            echo "No changes to push"
+          fi
