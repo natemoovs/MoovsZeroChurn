@@ -20,19 +20,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Sync upstream subtree
-        id: sync
         run: |
-          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/theswoopapp/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || echo "already_up_to_date=true" >> $GITHUB_OUTPUT
+          git subtree pull --prefix=zerochurn-factory/.factory-upstream https://github.com/theswoopapp/moovs-factory.git main --squash -m "chore: sync moovs-factory upstream" || true
 
-      - name: Create Pull Request
-        if: steps.sync.outputs.already_up_to_date != 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: chore/sync-upstream
-          title: "chore: sync moovs-factory upstream"
-          body: |
-            Automated sync of moovs-factory upstream changes.
-
-            This PR was created automatically by the sync-upstream workflow.
-          labels: dependencies, automated
+      - name: Push changes
+        run: |
+          git push origin main
