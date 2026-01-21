@@ -100,24 +100,59 @@ export async function GET(request: NextRequest) {
 }
 
 function buildSegmentFilter(segment: string): Record<string, unknown> {
-  if (segment === "all") return {}
+  // Base filter: exclude churned/terminated accounts with no MRR
+  // These are kept in DB for history but shouldn't show in active portfolio
+  const excludeChurned = {
+    NOT: {
+      AND: [
+        {
+          OR: [
+            { subscriptionStatus: { contains: "churn", mode: "insensitive" } },
+            { subscriptionStatus: { contains: "terminated", mode: "insensitive" } },
+            { subscriptionStatus: { contains: "cancelled", mode: "insensitive" } },
+            { subscriptionStatus: { contains: "canceled", mode: "insensitive" } },
+          ],
+        },
+        {
+          OR: [
+            { mrr: null },
+            { mrr: { lte: 0 } },
+          ],
+        },
+      ],
+    },
+  }
+
+  // Special case: show churned accounts
+  if (segment.toLowerCase() === "churned") {
+    return {
+      OR: [
+        { subscriptionStatus: { contains: "churn", mode: "insensitive" } },
+        { subscriptionStatus: { contains: "terminated", mode: "insensitive" } },
+        { subscriptionStatus: { contains: "cancelled", mode: "insensitive" } },
+        { subscriptionStatus: { contains: "canceled", mode: "insensitive" } },
+      ],
+    }
+  }
+
+  if (segment === "all") return excludeChurned
 
   switch (segment.toLowerCase()) {
     case "enterprise":
-      return { mrr: { gte: 500 } }
+      return { AND: [excludeChurned, { mrr: { gte: 500 } }] }
     case "mid-market":
-      return { mrr: { gte: 100, lt: 500 } }
+      return { AND: [excludeChurned, { mrr: { gte: 100, lt: 500 } }] }
     case "smb":
-      return { mrr: { gte: 0, lt: 100 } }
+      return { AND: [excludeChurned, { mrr: { gte: 0, lt: 100 } }] }
     case "at-risk":
     case "at_risk":
-      return { healthScore: "red" }
+      return { AND: [excludeChurned, { healthScore: "red" }] }
     case "healthy":
-      return { healthScore: "green" }
+      return { AND: [excludeChurned, { healthScore: "green" }] }
     case "warning":
-      return { healthScore: "yellow" }
+      return { AND: [excludeChurned, { healthScore: "yellow" }] }
     default:
-      return {}
+      return excludeChurned
   }
 }
 

@@ -838,40 +838,10 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // =========================================================================
-    // STEP 5: Clean up churned accounts from database
-    // Remove records that are no longer active (churned with no MRR)
-    // =========================================================================
-    let deletedChurned = 0
-    try {
-      // Delete records where subscriptionStatus indicates churned/terminated AND no MRR
-      const deleteResult = await prisma.hubSpotCompany.deleteMany({
-        where: {
-          AND: [
-            {
-              OR: [
-                { subscriptionStatus: { contains: "churn", mode: "insensitive" } },
-                { subscriptionStatus: { contains: "terminated", mode: "insensitive" } },
-                { subscriptionStatus: { contains: "cancelled", mode: "insensitive" } },
-                { subscriptionStatus: { contains: "canceled", mode: "insensitive" } },
-              ],
-            },
-            {
-              OR: [
-                { mrr: null },
-                { mrr: { lte: 0 } },
-              ],
-            },
-          ],
-        },
-      })
-      deletedChurned = deleteResult.count
-      console.log(`Cleaned up ${deletedChurned} churned/terminated accounts from database`)
-    } catch (cleanupError) {
-      console.error("Failed to cleanup churned accounts:", cleanupError)
-    }
+    // NOTE: Churned accounts are kept in DB for historical reference
+    // They are filtered out in portfolio views, not deleted
 
-    console.log(`Sync completed: ${synced} synced, ${failed} failed, ${skippedChurned} churned skipped, ${deletedChurned} deleted`)
+    console.log(`Sync completed: ${synced} synced, ${failed} failed, ${skippedChurned} churned skipped`)
     console.log(`  - ${hubspotMatches} with HubSpot data, ${noHubspotRecord} without HubSpot`)
     console.log(`  - ${stripeMatches} with Stripe payment data`)
 
