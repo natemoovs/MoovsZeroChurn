@@ -19,28 +19,9 @@ interface SlackAlert {
   }
 }
 
-interface SlackBlock {
-  type: string
-  text?: {
-    type: string
-    text: string
-    emoji?: boolean
-  }
-  elements?: Array<{
-    type: string
-    text?: {
-      type: string
-      text: string
-      emoji?: boolean
-    }
-    url?: string
-    style?: string
-  }>
-  fields?: Array<{
-    type: string
-    text: string
-  }>
-}
+// Using any for Slack blocks due to complex union types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SlackBlock = any
 
 /**
  * Send alert to Slack

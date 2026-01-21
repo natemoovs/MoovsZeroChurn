@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push && next build",
+    "build": "rm -rf node_modules/.prisma && prisma generate && if [ \"$VERCEL_ENV\" = \"production\" ]; then prisma db push --skip-generate; fi && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",

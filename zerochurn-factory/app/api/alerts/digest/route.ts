@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
     const atRiskMrr = atRisk.reduce((sum, s) => sum + (s.mrr || 0), 0)
 
     // Build Slack message
-    const blocks = [
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const blocks: any[] = [
       {
         type: "header",
         text: {
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
             },
             url: `${baseUrl}/accounts/${account.companyId}`,
           },
-        } as unknown)
+        })
       }
 
       if (atRisk.length > 5) {
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
               text: `_+ ${atRisk.length - 5} more at-risk accounts_`,
             },
           ],
-        } as unknown)
+        })
       }
     }
 
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
             text: `:large_green_circle: ${healthy.length} Healthy · :large_yellow_circle: ${monitor.length} Monitor · :red_circle: ${atRisk.length} At Risk`,
           },
         ],
-      } as unknown
+      }
     )
 
     // Action button
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest) {
           url: `${baseUrl}/accounts?filter=at-risk`,
         },
       ],
-    } as unknown)
+    })
 
     // Send to Slack
     const slackResponse = await fetch(SLACK_WEBHOOK_URL, {
