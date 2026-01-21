@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/serverless"
+import { Pool } from "@neondatabase/serverless"
 import { PrismaNeon } from "@prisma/adapter-neon"
 import { PrismaClient } from "@prisma/client"
 
@@ -11,12 +11,12 @@ function createPrismaClient() {
   const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL
 
   if (!connectionString) {
-    // Return a PrismaClient that will fail on first query (for build time)
     return new PrismaClient()
   }
 
-  const sql = neon(connectionString)
-  const adapter = new PrismaNeon(sql)
+  const pool = new Pool({ connectionString })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const adapter = new PrismaNeon(pool as any)
 
   return new PrismaClient({
     adapter,
