@@ -128,6 +128,19 @@ export interface HubSpotError {
 // Helper Functions
 // ============================================================================
 
+// Rate limiting: Track requests to stay under HubSpot's 10 requests/second limit
+let lastRequestTime = 0
+const MIN_REQUEST_INTERVAL = 150 // ms between requests (allows ~6 req/sec, safely under limit)
+
+async function rateLimitedDelay(): Promise<void> {
+  const now = Date.now()
+  const timeSinceLastRequest = now - lastRequestTime
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
+  }
+  lastRequestTime = Date.now()
+}
+
 function getHeaders(): HeadersInit {
   if (!HUBSPOT_API_KEY) {
     throw new Error("HUBSPOT_API_KEY environment variable is not set")
@@ -140,8 +153,12 @@ function getHeaders(): HeadersInit {
 
 async function hubspotFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retries = 3
 ): Promise<T> {
+  // Apply rate limiting before each request
+  await rateLimitedDelay()
+
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -149,6 +166,15 @@ async function hubspotFetch<T>(
       ...options.headers,
     },
   })
+
+  // Handle rate limiting with retry
+  if (response.status === 429 && retries > 0) {
+    const retryAfter = parseInt(response.headers.get("Retry-After") || "1", 10)
+    const waitTime = Math.max(retryAfter * 1000, 1000) * (4 - retries) // Exponential backoff
+    console.log(`HubSpot rate limited, waiting ${waitTime}ms before retry (${retries} retries left)`)
+    await new Promise(resolve => setTimeout(resolve, waitTime))
+    return hubspotFetch<T>(endpoint, options, retries - 1)
+  }
 
   if (!response.ok) {
     const error: HubSpotError = await response.json()
@@ -272,48 +298,33 @@ export async function getDeals(companyId: string): Promise<HubSpotDeal[]> {
 
 /**
  * Get recent activity (engagements) for a company
+ * Makes sequential requests with rate limiting to avoid hitting API limits
  */
 export async function getRecentActivity(companyId: string): Promise<HubSpotActivity> {
-  // Get recent engagements associated with the company
-  const engagements = await hubspotFetch<{
+  type AssociationResult = {
     results: Array<{
       id: string
       properties: Record<string, string>
       createdAt: string
     }>
-  }>(`/crm/v3/objects/companies/${companyId}/associations/notes`)
+  }
 
-  const notes = await hubspotFetch<{
-    results: Array<{
-      id: string
-      properties: Record<string, string>
-      createdAt: string
-    }>
-  }>(`/crm/v3/objects/companies/${companyId}/associations/notes`)
+  // Make requests sequentially to respect rate limits
+  const notes = await hubspotFetch<AssociationResult>(
+    `/crm/v3/objects/companies/${companyId}/associations/notes`
+  ).catch(() => ({ results: [] }))
 
-  const emails = await hubspotFetch<{
-    results: Array<{
-      id: string
-      properties: Record<string, string>
-      createdAt: string
-    }>
-  }>(`/crm/v3/objects/companies/${companyId}/associations/emails`)
+  const emails = await hubspotFetch<AssociationResult>(
+    `/crm/v3/objects/companies/${companyId}/associations/emails`
+  ).catch(() => ({ results: [] }))
 
-  const calls = await hubspotFetch<{
-    results: Array<{
-      id: string
-      properties: Record<string, string>
-      createdAt: string
-    }>
-  }>(`/crm/v3/objects/companies/${companyId}/associations/calls`)
+  const calls = await hubspotFetch<AssociationResult>(
+    `/crm/v3/objects/companies/${companyId}/associations/calls`
+  ).catch(() => ({ results: [] }))
 
-  const meetings = await hubspotFetch<{
-    results: Array<{
-      id: string
-      properties: Record<string, string>
-      createdAt: string
-    }>
-  }>(`/crm/v3/objects/companies/${companyId}/associations/meetings`)
+  const meetings = await hubspotFetch<AssociationResult>(
+    `/crm/v3/objects/companies/${companyId}/associations/meetings`
+  ).catch(() => ({ results: [] }))
 
   return {
     engagements: [],

@@ -10,7 +10,8 @@ import {
   CalendarClock,
   CheckSquare,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  UsersRound
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -18,6 +19,7 @@ import { useState } from "react"
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/accounts", icon: Users, label: "Accounts" },
+  { href: "/team", icon: UsersRound, label: "CSM Workload" },
   { href: "/tasks", icon: CheckSquare, label: "Tasks" },
   { href: "/renewals", icon: CalendarClock, label: "Renewals" },
   { href: "/skills", icon: Sparkles, label: "Skills" },
