@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { getCurrentUser } from "@/lib/auth"
 
 interface NotificationPreferences {
   channels: {
@@ -39,11 +40,28 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 }
 
 /**
- * Get notification preferences from database
+ * Get notification preferences for current user
  * GET /api/settings/notifications
  */
 export async function GET() {
   try {
+    const user = await getCurrentUser()
+
+    if (user) {
+      // Get per-user preferences
+      const userPref = await prisma.userPreference.findUnique({
+        where: { neonUserId: user.id },
+      })
+
+      if (userPref?.alertPreferences) {
+        return NextResponse.json({
+          preferences: userPref.alertPreferences as unknown as NotificationPreferences,
+          user: { email: user.email, name: user.name },
+        })
+      }
+    }
+
+    // Fallback to global settings
     const settings = await prisma.globalSettings.findUnique({
       where: { id: "default" },
     })
@@ -62,7 +80,7 @@ export async function GET() {
 }
 
 /**
- * Save notification preferences to database
+ * Save notification preferences for current user
  * POST /api/settings/notifications
  */
 export async function POST(request: NextRequest) {
@@ -85,7 +103,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Upsert settings (create if doesn't exist, update if does)
+    const user = await getCurrentUser()
+
+    if (user) {
+      // Save per-user preferences
+      await prisma.userPreference.upsert({
+        where: { neonUserId: user.id },
+        update: {
+          alertPreferences: JSON.parse(JSON.stringify(preferences)),
+        },
+        create: {
+          neonUserId: user.id,
+          email: user.email,
+          name: user.name,
+          alertPreferences: JSON.parse(JSON.stringify(preferences)),
+        },
+      })
+
+      return NextResponse.json({
+        success: true,
+        preferences,
+        user: { email: user.email, name: user.name },
+      })
+    }
+
+    // Fallback: save to global settings if no user
     await prisma.globalSettings.upsert({
       where: { id: "default" },
       update: {

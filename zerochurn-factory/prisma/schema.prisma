@@ -101,13 +101,16 @@ model AlertLog {
 
 model UserPreference {
   id              String   @id @default(cuid())
-  hubspotOwnerId  String   @unique // HubSpot owner ID
+  neonUserId      String   @unique // Neon Auth user ID
+  hubspotOwnerId  String?  // HubSpot owner ID (optional, for linking)
   email           String
   name            String?
   slackUserId     String?  // For direct Slack notifications
   alertPreferences Json?   // What alerts they want
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([email])
 }
 
 // ============================================================================

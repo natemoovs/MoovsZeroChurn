@@ -1,35 +1,35 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
 export default function LoginPage() {
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [authUrl, setAuthUrl] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    })
-
-    if (res.ok) {
-      router.push("/")
-      router.refresh()
-    } else {
-      setError("Invalid password")
+  useEffect(() => {
+    // Check for error from callback
+    const errorParam = searchParams.get("error")
+    if (errorParam) {
+      setError(errorParam === "no_token" ? "Authentication failed" : "Invalid token")
     }
-    setIsLoading(false)
+
+    // Get the Neon Auth URL from environment
+    const neonAuthUrl = process.env.NEXT_PUBLIC_NEON_AUTH_URL
+    if (neonAuthUrl) {
+      // Add callback URL
+      const callbackUrl = `${window.location.origin}/api/auth/callback`
+      setAuthUrl(`${neonAuthUrl}/signin?redirect_uri=${encodeURIComponent(callbackUrl)}`)
+    }
+  }, [searchParams])
+
+  const handleSignIn = () => {
+    if (authUrl) {
+      window.location.href = authUrl
+    }
   }
 
   return (
@@ -37,21 +37,26 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>ZeroChurn Factory</CardTitle>
+          <CardDescription>Sign in to access your CSM dashboard</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoFocus
-            />
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "..." : "Enter"}
-            </Button>
-          </form>
+        <CardContent className="space-y-4">
+          {error && (
+            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              {error}
+            </p>
+          )}
+          <Button
+            onClick={handleSignIn}
+            className="w-full"
+            disabled={!authUrl}
+          >
+            {authUrl ? "Sign in with Neon" : "Loading..."}
+          </Button>
+          {!authUrl && (
+            <p className="text-xs text-zinc-500 text-center">
+              Neon Auth not configured. Check NEXT_PUBLIC_NEON_AUTH_URL.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
