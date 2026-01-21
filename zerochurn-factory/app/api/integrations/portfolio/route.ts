@@ -1,52 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hubspot, metabase } from "@/lib/integrations"
-import type { HubSpotCompany } from "@/lib/integrations"
+import { prisma } from "@/lib/db"
 
-// Metabase query IDs
-const ACCOUNT_DATA_QUERY_ID = 948 // "Moovs Account Data - Detail"
-
-// ============================================================================
-// Cache - stores portfolio data for 5 minutes to avoid rate limits
-// ============================================================================
-interface CacheEntry {
-  data: {
-    companies: HubSpotCompany[]
-    metabase: MetabaseAccountData[]
-  }
-  timestamp: number
-}
-
-const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
-let portfolioCache: CacheEntry | null = null
-
-function isCacheValid(): boolean {
-  if (!portfolioCache) return false
-  return Date.now() - portfolioCache.timestamp < CACHE_TTL_MS
-}
-
-function getCache() {
-  if (isCacheValid()) {
-    return portfolioCache!.data
-  }
-  return null
-}
-
-function setCache(companies: HubSpotCompany[], metabaseData: MetabaseAccountData[]) {
-  portfolioCache = {
-    data: { companies, metabase: metabaseData },
-    timestamp: Date.now(),
-  }
-}
-
-interface MetabaseAccountData {
-  companyName: string
-  totalTrips: number
-  daysSinceLastLogin: number | null
-  churnStatus: string | null
-  mrr: number | null
-  plan: string | null
-  customerSegment: string | null
-}
+/**
+ * Get portfolio health data from synced database
+ * GET /api/integrations/portfolio?segment=enterprise|mid-market|smb|all
+ *
+ * Uses the HubSpotCompany table which is synced daily via /api/sync/hubspot
+ */
 
 interface CompanyHealthSummary {
   companyId: string
@@ -61,68 +21,48 @@ interface CompanyHealthSummary {
   riskSignals: string[]
   positiveSignals: string[]
   customerSince: string | null
-  // Metabase-enriched fields
   totalTrips?: number
   customerSegment?: string | null
+  ownerId?: string | null
+  ownerName?: string | null
 }
 
-/**
- * Get portfolio health data for a segment
- * GET /api/integrations/portfolio?segment=enterprise|mid-market|smb|all
- */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const segment = searchParams.get("segment") || "all"
-  const forceRefresh = searchParams.get("refresh") === "true"
-
-  if (!process.env.HUBSPOT_ACCESS_TOKEN) {
-    return NextResponse.json({
-      summaries: [],
-      configured: { hubspot: false, stripe: false, metabase: false },
-      error: "HubSpot not configured",
-    })
-  }
 
   try {
-    // Check cache first (unless force refresh requested)
-    let allCompanies: HubSpotCompany[]
-    let metabaseData: MetabaseAccountData[]
-    const cached = !forceRefresh ? getCache() : null
+    // Build filter based on segment
+    const where = buildSegmentFilter(segment)
 
-    if (cached) {
-      // Use cached data
-      allCompanies = cached.companies
-      metabaseData = cached.metabase
-    } else {
-      // Fetch fresh data from HubSpot and Metabase in parallel
-      const [companies, mbData] = await Promise.all([
-        hubspot.searchCompanies("*"),
-        fetchMetabaseAccountData(),
-      ])
-      allCompanies = companies
-      metabaseData = mbData
-
-      // Update cache
-      setCache(allCompanies, metabaseData)
-    }
-
-    // Build a map of Metabase data by company name for quick lookup
-    const metabaseMap = new Map<string, MetabaseAccountData>()
-    for (const account of metabaseData) {
-      if (account.companyName) {
-        metabaseMap.set(account.companyName.toLowerCase(), account)
-      }
-    }
-
-    // Filter by segment
-    const filtered = filterBySegment(allCompanies, segment)
-
-    // Health scoring with Metabase enrichment
-    const summaries: CompanyHealthSummary[] = filtered.map((company) => {
-      const companyName = company.properties.name?.toLowerCase() || ""
-      const metabaseAccount = metabaseMap.get(companyName)
-      return enrichedHealthScore(company, metabaseAccount)
+    // Query synced companies from database
+    const companies = await prisma.hubSpotCompany.findMany({
+      where,
+      orderBy: [
+        { healthScore: "asc" }, // red first (alphabetically red < yellow < green)
+        { mrr: "desc" },
+      ],
     })
+
+    // Transform to summary format
+    const summaries: CompanyHealthSummary[] = companies.map((company) => ({
+      companyId: company.hubspotId,
+      companyName: company.name,
+      domain: company.domain,
+      healthScore: (company.healthScore as "green" | "yellow" | "red" | "unknown") || "unknown",
+      mrr: company.mrr,
+      plan: company.plan,
+      paymentStatus: getPaymentStatus(company.subscriptionStatus),
+      lastActivity: company.lastLoginAt?.toISOString() || company.hubspotUpdatedAt?.toISOString() || null,
+      contactCount: company.primaryContactEmail ? 1 : 0,
+      riskSignals: company.riskSignals,
+      positiveSignals: company.positiveSignals,
+      customerSince: company.hubspotCreatedAt?.toISOString() || null,
+      totalTrips: company.totalTrips || undefined,
+      customerSegment: getSegmentFromMrr(company.mrr),
+      ownerId: company.ownerId,
+      ownerName: company.ownerName,
+    }))
 
     // Sort by health score (red first, then yellow, then green)
     summaries.sort((a, b) => {
@@ -130,19 +70,24 @@ export async function GET(request: NextRequest) {
       return order[a.healthScore] - order[b.healthScore]
     })
 
+    // Get last sync time
+    const lastSync = await prisma.syncLog.findFirst({
+      where: { type: "companies", status: "completed" },
+      orderBy: { completedAt: "desc" },
+    })
+
     return NextResponse.json({
       summaries,
-      total: filtered.length,
+      total: companies.length,
       segment,
       configured: {
-        hubspot: true,
+        hubspot: true, // Data comes from synced DB
         stripe: !!process.env.STRIPE_SECRET_KEY,
-        metabase: metabaseData.length > 0,
+        metabase: !!process.env.METABASE_URL,
       },
-      cache: {
-        hit: !!cached,
-        ageMinutes: portfolioCache ? Math.round((Date.now() - portfolioCache.timestamp) / 60000) : 0,
-        ttlMinutes: 60,
+      sync: {
+        lastSyncAt: lastSync?.completedAt?.toISOString() || null,
+        recordsSynced: lastSync?.recordsSynced || 0,
       },
     })
   } catch (error) {
@@ -154,184 +99,43 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * Fetch account data from Metabase
- */
-async function fetchMetabaseAccountData(): Promise<MetabaseAccountData[]> {
-  if (!process.env.METABASE_URL || !process.env.METABASE_API_KEY) {
-    return []
-  }
+function buildSegmentFilter(segment: string): Record<string, unknown> {
+  if (segment === "all") return {}
 
-  try {
-    const result = await metabase.runQuery(ACCOUNT_DATA_QUERY_ID)
-    const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
-
-    return rows.map((row) => ({
-      companyName: (row.MOOVS_COMPANY_NAME as string) || "",
-      totalTrips: (row.ALL_TRIPS_COUNT as number) || 0,
-      daysSinceLastLogin: row.DAYS_SINCE_LAST_IDENTIFY as number | null,
-      churnStatus: row.CHURN_STATUS as string | null,
-      mrr: row.TOTAL_MRR_NUMERIC as number | null,
-      plan: row.LAGO_PLAN_NAME as string | null,
-      customerSegment: row.CUSTOMER_SEGMENT as string | null,
-    }))
-  } catch (error) {
-    console.error("Metabase fetch error:", error)
-    return []
+  switch (segment.toLowerCase()) {
+    case "enterprise":
+      return { mrr: { gte: 500 } }
+    case "mid-market":
+      return { mrr: { gte: 100, lt: 500 } }
+    case "smb":
+      return { mrr: { gte: 0, lt: 100 } }
+    case "at-risk":
+    case "at_risk":
+      return { healthScore: "red" }
+    case "healthy":
+      return { healthScore: "green" }
+    case "warning":
+      return { healthScore: "yellow" }
+    default:
+      return {}
   }
 }
 
-/**
- * Health score with Metabase enrichment
- */
-function enrichedHealthScore(
-  company: HubSpotCompany,
-  mb: MetabaseAccountData | undefined
-): CompanyHealthSummary {
-  const riskSignals: string[] = []
-  const positiveSignals: string[] = []
+function getPaymentStatus(subscriptionStatus: string | null): "current" | "overdue" | "at_risk" | "unknown" {
+  if (!subscriptionStatus) return "unknown"
 
-  const lifecycleStage = company.properties.lifecyclestage?.toLowerCase() || ""
-  const lastModified = company.properties.hs_lastmodifieddate
-  const notesLastUpdated = company.properties.notes_last_updated
+  const status = subscriptionStatus.toLowerCase()
+  if (status === "active" || status === "paid") return "current"
+  if (status === "past_due" || status === "overdue") return "overdue"
+  if (status === "canceled" || status === "churned") return "at_risk"
 
-  // --- Metabase-based signals (product usage data) ---
-  if (mb) {
-    // Churn status (explicit)
-    if (mb.churnStatus && mb.churnStatus.toLowerCase().includes("churn")) {
-      riskSignals.push("Churned")
-    }
-
-    // Usage signals based on trips
-    if (mb.totalTrips > 100) {
-      positiveSignals.push(`${mb.totalTrips} trips`)
-    } else if (mb.totalTrips > 20) {
-      positiveSignals.push("Active usage")
-    } else if (mb.totalTrips > 0 && mb.totalTrips <= 5) {
-      riskSignals.push("Low usage")
-    } else if (mb.totalTrips === 0) {
-      riskSignals.push("No trips")
-    }
-
-    // Login recency
-    if (mb.daysSinceLastLogin !== null) {
-      if (mb.daysSinceLastLogin > 60) {
-        riskSignals.push(`No login in ${mb.daysSinceLastLogin}d`)
-      } else if (mb.daysSinceLastLogin > 30) {
-        riskSignals.push("Inactive 30+ days")
-      } else if (mb.daysSinceLastLogin <= 7) {
-        positiveSignals.push("Recent login")
-      }
-    }
-
-    // MRR / paying status
-    if (mb.mrr && mb.mrr > 0) {
-      positiveSignals.push("Paying customer")
-      if (mb.mrr >= 200) {
-        positiveSignals.push("High value")
-      }
-    } else if (mb.plan?.toLowerCase().includes("free")) {
-      // Free plan with no usage is risky
-      if (mb.totalTrips === 0) {
-        riskSignals.push("Free + no usage")
-      }
-    }
-  }
-
-  // --- HubSpot-based signals (fallback) ---
-  if (lifecycleStage === "customer") {
-    positiveSignals.push("Active customer")
-  }
-
-  // Activity recency from HubSpot (only if no Metabase data)
-  if (!mb) {
-    const daysSinceUpdate = lastModified
-      ? Math.floor((Date.now() - new Date(lastModified).getTime()) / (1000 * 60 * 60 * 24))
-      : null
-
-    if (daysSinceUpdate !== null) {
-      if (daysSinceUpdate > 180) {
-        riskSignals.push("Inactive 6+ months")
-      } else if (daysSinceUpdate > 90) {
-        riskSignals.push("Inactive 3+ months")
-      } else if (daysSinceUpdate <= 30) {
-        positiveSignals.push("Recent activity")
-      }
-    }
-  }
-
-  // --- Calculate health score based on signals ---
-  let healthScore: "green" | "yellow" | "red" | "unknown" = "unknown"
-
-  // Churned or severe issues = red
-  if (riskSignals.some((r) =>
-    r.includes("Churned") ||
-    r.includes("6+ months") ||
-    r.includes("No login in") && parseInt(r.match(/\d+/)?.[0] || "0") > 60
-  )) {
-    healthScore = "red"
-  } else if (riskSignals.length >= 2) {
-    // Multiple risk signals = red
-    healthScore = "red"
-  } else if (riskSignals.length === 1 && positiveSignals.length < 2) {
-    // One risk, few positives = yellow
-    healthScore = "yellow"
-  } else if (positiveSignals.length >= 3) {
-    // Many positive signals = green
-    healthScore = "green"
-  } else if (positiveSignals.length >= 2 && riskSignals.length === 0) {
-    // Multiple positives, no risk = green
-    healthScore = "green"
-  } else if (positiveSignals.length === 1 && riskSignals.length === 0) {
-    // One positive, no risk = green
-    healthScore = "green"
-  } else if (mb && mb.totalTrips > 10 && mb.mrr && mb.mrr > 0) {
-    // Paying with decent usage = green
-    healthScore = "green"
-  } else if (riskSignals.length === 0 && positiveSignals.length === 0) {
-    // No data = unknown
-    healthScore = "unknown"
-  } else {
-    healthScore = "yellow"
-  }
-
-  return {
-    companyId: company.id,
-    companyName: company.properties.name || "Unknown",
-    domain: company.properties.domain || null,
-    healthScore,
-    mrr: mb?.mrr || null,
-    plan: mb?.plan || lifecycleStage || null,
-    paymentStatus: mb?.mrr && mb.mrr > 0 ? "current" : "unknown",
-    lastActivity: notesLastUpdated || lastModified || null,
-    contactCount: 0,
-    riskSignals,
-    positiveSignals,
-    customerSince: company.properties.createdate || null,
-    totalTrips: mb?.totalTrips,
-    customerSegment: mb?.customerSegment,
-  }
+  return "unknown"
 }
 
-function filterBySegment(companies: HubSpotCompany[], segment: string): HubSpotCompany[] {
-  if (segment === "all") return companies
-
-  return companies.filter((company) => {
-    const revenue = parseFloat(company.properties.annualrevenue || "0")
-    const stage = company.properties.lifecyclestage?.toLowerCase() || ""
-
-    switch (segment.toLowerCase()) {
-      case "enterprise":
-        return revenue >= 1000000 || stage === "customer"
-      case "mid-market":
-        return revenue >= 250000 && revenue < 1000000
-      case "smb":
-        return revenue >= 50000 && revenue < 250000
-      case "smb/mid-market":
-      case "smb-mid-market":
-        return revenue >= 50000 && revenue < 1000000
-      default:
-        return true
-    }
-  })
+function getSegmentFromMrr(mrr: number | null): string | null {
+  if (mrr === null) return null
+  if (mrr >= 500) return "Enterprise"
+  if (mrr >= 100) return "Mid-Market"
+  if (mrr > 0) return "SMB"
+  return "Free"
 }
