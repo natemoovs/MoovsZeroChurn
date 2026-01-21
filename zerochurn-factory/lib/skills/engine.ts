@@ -97,6 +97,7 @@ function loadSkill(skillDir: string): Skill | null {
     questions: parseQuestions(content),
     outputPath: frontmatter.outputPath || `factory/knowledge/${skillDir}.md`,
     template: parseTemplate(content),
+    data: frontmatter.data,
   }
 }
 

@@ -2,6 +2,16 @@
 name: Churn Risk Analysis
 description: Analyze churn signals and create an intervention plan to save an at-risk account
 outputPath: factory/knowledge/zerochurn/risk-analysis/{{customerName}}.md
+data:
+  hubspot:
+    company: true
+    contacts: true
+    deals: true
+    activity: true
+  stripe:
+    customer: true
+    subscriptions: true
+    invoices: true
 ---
 
 # Churn Risk Analysis Skill

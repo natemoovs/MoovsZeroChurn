@@ -2,6 +2,16 @@
 name: Customer Health Summary
 description: Generate a quick health summary for a customer account to prep for a call or QBR
 outputPath: factory/knowledge/zerochurn/health-summaries/{{customerName}}.md
+data:
+  hubspot:
+    company: true
+    contacts: true
+    deals: true
+    activity: true
+  stripe:
+    customer: true
+    subscriptions: true
+    invoices: true
 ---
 
 # Customer Health Summary Skill

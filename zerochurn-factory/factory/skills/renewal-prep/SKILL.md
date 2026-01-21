@@ -2,6 +2,15 @@
 name: Renewal Prep Summary
 description: Prepare a comprehensive renewal strategy document before contract discussions
 outputPath: factory/knowledge/zerochurn/renewals/{{customerName}}.md
+data:
+  hubspot:
+    company: true
+    contacts: true
+    deals: true
+  stripe:
+    customer: true
+    subscriptions: true
+    invoices: true
 ---
 
 # Renewal Prep Summary Skill
