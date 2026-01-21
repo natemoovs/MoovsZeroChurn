@@ -9,6 +9,21 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
+import { CompanySelect } from "@/components/company-select"
+
+// Check if a question is asking for a company/customer
+function isCompanyQuestion(id: string, question: string): boolean {
+  const idPatterns = ["customer", "company", "account", "client"]
+  const questionPatterns = ["company", "customer", "account", "domain", "client name"]
+
+  const idLower = id.toLowerCase()
+  const questionLower = question.toLowerCase()
+
+  return (
+    idPatterns.some((p) => idLower.includes(p)) ||
+    questionPatterns.some((p) => questionLower.includes(p))
+  )
+}
 
 interface SkillWizardProps {
   skill: Skill
@@ -96,6 +111,12 @@ export function SkillWizard({ skill }: SkillWizardProps) {
               onChange={(e) => handleAnswer(e.target.value)}
               placeholder="Your answer..."
               className="min-h-[120px]"
+            />
+          ) : isCompanyQuestion(currentQuestion.id, currentQuestion.question) ? (
+            <CompanySelect
+              value={currentAnswer}
+              onChange={handleAnswer}
+              placeholder="Search or type company name..."
             />
           ) : (
             <Input

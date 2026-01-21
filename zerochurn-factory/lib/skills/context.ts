@@ -71,14 +71,31 @@ export async function gatherContext(
 ): Promise<string> {
   const context: GatheredContext = { errors: [] }
 
-  // Gather HubSpot data
+  // Gather HubSpot data first (we may need contact emails for Stripe)
   if (requirements.hubspot) {
     context.hubspot = await gatherHubSpotContext(requirements.hubspot, formData, context.errors)
   }
 
-  // Gather Stripe data
+  // Gather Stripe data - use HubSpot contact emails if no email in form data
   if (requirements.stripe) {
-    context.stripe = await gatherStripeContext(requirements.stripe, formData, context.errors)
+    // Try to get email from form data first, then fall back to HubSpot contacts
+    let emailForStripe = extractEmail(formData)
+
+    if (!emailForStripe && context.hubspot?.contacts?.length) {
+      // Use the first contact's email from HubSpot
+      for (const contact of context.hubspot.contacts) {
+        if (contact.properties.email) {
+          emailForStripe = contact.properties.email
+          break
+        }
+      }
+    }
+
+    context.stripe = await gatherStripeContext(
+      requirements.stripe,
+      emailForStripe ? { ...formData, _derivedEmail: emailForStripe } : formData,
+      context.errors
+    )
   }
 
   // Gather Notion data
@@ -447,6 +464,11 @@ function extractCompanyIdentifier(formData: Record<string, string>): string | nu
  * Extract email from form data
  */
 function extractEmail(formData: Record<string, string>): string | null {
+  // Check for derived email first (from HubSpot contacts)
+  if (formData._derivedEmail) {
+    return formData._derivedEmail
+  }
+
   const fields = ["email", "customerEmail", "contactEmail"]
   for (const field of fields) {
     const value = formData[field]
