@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import {
+  classifySegment,
+  getSegmentProfile,
+  getSegmentRecommendations,
+  getSegmentDisplayName,
+  CustomerSegment,
+} from "@/lib/segments"
 
 /**
  * Churn Risk Report API
@@ -9,12 +16,14 @@ import { prisma } from "@/lib/db"
  * Generates a comprehensive churn risk report combining all signals:
  * - Health scores (payment, engagement, support, growth)
  * - Risk signals and patterns
+ * - Segment-aware recommendations (SMB, Mid-Market, Enterprise)
  * - Actionable recommendations
  *
  * Query params:
  * - limit: number of accounts to include (default 20)
  * - minRisk: minimum risk level (high, medium, low - default high)
  * - includeDetails: boolean to include full details (default false)
+ * - segment: filter by segment (smb, mid_market, enterprise, all - default all)
  */
 
 interface ChurnRiskAccount {
@@ -24,6 +33,10 @@ interface ChurnRiskAccount {
   name: string
   domain: string | null
   operatorId: string | null
+
+  // Segment
+  segment: CustomerSegment
+  segmentDisplay: string
 
   // Health
   healthScore: string | null
@@ -46,7 +59,7 @@ interface ChurnRiskAccount {
   totalTrips: number | null
   failedPayments: number | null
 
-  // Recommendations
+  // Recommendations (segment-aware)
   recommendations: string[]
   priority: number
 
@@ -67,6 +80,7 @@ interface ChurnRiskReport {
     avgRiskScore: number
   }
   byCategory: Record<string, number>
+  bySegment: Record<string, number>
   accounts: ChurnRiskAccount[]
   insights: string[]
 }
@@ -76,6 +90,7 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "20")
   const minRisk = searchParams.get("minRisk") || "high"
   const includeDetails = searchParams.get("includeDetails") === "true"
+  const segmentFilter = searchParams.get("segment") || "all"
 
   try {
     // Query at-risk companies (red or yellow health, or low numeric score)
@@ -97,11 +112,25 @@ export async function GET(request: NextRequest) {
       take: limit * 2, // Get extra to filter
     })
 
-    // Process and categorize each account
+    // Process and categorize each account with segment intelligence
     const processedAccounts: ChurnRiskAccount[] = companies.map((company) => {
+      // Classify segment based on MRR (primary indicator per ICP)
+      const segment = classifySegment(company.mrr)
+      const segmentDisplay = getSegmentDisplayName(segment)
+
       const riskLevel = calculateRiskLevel(company)
       const riskCategory = categorizeRisk(company)
-      const recommendations = generateRecommendations(company, riskCategory)
+
+      // Get segment-aware recommendations
+      const genericRecs = generateRecommendations(company, riskCategory)
+      const segmentRecs = getSegmentRecommendations(
+        segment,
+        company.riskSignals,
+        company.numericHealthScore || 50
+      )
+      // Combine and dedupe recommendations (segment-specific first)
+      const recommendations = [...new Set([...segmentRecs, ...genericRecs])].slice(0, 5)
+
       const priority = calculatePriority(company, riskLevel)
 
       return {
@@ -110,6 +139,9 @@ export async function GET(request: NextRequest) {
         name: company.name,
         domain: company.domain,
         operatorId: company.operatorId,
+
+        segment,
+        segmentDisplay,
 
         healthScore: company.healthScore,
         numericScore: company.numericHealthScore,
@@ -138,11 +170,12 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Filter by minimum risk level
+    // Filter by minimum risk level and segment
     const riskLevels: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
     const minRiskNum = riskLevels[minRisk] ?? 1
     const filteredAccounts = processedAccounts
       .filter((a) => riskLevels[a.riskLevel] <= minRiskNum)
+      .filter((a) => segmentFilter === "all" || a.segment === segmentFilter)
       .sort((a, b) => a.priority - b.priority)
       .slice(0, limit)
 
@@ -162,8 +195,14 @@ export async function GET(request: NextRequest) {
       byCategory[account.riskCategory] = (byCategory[account.riskCategory] || 0) + 1
     }
 
-    // Generate portfolio-level insights
-    const insights = generatePortfolioInsights(filteredAccounts, byCategory)
+    // Count by segment
+    const bySegment: Record<string, number> = {}
+    for (const account of filteredAccounts) {
+      bySegment[account.segmentDisplay] = (bySegment[account.segmentDisplay] || 0) + 1
+    }
+
+    // Generate portfolio-level insights (segment-aware)
+    const insights = generatePortfolioInsights(filteredAccounts, byCategory, bySegment)
 
     const report: ChurnRiskReport = {
       generatedAt: new Date().toISOString(),
@@ -176,6 +215,7 @@ export async function GET(request: NextRequest) {
         avgRiskScore: Math.round(avgRiskScore),
       },
       byCategory,
+      bySegment,
       accounts: includeDetails ? filteredAccounts : filteredAccounts.map((a) => ({
         ...a,
         // Slim down for non-detailed view
@@ -383,7 +423,8 @@ function calculatePriority(
 
 function generatePortfolioInsights(
   accounts: ChurnRiskAccount[],
-  byCategory: Record<string, number>
+  byCategory: Record<string, number>,
+  bySegment: Record<string, number> = {}
 ): string[] {
   const insights: string[] = []
 
@@ -395,6 +436,26 @@ function generatePortfolioInsights(
   if (critical > 0) {
     insights.push(
       `${critical} account${critical > 1 ? "s" : ""} require${critical === 1 ? "s" : ""} immediate attention`
+    )
+  }
+
+  // Segment-specific insights
+  const enterpriseAtRisk = accounts.filter((a) => a.segment === "enterprise").length
+  if (enterpriseAtRisk > 0) {
+    const enterpriseMrr = accounts
+      .filter((a) => a.segment === "enterprise")
+      .reduce((sum, a) => sum + (a.mrr || 0), 0)
+    insights.push(
+      `${enterpriseAtRisk} Enterprise account${enterpriseAtRisk > 1 ? "s" : ""} at risk ($${enterpriseMrr.toLocaleString()} MRR) - prioritize high-touch outreach`
+    )
+  }
+
+  const freeWithZeroUsage = accounts.filter(
+    (a) => a.segment === "free" && (a.totalTrips === 0 || a.totalTrips === null)
+  ).length
+  if (freeWithZeroUsage > 3) {
+    insights.push(
+      `${freeWithZeroUsage} Free accounts with zero usage - consider activation campaign (44.7% of SMB starts free)`
     )
   }
 
@@ -443,5 +504,5 @@ function generatePortfolioInsights(
     )
   }
 
-  return insights.slice(0, 5)
+  return insights.slice(0, 6)
 }
