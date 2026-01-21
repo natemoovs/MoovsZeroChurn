@@ -75,18 +75,19 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/integrations/portfolio?segment=all").then((r) => r.json()).catch(() => null),
-      fetch("/api/tasks?status=pending&limit=5").then((r) => r.json()).catch(() => ({ tasks: [] })),
-      fetch("/api/integrations/renewals?days=30").then((r) => r.json()).catch(() => ({ renewals: [] })),
-      fetch("/api/health-history/trends").then((r) => r.json()).catch(() => null),
-    ]).then(([portfolioData, tasksData, renewalsData, trendsData]) => {
-      if (portfolioData) setData(portfolioData)
-      if (tasksData?.tasks) setTasks(tasksData.tasks)
-      if (renewalsData?.renewals) setRenewals(renewalsData.renewals)
-      if (trendsData) setHealthTrend(trendsData)
-      setLoading(false)
-    })
+    // Single combined API call for faster loading
+    fetch("/api/dashboard")
+      .then((r) => r.json())
+      .then((dashboardData) => {
+        if (dashboardData.portfolio) setData(dashboardData.portfolio)
+        if (dashboardData.tasks?.tasks) setTasks(dashboardData.tasks.tasks)
+        if (dashboardData.renewals?.renewals) setRenewals(dashboardData.renewals.renewals)
+        if (dashboardData.healthTrend) setHealthTrend(dashboardData.healthTrend)
+        setLoading(false)
+      })
+      .catch(() => {
+        setLoading(false)
+      })
   }, [])
 
   const green = data?.summaries.filter((s) => s.healthScore === "green").length || 0
