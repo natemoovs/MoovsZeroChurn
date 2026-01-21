@@ -626,6 +626,12 @@ export async function POST(request: NextRequest) {
         // Calculate weighted health score
         const health = calculateWeightedHealthScore(mbData, stripeData, company)
 
+        // Get existing company for health change tracking
+        const existingCompany = await prisma.hubSpotCompany.findUnique({
+          where: { hubspotId: company.id },
+          select: { id: true, healthScore: true, numericHealthScore: true },
+        })
+
         // Parse dates safely
         const parseDate = (dateStr?: string): Date | null => {
           if (!dateStr) return null
@@ -650,7 +656,7 @@ export async function POST(request: NextRequest) {
           : parseDate(props.last_login_date)
 
         // Upsert company
-        await prisma.hubSpotCompany.upsert({
+        const upsertedCompany = await prisma.hubSpotCompany.upsert({
           where: { hubspotId: company.id },
           update: {
             name: companyName,
@@ -738,6 +744,25 @@ export async function POST(request: NextRequest) {
             lastSyncedAt: new Date(),
           },
         })
+
+        // Log health change if it changed
+        const healthChanged = existingCompany &&
+          (existingCompany.healthScore !== health.healthScore ||
+           Math.abs((existingCompany.numericHealthScore || 0) - health.numericScore) >= 10)
+
+        if (healthChanged || !existingCompany) {
+          await prisma.healthChangeLog.create({
+            data: {
+              companyId: upsertedCompany.id,
+              previousScore: existingCompany?.healthScore || null,
+              newScore: health.healthScore,
+              previousNumericScore: existingCompany?.numericHealthScore || null,
+              newNumericScore: health.numericScore,
+              riskSignals: health.riskSignals,
+              trigger: "sync",
+            },
+          })
+        }
 
         synced++
       } catch (err) {
