@@ -29,18 +29,20 @@
 
 ## The Plan: 3 Phases
 
-### Phase 1: Enhanced Data Integration ⬅️ CURRENT
+### Phase 1: Enhanced Data Integration ✅ COMPLETE
 **Goal:** Connect real data sources for smarter insights
 
-- [ ] **Fix HubSpot Sync** - Resolve Neon Auth database connection errors
-- [ ] **Metabase Integration** - Query actual usage data (reservations, trips, revenue)
-- [ ] **Stripe Integration** - Payment health, failed charges, disputes
-- [ ] **Notion Integration** - Sync CSM tasks, track interventions, log outcomes
+- [x] **Fix HubSpot Sync** - Fixed env variable naming (HUBSPOT_ACCESS_TOKEN)
+- [x] **Metabase Integration** - Query actual usage data (reservations, trips, revenue)
+- [x] **Stripe Integration** - Payment health, failed charges, subscriptions
+- [x] **Notion Integration** - CSM tasks API with create/list capabilities
+- [x] **Customer 360 Endpoint** - Unified view combining all data sources
 
 **New Capabilities:**
 - Real usage trends (not just "last login")
 - Payment failure early warning
 - CSM task tracking with full context
+- Health scoring from all data sources combined
 
 ---
 
@@ -131,10 +133,12 @@
 ### 2026-01-21
 - [x] Synced moovs-factory upstream (MCPs, skills, knowledge)
 - [x] Created enhancement plan
-- [ ] Phase 1: MCP configuration
-- [ ] Phase 1: Metabase integration
-- [ ] Phase 1: Stripe integration
-- [ ] Phase 1: Notion integration
+- [x] Phase 1: Fixed HubSpot env variable naming
+- [x] Phase 1: Metabase integration (already existed)
+- [x] Phase 1: Stripe integration - Added to account detail with payment health
+- [x] Phase 1: Notion integration - Created tasks API route
+- [x] Phase 1: Customer 360 endpoint - Unified view from all sources
+- [x] Fixed instrumentation.ts for all runtimes
 
 ---
 
