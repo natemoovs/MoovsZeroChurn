@@ -163,7 +163,16 @@ export async function POST(request: NextRequest) {
             dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
             metadata: {
               source: "health-monitor-agent",
-              healthChange: change,
+              healthChange: {
+                companyId: change.companyId,
+                companyName: change.companyName,
+                previousHealth: change.previousHealth,
+                currentHealth: change.currentHealth,
+                changeType: change.changeType,
+                riskSignals: change.riskSignals,
+                positiveSignals: change.positiveSignals,
+                mrr: change.mrr,
+              },
             },
           },
         })
