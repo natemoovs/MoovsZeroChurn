@@ -16,20 +16,39 @@ data:
 
 # Customer Health Summary
 
-Generate a complete customer health summary with data pulled automatically from HubSpot and Stripe. No copying/pasting data — just enter the customer name and get a full briefing.
+Generate a complete customer health summary for Moovs transportation operator customers with data pulled automatically from HubSpot and Stripe. No copying/pasting data — just enter the customer name and get a full briefing.
+
+## Context: Moovs Customers
+
+**Moovs** is a B2B SaaS platform for ground transportation operators (black car/limo services and shuttle programs).
+
+### Customer Segments
+- **SMB** ($50K-$250K revenue, 1-5 vehicles) — Owner-operators on Free/Standard plans
+- **Mid-Market** ($250K-$1M revenue, 6-19 vehicles) — Growing operators on Pro plans
+- **Enterprise** ($1M+ revenue, 20+ vehicles) — Large fleets on Enterprise plans
+- **Shuttle** — University, Corporate, or Third-party operator programs
+
+### Moovs Pricing Tiers
+| Plan | Price | Key Features |
+|------|-------|--------------|
+| Free | $0/mo | 3 users, 10 vehicles, 4% + $0.30 CC rate |
+| Standard | $149/mo | 3 users, unlimited vehicles, 3.4% CC rate |
+| Pro | $199/mo | 5 users, unlimited promo codes, 3% CC rate |
+| Enterprise | $499+/mo | Unlimited users, AI features, custom rates |
+| Shuttle Add-on | $499+/mo | Full shuttle operations platform |
 
 ## What This Skill Does
 
 1. **Fetches live data** from HubSpot (company, contacts, deals, activity) and Stripe (subscription, invoices, payment history)
-2. **Synthesizes** the data into a 1-page health summary
-3. **Surfaces risks** and talking points based on the data
+2. **Synthesizes** the data into a 1-page health summary specific to transportation operators
+3. **Surfaces risks** and talking points based on segment-appropriate signals
 
 ## When to Use
 
-- Before a **check-in call** — get quick context
-- Preparing for a **QBR** — have the full picture
-- Going into a **renewal** — know the account health
-- Handling an **escalation** — understand the history
+- Before a **check-in call** — get quick context on the operator
+- Preparing for a **QBR** — have the full picture of their Moovs usage
+- Going into a **renewal** — know the account health and expansion potential
+- Handling an **escalation** — understand their history and relationship
 - Anytime you need customer context fast
 
 ---
@@ -74,28 +93,36 @@ Examples:
 | Metric | Value |
 |--------|-------|
 | **Health Score** | [Calculated: Green/Yellow/Red] |
-| **MRR/ARR** | [From Stripe] |
+| **Segment** | [SMB/Mid-Market/Enterprise based on plan + revenue] |
+| **MRR** | [From Stripe] |
 | **Customer Since** | [From data] |
-| **Plan** | [Current subscription] |
+| **Plan** | [Free/Standard/Pro/Enterprise + Add-ons] |
 | **Payment Status** | [Current/Overdue/At Risk] |
 
 ---
 
-## Account Overview
+## Operator Profile
 
-### Company Profile
-[From HubSpot: industry, size, location, lifecycle stage]
+### Company Overview
+| Field | Value |
+|-------|-------|
+| **Company** | [Name from HubSpot] |
+| **Type** | [Black Car / Shuttle / Both] |
+| **Fleet Size** | [If available] |
+| **Location** | [City, State] |
+| **Industry** | [Ground Transportation / Limo / Shuttle Service] |
 
 ### Key Contacts
 | Name | Role | Last Contact |
 |------|------|--------------|
-| [Contact 1] | [Title] | [Date] |
+| [Contact 1] | [Owner/GM/Dispatcher/Ops Mgr] | [Date] |
 | [Contact 2] | [Title] | [Date] |
 
 ### Relationship History
 - **Tenure:** [X months/years]
-- **Deals:** [Open/Won/Lost summary]
-- **Last Interaction:** [Most recent activity]
+- **Onboarding:** [Completed/In Progress]
+- **Last CSM Touch:** [Most recent activity]
+- **Support Tickets:** [Open/Recent]
 
 ---
 
@@ -184,27 +211,31 @@ Based on the data and meeting type ({{meetingType}}):
 
 ## Health Score Calculation
 
-The health score is calculated from integration data:
+The health score is calculated from integration data with Moovs-specific signals:
 
 ### Green (Healthy)
-- Payment status current
-- Active subscription
-- Recent activity in HubSpot
-- No overdue invoices
-- Contacts engaged
+- Payment status current, no failed charges
+- Active subscription on paid plan (Standard+)
+- Recent CSM/Support activity in HubSpot
+- Using key features (Dispatch, Customer Portal, Driver App)
+- Contacts engaged, champion identified
 
 ### Yellow (Monitor)
-- Minor payment delays
-- Decreasing activity
+- Minor payment delays (1 failed charge retried)
+- Stuck on Free plan too long (60+ days)
+- Decreasing login/usage (from Moovs metrics if available)
 - Open support issues
-- Contact gaps
+- No contact in 30+ days
+- Champion role change (new dispatcher/GM)
 
 ### Red (At Risk)
-- Failed payments or overdue invoices
-- Subscription canceled or past due
-- No recent activity
-- Champion left or unknown
-- Multiple risk signals
+- Failed payments or overdue invoices (2+ failures)
+- Subscription past due or cancel pending
+- No activity in 60+ days
+- Champion left company
+- Competitor mention in notes
+- Downgrade request
+- Multiple risk signals combined
 
 ---
 
