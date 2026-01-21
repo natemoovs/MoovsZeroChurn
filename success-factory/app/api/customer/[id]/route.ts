@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { metabase } from "@/lib/integrations"
+import { metabase, notion } from "@/lib/integrations"
 
 // Snowflake database ID in Metabase
 const SNOWFLAKE_DB_ID = 2
@@ -133,6 +133,35 @@ export async function GET(
       }
     }
 
+    // Get support tickets from Notion if we have the API key
+    let supportTickets = null
+    if (process.env.NOTION_API_KEY) {
+      try {
+        const tickets = await notion.searchTicketsByCustomer(company.name)
+        const openTickets = tickets.filter(t =>
+          t.status !== "Done" && t.status !== "Archived"
+        )
+
+        supportTickets = {
+          total: tickets.length,
+          open: openTickets.length,
+          highPriority: openTickets.filter(t =>
+            t.priority === "High" || t.priority === "Urgent"
+          ).length,
+          recentTickets: tickets.slice(0, 5).map(t => ({
+            id: t.id,
+            title: t.title,
+            status: t.status,
+            priority: t.priority,
+            createdAt: t.createdAt,
+            url: t.url,
+          })),
+        }
+      } catch (err) {
+        console.log("Notion ticket search failed:", err)
+      }
+    }
+
     // Build comprehensive customer profile
     const profile = {
       // Identity
@@ -197,6 +226,7 @@ export async function GET(
       // Detailed data from live queries
       reservationDetails,
       paymentDetails,
+      supportTickets,
 
       // Metadata
       metadata: {
