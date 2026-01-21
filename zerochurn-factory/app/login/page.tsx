@@ -2,8 +2,7 @@
 
 import { Suspense, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { AuthView } from "@neondatabase/auth/react/ui"
-import "@neondatabase/auth/ui/css"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -12,7 +11,6 @@ function LoginContent() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [showNeonAuth, setShowNeonAuth] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -37,24 +35,6 @@ function LoginContent() {
       setError("Invalid password")
     }
     setIsLoading(false)
-  }
-
-  // Show Neon Auth view when user clicks sign up or SSO
-  if (showNeonAuth) {
-    return (
-      <div className="w-full max-w-md">
-        <AuthView
-          view="SIGN_UP"
-          redirectTo="/"
-        />
-        <button
-          onClick={() => setShowNeonAuth(false)}
-          className="mt-4 w-full text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-        >
-          Back to password login
-        </button>
-      </div>
-    )
   }
 
   return (
@@ -96,10 +76,12 @@ function LoginContent() {
 
         <Button
           variant="outline"
-          onClick={() => setShowNeonAuth(true)}
           className="w-full"
+          asChild
         >
-          Sign up / Sign in with SSO
+          <Link href="/auth/sign-up">
+            Sign up / Sign in with SSO
+          </Link>
         </Button>
       </CardContent>
     </Card>
