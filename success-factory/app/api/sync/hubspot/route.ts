@@ -9,6 +9,7 @@ const METABASE_QUERY_ID = 948
 // Metabase data structure
 interface MetabaseAccountData {
   companyName: string
+  domain: string | null
   totalTrips: number
   daysSinceLastLogin: number | null
   churnStatus: string | null
@@ -32,8 +33,13 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
   const result = await metabase.runQuery(METABASE_QUERY_ID)
   const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
 
+  // Log column names for debugging
+  console.log("Metabase columns:", Object.keys(rows[0] || {}))
+
   return rows.map((row) => ({
     companyName: (row.MOOVS_COMPANY_NAME as string) || "",
+    // Try multiple possible domain column names
+    domain: (row.DOMAIN as string) || (row.COMPANY_DOMAIN as string) || (row.WEBSITE as string) || null,
     totalTrips: (row.ALL_TRIPS_COUNT as number) || 0,
     daysSinceLastLogin: row.DAYS_SINCE_LAST_IDENTIFY as number | null,
     churnStatus: row.CHURN_STATUS as string | null,
@@ -210,15 +216,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch Metabase data for enrichment (usage metrics, MRR, etc.)
-    const metabaseMap = new Map<string, MetabaseAccountData>()
+    const metabaseByName = new Map<string, MetabaseAccountData>()
+    const metabaseByDomain = new Map<string, MetabaseAccountData>()
     try {
       const metabaseData = await fetchMetabaseData()
       for (const account of metabaseData) {
+        // Index by company name
         if (account.companyName) {
-          metabaseMap.set(account.companyName.toLowerCase(), account)
+          metabaseByName.set(account.companyName.toLowerCase(), account)
+        }
+        // Also index by domain for fallback matching
+        if (account.domain) {
+          const cleanDomain = account.domain.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0]
+          metabaseByDomain.set(cleanDomain, account)
         }
       }
-      console.log(`Loaded ${metabaseData.length} accounts from Metabase`)
+      console.log(`Loaded ${metabaseData.length} accounts from Metabase (${metabaseByName.size} by name, ${metabaseByDomain.size} by domain)`)
     } catch (metabaseError) {
       console.log("Metabase fetch skipped (not configured or error):", metabaseError)
       // Continue without Metabase data - HubSpot data will still sync
@@ -230,15 +243,34 @@ export async function POST(request: NextRequest) {
 
     let synced = 0
     let failed = 0
+    let metabaseMatches = 0
 
     // Process each company
     for (const company of companies) {
       try {
         const props = company.properties
         const companyName = props.name || "Unknown"
+        const companyDomain = props.domain?.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0]
 
-        // Get Metabase data for this company (by name match)
-        const mbData = metabaseMap.get(companyName.toLowerCase())
+        // Get Metabase data for this company
+        // Try multiple matching strategies:
+        // 1. Exact name match
+        // 2. Domain match (since HubSpot often uses domain as company name)
+        // 3. Try HubSpot name as domain (e.g., "tellurides.com")
+        let mbData = metabaseByName.get(companyName.toLowerCase())
+        if (!mbData && companyDomain) {
+          mbData = metabaseByDomain.get(companyDomain)
+        }
+        if (!mbData) {
+          // Try using company name as domain (for cases like "tellurides.com")
+          const nameAsDomain = companyName.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0]
+          mbData = metabaseByDomain.get(nameAsDomain)
+        }
+
+        // Track Metabase matches
+        if (mbData) {
+          metabaseMatches++
+        }
 
         // Calculate health score with Metabase enrichment
         const health = calculateHealthScoreEnriched(company, mbData)
@@ -341,13 +373,14 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log(`Sync completed: ${synced} synced, ${failed} failed`)
+    console.log(`Sync completed: ${synced} synced, ${failed} failed, ${metabaseMatches} enriched with Metabase`)
 
     return NextResponse.json({
       success: true,
       recordsFound: companies.length,
       recordsSynced: synced,
       recordsFailed: failed,
+      metabaseMatches,
     })
   } catch (error) {
     console.error("Sync failed:", error)
