@@ -3,19 +3,28 @@ import { prisma } from "@/lib/db"
 import { hubspot, HubSpotCompany, getOwners } from "@/lib/integrations/hubspot"
 import { metabase } from "@/lib/integrations"
 
-// Metabase query ID for account data
-const METABASE_QUERY_ID = 948
+// Metabase query ID for CSM_MOOVS master customer view (Card 1469)
+const METABASE_QUERY_ID = 1469
 
-// Metabase data structure
+// Metabase data structure (from CSM_MOOVS card)
 interface MetabaseAccountData {
+  // Identity
+  operatorId: string | null
   companyName: string
-  domain: string | null
-  totalTrips: number
-  daysSinceLastLogin: number | null
-  churnStatus: string | null
+  email: string | null
+  hubspotCompanyId: string | null
+  // Billing
   mrr: number | null
   plan: string | null
+  billingStatus: string | null
+  // Usage
+  totalTrips: number
+  tripsLast30Days: number
+  daysSinceLastActivity: number | null
+  // Status
+  churnStatus: string | null
   customerSegment: string | null
+  engagementStatus: string | null
 }
 
 interface OwnerMap {
@@ -23,10 +32,11 @@ interface OwnerMap {
 }
 
 /**
- * Fetch account data from Metabase
+ * Fetch account data from Metabase CSM_MOOVS view
  */
 async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
   if (!process.env.METABASE_URL || !process.env.METABASE_API_KEY) {
+    console.log("Metabase not configured (missing METABASE_URL or METABASE_API_KEY)")
     return []
   }
 
@@ -34,18 +44,27 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
   const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
 
   // Log column names for debugging
-  console.log("Metabase columns:", Object.keys(rows[0] || {}))
+  console.log("Metabase CSM_MOOVS columns:", Object.keys(rows[0] || {}))
+  console.log("Sample row:", JSON.stringify(rows[0] || {}).slice(0, 500))
 
   return rows.map((row) => ({
-    companyName: (row.MOOVS_COMPANY_NAME as string) || "",
-    // Try multiple possible domain column names
-    domain: (row.DOMAIN as string) || (row.COMPANY_DOMAIN as string) || (row.WEBSITE as string) || null,
-    totalTrips: (row.ALL_TRIPS_COUNT as number) || 0,
-    daysSinceLastLogin: row.DAYS_SINCE_LAST_IDENTIFY as number | null,
-    churnStatus: row.CHURN_STATUS as string | null,
-    mrr: row.TOTAL_MRR_NUMERIC as number | null,
-    plan: row.LAGO_PLAN_NAME as string | null,
-    customerSegment: row.CUSTOMER_SEGMENT as string | null,
+    // Identity - from CSM_MOOVS fields
+    operatorId: (row.LAGO_EXTERNAL_CUSTOMER_ID as string) || null,
+    companyName: (row.P_COMPANY_NAME as string) || "",
+    email: (row.P_GENERAL_EMAIL as string) || null,
+    hubspotCompanyId: (row.HS_C_ID as string) || null,
+    // Billing
+    mrr: (row.CALCULATED_MRR as number) || null,
+    plan: (row.LAGO_PLAN_NAME as string) || null,
+    billingStatus: (row.LAGO_STATUS as string) || (row.LAGO_CUSTOMER_STATUS as string) || null,
+    // Usage
+    totalTrips: (row.R_TOTAL_RESERVATIONS_COUNT as number) || 0,
+    tripsLast30Days: (row.R_LAST_30_DAYS_RESERVATIONS_COUNT as number) || 0,
+    daysSinceLastActivity: (row.DA_DAYS_SINCE_LAST_ASSIGNMENT as number) || null,
+    // Status
+    churnStatus: (row.HS_D_CHURN_STATUS as string) || null,
+    customerSegment: (row.HS_C_PROPERTY_CUSTOMER_SEGMENT as string) || null,
+    engagementStatus: (row.DA_ENGAGEMENT_STATUS as string) || null,
   }))
 }
 
@@ -83,15 +102,32 @@ function calculateHealthScoreEnriched(
       riskSignals.push("No trips")
     }
 
-    // Login recency
-    if (mbData.daysSinceLastLogin !== null) {
-      if (mbData.daysSinceLastLogin > 60) {
-        riskSignals.push(`No login in ${mbData.daysSinceLastLogin}d`)
-      } else if (mbData.daysSinceLastLogin > 30) {
+    // Activity recency (days since last driver assignment in CSM_MOOVS)
+    if (mbData.daysSinceLastActivity !== null) {
+      if (mbData.daysSinceLastActivity > 60) {
+        riskSignals.push(`No activity in ${mbData.daysSinceLastActivity}d`)
+      } else if (mbData.daysSinceLastActivity > 30) {
         riskSignals.push("Inactive 30+ days")
-      } else if (mbData.daysSinceLastLogin <= 7) {
-        positiveSignals.push("Recent login")
+      } else if (mbData.daysSinceLastActivity <= 7) {
+        positiveSignals.push("Recent activity")
       }
+    }
+
+    // Engagement status from CSM_MOOVS
+    if (mbData.engagementStatus) {
+      const status = mbData.engagementStatus.toLowerCase()
+      if (status.includes("churn") || status.includes("inactive")) {
+        riskSignals.push(`Engagement: ${mbData.engagementStatus}`)
+      } else if (status.includes("active") || status.includes("engaged")) {
+        positiveSignals.push("Engaged")
+      }
+    }
+
+    // Recent activity (trips in last 30 days)
+    if (mbData.tripsLast30Days > 10) {
+      positiveSignals.push(`${mbData.tripsLast30Days} trips (30d)`)
+    } else if (mbData.tripsLast30Days > 0) {
+      positiveSignals.push("Active recently")
     }
 
     // MRR / paying status
@@ -216,22 +252,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch Metabase data for enrichment (usage metrics, MRR, etc.)
+    const metabaseByHubspotId = new Map<string, MetabaseAccountData>()
     const metabaseByName = new Map<string, MetabaseAccountData>()
-    const metabaseByDomain = new Map<string, MetabaseAccountData>()
+    const metabaseByEmail = new Map<string, MetabaseAccountData>()
     try {
       const metabaseData = await fetchMetabaseData()
       for (const account of metabaseData) {
-        // Index by company name
+        // Primary: Index by HubSpot company ID (best match)
+        if (account.hubspotCompanyId) {
+          metabaseByHubspotId.set(account.hubspotCompanyId, account)
+        }
+        // Fallback: Index by company name
         if (account.companyName) {
           metabaseByName.set(account.companyName.toLowerCase(), account)
         }
-        // Also index by domain for fallback matching
-        if (account.domain) {
-          const cleanDomain = account.domain.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0]
-          metabaseByDomain.set(cleanDomain, account)
+        // Fallback: Index by email domain
+        if (account.email) {
+          const domain = account.email.split("@")[1]?.toLowerCase()
+          if (domain) {
+            metabaseByEmail.set(domain, account)
+          }
         }
       }
-      console.log(`Loaded ${metabaseData.length} accounts from Metabase (${metabaseByName.size} by name, ${metabaseByDomain.size} by domain)`)
+      console.log(`Loaded ${metabaseData.length} accounts from Metabase (${metabaseByHubspotId.size} by HS ID, ${metabaseByName.size} by name)`)
     } catch (metabaseError) {
       console.log("Metabase fetch skipped (not configured or error):", metabaseError)
       // Continue without Metabase data - HubSpot data will still sync
@@ -254,17 +297,15 @@ export async function POST(request: NextRequest) {
 
         // Get Metabase data for this company
         // Try multiple matching strategies:
-        // 1. Exact name match
-        // 2. Domain match (since HubSpot often uses domain as company name)
-        // 3. Try HubSpot name as domain (e.g., "tellurides.com")
-        let mbData = metabaseByName.get(companyName.toLowerCase())
-        if (!mbData && companyDomain) {
-          mbData = metabaseByDomain.get(companyDomain)
-        }
+        // 1. HubSpot company ID (best - CSM_MOOVS has HS_C_ID)
+        // 2. Exact company name match
+        // 3. Email domain match
+        let mbData = metabaseByHubspotId.get(company.id)
         if (!mbData) {
-          // Try using company name as domain (for cases like "tellurides.com")
-          const nameAsDomain = companyName.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0]
-          mbData = metabaseByDomain.get(nameAsDomain)
+          mbData = metabaseByName.get(companyName.toLowerCase())
+        }
+        if (!mbData && companyDomain) {
+          mbData = metabaseByEmail.get(companyDomain)
         }
 
         // Track Metabase matches
@@ -289,11 +330,11 @@ export async function POST(request: NextRequest) {
         // Use Metabase data for usage metrics (preferred), fall back to HubSpot
         const mrr = mbData?.mrr ?? (parseFloat(props.mrr || props.monthly_recurring_revenue || "0") || null)
         const totalTrips = mbData?.totalTrips ?? (parseInt(props.total_trips || "0", 10) || null)
-        const daysSinceLastLogin = mbData?.daysSinceLastLogin ?? null
+        const daysSinceLastLogin = mbData?.daysSinceLastActivity ?? null
         const plan = mbData?.plan ?? props.plan_name ?? null
-        const subscriptionStatus = mbData?.churnStatus ?? props.subscription_status ?? props.lifecyclestage
+        const subscriptionStatus = mbData?.billingStatus ?? mbData?.churnStatus ?? props.subscription_status ?? props.lifecyclestage
 
-        // Calculate lastLoginAt from daysSinceLastLogin
+        // Calculate lastLoginAt from daysSinceLastActivity
         const lastLoginAt = daysSinceLastLogin !== null
           ? new Date(Date.now() - daysSinceLastLogin * 24 * 60 * 60 * 1000)
           : parseDate(props.last_login_date)
