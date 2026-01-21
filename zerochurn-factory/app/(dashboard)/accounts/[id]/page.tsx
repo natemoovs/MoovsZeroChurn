@@ -30,6 +30,8 @@ import {
   RefreshCw,
   MessageSquare,
   BarChart3,
+  Route,
+  ChevronDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -68,6 +70,36 @@ interface HealthHistory {
   }>
   totalSnapshots: number
 }
+
+interface JourneyStageHistory {
+  id: string
+  fromStage: string | null
+  toStage: string
+  changedBy: string | null
+  reason: string | null
+  createdAt: string
+}
+
+interface CustomerJourney {
+  id: string
+  companyId: string
+  companyName: string
+  stage: string
+  previousStage: string | null
+  stageChangedAt: string
+  notes: string | null
+  history: JourneyStageHistory[]
+}
+
+const JOURNEY_STAGES = [
+  { id: "onboarding", label: "Onboarding", color: "bg-blue-500" },
+  { id: "adoption", label: "Adoption", color: "bg-purple-500" },
+  { id: "growth", label: "Growth", color: "bg-emerald-500" },
+  { id: "maturity", label: "Maturity", color: "bg-teal-500" },
+  { id: "renewal", label: "Renewal", color: "bg-amber-500" },
+  { id: "at_risk", label: "At Risk", color: "bg-red-500" },
+  { id: "churned", label: "Churned", color: "bg-zinc-500" },
+] as const
 
 interface AccountDetail {
   id: string
@@ -125,13 +157,14 @@ export default function AccountDetailPage() {
 
   const [account, setAccount] = useState<AccountDetail | null>(null)
   const [healthHistory, setHealthHistory] = useState<HealthHistory | null>(null)
+  const [journey, setJourney] = useState<CustomerJourney | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
 
-    // Fetch account details and health history in parallel
+    // Fetch account details, health history, and journey in parallel
     Promise.all([
       fetch(`/api/integrations/accounts/${id}`).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch account")
@@ -141,10 +174,15 @@ export default function AccountDetailPage() {
         if (!res.ok) return null
         return res.json()
       }).catch(() => null),
+      fetch(`/api/journey/${id}`).then((res) => {
+        if (!res.ok) return null
+        return res.json()
+      }).catch(() => null),
     ])
-      .then(([accountData, historyData]) => {
+      .then(([accountData, historyData, journeyData]) => {
         setAccount(accountData)
         if (historyData) setHealthHistory(historyData)
+        if (journeyData?.journey) setJourney(journeyData.journey)
         setLoading(false)
       })
       .catch((err) => {
@@ -189,6 +227,33 @@ export default function AccountDetailPage() {
   const location = [account.city, account.state, account.country]
     .filter(Boolean)
     .join(", ")
+
+  const handleJourneyUpdate = async (newStage: string, reason?: string) => {
+    try {
+      const res = await fetch("/api/journey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyId: account.id,
+          companyName: account.name,
+          stage: newStage,
+          reason,
+          changedBy: "manual",
+        }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        // Refetch journey with history
+        const journeyRes = await fetch(`/api/journey/${account.id}`)
+        if (journeyRes.ok) {
+          const journeyData = await journeyRes.json()
+          if (journeyData?.journey) setJourney(journeyData.journey)
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update journey:", err)
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -342,6 +407,14 @@ export default function AccountDetailPage() {
             )}
           </div>
         )}
+
+        {/* Customer Journey Stage */}
+        <JourneyStageCard
+          journey={journey}
+          companyId={account.id}
+          companyName={account.name}
+          onUpdate={handleJourneyUpdate}
+        />
 
         {/* Health Score Trend */}
         {healthHistory && healthHistory.snapshots.length > 0 && (
@@ -826,6 +899,157 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
                   </div>
                   <span className="text-zinc-500 dark:text-zinc-400">
                     {new Date(change.date).toLocaleDateString()}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function JourneyStageCard({
+  journey,
+  companyId,
+  companyName,
+  onUpdate,
+}: {
+  journey: CustomerJourney | null
+  companyId: string
+  companyName: string
+  onUpdate: (stage: string, reason?: string) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [updating, setUpdating] = useState(false)
+
+  const currentStage = journey?.stage || "onboarding"
+  const currentStageInfo = JOURNEY_STAGES.find((s) => s.id === currentStage) || JOURNEY_STAGES[0]
+
+  const handleStageChange = async (newStage: string) => {
+    if (newStage === currentStage) {
+      setIsOpen(false)
+      return
+    }
+    setUpdating(true)
+    await onUpdate(newStage)
+    setUpdating(false)
+    setIsOpen(false)
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Route className="h-5 w-5 text-zinc-400" />
+          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
+            Customer Journey
+          </h2>
+        </div>
+
+        {/* Stage Selector */}
+        <div className="relative">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            disabled={updating}
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "border border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700",
+              updating && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <span className={cn("h-2.5 w-2.5 rounded-full", currentStageInfo.color)} />
+            <span className="text-zinc-900 dark:text-zinc-100">{currentStageInfo.label}</span>
+            <ChevronDown className={cn("h-4 w-4 text-zinc-400 transition-transform", isOpen && "rotate-180")} />
+          </button>
+
+          {isOpen && (
+            <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+              {JOURNEY_STAGES.map((stage) => (
+                <button
+                  key={stage.id}
+                  onClick={() => handleStageChange(stage.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700",
+                    stage.id === currentStage && "bg-zinc-50 dark:bg-zinc-700"
+                  )}
+                >
+                  <span className={cn("h-2.5 w-2.5 rounded-full", stage.color)} />
+                  <span className="text-zinc-900 dark:text-zinc-100">{stage.label}</span>
+                  {stage.id === currentStage && (
+                    <CheckCircle className="ml-auto h-4 w-4 text-emerald-500" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Journey Progress */}
+      <div className="mt-4">
+        <div className="flex items-center gap-1">
+          {JOURNEY_STAGES.slice(0, -1).map((stage, i) => {
+            const isActive = stage.id === currentStage
+            const isPast = JOURNEY_STAGES.findIndex((s) => s.id === currentStage) > i
+            const isChurned = currentStage === "churned"
+            const isAtRisk = currentStage === "at_risk"
+
+            return (
+              <div key={stage.id} className="flex flex-1 items-center">
+                <div
+                  className={cn(
+                    "h-2 flex-1 rounded-full transition-all",
+                    isPast || isActive
+                      ? isChurned
+                        ? "bg-zinc-400"
+                        : isAtRisk
+                        ? "bg-red-400"
+                        : stage.color
+                      : "bg-zinc-200 dark:bg-zinc-700"
+                  )}
+                />
+                {i < JOURNEY_STAGES.length - 2 && (
+                  <div className="h-1 w-1" />
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <div className="mt-2 flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+          <span>Onboarding</span>
+          <span>Maturity</span>
+          <span>Renewal</span>
+        </div>
+      </div>
+
+      {/* Journey History */}
+      {journey?.history && journey.history.length > 0 && (
+        <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+          <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Recent Changes
+          </h3>
+          <div className="space-y-2">
+            {journey.history.slice(0, 3).map((h) => {
+              const fromStage = JOURNEY_STAGES.find((s) => s.id === h.fromStage)
+              const toStage = JOURNEY_STAGES.find((s) => s.id === h.toStage)
+              return (
+                <div key={h.id} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    {fromStage && (
+                      <>
+                        <span className={cn("h-2 w-2 rounded-full", fromStage.color)} />
+                        <span className="text-zinc-500 dark:text-zinc-400">→</span>
+                      </>
+                    )}
+                    <span className={cn("h-2 w-2 rounded-full", toStage?.color || "bg-zinc-400")} />
+                    <span className="text-zinc-700 dark:text-zinc-300">
+                      {fromStage ? `${fromStage.label} → ` : ""}{toStage?.label}
+                    </span>
+                  </div>
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    {new Date(h.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               )

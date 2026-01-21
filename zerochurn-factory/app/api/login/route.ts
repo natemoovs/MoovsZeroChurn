@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
 
   const response = NextResponse.json({ success: true })
 
+  // Set auth cookie
   response.cookies.set("site-auth", sitePassword, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

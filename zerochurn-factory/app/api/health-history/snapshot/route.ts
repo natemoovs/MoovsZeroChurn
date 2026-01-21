@@ -27,7 +27,7 @@ async function executePlaybooks(
     })
 
     for (const playbook of playbooks) {
-      const actions = playbook.actions as PlaybookAction[]
+      const actions = playbook.actions as unknown as PlaybookAction[]
 
       for (const action of actions) {
         if (action.type === "create_task") {

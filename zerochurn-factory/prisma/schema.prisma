@@ -101,11 +101,61 @@ model AlertLog {
 
 model UserPreference {
   id              String   @id @default(cuid())
-  hubspotOwnerId  String   @unique // HubSpot owner ID
+  neonUserId      String   @unique // Neon Auth user ID
+  hubspotOwnerId  String?  // HubSpot owner ID (optional, for linking)
   email           String
   name            String?
   slackUserId     String?  // For direct Slack notifications
   alertPreferences Json?   // What alerts they want
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([email])
+}
+
+// ============================================================================
+// Global Settings - Site-wide configuration (singleton)
+// ============================================================================
+
+model GlobalSettings {
+  id          String   @id @default("default") // Always "default" for singleton
+  notifications Json   // NotificationPreferences object
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================================================
+// Customer Journey - Track lifecycle stages for accounts
+// ============================================================================
+
+model CustomerJourney {
+  id          String   @id @default(cuid())
+  companyId   String   @unique // HubSpot company ID
+  companyName String
+  stage       String   // onboarding, adoption, growth, maturity, renewal, at_risk, churned
+  previousStage String?
+  stageChangedAt DateTime @default(now())
+  notes       String?
+  metadata    Json?    // Additional context like reason for stage change
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  history     JourneyStageHistory[]
+
+  @@index([companyId])
+  @@index([stage])
+}
+
+model JourneyStageHistory {
+  id          String   @id @default(cuid())
+  journeyId   String
+  journey     CustomerJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  fromStage   String?
+  toStage     String
+  changedBy   String?  // Email or system
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@index([journeyId])
+  @@index([createdAt])
 }
