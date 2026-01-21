@@ -14,6 +14,9 @@ import {
   Moon,
   Save,
   Loader2,
+  RefreshCw,
+  Database,
+  Clock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -40,6 +43,17 @@ interface NotificationPreferences {
 interface IntegrationStatus {
   slack: { configured: boolean }
   email: { configured: boolean; provider: string | null }
+}
+
+interface SyncStatus {
+  lastSync: {
+    status: string
+    recordsSynced: number
+    recordsFailed: number
+    completedAt: string
+  } | null
+  totalCompanies: number
+  healthDistribution: Record<string, number>
 }
 
 const ALERT_TYPES = [
@@ -69,24 +83,57 @@ export default function SettingsPage() {
     },
   })
   const [integrations, setIntegrations] = useState<IntegrationStatus | null>(null)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
+  const [syncing, setSyncing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  const fetchSyncStatus = async () => {
+    try {
+      const res = await fetch("/api/sync/hubspot")
+      const data = await res.json()
+      setSyncStatus(data)
+    } catch (e) {
+      console.error("Failed to fetch sync status:", e)
+    }
+  }
+
   useEffect(() => {
-    // Fetch integration status
+    // Fetch integration status and sync status
     Promise.all([
       fetch("/api/alerts/slack").then((r) => r.json()).catch(() => ({ configured: false })),
       fetch("/api/alerts/email").then((r) => r.json()).catch(() => ({ configured: false, provider: null })),
       fetch("/api/settings/notifications").then((r) => r.json()).catch(() => null),
-    ]).then(([slack, email, savedPrefs]) => {
+      fetch("/api/sync/hubspot").then((r) => r.json()).catch(() => null),
+    ]).then(([slack, email, savedPrefs, sync]) => {
       setIntegrations({ slack, email })
       if (savedPrefs?.preferences) {
         setPreferences(savedPrefs.preferences)
       }
+      if (sync) {
+        setSyncStatus(sync)
+      }
       setLoading(false)
     })
   }, [])
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      const res = await fetch("/api/sync/hubspot", { method: "POST" })
+      const data = await res.json()
+      if (data.success) {
+        // Refresh sync status
+        await fetchSyncStatus()
+      } else {
+        console.error("Sync failed:", data.error)
+      }
+    } catch (e) {
+      console.error("Sync error:", e)
+    }
+    setSyncing(false)
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -410,6 +457,88 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Data Sync */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-4 flex items-center gap-3">
+            <Database className="h-5 w-5 text-zinc-400" />
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              HubSpot Data Sync
+            </h2>
+          </div>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            Sync customer data from HubSpot to the local database for faster portfolio loads.
+            Automatic sync runs at 5am and 5pm UTC daily.
+          </p>
+
+          {/* Sync Status */}
+          {syncStatus && (
+            <div className="mb-4 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+                <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  {syncStatus.totalCompanies}
+                </div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Companies Synced
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-emerald-500" />
+                  <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                    {syncStatus.healthDistribution.green || 0}
+                  </span>
+                  <span className="h-3 w-3 rounded-full bg-amber-500" />
+                  <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                    {syncStatus.healthDistribution.yellow || 0}
+                  </span>
+                  <span className="h-3 w-3 rounded-full bg-red-500" />
+                  <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                    {syncStatus.healthDistribution.red || 0}
+                  </span>
+                </div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Health Distribution
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+                <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
+                  <Clock className="h-4 w-4 text-zinc-400" />
+                  <span className="text-sm font-medium">
+                    {syncStatus.lastSync?.completedAt
+                      ? new Date(syncStatus.lastSync.completedAt).toLocaleString()
+                      : "Never"}
+                  </span>
+                </div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Last Sync
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sync Button */}
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200",
+              syncing && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />
+            {syncing ? "Syncing..." : "Sync Now"}
+          </button>
+
+          {syncStatus?.lastSync?.status === "failed" && (
+            <p className="mt-3 text-sm text-red-500">
+              Last sync failed. Check logs for details.
+            </p>
           )}
         </div>
       </div>

@@ -1,36 +1,38 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { neonAuthMiddleware } from "@neondatabase/auth/next/server"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+
+const NEON_AUTH_ENABLED = !!process.env.NEON_AUTH_BASE_URL
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/api/auth/callback', '/api/login']
+const PUBLIC_ROUTES = ["/login", "/auth", "/api/auth", "/api/login", "/api/nps/respond"]
 
-export function proxy(request: NextRequest) {
+function legacyPasswordAuth(request: NextRequest) {
   const url = new URL(request.url)
 
   // Allow public routes
-  if (PUBLIC_ROUTES.some(route => url.pathname.startsWith(route))) {
+  if (PUBLIC_ROUTES.some((route) => url.pathname.startsWith(route))) {
     return NextResponse.next()
   }
 
-  // Check for Neon Auth token
-  const authToken = request.cookies.get('neon-auth-token')
-  if (authToken?.value) {
-    return NextResponse.next()
-  }
-
-  // Fallback: check for old site password (for backward compatibility)
+  // Check for site password cookie
   const sitePassword = process.env.SITE_PW
-  const siteAuthCookie = request.cookies.get('site-auth')
+  const siteAuthCookie = request.cookies.get("site-auth")
   if (sitePassword && siteAuthCookie?.value === sitePassword) {
     return NextResponse.next()
   }
 
   // Redirect to login
-  return NextResponse.redirect(new URL('/login', request.url))
+  return NextResponse.redirect(new URL("/login", request.url))
 }
 
+// Use Neon Auth middleware if configured, otherwise fall back to password auth
+export default NEON_AUTH_ENABLED
+  ? neonAuthMiddleware({
+      loginUrl: "/auth/sign-in",
+    })
+  : legacyPasswordAuth
+
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/nps/respond).*)"],
 }
