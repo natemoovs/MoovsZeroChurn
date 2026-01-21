@@ -224,6 +224,18 @@ model HubSpotCompany {
   lastLoginAt         DateTime? // Last activity
   daysSinceLastLogin  Int?     // Computed for convenience
 
+  // Payment Health (from Stripe via Metabase)
+  paymentSuccessRate  Float?   // 0-100% payment success rate
+  failedPaymentCount  Int?     // Failed payments in last 90 days
+  disputeCount        Int?     // Active/recent disputes
+  avgRiskScore        Float?   // Average Stripe risk score (0-100)
+  paymentHealth       String?  // good, at_risk, critical
+  totalChargeVolume   Float?   // Total $ charged through Stripe
+
+  // Support Health (from Notion tickets)
+  openTicketCount     Int?     // Open support tickets
+  ticketAgeDays       Int?     // Oldest open ticket age
+
   // CSM Assignment
   ownerId             String?  // HubSpot owner ID
   ownerName           String?
@@ -231,8 +243,15 @@ model HubSpotCompany {
 
   // Computed Health
   healthScore         String?  // green, yellow, red, unknown
+  numericHealthScore  Int?     // 0-100 weighted score
   riskSignals         String[] // Array of risk signal strings
   positiveSignals     String[] // Array of positive signal strings
+
+  // Health Score Components (0-100 each)
+  paymentScore        Int?     // Payment health dimension (40% weight)
+  engagementScore     Int?     // Engagement dimension (25% weight)
+  supportScore        Int?     // Support health dimension (20% weight)
+  growthScore         Int?     // Growth signals dimension (15% weight)
 
   // Contacts (primary)
   primaryContactName  String?
@@ -244,6 +263,8 @@ model HubSpotCompany {
   state               String?
   country             String?
   employeeCount       Int?
+  operatorId          String?  // Moovs operator ID (for cross-referencing)
+  stripeAccountId     String?  // Stripe Connect account ID
 
   // HubSpot timestamps
   hubspotCreatedAt    DateTime?
@@ -257,9 +278,11 @@ model HubSpotCompany {
   @@index([hubspotId])
   @@index([ownerId])
   @@index([healthScore])
+  @@index([numericHealthScore])
   @@index([subscriptionStatus])
   @@index([contractEndDate])
   @@index([lastSyncedAt])
+  @@index([operatorId])
 }
 
 // ============================================================================

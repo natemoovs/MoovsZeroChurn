@@ -390,6 +390,186 @@ export function extractDate(property: NotionPropertyValue): string | null {
 }
 
 // ============================================================================
+// Moovs-Specific: Ticket Functions
+// ============================================================================
+
+// Moovs Tickets database ID (from RESEARCH_GUIDE.md)
+export const MOOVS_TICKETS_DATABASE_ID = "13b8aeaa-3759-80f8-8d7c-dd2f627d2578"
+
+export interface MoovsTicket {
+  id: string
+  title: string
+  status: string | null
+  priority: string | null
+  stage: string | null
+  tags: string[]
+  createdAt: string
+  updatedAt: string
+  url: string
+}
+
+/**
+ * Extract multi-select values as string array
+ */
+export function extractMultiSelect(property: NotionPropertyValue): string[] {
+  if (property.type === "multi_select") {
+    return property.multi_select.map(s => s.name)
+  }
+  return []
+}
+
+/**
+ * Extract status value
+ */
+export function extractStatus(property: NotionPropertyValue): string | null {
+  if (property.type === "status") {
+    return property.status?.name || null
+  }
+  return null
+}
+
+/**
+ * Query Moovs tickets database
+ */
+export async function queryTickets(options: {
+  filter?: NotionFilter
+  limit?: number
+}): Promise<MoovsTicket[]> {
+  if (!NOTION_API_KEY) {
+    console.log("Notion not configured (missing NOTION_API_KEY)")
+    return []
+  }
+
+  try {
+    const result = await queryDatabase(MOOVS_TICKETS_DATABASE_ID, {
+      filter: options.filter,
+      pageSize: options.limit || 100,
+      sorts: [{ timestamp: "created_time", direction: "descending" }],
+    })
+
+    return result.results.map(page => {
+      const props = page.properties
+
+      return {
+        id: page.id,
+        title: props.Name ? extractTitle(props.Name) : props.Ticket ? extractTitle(props.Ticket) : "",
+        status: props.Status ? extractStatus(props.Status) : null,
+        priority: props.Priority ? extractSelect(props.Priority) : null,
+        stage: props.Stage ? extractSelect(props.Stage) : null,
+        tags: props.Tags ? extractMultiSelect(props.Tags) : [],
+        createdAt: page.created_time,
+        updatedAt: page.last_edited_time,
+        url: page.url,
+      }
+    })
+  } catch (err) {
+    console.log("Failed to query Notion tickets:", err)
+    return []
+  }
+}
+
+/**
+ * Get open tickets count (for support health scoring)
+ * Returns counts by status and priority
+ */
+export async function getOpenTicketStats(): Promise<{
+  total: number
+  byStatus: Record<string, number>
+  highPriority: number
+  oldestOpenDays: number | null
+}> {
+  if (!NOTION_API_KEY) {
+    return { total: 0, byStatus: {}, highPriority: 0, oldestOpenDays: null }
+  }
+
+  try {
+    // Query for non-done tickets
+    const tickets = await queryTickets({
+      filter: {
+        and: [
+          {
+            property: "Status",
+            status: { does_not_equal: "Done" },
+          },
+          {
+            property: "Status",
+            status: { does_not_equal: "Archived" },
+          },
+        ],
+      },
+      limit: 100,
+    })
+
+    // Count by status
+    const byStatus: Record<string, number> = {}
+    let highPriority = 0
+    let oldestDate: Date | null = null
+
+    for (const ticket of tickets) {
+      const status = ticket.status || "Unknown"
+      byStatus[status] = (byStatus[status] || 0) + 1
+
+      if (ticket.priority === "High" || ticket.priority === "Urgent") {
+        highPriority++
+      }
+
+      const created = new Date(ticket.createdAt)
+      if (!oldestDate || created < oldestDate) {
+        oldestDate = created
+      }
+    }
+
+    const oldestOpenDays = oldestDate
+      ? Math.floor((Date.now() - oldestDate.getTime()) / (1000 * 60 * 60 * 24))
+      : null
+
+    return {
+      total: tickets.length,
+      byStatus,
+      highPriority,
+      oldestOpenDays,
+    }
+  } catch (err) {
+    console.log("Failed to get ticket stats:", err)
+    return { total: 0, byStatus: {}, highPriority: 0, oldestOpenDays: null }
+  }
+}
+
+/**
+ * Search tickets by customer name or tag
+ * Useful for customer research to find related tickets
+ */
+export async function searchTicketsByCustomer(customerName: string): Promise<MoovsTicket[]> {
+  if (!NOTION_API_KEY) {
+    return []
+  }
+
+  try {
+    // Search by tag containing customer name
+    const tickets = await queryTickets({
+      filter: {
+        or: [
+          {
+            property: "Tags",
+            multi_select: { contains: customerName },
+          },
+          {
+            property: "Name",
+            title: { contains: customerName },
+          },
+        ],
+      },
+      limit: 50,
+    })
+
+    return tickets
+  } catch (err) {
+    console.log("Failed to search tickets:", err)
+    return []
+  }
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -405,4 +585,11 @@ export const notion = {
   extractSelect,
   extractNumber,
   extractDate,
+  extractMultiSelect,
+  extractStatus,
+  // Moovs Tickets
+  queryTickets,
+  getOpenTicketStats,
+  searchTicketsByCustomer,
+  MOOVS_TICKETS_DATABASE_ID,
 }
