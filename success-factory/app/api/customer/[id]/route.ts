@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { metabase, notion } from "@/lib/integrations"
+import { metabase, notion, lago } from "@/lib/integrations"
 
 // Snowflake database ID in Metabase
 const SNOWFLAKE_DB_ID = 2
@@ -60,8 +60,9 @@ export async function GET(
       )
     }
 
-    // Get reservation details from Metabase if we have operator ID
+    // Get reservation details and TRENDS from Metabase if we have operator ID
     let reservationDetails = null
+    let reservationTrends = null
     if (company.operatorId && process.env.METABASE_URL && process.env.METABASE_API_KEY) {
       try {
         const reservationSql = `
@@ -91,6 +92,65 @@ export async function GET(
         }
       } catch (err) {
         console.log("Reservation query failed:", err)
+      }
+
+      // Get monthly reservation TRENDS (last 6 months)
+      try {
+        const trendSql = `
+          SELECT
+            DATE_TRUNC('month', CREATED_AT) as month,
+            COUNT(*) as reservations,
+            SUM(TOTAL_AMOUNT) as revenue,
+            COUNT(DISTINCT TRIP_TYPE) as trip_types
+          FROM MOZART_NEW.MOOVS_OPERATOR_RESERVATIONS
+          WHERE OPERATOR_ID = '${company.operatorId}'
+            AND CREATED_AT >= DATEADD(month, -6, CURRENT_DATE())
+          GROUP BY DATE_TRUNC('month', CREATED_AT)
+          ORDER BY month DESC
+        `
+        const trendResult = await metabase.runCustomQuery(SNOWFLAKE_DB_ID, trendSql)
+        const trendRows = metabase.rowsToObjects<Record<string, unknown>>(trendResult)
+
+        if (trendRows.length > 0) {
+          // Calculate month-over-month change
+          const months = trendRows.map(r => ({
+            month: r.month,
+            reservations: (r.reservations as number) || 0,
+            revenue: (r.revenue as number) || 0,
+          }))
+
+          // Calculate trend direction
+          let trendDirection: "up" | "down" | "stable" = "stable"
+          if (months.length >= 2) {
+            const recent = months[0].reservations
+            const previous = months[1].reservations
+            if (recent > previous * 1.1) trendDirection = "up"
+            else if (recent < previous * 0.9) trendDirection = "down"
+          }
+
+          // Calculate average and check for concerning decline
+          const avgReservations = months.reduce((sum, m) => sum + m.reservations, 0) / months.length
+          const recentVsAvg = months.length > 0 ? months[0].reservations / avgReservations : 1
+
+          reservationTrends = {
+            monthlyData: months,
+            trendDirection,
+            recentVsAverage: Math.round(recentVsAvg * 100),
+            isDeclining: trendDirection === "down" || recentVsAvg < 0.7,
+          }
+        }
+      } catch (err) {
+        console.log("Reservation trend query failed:", err)
+      }
+    }
+
+    // Get Lago billing health if we have operator ID
+    let billingHealth = null
+    if (company.operatorId && process.env.LAGO_API_KEY) {
+      try {
+        billingHealth = await lago.getBillingHealth(company.operatorId)
+      } catch (err) {
+        console.log("Lago billing query failed:", err)
       }
     }
 
@@ -225,7 +285,9 @@ export async function GET(
 
       // Detailed data from live queries
       reservationDetails,
+      reservationTrends,
       paymentDetails,
+      billingHealth,
       supportTickets,
 
       // Metadata

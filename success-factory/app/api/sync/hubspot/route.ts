@@ -280,13 +280,44 @@ function calculateWeightedHealthScore(
       riskSignals.push("Low usage")
     }
 
-    // Declining trend (check 30-day vs total)
-    if (mbData.totalTrips > 30 && mbData.tripsLast30Days === 0) {
-      engagementScore -= 20
-      riskSignals.push("No recent trips")
+    // TREND DETECTION - This is critical for early churn warning
+    // Calculate expected monthly rate and compare to recent activity
+    if (mbData.totalTrips > 0) {
+      // Estimate historical monthly average (assuming 12+ months of data for established customers)
+      // A rough heuristic: if totalTrips > 60, assume 6+ months history
+      const estimatedMonthsActive = Math.max(1, Math.min(12, Math.ceil(mbData.totalTrips / 10)))
+      const historicalMonthlyAvg = mbData.totalTrips / estimatedMonthsActive
+
+      // Compare recent 30-day activity to historical average
+      if (historicalMonthlyAvg > 5) {
+        // Only check trends for customers with meaningful volume
+        const recentVsHistorical = mbData.tripsLast30Days / historicalMonthlyAvg
+
+        if (mbData.tripsLast30Days === 0 && mbData.totalTrips > 20) {
+          // Complete stop after being active - HIGH RISK
+          engagementScore -= 30
+          riskSignals.push("Usage stopped (was active)")
+        } else if (recentVsHistorical < 0.3 && mbData.totalTrips > 30) {
+          // Down 70%+ from average - SEVERE DECLINE
+          engagementScore -= 25
+          riskSignals.push(`Usage down ${Math.round((1 - recentVsHistorical) * 100)}%`)
+        } else if (recentVsHistorical < 0.5 && mbData.totalTrips > 20) {
+          // Down 50%+ - MODERATE DECLINE
+          engagementScore -= 15
+          riskSignals.push("Declining usage")
+        } else if (recentVsHistorical >= 1.2) {
+          // Growing 20%+ - POSITIVE
+          engagementScore += 10
+          positiveSignals.push("Growing usage")
+        }
+      } else if (mbData.tripsLast30Days === 0 && mbData.totalTrips > 10) {
+        // Lower volume but stopped recently
+        engagementScore -= 20
+        riskSignals.push("No recent trips")
+      }
     }
 
-    // Positive signals
+    // Positive signals for active usage
     if (mbData.tripsLast30Days > 10) {
       engagementScore += 10
       positiveSignals.push(`${mbData.tripsLast30Days} trips (30d)`)
