@@ -470,7 +470,7 @@ export default function SettingsPage() {
           </div>
           <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
             Sync customer data from HubSpot to the local database for faster portfolio loads.
-            Automatic sync runs at 5am and 5pm UTC daily.
+            Automatic sync runs at 5am UTC daily.
           </p>
 
           {/* Sync Status */}
