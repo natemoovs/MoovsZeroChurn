@@ -117,14 +117,20 @@ export async function POST(request: NextRequest) {
   try {
     console.log("Starting HubSpot sync...")
 
-    // Fetch owners first for mapping
-    const owners = await getOwners()
+    // Fetch owners for mapping (optional - may not have scope)
     const ownerMap: OwnerMap = {}
-    for (const owner of owners) {
-      ownerMap[owner.id] = {
-        name: `${owner.firstName} ${owner.lastName}`.trim(),
-        email: owner.email,
+    try {
+      const owners = await getOwners()
+      for (const owner of owners) {
+        ownerMap[owner.id] = {
+          name: `${owner.firstName} ${owner.lastName}`.trim(),
+          email: owner.email,
+        }
       }
+      console.log(`Loaded ${owners.length} owners`)
+    } catch (ownerError) {
+      console.log("Owner fetch skipped (missing scope or error):", ownerError)
+      // Continue without owner data - not critical
     }
 
     // Fetch all customers from HubSpot
