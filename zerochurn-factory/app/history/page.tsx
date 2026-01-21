@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { getHistory, deleteHistoryItem, clearHistory, type HistoryItem } from "@/lib/history"
 
 export default function HistoryPage() {
@@ -50,11 +51,14 @@ export default function HistoryPage() {
               Your recent generations (stored locally)
             </p>
           </div>
-          {history.length > 0 && (
-            <Button variant="outline" onClick={handleClearAll}>
-              Clear All
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {history.length > 0 && (
+              <Button variant="outline" onClick={handleClearAll}>
+                Clear All
+              </Button>
+            )}
+            <ThemeToggle />
+          </div>
         </div>
 
         {history.length === 0 ? (

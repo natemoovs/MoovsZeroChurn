@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { getSkills } from "@/lib/skills"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function Home() {
   const skills = getSkills()
@@ -17,12 +18,15 @@ export default function Home() {
               Select a skill to get started
             </p>
           </div>
-          <Link
-            href="/history"
-            className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-          >
-            View History &rarr;
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/history"
+              className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              View History &rarr;
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
 
         {skills.length === 0 ? (
