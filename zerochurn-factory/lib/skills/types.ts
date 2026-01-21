@@ -1,3 +1,5 @@
+import type { SkillDataRequirements } from "./context"
+
 export interface SkillQuestion {
   id: string
   question: string
@@ -11,10 +13,12 @@ export interface Skill {
   questions: SkillQuestion[]
   outputPath: string
   template: string
+  data?: SkillDataRequirements
 }
 
 export interface SkillFrontmatter {
   name: string
   description: string
   outputPath: string
+  data?: SkillDataRequirements
 }

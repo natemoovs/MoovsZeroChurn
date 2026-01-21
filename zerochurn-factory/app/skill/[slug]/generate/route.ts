@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { getSkill } from "@/lib/skills"
+import { gatherContext } from "@/lib/skills/context"
 import fs from "fs"
 import path from "path"
 
@@ -77,6 +78,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const knowledgeBase = loadKnowledgeBase()
 
+    // Gather integration context if skill has data requirements
+    let integrationContext = ""
+    if (skill.data) {
+      try {
+        integrationContext = await gatherContext(skill.data, answers)
+      } catch (error) {
+        console.error("Error gathering integration context:", error)
+        // Continue without integration context - don't fail the request
+      }
+    }
+
     // Build the prompt
     const answersText = skill.questions
       .map(q => `**${q.question}**\n${answers[q.id] || "Not provided"}`)
@@ -86,13 +98,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const prompt = `You are helping generate content for a business tool called ZeroChurn.
 
-${knowledgeBase ? `## Knowledge Base\n${knowledgeBase}\n\n` : ""}## User Responses
+${knowledgeBase ? `## Knowledge Base\n${knowledgeBase}\n\n` : ""}${integrationContext ? `## Live Data from Integrations\n${integrationContext}\n\n` : ""}## User Responses
 ${answersText}
 
 ## Template
 ${skill.template}${tweaksSection}
 
-Based on the user's responses above, generate content following the template format. Replace all {{placeholders}} with appropriate content derived from the user's answers. Make the output practical, specific, and actionable.
+Based on the user's responses and any live data provided above, generate content following the template format. Replace all {{placeholders}} with appropriate content derived from the user's answers and integration data. Make the output practical, specific, and actionable.
 
 Output only the generated markdown content, nothing else.`
 
