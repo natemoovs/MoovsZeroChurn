@@ -13,6 +13,70 @@ function getAnthropicClient() {
   return new Anthropic({ apiKey })
 }
 
+async function gatherPortfolioContext(segment: string): Promise<string> {
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000"
+
+  try {
+    const response = await fetch(`${baseUrl}/api/integrations/portfolio?segment=${encodeURIComponent(segment)}`)
+    const data = await response.json()
+
+    if (!data.summaries || data.summaries.length === 0) {
+      return `No companies found for segment: ${segment}`
+    }
+
+    // Format as markdown
+    const lines: string[] = []
+    lines.push(`## Portfolio Data for ${segment}`)
+    lines.push("")
+
+    // Summary stats
+    const green = data.summaries.filter((s: { healthScore: string }) => s.healthScore === "green").length
+    const yellow = data.summaries.filter((s: { healthScore: string }) => s.healthScore === "yellow").length
+    const red = data.summaries.filter((s: { healthScore: string }) => s.healthScore === "red").length
+    const totalMrr = data.summaries.reduce((sum: number, s: { mrr: number | null }) => sum + (s.mrr || 0), 0)
+
+    lines.push("### Summary")
+    lines.push(`- **Total Accounts:** ${data.summaries.length}`)
+    lines.push(`- **Healthy (Green):** ${green}`)
+    lines.push(`- **Monitor (Yellow):** ${yellow}`)
+    lines.push(`- **At Risk (Red):** ${red}`)
+    lines.push(`- **Total MRR:** $${totalMrr.toLocaleString()}`)
+    lines.push("")
+
+    // Account details
+    lines.push("### Account Details")
+    lines.push("")
+
+    for (const summary of data.summaries) {
+      const healthIcon = summary.healthScore === "green" ? "🟢" :
+        summary.healthScore === "yellow" ? "🟡" :
+        summary.healthScore === "red" ? "🔴" : "⚪"
+
+      lines.push(`#### ${summary.companyName} ${healthIcon}`)
+      lines.push(`- **Health:** ${summary.healthScore}`)
+      lines.push(`- **MRR:** ${summary.mrr ? `$${summary.mrr.toLocaleString()}` : "Unknown"}`)
+      lines.push(`- **Plan:** ${summary.plan || "Unknown"}`)
+      lines.push(`- **Payment Status:** ${summary.paymentStatus}`)
+      lines.push(`- **Contacts:** ${summary.contactCount}`)
+
+      if (summary.riskSignals.length > 0) {
+        lines.push(`- **Risk Signals:** ${summary.riskSignals.join("; ")}`)
+      }
+      if (summary.positiveSignals.length > 0) {
+        lines.push(`- **Positive Signals:** ${summary.positiveSignals.join("; ")}`)
+      }
+      lines.push("")
+    }
+
+    return lines.join("\n")
+  } catch (error) {
+    console.error("Portfolio context error:", error)
+    return `Error fetching portfolio data: ${error}`
+  }
+}
+
 function loadKnowledgeBase(): string {
   const knowledgePath = path.join(process.cwd(), "factory", "knowledge")
 
@@ -82,7 +146,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
     let integrationContext = ""
     if (skill.data) {
       try {
-        integrationContext = await gatherContext(skill.data, answers)
+        // Check if this is a batch/portfolio skill
+        if (skill.data.batch) {
+          // Use portfolio API for batch data
+          const segment = answers.segment || "all"
+          integrationContext = await gatherPortfolioContext(segment)
+        } else {
+          // Single customer context
+          integrationContext = await gatherContext(skill.data, answers)
+        }
       } catch (error) {
         console.error("Error gathering integration context:", error)
         // Continue without integration context - don't fail the request
