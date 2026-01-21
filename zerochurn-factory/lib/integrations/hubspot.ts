@@ -343,7 +343,59 @@ export async function getRecentActivity(companyId: string): Promise<HubSpotActiv
 }
 
 /**
+ * List all CUSTOMERS (lifecycle stage = customer) with pagination
+ * This is what CSMs care about - not all 50k companies
+ */
+export async function listCustomers(): Promise<HubSpotCompany[]> {
+  const properties = [
+    "name", "domain", "industry", "numberofemployees", "annualrevenue",
+    "city", "state", "country", "phone", "website", "description",
+    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated"
+  ]
+
+  const allCustomers: HubSpotCompany[] = []
+  let after: string | undefined
+
+  // Use search API with filter for lifecycle stage = customer
+  while (true) {
+    const body: Record<string, unknown> = {
+      filterGroups: [{
+        filters: [{
+          propertyName: "lifecyclestage",
+          operator: "EQ",
+          value: "customer"
+        }]
+      }],
+      properties,
+      limit: 100,
+    }
+
+    if (after) {
+      body.after = after
+    }
+
+    const result = await hubspotFetch<{
+      results: HubSpotCompany[]
+      paging?: { next?: { after: string } }
+    }>("/crm/v3/objects/companies/search", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+
+    allCustomers.push(...result.results)
+
+    if (!result.paging?.next?.after) {
+      break // No more pages
+    }
+    after = result.paging.next.after
+  }
+
+  return allCustomers
+}
+
+/**
  * List all companies with full pagination (no limit)
+ * @deprecated Use listCustomers() instead for CSM use cases
  */
 export async function listCompanies(): Promise<HubSpotCompany[]> {
   const properties = [
@@ -379,11 +431,12 @@ export async function listCompanies(): Promise<HubSpotCompany[]> {
 
 /**
  * Search companies by query string
+ * For CSM purposes, returns only customers when no query specified
  */
 export async function searchCompanies(query: string): Promise<HubSpotCompany[]> {
-  // If query is "*" or empty, list all companies instead
+  // If query is "*" or empty, list customers only (not all 50k companies)
   if (!query || query === "*") {
-    return listCompanies()
+    return listCustomers()
   }
 
   const result = await hubspotFetch<HubSpotSearchResult>(
@@ -415,6 +468,7 @@ export const hubspot = {
   getContacts,
   getDeals,
   getRecentActivity,
+  listCustomers,
   listCompanies,
   searchCompanies,
 }
