@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { hubspot, metabase, stripe } from "@/lib/integrations"
+import { prisma } from "@/lib/db"
 import type { StripeSubscription, StripeInvoice, StripeCharge } from "@/lib/integrations"
 
 // Metabase query IDs
@@ -146,12 +147,44 @@ export async function GET(
     // Build timeline from activity (including payments)
     const timeline = buildTimeline(activity, deals, paymentHealth)
 
-    // Calculate health score
-    const { healthScore, riskSignals, positiveSignals } = calculateHealth(
-      company,
-      metabaseData,
-      paymentHealth
-    )
+    // Get health score from synced database FIRST (for consistency with CSM Workload)
+    // This ensures the same health score is shown everywhere
+    const syncedCompany = await prisma.hubSpotCompany.findUnique({
+      where: { hubspotId: id },
+      select: {
+        healthScore: true,
+        riskSignals: true,
+        positiveSignals: true,
+        mrr: true,
+        plan: true,
+        totalTrips: true,
+        daysSinceLastLogin: true,
+      },
+    })
+
+    // Use synced data if available, otherwise calculate (for companies not yet synced)
+    let healthScore: "green" | "yellow" | "red" | "unknown"
+    let riskSignals: string[]
+    let positiveSignals: string[]
+
+    if (syncedCompany && syncedCompany.healthScore) {
+      // Use stored health data from sync (consistent with CSM Workload)
+      healthScore = syncedCompany.healthScore as "green" | "yellow" | "red" | "unknown"
+      riskSignals = syncedCompany.riskSignals || []
+      positiveSignals = syncedCompany.positiveSignals || []
+    } else {
+      // Fallback: calculate health for companies not yet synced
+      const calculated = calculateHealth(company, metabaseData, paymentHealth)
+      healthScore = calculated.healthScore
+      riskSignals = calculated.riskSignals
+      positiveSignals = calculated.positiveSignals
+    }
+
+    // Prefer synced data for usage metrics if available
+    const finalMrr = syncedCompany?.mrr ?? metabaseData?.mrr ?? null
+    const finalPlan = syncedCompany?.plan ?? metabaseData?.plan ?? null
+    const finalTotalTrips = syncedCompany?.totalTrips ?? metabaseData?.totalTrips ?? null
+    const finalDaysSinceLastLogin = syncedCompany?.daysSinceLastLogin ?? metabaseData?.daysSinceLastLogin ?? null
 
     const accountDetail: AccountDetail = {
       // Core info
@@ -169,17 +202,17 @@ export async function GET(
       lifecycleStage: company.properties.lifecyclestage || null,
       customerSince: company.properties.createdate || null,
       lastModified: company.properties.hs_lastmodifieddate || null,
-      // Health
+      // Health (from synced database for consistency)
       healthScore,
       riskSignals,
       positiveSignals,
-      // Financials
-      mrr: metabaseData?.mrr || null,
-      plan: metabaseData?.plan || null,
+      // Financials (prefer synced data)
+      mrr: finalMrr,
+      plan: finalPlan,
       customerSegment: metabaseData?.customerSegment || null,
-      // Usage
-      totalTrips: metabaseData?.totalTrips || null,
-      daysSinceLastLogin: metabaseData?.daysSinceLastLogin || null,
+      // Usage (prefer synced data)
+      totalTrips: finalTotalTrips,
+      daysSinceLastLogin: finalDaysSinceLastLogin,
       churnStatus: metabaseData?.churnStatus || null,
       // Contacts
       contacts: contacts.map((c) => ({

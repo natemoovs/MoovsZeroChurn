@@ -25,7 +25,7 @@ interface CSM {
 }
 
 // CSM Assignments based on customer segment
-// Nate handles Enterprise accounts ($500+ MRR)
+// Nate handles Enterprise accounts ($499+ MRR)
 // Andrea handles Mid-Market and SMB accounts
 const CSM_ASSIGNMENTS: CSM[] = [
   { name: "Nate", email: "nate@moovs.com", segments: ["enterprise"] },
@@ -46,8 +46,8 @@ function assignCSM(segment: string | null, mrr: number | null): CSM | null {
   }
 
   // Fallback: assign by MRR threshold if segment not set
-  // Enterprise: $500+ MRR, everyone else to Andrea
-  if (mrr >= 500) {
+  // Enterprise: $499+ MRR, everyone else to Andrea
+  if (mrr >= 499) {
     return CSM_ASSIGNMENTS[0] // Nate
   }
 
@@ -157,7 +157,7 @@ export default function TeamPage() {
                     <div>
                       <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{csm.name}</h2>
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {csm.name === "Nate" ? "Enterprise ($500+ MRR)" : "Mid-Market & SMB"}
+                        {csm.name === "Nate" ? "Enterprise ($499+ MRR)" : "Mid-Market & SMB"}
                       </p>
                     </div>
                   </div>

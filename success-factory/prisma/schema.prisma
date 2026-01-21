@@ -287,6 +287,10 @@ model HubSpotCompany {
   operatorId          String?  // Moovs operator ID (for cross-referencing)
   stripeAccountId     String?  // Stripe Connect account ID
 
+  // Data source tracking
+  hasHubSpotRecord    Boolean  @default(true)  // False if synced from Metabase only
+  hubspotRecordId     String?  // Actual HubSpot ID (null if no HubSpot record)
+
   // HubSpot timestamps
   hubspotCreatedAt    DateTime?
   hubspotUpdatedAt    DateTime?

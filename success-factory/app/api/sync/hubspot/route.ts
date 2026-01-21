@@ -464,12 +464,12 @@ function calculateWeightedHealthScore(
 }
 
 /**
- * Sync HubSpot companies to database
+ * Sync operators to database - METABASE FIRST
  * POST /api/sync/hubspot
  *
- * IMPORTANT: This sync is MOOVS-SPECIFIC. It only syncs customers that exist in
- * the CSM_MOOVS table (Metabase Card 1469), which contains only Moovs operators.
- * This filters out Swoop customers that also exist in the shared HubSpot.
+ * IMPORTANT: This sync is now METABASE-FIRST. CSM_MOOVS (Card 1469) is the source
+ * of truth for all active Moovs operators. HubSpot is used for enrichment only.
+ * This ensures ALL active operators show up, even those without HubSpot records.
  */
 export async function POST(request: NextRequest) {
   // Verify this is a cron job or authorized request
@@ -496,65 +496,73 @@ export async function POST(request: NextRequest) {
   })
 
   try {
-    console.log("Starting MOOVS-ONLY HubSpot sync (filtering out Swoop)...")
+    console.log("Starting METABASE-FIRST sync (all active operators)...")
 
-    // Fetch owners for mapping (optional - may not have scope)
-    const ownerMap: OwnerMap = {}
+    // =========================================================================
+    // STEP 1: Fetch Metabase data - THIS IS THE MASTER LIST
+    // =========================================================================
+    let metabaseOperators: MetabaseAccountData[] = []
     try {
-      const owners = await getOwners()
-      for (const owner of owners) {
-        ownerMap[owner.id] = {
-          name: `${owner.firstName} ${owner.lastName}`.trim(),
-          email: owner.email,
-        }
-      }
-      console.log(`Loaded ${owners.length} owners`)
-    } catch (ownerError) {
-      console.log("Owner fetch skipped (missing scope or error):", ownerError)
+      metabaseOperators = await fetchMetabaseData()
+      console.log(`Loaded ${metabaseOperators.length} operators from CSM_MOOVS (source of truth)`)
+    } catch (metabaseError) {
+      console.error("Metabase fetch failed:", metabaseError)
+      throw new Error("Cannot sync without Metabase data - CSM_MOOVS is required")
     }
 
-    // Fetch Metabase data for enrichment (usage metrics, MRR, etc.)
-    // CSM_MOOVS is the SOURCE OF TRUTH for which customers are Moovs (not Swoop)
-    const metabaseByHubspotId = new Map<string, MetabaseAccountData>()
-    const metabaseByName = new Map<string, MetabaseAccountData>()
-    const metabaseByEmail = new Map<string, MetabaseAccountData>()
-    const metabaseByStripeId = new Map<string, MetabaseAccountData>()
-    let moovsHubspotIds = new Set<string>() // HubSpot IDs that are confirmed Moovs customers
+    if (metabaseOperators.length === 0) {
+      throw new Error("No operators found in CSM_MOOVS - check Metabase connection")
+    }
+
+    // =========================================================================
+    // STEP 2: Fetch HubSpot data FOR ENRICHMENT ONLY
+    // =========================================================================
+    const hubspotById = new Map<string, HubSpotCompany>()
+    const hubspotByName = new Map<string, HubSpotCompany>()
+    const hubspotByDomain = new Map<string, HubSpotCompany>()
+    let ownerMap: OwnerMap = {}
 
     try {
-      const metabaseData = await fetchMetabaseData()
-      for (const account of metabaseData) {
-        // Primary: Index by HubSpot company ID (best match)
-        if (account.hubspotCompanyId) {
-          metabaseByHubspotId.set(account.hubspotCompanyId, account)
-          moovsHubspotIds.add(account.hubspotCompanyId) // Track as Moovs customer
-        }
-        // Fallback: Index by company name
-        if (account.companyName) {
-          metabaseByName.set(account.companyName.toLowerCase(), account)
-        }
-        // Fallback: Index by email domain
-        if (account.email) {
-          const domain = account.email.split("@")[1]?.toLowerCase()
-          if (domain) {
-            metabaseByEmail.set(domain, account)
+      // Fetch owners
+      try {
+        const owners = await getOwners()
+        for (const owner of owners) {
+          ownerMap[owner.id] = {
+            name: `${owner.firstName} ${owner.lastName}`.trim(),
+            email: owner.email,
           }
         }
-        // Index by Stripe account ID (for linking payment data)
-        if (account.stripeAccountId) {
-          metabaseByStripeId.set(account.stripeAccountId, account)
+        console.log(`Loaded ${owners.length} HubSpot owners`)
+      } catch (ownerError) {
+        console.log("Owner fetch skipped:", ownerError)
+      }
+
+      // Fetch companies
+      const allCompanies = await hubspot.listCustomers()
+      console.log(`Loaded ${allCompanies.length} HubSpot companies for enrichment`)
+
+      for (const company of allCompanies) {
+        // Index by ID
+        hubspotById.set(company.id, company)
+        // Index by name (lowercase)
+        if (company.properties.name) {
+          hubspotByName.set(company.properties.name.toLowerCase(), company)
+        }
+        // Index by domain
+        if (company.properties.domain) {
+          const domain = company.properties.domain.toLowerCase()
+            .replace(/^(https?:\/\/)?(www\.)?/, "")
+            .split("/")[0]
+          hubspotByDomain.set(domain, company)
         }
       }
-      console.log(`Loaded ${metabaseData.length} MOOVS accounts from CSM_MOOVS (${metabaseByHubspotId.size} by HS ID, ${metabaseByName.size} by name, ${metabaseByStripeId.size} by Stripe ID)`)
-    } catch (metabaseError) {
-      console.log("Metabase fetch skipped (not configured or error):", metabaseError)
-      // If Metabase is not configured, we can't filter - return error
-      if (!process.env.METABASE_URL || !process.env.METABASE_API_KEY) {
-        console.log("WARNING: Without Metabase, cannot filter Moovs vs Swoop customers")
-      }
+    } catch (hubspotError) {
+      console.log("HubSpot fetch failed (will sync without enrichment):", hubspotError)
     }
 
-    // Fetch Stripe payment data
+    // =========================================================================
+    // STEP 3: Fetch Stripe payment data
+    // =========================================================================
     let stripePaymentData = new Map<string, StripePaymentData>()
     try {
       stripePaymentData = await fetchStripePaymentData()
@@ -563,134 +571,116 @@ export async function POST(request: NextRequest) {
       console.log("Stripe data fetch skipped:", stripeError)
     }
 
-    // Fetch all customers from HubSpot
-    const allCompanies = await hubspot.listCustomers()
-    console.log(`Found ${allCompanies.length} total customers in HubSpot (includes Swoop)`)
-
-    // Filter to only Moovs customers (those with a match in CSM_MOOVS)
-    // We check: 1) HubSpot ID in CSM_MOOVS, 2) Company name match, 3) Domain match
-    const companies = allCompanies.filter(company => {
-      const props = company.properties
-      const companyName = props.name || ""
-      const companyDomain = props.domain?.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0]
-
-      // Check if this is a Moovs customer via any matching strategy
-      if (moovsHubspotIds.has(company.id)) return true
-      if (metabaseByName.has(companyName.toLowerCase())) return true
-      if (companyDomain && metabaseByEmail.has(companyDomain)) return true
-
-      return false
-    })
-
-    console.log(`Filtered to ${companies.length} MOOVS customers (${allCompanies.length - companies.length} Swoop/other filtered out)`)
-
+    // =========================================================================
+    // STEP 4: Process each METABASE operator (master list)
+    // =========================================================================
     let synced = 0
     let failed = 0
-    let metabaseMatches = 0
+    let hubspotMatches = 0
     let stripeMatches = 0
+    let noHubspotRecord = 0
 
-    // Process each company
-    for (const company of companies) {
+    // CSM Assignment based on MRR
+    const CSM_ASSIGNMENTS = {
+      enterprise: { name: "Nate", email: "nate@moovs.com" },
+      mid_market: { name: "Andrea", email: "andrea@moovs.com" },
+      smb: { name: "Andrea", email: "andrea@moovs.com" },
+      free: { name: "Andrea", email: "andrea@moovs.com" },
+      unknown: { name: "Andrea", email: "andrea@moovs.com" },
+    }
+
+    // Parse dates safely
+    const parseDate = (dateStr?: string): Date | null => {
+      if (!dateStr) return null
+      const date = new Date(dateStr)
+      return isNaN(date.getTime()) ? null : date
+    }
+
+    for (const mbData of metabaseOperators) {
       try {
-        const props = company.properties
-        const companyName = props.name || "Unknown"
-        const companyDomain = props.domain?.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0]
+        // Find matching HubSpot company (for enrichment)
+        let hsCompany: HubSpotCompany | undefined
 
-        // Get Metabase data for this company
-        // Try multiple matching strategies:
-        // 1. HubSpot company ID (best - CSM_MOOVS has HS_C_ID)
-        // 2. Exact company name match
+        // Try matching strategies in order of reliability:
+        // 1. Direct HubSpot ID from CSM_MOOVS
+        if (mbData.hubspotCompanyId) {
+          hsCompany = hubspotById.get(mbData.hubspotCompanyId)
+        }
+        // 2. Company name match
+        if (!hsCompany && mbData.companyName) {
+          hsCompany = hubspotByName.get(mbData.companyName.toLowerCase())
+        }
         // 3. Email domain match
-        let mbData = metabaseByHubspotId.get(company.id)
-        if (!mbData) {
-          mbData = metabaseByName.get(companyName.toLowerCase())
-        }
-        if (!mbData && companyDomain) {
-          mbData = metabaseByEmail.get(companyDomain)
-        }
-
-        // Track Metabase matches
-        if (mbData) {
-          metabaseMatches++
+        if (!hsCompany && mbData.email) {
+          const domain = mbData.email.split("@")[1]?.toLowerCase()
+          if (domain) {
+            hsCompany = hubspotByDomain.get(domain)
+          }
         }
 
-        // Get Stripe payment data (if we have a Stripe account ID)
+        if (hsCompany) {
+          hubspotMatches++
+        } else {
+          noHubspotRecord++
+        }
+
+        // Get Stripe payment data
         let stripeData: StripePaymentData | undefined
-        if (mbData?.stripeAccountId) {
+        if (mbData.stripeAccountId) {
           stripeData = stripePaymentData.get(mbData.stripeAccountId)
           if (stripeData) {
             stripeMatches++
           }
         }
 
+        // Determine unique ID - use HubSpot ID if available, otherwise synthetic ID
+        const hasHubSpotRecord = !!hsCompany
+        const actualHubSpotId = hsCompany?.id || null
+        const recordId = hsCompany?.id || `operator-${mbData.operatorId || mbData.companyName.replace(/\s+/g, "-").toLowerCase()}`
+        const companyName = mbData.companyName || hsCompany?.properties.name || "Unknown"
+
         // Calculate weighted health score
-        const health = calculateWeightedHealthScore(mbData, stripeData, company)
+        const health = calculateWeightedHealthScore(mbData, stripeData, hsCompany || {
+          id: recordId,
+          properties: {},
+        } as HubSpotCompany)
 
         // Get existing company for health change tracking
         const existingCompany = await prisma.hubSpotCompany.findUnique({
-          where: { hubspotId: company.id },
+          where: { hubspotId: recordId },
           select: { id: true, healthScore: true, numericHealthScore: true },
         })
 
-        // Parse dates safely
-        const parseDate = (dateStr?: string): Date | null => {
-          if (!dateStr) return null
-          const date = new Date(dateStr)
-          return isNaN(date.getTime()) ? null : date
-        }
+        // Determine segment for CSM assignment
+        const customerMrr = mbData.mrr ?? 0
+        const customerSegment = customerMrr >= 499 ? "enterprise"
+          : customerMrr >= 100 ? "mid_market"
+          : customerMrr > 0 ? "smb"
+          : "free"
 
-        // CSM Assignment based on segment (overrides HubSpot owner)
-        // Nate = Enterprise, Andrea = rest
-        const CSM_ASSIGNMENTS = {
-          enterprise: { name: "Nate", email: "nate@moovs.com" },
-          mid_market: { name: "Andrea", email: "andrea@moovs.com" },
-          smb: { name: "Andrea", email: "andrea@moovs.com" },
-          free: { name: "Andrea", email: "andrea@moovs.com" },
-          unknown: { name: "Andrea", email: "andrea@moovs.com" },
-        }
-
-        // Get owner info - prefer segment-based assignment over HubSpot owner
-        const hubspotOwnerId = props.hubspot_owner_id
-        const hubspotOwner = hubspotOwnerId ? ownerMap[hubspotOwnerId] : null
-
-        // Determine segment for CSM assignment (use MRR from Metabase or HubSpot)
-        const customerMrr = mbData?.mrr ?? (parseFloat(props.mrr || props.monthly_recurring_revenue || "0") || 0)
-        const customerSegment = customerMrr >= 83000 ? "enterprise"
-          : customerMrr >= 21000 ? "mid_market"
-          : customerMrr >= 4000 ? "smb"
-          : customerMrr > 0 ? "free"
-          : "unknown"
-
-        // Use segment-based CSM assignment
         const segmentCsm = CSM_ASSIGNMENTS[customerSegment]
-        const ownerId = hubspotOwnerId || null
-        const owner = segmentCsm // Always use segment-based CSM
 
-        // Use Metabase data for usage metrics (preferred), fall back to HubSpot
-        const mrr = mbData?.mrr ?? (parseFloat(props.mrr || props.monthly_recurring_revenue || "0") || null)
-        const totalTrips = mbData?.totalTrips ?? (parseInt(props.total_trips || "0", 10) || null)
-        const daysSinceLastLogin = mbData?.daysSinceLastActivity ?? null
-        const plan = mbData?.plan ?? props.plan_name ?? null
-        const subscriptionStatus = mbData?.billingStatus ?? mbData?.churnStatus ?? props.subscription_status ?? props.lifecyclestage
+        // Get HubSpot props (if available) - cast to Record for safe access
+        const hsProps: Record<string, string | undefined> = hsCompany?.properties || {}
 
         // Calculate lastLoginAt from daysSinceLastActivity
-        const lastLoginAt = daysSinceLastLogin !== null
-          ? new Date(Date.now() - daysSinceLastLogin * 24 * 60 * 60 * 1000)
-          : parseDate(props.last_login_date)
+        const lastLoginAt = mbData.daysSinceLastActivity !== null
+          ? new Date(Date.now() - mbData.daysSinceLastActivity * 24 * 60 * 60 * 1000)
+          : parseDate(hsProps.last_login_date)
 
         // Upsert company
         const upsertedCompany = await prisma.hubSpotCompany.upsert({
-          where: { hubspotId: company.id },
+          where: { hubspotId: recordId },
           update: {
             name: companyName,
-            domain: props.domain,
-            mrr,
-            subscriptionStatus,
-            plan,
-            contractEndDate: parseDate(props.contract_end_date || props.renewal_date),
-            totalTrips,
+            domain: hsProps.domain || mbData.email?.split("@")[1] || null,
+            mrr: mbData.mrr,
+            subscriptionStatus: mbData.billingStatus || mbData.churnStatus || hsProps.subscription_status || null,
+            plan: mbData.plan || hsProps.plan_name || null,
+            contractEndDate: parseDate(hsProps.contract_end_date || hsProps.renewal_date),
+            totalTrips: mbData.totalTrips,
             lastLoginAt,
-            daysSinceLastLogin,
+            daysSinceLastLogin: mbData.daysSinceLastActivity,
             // Payment health fields
             paymentSuccessRate: stripeData?.successRate ?? null,
             failedPaymentCount: stripeData?.failedCharges ?? null,
@@ -699,9 +689,9 @@ export async function POST(request: NextRequest) {
             paymentHealth: health.paymentHealth !== "unknown" ? health.paymentHealth : null,
             totalChargeVolume: stripeData?.totalCharged ?? null,
             // CSM assignment
-            ownerId: ownerId || null,
-            ownerName: owner?.name || null,
-            ownerEmail: owner?.email || null,
+            ownerId: hsProps.hubspot_owner_id || null,
+            ownerName: segmentCsm.name,
+            ownerEmail: segmentCsm.email,
             // Health scores
             healthScore: health.healthScore,
             numericHealthScore: health.numericScore,
@@ -712,28 +702,31 @@ export async function POST(request: NextRequest) {
             supportScore: health.supportScore,
             growthScore: health.growthScore,
             // Metadata
-            industry: props.industry,
-            city: props.city,
-            state: props.state,
-            country: props.country,
-            employeeCount: parseInt(props.numberofemployees || "0", 10) || null,
-            operatorId: mbData?.operatorId ?? null,
-            stripeAccountId: mbData?.stripeAccountId ?? null,
-            hubspotCreatedAt: parseDate(props.createdate),
-            hubspotUpdatedAt: parseDate(props.hs_lastmodifieddate),
+            industry: hsProps.industry || null,
+            city: hsProps.city || null,
+            state: hsProps.state || null,
+            country: hsProps.country || null,
+            employeeCount: hsProps.numberofemployees ? parseInt(hsProps.numberofemployees, 10) : null,
+            operatorId: mbData.operatorId,
+            stripeAccountId: mbData.stripeAccountId,
+            primaryContactEmail: mbData.email,
+            hasHubSpotRecord,
+            hubspotRecordId: actualHubSpotId,
+            hubspotCreatedAt: parseDate(hsProps.createdate),
+            hubspotUpdatedAt: parseDate(hsProps.hs_lastmodifieddate),
             lastSyncedAt: new Date(),
           },
           create: {
-            hubspotId: company.id,
+            hubspotId: recordId,
             name: companyName,
-            domain: props.domain,
-            mrr,
-            subscriptionStatus,
-            plan,
-            contractEndDate: parseDate(props.contract_end_date || props.renewal_date),
-            totalTrips,
+            domain: hsProps.domain || mbData.email?.split("@")[1] || null,
+            mrr: mbData.mrr,
+            subscriptionStatus: mbData.billingStatus || mbData.churnStatus || hsProps.subscription_status || null,
+            plan: mbData.plan || hsProps.plan_name || null,
+            contractEndDate: parseDate(hsProps.contract_end_date || hsProps.renewal_date),
+            totalTrips: mbData.totalTrips,
             lastLoginAt,
-            daysSinceLastLogin,
+            daysSinceLastLogin: mbData.daysSinceLastActivity,
             // Payment health fields
             paymentSuccessRate: stripeData?.successRate ?? null,
             failedPaymentCount: stripeData?.failedCharges ?? null,
@@ -742,9 +735,9 @@ export async function POST(request: NextRequest) {
             paymentHealth: health.paymentHealth !== "unknown" ? health.paymentHealth : null,
             totalChargeVolume: stripeData?.totalCharged ?? null,
             // CSM assignment
-            ownerId: ownerId || null,
-            ownerName: owner?.name || null,
-            ownerEmail: owner?.email || null,
+            ownerId: hsProps.hubspot_owner_id || null,
+            ownerName: segmentCsm.name,
+            ownerEmail: segmentCsm.email,
             // Health scores
             healthScore: health.healthScore,
             numericHealthScore: health.numericScore,
@@ -755,15 +748,18 @@ export async function POST(request: NextRequest) {
             supportScore: health.supportScore,
             growthScore: health.growthScore,
             // Metadata
-            industry: props.industry,
-            city: props.city,
-            state: props.state,
-            country: props.country,
-            employeeCount: parseInt(props.numberofemployees || "0", 10) || null,
-            operatorId: mbData?.operatorId ?? null,
-            stripeAccountId: mbData?.stripeAccountId ?? null,
-            hubspotCreatedAt: parseDate(props.createdate),
-            hubspotUpdatedAt: parseDate(props.hs_lastmodifieddate),
+            industry: hsProps.industry || null,
+            city: hsProps.city || null,
+            state: hsProps.state || null,
+            country: hsProps.country || null,
+            employeeCount: hsProps.numberofemployees ? parseInt(hsProps.numberofemployees, 10) : null,
+            operatorId: mbData.operatorId,
+            stripeAccountId: mbData.stripeAccountId,
+            primaryContactEmail: mbData.email,
+            hasHubSpotRecord,
+            hubspotRecordId: actualHubSpotId,
+            hubspotCreatedAt: parseDate(hsProps.createdate),
+            hubspotUpdatedAt: parseDate(hsProps.hs_lastmodifieddate),
             lastSyncedAt: new Date(),
           },
         })
@@ -789,7 +785,7 @@ export async function POST(request: NextRequest) {
 
         synced++
       } catch (err) {
-        console.error(`Failed to sync company ${company.id}:`, err)
+        console.error(`Failed to sync operator ${mbData.companyName}:`, err)
         failed++
       }
     }
@@ -799,23 +795,24 @@ export async function POST(request: NextRequest) {
       where: { id: syncLog.id },
       data: {
         status: "completed",
-        recordsFound: companies.length,
+        recordsFound: metabaseOperators.length,
         recordsSynced: synced,
         recordsFailed: failed,
         completedAt: new Date(),
       },
     })
 
-    console.log(`Sync completed: ${synced} synced, ${failed} failed, ${metabaseMatches} enriched with Metabase, ${stripeMatches} with Stripe payment data`)
+    console.log(`Sync completed: ${synced} synced, ${failed} failed`)
+    console.log(`  - ${hubspotMatches} with HubSpot data, ${noHubspotRecord} without HubSpot`)
+    console.log(`  - ${stripeMatches} with Stripe payment data`)
 
     return NextResponse.json({
       success: true,
-      totalHubSpotCustomers: allCompanies.length,
-      moovsCustomersFound: companies.length,
-      swoopFiltered: allCompanies.length - companies.length,
+      totalOperators: metabaseOperators.length,
       recordsSynced: synced,
       recordsFailed: failed,
-      metabaseMatches,
+      hubspotMatches,
+      noHubspotRecord,
       stripeMatches,
     })
   } catch (error) {
