@@ -1,0 +1,378 @@
+[
+  {
+    "type": "callout",
+    "callout": {
+      "rich_text": [{"type": "text", "text": {"content": "Technical approach for Anthropic shuttle badge integration. Shared with Chris and Alex for input before scheduling the deep dive with Joel (Security Engineering)."}}],
+      "icon": {"emoji": "📋"}
+    }
+  },
+  {
+    "type": "heading_1",
+    "heading_1": {
+      "rich_text": [{"type": "text", "text": {"content": "Deal Context"}}]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Customer: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "Anthropic ($62,811 ARR, close 2026-02-20)"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Contacts: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "Fran Rubio (Workplace Experience), Joel Hosino (Security Engineering)"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Service: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "~100 employees, peninsula ↔ SF (500 Howard), Monday-Friday"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Phase 1: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "Basic shuttle (already enabled)"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Phase 2: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "Badge-based passenger check-in (this pitch)"}}
+      ]
+    }
+  },
+  {
+    "type": "heading_1",
+    "heading_1": {
+      "rich_text": [{"type": "text", "text": {"content": "The Problem"}}]
+    }
+  },
+  {
+    "type": "paragraph",
+    "paragraph": {
+      "rich_text": [{"type": "text", "text": {"content": "Anthropic needs to verify that only authorized employees board their shuttles. They require badge tap check-in — not QR codes, not manual check-in. This integrates with their existing physical security infrastructure."}}]
+    }
+  },
+  {
+    "type": "heading_1",
+    "heading_1": {
+      "rich_text": [{"type": "text", "text": {"content": "What We Learned"}}]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Identity Provider: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "Likely Okta or Azure AD"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Middleware: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "Braxos Steward — syncs employee data across their physical access systems (150+ connectors)"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Badge Type: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "PROX 125kHz (confirmed) — unencrypted, simple"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Data Format: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "Facility code + card number"}}
+      ]
+    }
+  },
+  {
+    "type": "heading_1",
+    "heading_1": {
+      "rich_text": [{"type": "text", "text": {"content": "Proposed Architecture"}}]
+    }
+  },
+  {
+    "type": "code",
+    "code": {
+      "rich_text": [{"type": "text", "text": {"content": "Braxos Steward ──▶ Moovs API ◀── PROX Reader\n   (roster sync)      (match)     (badge tap)"}}],
+      "language": "plain text"
+    }
+  },
+  {
+    "type": "heading_2",
+    "heading_2": {
+      "rich_text": [{"type": "text", "text": {"content": "Two Integration Points"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Roster Sync: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "Braxos pushes employee roster (name, email, credential ID) to Moovs"}}
+      ]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Badge Check-in: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "PROX reader on shuttle → driver app receives card number → Moovs matches → passenger checked in"}}
+      ]
+    }
+  },
+  {
+    "type": "heading_2",
+    "heading_2": {
+      "rich_text": [{"type": "text", "text": {"content": "Hardware Recommendation"}}]
+    }
+  },
+  {
+    "type": "paragraph",
+    "paragraph": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "RF Ideas pcProx Plus "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "(~$100/unit) — USB to Android tablet, outputs card number as keyboard input. No gateway needed."}}
+      ]
+    }
+  },
+  {
+    "type": "heading_1",
+    "heading_1": {
+      "rich_text": [{"type": "text", "text": {"content": "Appetite: 3 Weeks (Big Batch)"}}]
+    }
+  },
+  {
+    "type": "table",
+    "table": {
+      "table_width": 2,
+      "has_column_header": true,
+      "has_row_header": false,
+      "children": [
+        {
+          "type": "table_row",
+          "table_row": {
+            "cells": [
+              [{"type": "text", "text": {"content": "Scope"}, "annotations": {"bold": true}}],
+              [{"type": "text", "text": {"content": "Effort"}, "annotations": {"bold": true}}]
+            ]
+          }
+        },
+        {
+          "type": "table_row",
+          "table_row": {
+            "cells": [
+              [{"type": "text", "text": {"content": "Braxos roster sync API"}}],
+              [{"type": "text", "text": {"content": "3-5 days"}}]
+            ]
+          }
+        },
+        {
+          "type": "table_row",
+          "table_row": {
+            "cells": [
+              [{"type": "text", "text": {"content": "PROX reader integration"}}],
+              [{"type": "text", "text": {"content": "3-5 days"}}]
+            ]
+          }
+        },
+        {
+          "type": "table_row",
+          "table_row": {
+            "cells": [
+              [{"type": "text", "text": {"content": "Badge tap UI + matching"}}],
+              [{"type": "text", "text": {"content": "3-5 days"}}]
+            ]
+          }
+        },
+        {
+          "type": "table_row",
+          "table_row": {
+            "cells": [
+              [{"type": "text", "text": {"content": "Testing + UAT"}}],
+              [{"type": "text", "text": {"content": "3-5 days"}}]
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "heading_1",
+    "heading_1": {
+      "rich_text": [{"type": "text", "text": {"content": "Rabbit Holes"}}]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Braxos may not have a Moovs connector"}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": " → we build webhook receiver, they configure push"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Credential ID mismatch"}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": " → must confirm with Joel before build (blocker if mismatched)"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Reader hardware procurement delays"}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": " → decide who buys immediately post-signature"}}
+      ]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Offline shuttle"}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": " → design for graceful degradation (queue locally, sync when back online)"}}
+      ]
+    }
+  },
+  {
+    "type": "heading_1",
+    "heading_1": {
+      "rich_text": [{"type": "text", "text": {"content": "No-Gos"}}]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "No encrypted badge support — PROX only. If they change credential types later, that's a separate project."}}]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "No biometrics or mobile credentials — badge tap only for this phase."}}]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "No real-time Braxos ↔ Moovs bidirectional sync — we receive roster, we don't push back."}}]
+    }
+  },
+  {
+    "type": "bulleted_list_item",
+    "bulleted_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "No SSO login flow — badge is the auth, not Okta login on passenger app."}}]
+    }
+  },
+  {
+    "type": "heading_1",
+    "heading_1": {
+      "rich_text": [{"type": "text", "text": {"content": "Open Questions for Joel"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "Does Braxos store the physical credential ID (facility code + card number)?"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "Can Braxos push to a webhook/REST endpoint, or do we need to pull?"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "Who procures the PROX readers — Anthropic or Moovs?"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "What's shuttle connectivity — reliable cellular?"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "Offline tolerance — acceptable delay if connectivity drops?"}}]
+    }
+  },
+  {
+    "type": "heading_1",
+    "heading_1": {
+      "rich_text": [{"type": "text", "text": {"content": "Questions for Chris & Alex"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "Does 3 weeks feel right? Any scopes I'm underestimating?"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "Reader integration — USB keyboard input to driver app, or different approach?"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "Roster sync API — webhook receiver vs. polling?"}}]
+    }
+  },
+  {
+    "type": "numbered_list_item",
+    "numbered_list_item": {
+      "rich_text": [{"type": "text", "text": {"content": "Offline handling — how robust does this need to be?"}}]
+    }
+  },
+  {
+    "type": "divider",
+    "divider": {}
+  },
+  {
+    "type": "paragraph",
+    "paragraph": {
+      "rich_text": [
+        {"type": "text", "text": {"content": "Next step: "}, "annotations": {"bold": true}},
+        {"type": "text", "text": {"content": "Schedule deep dive with Joel once we align on the approach."}}
+      ]
+    }
+  }
+]

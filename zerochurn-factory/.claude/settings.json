@@ -1,0 +1,89 @@
+{
+  "disabledMcpjsonServers": [
+    "slack",
+    "google-calendar",
+    "stripe"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(gh:*)",
+      "Read",
+      "Edit",
+      "Write",
+      "Skill(blog-post)",
+      "Skill(customer-research)",
+      "Skill(email-sequence)",
+      "Skill(moovs-walkthrough-capture)",
+      "Skill(problem)",
+      "Skill(product-ops)",
+      "Skill(release-notes)",
+      "Skill(shaping)",
+      "Skill(task-shaping)",
+      "Skill(tickets)",
+      "mcp__notion__*",
+      "mcp__hubspot__*",
+      "mcp__supabase__*",
+      "mcp__slack__*",
+      "mcp__google-calendar__*",
+      "mcp__metabase__*",
+      "mcp__stripe__*",
+      "WebFetch",
+      "WebSearch"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start-pull-repos.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/sync-problem-to-notion.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}
