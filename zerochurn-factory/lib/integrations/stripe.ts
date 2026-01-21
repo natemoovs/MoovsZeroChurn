@@ -182,6 +182,8 @@ export interface StripeCharge {
   paid: boolean
   refunded: boolean
   status: "succeeded" | "pending" | "failed"
+  failure_code: string | null
+  failure_message: string | null
   created: number
   receipt_url: string | null
   payment_method_details: {
@@ -330,6 +332,30 @@ export async function getPaymentHistory(
   return result.data
 }
 
+/**
+ * List all customers (paginated)
+ */
+export async function listCustomers(
+  limit: number = 100
+): Promise<StripeCustomer[]> {
+  const params = toFormData({ limit })
+  const result = await stripeFetch<StripeListResponse<StripeCustomer>>(
+    `/customers?${params}`
+  )
+  return result.data
+}
+
+/**
+ * Get recent charges for a customer
+ * Alias for getPaymentHistory with limit
+ */
+export async function getRecentCharges(
+  customerId: string,
+  limit: number = 10
+): Promise<StripeCharge[]> {
+  return getPaymentHistory(customerId, { limit })
+}
+
 // ============================================================================
 // Export Client Object
 // ============================================================================
@@ -340,4 +366,6 @@ export const stripe = {
   getSubscriptions,
   getInvoices,
   getPaymentHistory,
+  listCustomers,
+  getRecentCharges,
 }
