@@ -1,25 +1,55 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hubspot, HubSpotCompany, getOwners } from "@/lib/integrations/hubspot"
+import { metabase } from "@/lib/integrations"
 
-// Custom properties for Moovs - adjust these based on your HubSpot setup
-const CUSTOM_PROPERTIES = [
-  "name", "domain", "industry", "numberofemployees",
-  "city", "state", "country", "lifecyclestage",
-  "hubspot_owner_id", "createdate", "hs_lastmodifieddate",
-  // Moovs custom properties - add yours here
-  "mrr", "monthly_recurring_revenue", "contract_end_date", "renewal_date",
-  "total_trips", "last_login_date", "subscription_status", "plan_name",
-]
+// Metabase query ID for account data
+const METABASE_QUERY_ID = 948
+
+// Metabase data structure
+interface MetabaseAccountData {
+  companyName: string
+  totalTrips: number
+  daysSinceLastLogin: number | null
+  churnStatus: string | null
+  mrr: number | null
+  plan: string | null
+  customerSegment: string | null
+}
 
 interface OwnerMap {
   [key: string]: { name: string; email: string }
 }
 
 /**
- * Calculate health score based on company data
+ * Fetch account data from Metabase
  */
-function calculateHealthScore(company: HubSpotCompany): {
+async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
+  if (!process.env.METABASE_URL || !process.env.METABASE_API_KEY) {
+    return []
+  }
+
+  const result = await metabase.runQuery(METABASE_QUERY_ID)
+  const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
+
+  return rows.map((row) => ({
+    companyName: (row.MOOVS_COMPANY_NAME as string) || "",
+    totalTrips: (row.ALL_TRIPS_COUNT as number) || 0,
+    daysSinceLastLogin: row.DAYS_SINCE_LAST_IDENTIFY as number | null,
+    churnStatus: row.CHURN_STATUS as string | null,
+    mrr: row.TOTAL_MRR_NUMERIC as number | null,
+    plan: row.LAGO_PLAN_NAME as string | null,
+    customerSegment: row.CUSTOMER_SEGMENT as string | null,
+  }))
+}
+
+/**
+ * Calculate health score with Metabase enrichment
+ */
+function calculateHealthScoreEnriched(
+  company: HubSpotCompany,
+  mbData: MetabaseAccountData | undefined
+): {
   score: string
   riskSignals: string[]
   positiveSignals: string[]
@@ -29,57 +59,103 @@ function calculateHealthScore(company: HubSpotCompany): {
 
   const props = company.properties
 
-  // Check last login / activity
-  const lastLogin = props.last_login_date
-  if (lastLogin) {
-    const daysSinceLogin = Math.floor(
-      (Date.now() - new Date(lastLogin).getTime()) / (1000 * 60 * 60 * 24)
-    )
-    if (daysSinceLogin > 60) {
-      riskSignals.push(`No login in ${daysSinceLogin} days`)
-    } else if (daysSinceLogin > 30) {
-      riskSignals.push(`Last login ${daysSinceLogin} days ago`)
-    } else if (daysSinceLogin < 7) {
-      positiveSignals.push("Recent activity")
+  // --- Metabase-based signals (product usage data) - PREFERRED ---
+  if (mbData) {
+    // Churn status (explicit)
+    if (mbData.churnStatus && mbData.churnStatus.toLowerCase().includes("churn")) {
+      riskSignals.push("Churned")
+    }
+
+    // Usage signals based on trips
+    if (mbData.totalTrips > 100) {
+      positiveSignals.push(`${mbData.totalTrips} trips`)
+    } else if (mbData.totalTrips > 20) {
+      positiveSignals.push("Active usage")
+    } else if (mbData.totalTrips > 0 && mbData.totalTrips <= 5) {
+      riskSignals.push("Low usage")
+    } else if (mbData.totalTrips === 0) {
+      riskSignals.push("No trips")
+    }
+
+    // Login recency
+    if (mbData.daysSinceLastLogin !== null) {
+      if (mbData.daysSinceLastLogin > 60) {
+        riskSignals.push(`No login in ${mbData.daysSinceLastLogin}d`)
+      } else if (mbData.daysSinceLastLogin > 30) {
+        riskSignals.push("Inactive 30+ days")
+      } else if (mbData.daysSinceLastLogin <= 7) {
+        positiveSignals.push("Recent login")
+      }
+    }
+
+    // MRR / paying status
+    if (mbData.mrr && mbData.mrr > 0) {
+      positiveSignals.push("Paying customer")
+      if (mbData.mrr >= 200) {
+        positiveSignals.push("High value")
+      }
+    } else if (mbData.plan?.toLowerCase().includes("free")) {
+      if (mbData.totalTrips === 0) {
+        riskSignals.push("Free + no usage")
+      }
     }
   }
 
-  // Check usage (trips)
-  const totalTrips = parseInt(props.total_trips || "0", 10)
-  if (totalTrips === 0) {
-    riskSignals.push("No usage recorded")
-  } else if (totalTrips < 5) {
-    riskSignals.push("Low usage")
-  } else if (totalTrips > 50) {
-    positiveSignals.push("High usage")
+  // --- HubSpot-based signals (fallback when no Metabase data) ---
+  const lifecycleStage = props.lifecyclestage?.toLowerCase() || ""
+  if (lifecycleStage === "customer") {
+    positiveSignals.push("Active customer")
   }
 
-  // Check renewal date
-  const renewalDate = props.contract_end_date || props.renewal_date
-  if (renewalDate) {
-    const daysToRenewal = Math.floor(
-      (new Date(renewalDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    )
-    if (daysToRenewal < 0) {
-      riskSignals.push("Contract expired")
-    } else if (daysToRenewal < 30) {
-      riskSignals.push(`Renewal in ${daysToRenewal} days`)
-    } else if (daysToRenewal > 180) {
-      positiveSignals.push("Long-term contract")
+  // Activity recency from HubSpot (only if no Metabase data)
+  if (!mbData) {
+    const lastModified = props.hs_lastmodifieddate
+    if (lastModified) {
+      const daysSinceUpdate = Math.floor(
+        (Date.now() - new Date(lastModified).getTime()) / (1000 * 60 * 60 * 24)
+      )
+      if (daysSinceUpdate > 180) {
+        riskSignals.push("Inactive 6+ months")
+      } else if (daysSinceUpdate > 90) {
+        riskSignals.push("Inactive 3+ months")
+      } else if (daysSinceUpdate <= 30) {
+        positiveSignals.push("Recent activity")
+      }
     }
   }
 
-  // Check MRR
-  const mrr = parseFloat(props.mrr || props.monthly_recurring_revenue || "0")
-  if (mrr > 1000) {
-    positiveSignals.push("High-value account")
-  }
+  // --- Calculate health score based on signals ---
+  let score = "unknown"
 
-  // Determine score
-  let score = "green"
-  if (riskSignals.length >= 3) {
+  // Churned or severe issues = red
+  if (riskSignals.some((r) =>
+    r.includes("Churned") ||
+    r.includes("6+ months") ||
+    (r.includes("No login in") && parseInt(r.match(/\d+/)?.[0] || "0") > 60)
+  )) {
     score = "red"
-  } else if (riskSignals.length >= 1) {
+  } else if (riskSignals.length >= 2) {
+    // Multiple risk signals = red
+    score = "red"
+  } else if (riskSignals.length === 1 && positiveSignals.length < 2) {
+    // One risk, few positives = yellow
+    score = "yellow"
+  } else if (positiveSignals.length >= 3) {
+    // Many positive signals = green
+    score = "green"
+  } else if (positiveSignals.length >= 2 && riskSignals.length === 0) {
+    // Multiple positives, no risk = green
+    score = "green"
+  } else if (positiveSignals.length === 1 && riskSignals.length === 0) {
+    // One positive, no risk = green
+    score = "green"
+  } else if (mbData && mbData.totalTrips > 10 && mbData.mrr && mbData.mrr > 0) {
+    // Paying with decent usage = green
+    score = "green"
+  } else if (riskSignals.length === 0 && positiveSignals.length === 0) {
+    // No data = unknown
+    score = "unknown"
+  } else {
     score = "yellow"
   }
 
@@ -133,6 +209,21 @@ export async function POST(request: NextRequest) {
       // Continue without owner data - not critical
     }
 
+    // Fetch Metabase data for enrichment (usage metrics, MRR, etc.)
+    const metabaseMap = new Map<string, MetabaseAccountData>()
+    try {
+      const metabaseData = await fetchMetabaseData()
+      for (const account of metabaseData) {
+        if (account.companyName) {
+          metabaseMap.set(account.companyName.toLowerCase(), account)
+        }
+      }
+      console.log(`Loaded ${metabaseData.length} accounts from Metabase`)
+    } catch (metabaseError) {
+      console.log("Metabase fetch skipped (not configured or error):", metabaseError)
+      // Continue without Metabase data - HubSpot data will still sync
+    }
+
     // Fetch all customers from HubSpot
     const companies = await hubspot.listCustomers()
     console.log(`Found ${companies.length} customers in HubSpot`)
@@ -144,7 +235,13 @@ export async function POST(request: NextRequest) {
     for (const company of companies) {
       try {
         const props = company.properties
-        const health = calculateHealthScore(company)
+        const companyName = props.name || "Unknown"
+
+        // Get Metabase data for this company (by name match)
+        const mbData = metabaseMap.get(companyName.toLowerCase())
+
+        // Calculate health score with Metabase enrichment
+        const health = calculateHealthScoreEnriched(company, mbData)
 
         // Parse dates safely
         const parseDate = (dateStr?: string): Date | null => {
@@ -157,24 +254,30 @@ export async function POST(request: NextRequest) {
         const ownerId = props.hubspot_owner_id
         const owner = ownerId ? ownerMap[ownerId] : null
 
-        // Calculate days since last login
-        const lastLoginDate = parseDate(props.last_login_date)
-        const daysSinceLastLogin = lastLoginDate
-          ? Math.floor((Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24))
-          : null
+        // Use Metabase data for usage metrics (preferred), fall back to HubSpot
+        const mrr = mbData?.mrr ?? (parseFloat(props.mrr || props.monthly_recurring_revenue || "0") || null)
+        const totalTrips = mbData?.totalTrips ?? (parseInt(props.total_trips || "0", 10) || null)
+        const daysSinceLastLogin = mbData?.daysSinceLastLogin ?? null
+        const plan = mbData?.plan ?? props.plan_name ?? null
+        const subscriptionStatus = mbData?.churnStatus ?? props.subscription_status ?? props.lifecyclestage
+
+        // Calculate lastLoginAt from daysSinceLastLogin
+        const lastLoginAt = daysSinceLastLogin !== null
+          ? new Date(Date.now() - daysSinceLastLogin * 24 * 60 * 60 * 1000)
+          : parseDate(props.last_login_date)
 
         // Upsert company
         await prisma.hubSpotCompany.upsert({
           where: { hubspotId: company.id },
           update: {
-            name: props.name || "Unknown",
+            name: companyName,
             domain: props.domain,
-            mrr: parseFloat(props.mrr || props.monthly_recurring_revenue || "0") || null,
-            subscriptionStatus: props.subscription_status || props.lifecyclestage,
-            plan: props.plan_name,
+            mrr,
+            subscriptionStatus,
+            plan,
             contractEndDate: parseDate(props.contract_end_date || props.renewal_date),
-            totalTrips: parseInt(props.total_trips || "0", 10) || null,
-            lastLoginAt: lastLoginDate,
+            totalTrips,
+            lastLoginAt,
             daysSinceLastLogin,
             ownerId: ownerId || null,
             ownerName: owner?.name || null,
@@ -193,14 +296,14 @@ export async function POST(request: NextRequest) {
           },
           create: {
             hubspotId: company.id,
-            name: props.name || "Unknown",
+            name: companyName,
             domain: props.domain,
-            mrr: parseFloat(props.mrr || props.monthly_recurring_revenue || "0") || null,
-            subscriptionStatus: props.subscription_status || props.lifecyclestage,
-            plan: props.plan_name,
+            mrr,
+            subscriptionStatus,
+            plan,
             contractEndDate: parseDate(props.contract_end_date || props.renewal_date),
-            totalTrips: parseInt(props.total_trips || "0", 10) || null,
-            lastLoginAt: lastLoginDate,
+            totalTrips,
+            lastLoginAt,
             daysSinceLastLogin,
             ownerId: ownerId || null,
             ownerName: owner?.name || null,
