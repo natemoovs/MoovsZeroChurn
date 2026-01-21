@@ -594,6 +594,7 @@ export async function POST(request: NextRequest) {
     let hubspotMatches = 0
     let stripeMatches = 0
     let noHubspotRecord = 0
+    let skippedChurned = 0
 
     // CSM Assignment based on MRR
     const CSM_ASSIGNMENTS = {
@@ -613,6 +614,26 @@ export async function POST(request: NextRequest) {
 
     for (const mbData of metabaseOperators) {
       try {
+        // =====================================================================
+        // FILTER: Skip churned/terminated accounts - they shouldn't be in active portfolio
+        // =====================================================================
+        const churnStatus = mbData.churnStatus?.toLowerCase() || ""
+        const billingStatus = mbData.billingStatus?.toLowerCase() || ""
+
+        const isChurned = churnStatus.includes("churn") ||
+                          churnStatus.includes("cancelled") ||
+                          churnStatus.includes("canceled")
+        const isTerminated = billingStatus.includes("terminated") ||
+                             billingStatus.includes("cancelled") ||
+                             billingStatus.includes("canceled")
+
+        // Skip if churned AND has no MRR (fully dead account)
+        // Keep if churned but still has MRR (might be pending cancellation)
+        if ((isChurned || isTerminated) && (!mbData.mrr || mbData.mrr <= 0)) {
+          skippedChurned++
+          continue
+        }
+
         // Find matching HubSpot company (for enrichment)
         let hsCompany: HubSpotCompany | undefined
 
@@ -817,14 +838,18 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log(`Sync completed: ${synced} synced, ${failed} failed`)
+    // NOTE: Churned accounts are kept in DB for historical reference
+    // They are filtered out in portfolio views, not deleted
+
+    console.log(`Sync completed: ${synced} synced, ${failed} failed, ${skippedChurned} churned skipped`)
     console.log(`  - ${hubspotMatches} with HubSpot data, ${noHubspotRecord} without HubSpot`)
     console.log(`  - ${stripeMatches} with Stripe payment data`)
 
     return NextResponse.json({
       success: true,
       totalOperators: metabaseOperators.length,
-      recordsSynced: synced,
+      activeOperatorsSynced: synced,
+      churnedSkipped: skippedChurned,
       recordsFailed: failed,
       hubspotMatches,
       noHubspotRecord,
