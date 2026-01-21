@@ -594,6 +594,7 @@ export async function POST(request: NextRequest) {
     let hubspotMatches = 0
     let stripeMatches = 0
     let noHubspotRecord = 0
+    let skippedChurned = 0
 
     // CSM Assignment based on MRR
     const CSM_ASSIGNMENTS = {
@@ -613,6 +614,26 @@ export async function POST(request: NextRequest) {
 
     for (const mbData of metabaseOperators) {
       try {
+        // =====================================================================
+        // FILTER: Skip churned/terminated accounts - they shouldn't be in active portfolio
+        // =====================================================================
+        const churnStatus = mbData.churnStatus?.toLowerCase() || ""
+        const billingStatus = mbData.billingStatus?.toLowerCase() || ""
+
+        const isChurned = churnStatus.includes("churn") ||
+                          churnStatus.includes("cancelled") ||
+                          churnStatus.includes("canceled")
+        const isTerminated = billingStatus.includes("terminated") ||
+                             billingStatus.includes("cancelled") ||
+                             billingStatus.includes("canceled")
+
+        // Skip if churned AND has no MRR (fully dead account)
+        // Keep if churned but still has MRR (might be pending cancellation)
+        if ((isChurned || isTerminated) && (!mbData.mrr || mbData.mrr <= 0)) {
+          skippedChurned++
+          continue
+        }
+
         // Find matching HubSpot company (for enrichment)
         let hsCompany: HubSpotCompany | undefined
 
@@ -817,14 +838,48 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log(`Sync completed: ${synced} synced, ${failed} failed`)
+    // =========================================================================
+    // STEP 5: Clean up churned accounts from database
+    // Remove records that are no longer active (churned with no MRR)
+    // =========================================================================
+    let deletedChurned = 0
+    try {
+      // Delete records where subscriptionStatus indicates churned/terminated AND no MRR
+      const deleteResult = await prisma.hubSpotCompany.deleteMany({
+        where: {
+          AND: [
+            {
+              OR: [
+                { subscriptionStatus: { contains: "churn", mode: "insensitive" } },
+                { subscriptionStatus: { contains: "terminated", mode: "insensitive" } },
+                { subscriptionStatus: { contains: "cancelled", mode: "insensitive" } },
+                { subscriptionStatus: { contains: "canceled", mode: "insensitive" } },
+              ],
+            },
+            {
+              OR: [
+                { mrr: null },
+                { mrr: { lte: 0 } },
+              ],
+            },
+          ],
+        },
+      })
+      deletedChurned = deleteResult.count
+      console.log(`Cleaned up ${deletedChurned} churned/terminated accounts from database`)
+    } catch (cleanupError) {
+      console.error("Failed to cleanup churned accounts:", cleanupError)
+    }
+
+    console.log(`Sync completed: ${synced} synced, ${failed} failed, ${skippedChurned} churned skipped, ${deletedChurned} deleted`)
     console.log(`  - ${hubspotMatches} with HubSpot data, ${noHubspotRecord} without HubSpot`)
     console.log(`  - ${stripeMatches} with Stripe payment data`)
 
     return NextResponse.json({
       success: true,
       totalOperators: metabaseOperators.length,
-      recordsSynced: synced,
+      activeOperatorsSynced: synced,
+      churnedSkipped: skippedChurned,
       recordsFailed: failed,
       hubspotMatches,
       noHubspotRecord,
