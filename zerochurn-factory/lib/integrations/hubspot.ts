@@ -345,7 +345,7 @@ export async function getRecentActivity(companyId: string): Promise<HubSpotActiv
 /**
  * List all companies with full pagination
  */
-export async function listCompanies(maxResults = 2000): Promise<HubSpotCompany[]> {
+export async function listCompanies(maxResults = 5000): Promise<HubSpotCompany[]> {
   const properties = [
     "name", "domain", "industry", "numberofemployees", "annualrevenue",
     "city", "state", "country", "phone", "website", "description",
@@ -382,7 +382,7 @@ export async function listCompanies(maxResults = 2000): Promise<HubSpotCompany[]
 export async function searchCompanies(query: string): Promise<HubSpotCompany[]> {
   // If query is "*" or empty, list all companies instead
   if (!query || query === "*") {
-    return listCompanies(2000)
+    return listCompanies(5000)
   }
 
   const result = await hubspotFetch<HubSpotSearchResult>(
