@@ -1,11 +1,11 @@
 /**
  * HubSpot CRM Integration Client
  *
- * Requires HUBSPOT_API_KEY environment variable
+ * Requires HUBSPOT_ACCESS_TOKEN environment variable
  * API Docs: https://developers.hubspot.com/docs/api/overview
  */
 
-const HUBSPOT_API_KEY = process.env.HUBSPOT_API_KEY
+const HUBSPOT_API_KEY = process.env.HUBSPOT_ACCESS_TOKEN
 const BASE_URL = "https://api.hubapi.com"
 
 // ============================================================================
@@ -343,9 +343,31 @@ export async function getRecentActivity(companyId: string): Promise<HubSpotActiv
 }
 
 /**
+ * List all companies (paginated)
+ */
+export async function listCompanies(limit = 100): Promise<HubSpotCompany[]> {
+  const properties = [
+    "name", "domain", "industry", "numberofemployees", "annualrevenue",
+    "city", "state", "country", "phone", "website", "description",
+    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated"
+  ].join(",")
+
+  const result = await hubspotFetch<{ results: HubSpotCompany[] }>(
+    `/crm/v3/objects/companies?limit=${limit}&properties=${properties}`
+  )
+
+  return result.results
+}
+
+/**
  * Search companies by query string
  */
 export async function searchCompanies(query: string): Promise<HubSpotCompany[]> {
+  // If query is "*" or empty, list all companies instead
+  if (!query || query === "*") {
+    return listCompanies(100)
+  }
+
   const result = await hubspotFetch<HubSpotSearchResult>(
     "/crm/v3/objects/companies/search",
     {
@@ -375,5 +397,6 @@ export const hubspot = {
   getContacts,
   getDeals,
   getRecentActivity,
+  listCompanies,
   searchCompanies,
 }
