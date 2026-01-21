@@ -1,0 +1,22 @@
+# Moovs Walkthrough Capture Dependencies
+
+# Browser automation
+playwright>=1.40.0
+
+# Image processing
+Pillow>=10.0.0
+
+# GIF creation
+imageio>=2.31.0
+
+# YAML parsing for workflow definitions
+PyYAML>=6.0
+
+# CLI argument parsing (stdlib, but explicit for clarity)
+# argparse is included in Python stdlib
+
+# Optional: Progress bars for long captures
+tqdm>=4.66.0
+
+# Optional: Better image optimization
+imageio-ffmpeg>=0.4.9

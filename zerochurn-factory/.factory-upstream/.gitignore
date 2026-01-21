@@ -1,0 +1,15 @@
+server/
+dooms-operator/
+dooms-customer/
+moovs-import-app/
+problems/
+shaping/
+problem.md
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
