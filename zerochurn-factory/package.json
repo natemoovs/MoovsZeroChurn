@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "rm -rf node_modules/.prisma && prisma generate && if [ \"$VERCEL_ENV\" = \"production\" ]; then prisma db push --skip-generate; fi && next build",
+    "build": "rm -rf node_modules/.prisma && prisma generate && if [ \"$VERCEL_ENV\" = \"production\" ]; then prisma db push; fi && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@neondatabase/serverless": "^1.0.2",
+    "@prisma/adapter-neon": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
