@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
-export default function LoginPage() {
+function LoginContent() {
   const [authUrl, setAuthUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
@@ -33,32 +33,47 @@ export default function LoginPage() {
   }
 
   return (
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle>ZeroChurn Factory</CardTitle>
+        <CardDescription>Sign in to access your CSM dashboard</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {error && (
+          <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+            {error}
+          </p>
+        )}
+        <Button
+          onClick={handleSignIn}
+          className="w-full"
+          disabled={!authUrl}
+        >
+          {authUrl ? "Sign in with Neon" : "Loading..."}
+        </Button>
+        {!authUrl && (
+          <p className="text-xs text-zinc-500 text-center">
+            Neon Auth not configured. Check NEXT_PUBLIC_NEON_AUTH_URL.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>ZeroChurn Factory</CardTitle>
-          <CardDescription>Sign in to access your CSM dashboard</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-              {error}
-            </p>
-          )}
-          <Button
-            onClick={handleSignIn}
-            className="w-full"
-            disabled={!authUrl}
-          >
-            {authUrl ? "Sign in with Neon" : "Loading..."}
-          </Button>
-          {!authUrl && (
-            <p className="text-xs text-zinc-500 text-center">
-              Neon Auth not configured. Check NEXT_PUBLIC_NEON_AUTH_URL.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <Suspense fallback={
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle>ZeroChurn Factory</CardTitle>
+            <CardDescription>Loading...</CardDescription>
+          </CardHeader>
+        </Card>
+      }>
+        <LoginContent />
+      </Suspense>
     </div>
   )
 }
