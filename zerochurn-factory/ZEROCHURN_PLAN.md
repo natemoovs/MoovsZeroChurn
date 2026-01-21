@@ -46,27 +46,28 @@
 
 ---
 
-### Phase 2: AI-Powered Customer Intelligence
+### Phase 2: AI-Powered Customer Intelligence ✅ COMPLETE
 **Goal:** Proactive churn detection and intervention
 
-1. **Deep Customer Research Agent**
-   - Adapts the `/customer-research` skill for CSM
-   - Pulls HubSpot + Metabase + Stripe into unified view
-   - Generates health reports before QBRs
+1. **Deep Customer Research Agent** ✅
+   - `POST /api/ai/research` - Generate QBR prep, health reports, risk assessments
+   - Uses Customer 360 data + Claude for AI-powered analysis
+   - Three report types: `qbr`, `health`, `risk`
 
-2. **Churn Reason Documentation**
-   - Adapts the `/problem` skill methodology
-   - When account churns, capture WHY (structured interview)
-   - Feed back into AI model for pattern learning
+2. **Churn Reason Documentation** ✅
+   - `POST /api/churn` - Document churn with structured reasons
+   - `GET /api/churn` - List and filter churn records
+   - `POST /api/churn/patterns` - AI-generated pattern analysis
+   - New Prisma models: `ChurnRecord`, `ChurnPattern`
 
-3. **Smart Alert Prioritization**
-   - Not just "red health" alerts
-   - Combine: payment failures + usage drop + renewal proximity
-   - Score urgency, suggest intervention type
+3. **Smart Alert Prioritization** ✅
+   - `GET /api/alerts/prioritized` - Urgency-scored alert list
+   - Combines: payment + usage + renewal + engagement signals
+   - Generates intervention recommendations + playbook suggestions
 
 ---
 
-### Phase 3: Autonomous AI Agents
+### Phase 3: Autonomous AI Agents ⬅️ NEXT
 **Goal:** AI that works while you sleep
 
 | Agent | Trigger | Action |
@@ -139,6 +140,11 @@
 - [x] Phase 1: Notion integration - Created tasks API route
 - [x] Phase 1: Customer 360 endpoint - Unified view from all sources
 - [x] Fixed instrumentation.ts for all runtimes
+- [x] Fixed auth logic for HubSpot sync endpoint
+- [x] Phase 2: Deep Customer Research Agent (`/api/ai/research`)
+- [x] Phase 2: Churn Reason Documentation (`/api/churn`, `/api/churn/patterns`)
+- [x] Phase 2: Smart Alert Prioritization (`/api/alerts/prioritized`)
+- [x] Added ChurnRecord and ChurnPattern Prisma models
 
 ---
 

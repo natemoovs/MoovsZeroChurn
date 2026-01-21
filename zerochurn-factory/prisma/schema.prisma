@@ -280,3 +280,81 @@ model SyncLog {
   @@index([type])
   @@index([startedAt])
 }
+
+// ============================================================================
+// Churn Documentation - Structured capture of churn reasons for pattern learning
+// ============================================================================
+
+model ChurnRecord {
+  id              String   @id @default(cuid())
+  companyId       String   // HubSpot company ID
+  companyName     String
+  domain          String?
+
+  // When did they churn
+  churnDate       DateTime @default(now())
+  customerSince   DateTime? // To calculate lifetime
+
+  // Financial impact
+  lostMrr         Float?
+  lifetimeValue   Float?
+
+  // Primary reason (categorized)
+  primaryReason   String   // price, product_fit, support, competitor, business_closed, budget, other
+  secondaryReason String?
+
+  // Detailed capture
+  reasonDetails   String?  // Free-form explanation
+  competitorName  String?  // If lost to competitor
+  featureGaps     String[] // Features they needed but didn't have
+
+  // Context at time of churn
+  healthScoreAtChurn String? // green, yellow, red
+  daysSinceLastLogin Int?
+  totalTrips      Int?
+  lastContactDate DateTime?
+
+  // Exit interview
+  exitInterviewDone Boolean @default(false)
+  exitInterviewNotes String?
+  willingToReturn   Boolean?
+  returnConditions  String? // What would bring them back
+
+  // Who documented this
+  documentedBy    String?  // CSM email
+  documentedAt    DateTime @default(now())
+
+  // Follow-up tracking
+  winBackAttempted Boolean @default(false)
+  winBackDate     DateTime?
+  winBackSuccessful Boolean?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([primaryReason])
+  @@index([churnDate])
+  @@index([lostMrr])
+}
+
+// ============================================================================
+// Churn Pattern - AI-generated insights from churn data
+// ============================================================================
+
+model ChurnPattern {
+  id              String   @id @default(cuid())
+  patternType     String   // reason_trend, segment_risk, feature_gap, seasonal
+  title           String
+  description     String
+  affectedSegment String?  // e.g., "SMB", "Enterprise", "Free plan"
+  frequency       Int      // How many churns match this pattern
+  mrrImpact       Float?   // Total MRR lost to this pattern
+  recommendations String[] // AI-suggested actions
+  confidence      Float?   // 0-1 confidence score
+  dataRange       String?  // e.g., "Last 90 days"
+  generatedAt     DateTime @default(now())
+
+  @@index([patternType])
+  @@index([affectedSegment])
+}
