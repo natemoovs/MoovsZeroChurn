@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
@@ -35,7 +35,7 @@ function isCompanyQuestion(id: string, question: string): boolean {
   )
 }
 
-export default function SkillPage() {
+function SkillPageContent() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -372,5 +372,31 @@ export default function SkillPage() {
         </div>
       </div>
     </DashboardLayout>
+  )
+}
+
+function SkillPageLoading() {
+  return (
+    <DashboardLayout>
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div className="h-6 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-8 w-64 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-4 w-96 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="space-y-4">
+            <div className="h-6 w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-12 w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  )
+}
+
+export default function SkillPage() {
+  return (
+    <Suspense fallback={<SkillPageLoading />}>
+      <SkillPageContent />
+    </Suspense>
   )
 }
