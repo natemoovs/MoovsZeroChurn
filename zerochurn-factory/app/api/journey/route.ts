@@ -14,6 +14,79 @@ const VALID_STAGES = [
 
 type JourneyStage = (typeof VALID_STAGES)[number]
 
+// Map journey stages to playbook triggers
+const STAGE_TO_TRIGGER: Record<string, string> = {
+  at_risk: "journey_to_at_risk",
+  churned: "journey_to_churned",
+  renewal: "journey_to_renewal",
+  growth: "journey_to_growth",
+}
+
+// Playbook action type
+interface PlaybookAction {
+  type: "create_task"
+  title: string
+  description?: string
+  priority: "low" | "medium" | "high" | "urgent"
+  dueInDays?: number
+}
+
+/**
+ * Execute playbooks based on journey stage change
+ */
+async function executeJourneyPlaybooks(
+  trigger: string,
+  context: { companyId: string; companyName: string; fromStage?: string; toStage: string }
+) {
+  try {
+    const playbooks = await prisma.playbook.findMany({
+      where: {
+        trigger,
+        isActive: true,
+      },
+    })
+
+    for (const playbook of playbooks) {
+      const actions = playbook.actions as unknown as PlaybookAction[]
+
+      for (const action of actions) {
+        if (action.type === "create_task") {
+          const dueDate = action.dueInDays
+            ? new Date(Date.now() + action.dueInDays * 24 * 60 * 60 * 1000)
+            : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+
+          await prisma.task.create({
+            data: {
+              companyId: context.companyId,
+              companyName: context.companyName,
+              title: action.title
+                .replace("{companyName}", context.companyName)
+                .replace("{toStage}", context.toStage)
+                .replace("{fromStage}", context.fromStage || "unknown"),
+              description: action.description
+                ?.replace("{companyName}", context.companyName)
+                .replace("{toStage}", context.toStage)
+                .replace("{fromStage}", context.fromStage || "unknown"),
+              priority: action.priority || "medium",
+              status: "pending",
+              dueDate,
+              playbookId: playbook.id,
+              metadata: {
+                trigger,
+                fromStage: context.fromStage,
+                toStage: context.toStage,
+                createdBy: "playbook",
+              },
+            },
+          })
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Journey playbook execution error:", error)
+  }
+}
+
 /**
  * Get all journey stages or filter by stage
  * GET /api/journey?stage=at_risk
@@ -111,6 +184,17 @@ export async function POST(request: NextRequest) {
           reason,
         },
       })
+
+      // Trigger playbooks if stage has a trigger
+      const trigger = STAGE_TO_TRIGGER[stage]
+      if (trigger) {
+        await executeJourneyPlaybooks(trigger, {
+          companyId,
+          companyName,
+          fromStage: existing.stage,
+          toStage: stage,
+        })
+      }
 
       return NextResponse.json(journey)
     } else {

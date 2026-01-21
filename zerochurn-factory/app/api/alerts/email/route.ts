@@ -342,7 +342,7 @@ async function logAlert(
         companyId: alert.companyId || null,
         companyName: alert.companyName || null,
         channel,
-        payload: alert as unknown as Record<string, unknown>,
+        payload: JSON.parse(JSON.stringify(alert)),
         success,
         error: error || null,
       },

@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   UsersRound,
-  Zap
+  Zap,
+  Settings
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/renewals", icon: CalendarClock, label: "Renewals" },
   { href: "/skills", icon: Sparkles, label: "Skills" },
   { href: "/history", icon: History, label: "History" },
+  { href: "/settings", icon: Settings, label: "Settings" },
 ]
 
 export function Sidebar() {
