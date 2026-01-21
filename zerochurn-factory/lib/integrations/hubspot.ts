@@ -343,9 +343,9 @@ export async function getRecentActivity(companyId: string): Promise<HubSpotActiv
 }
 
 /**
- * List all companies with full pagination
+ * List all companies with full pagination (no limit)
  */
-export async function listCompanies(maxResults = 5000): Promise<HubSpotCompany[]> {
+export async function listCompanies(): Promise<HubSpotCompany[]> {
   const properties = [
     "name", "domain", "industry", "numberofemployees", "annualrevenue",
     "city", "state", "country", "phone", "website", "description",
@@ -355,7 +355,8 @@ export async function listCompanies(maxResults = 5000): Promise<HubSpotCompany[]
   const allCompanies: HubSpotCompany[] = []
   let after: string | undefined
 
-  while (allCompanies.length < maxResults) {
+  // Keep paginating until no more results
+  while (true) {
     const url = after
       ? `/crm/v3/objects/companies?limit=100&properties=${properties}&after=${after}`
       : `/crm/v3/objects/companies?limit=100&properties=${properties}`
@@ -373,7 +374,7 @@ export async function listCompanies(maxResults = 5000): Promise<HubSpotCompany[]
     after = result.paging.next.after
   }
 
-  return allCompanies.slice(0, maxResults)
+  return allCompanies
 }
 
 /**
@@ -382,7 +383,7 @@ export async function listCompanies(maxResults = 5000): Promise<HubSpotCompany[]
 export async function searchCompanies(query: string): Promise<HubSpotCompany[]> {
   // If query is "*" or empty, list all companies instead
   if (!query || query === "*") {
-    return listCompanies(5000)
+    return listCompanies()
   }
 
   const result = await hubspotFetch<HubSpotSearchResult>(
