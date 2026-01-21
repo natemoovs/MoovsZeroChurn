@@ -202,3 +202,81 @@ model AIPrediction {
   @@index([riskLevel])
   @@index([createdAt])
 }
+
+// ============================================================================
+// HubSpot Company - Synced customer data (refreshed 1-2x daily)
+// ============================================================================
+
+model HubSpotCompany {
+  id                  String   @id @default(cuid())
+  hubspotId           String   @unique // HubSpot company ID
+  name                String
+  domain              String?
+
+  // Subscription & Revenue
+  mrr                 Float?   // Monthly recurring revenue
+  subscriptionStatus  String?  // active, churned, trial, etc.
+  plan                String?  // Plan name/tier
+  contractEndDate     DateTime? // Renewal date
+
+  // Usage & Engagement
+  totalTrips          Int?     // Usage metric
+  lastLoginAt         DateTime? // Last activity
+  daysSinceLastLogin  Int?     // Computed for convenience
+
+  // CSM Assignment
+  ownerId             String?  // HubSpot owner ID
+  ownerName           String?
+  ownerEmail          String?
+
+  // Computed Health
+  healthScore         String?  // green, yellow, red, unknown
+  riskSignals         String[] // Array of risk signal strings
+  positiveSignals     String[] // Array of positive signal strings
+
+  // Contacts (primary)
+  primaryContactName  String?
+  primaryContactEmail String?
+
+  // Metadata
+  industry            String?
+  city                String?
+  state               String?
+  country             String?
+  employeeCount       Int?
+
+  // HubSpot timestamps
+  hubspotCreatedAt    DateTime?
+  hubspotUpdatedAt    DateTime?
+
+  // Sync tracking
+  lastSyncedAt        DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([hubspotId])
+  @@index([ownerId])
+  @@index([healthScore])
+  @@index([subscriptionStatus])
+  @@index([contractEndDate])
+  @@index([lastSyncedAt])
+}
+
+// ============================================================================
+// Sync Log - Track HubSpot sync runs
+// ============================================================================
+
+model SyncLog {
+  id            String   @id @default(cuid())
+  type          String   // companies, contacts, deals
+  status        String   // running, completed, failed
+  recordsFound  Int?
+  recordsSynced Int?
+  recordsFailed Int?
+  error         String?
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+
+  @@index([type])
+  @@index([startedAt])
+}

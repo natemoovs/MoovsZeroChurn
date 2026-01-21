@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/sync/hubspot",
+      "schedule": "0 5,17 * * *"
+    },
+    {
       "path": "/api/health-history/snapshot",
       "schedule": "0 6 * * *"
     },
