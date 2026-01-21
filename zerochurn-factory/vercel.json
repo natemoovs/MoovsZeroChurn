@@ -15,6 +15,26 @@
     {
       "path": "/api/alerts/email-digest",
       "schedule": "0 8 * * 1-5"
+    },
+    {
+      "path": "/api/agents/health-monitor",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/agents/qbr-prep",
+      "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/agents/renewal-risk",
+      "schedule": "0 8 * * 0"
+    },
+    {
+      "path": "/api/agents/payment-recovery",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/agents/win-back",
+      "schedule": "0 10 * * 4"
     }
   ]
 }

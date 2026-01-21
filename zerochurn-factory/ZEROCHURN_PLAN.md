@@ -67,16 +67,16 @@
 
 ---
 
-### Phase 3: Autonomous AI Agents ⬅️ NEXT
+### Phase 3: Autonomous AI Agents ✅ COMPLETE
 **Goal:** AI that works while you sleep
 
 | Agent | Trigger | Action |
 |-------|---------|--------|
-| **Health Monitor** | Daily cron | Scan all accounts, flag changes, create tasks |
-| **Pre-QBR Prep** | 7 days before QBR | Generate account brief with talking points |
-| **Renewal Risk** | 60 days before renewal | Deep analysis + intervention playbook |
-| **Payment Recovery** | Failed charge | Auto-outreach sequence + escalation |
-| **Win-Back** | Account churned | 30/60/90 day check-in sequence |
+| **Health Monitor** ✅ | Daily cron (6 AM UTC) | Scan all accounts, flag changes, create tasks |
+| **Pre-QBR Prep** ✅ | Weekly (Mon 7 AM UTC) | Generate account brief with talking points |
+| **Renewal Risk** ✅ | Weekly (Sun 8 AM UTC) | Deep analysis + intervention playbook |
+| **Payment Recovery** ✅ | Daily (9 AM UTC) | Auto-outreach sequence + escalation |
+| **Win-Back** ✅ | Weekly (Thu 10 AM UTC) | 30/60/90 day check-in sequence |
 
 **How Agents Work:**
 ```
@@ -145,6 +145,13 @@
 - [x] Phase 2: Churn Reason Documentation (`/api/churn`, `/api/churn/patterns`)
 - [x] Phase 2: Smart Alert Prioritization (`/api/alerts/prioritized`)
 - [x] Added ChurnRecord and ChurnPattern Prisma models
+- [x] Phase 3: Health Monitor Agent (`/api/agents/health-monitor`)
+- [x] Phase 3: Pre-QBR Prep Agent (`/api/agents/qbr-prep`)
+- [x] Phase 3: Renewal Risk Agent (`/api/agents/renewal-risk`)
+- [x] Phase 3: Payment Recovery Agent (`/api/agents/payment-recovery`)
+- [x] Phase 3: Win-Back Agent (`/api/agents/win-back`)
+- [x] Updated vercel.json with agent cron schedules
+- [x] Updated proxy.ts to exclude agent API routes from auth
 
 ---
 
