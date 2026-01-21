@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { CompanySelect } from "@/components/company-select"
-import { getSkill, type Skill } from "@/lib/skills"
+import type { Skill } from "@/lib/skills"
 import {
   ArrowLeft,
   ArrowRight,
@@ -49,14 +49,20 @@ export default function SkillPage() {
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    const s = getSkill(params.slug as string)
-    setSkill(s)
-
-    // Pre-fill from URL params
-    const customer = searchParams.get("customer")
-    if (customer && s) {
-      setAnswers((prev) => ({ ...prev, customer }))
-    }
+    // Fetch skill from API
+    fetch(`/api/skills/${params.slug}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.skill) {
+          setSkill(data.skill)
+          // Pre-fill from URL params
+          const customer = searchParams.get("customer")
+          if (customer) {
+            setAnswers((prev) => ({ ...prev, customer }))
+          }
+        }
+      })
+      .catch(console.error)
   }, [params.slug, searchParams])
 
   if (!skill) {
