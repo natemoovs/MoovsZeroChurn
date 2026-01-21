@@ -8,13 +8,21 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="container mx-auto px-4 py-16">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            ZeroChurn Factory
-          </h1>
-          <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
-            Select a skill to get started
-          </p>
+        <div className="mb-12 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+              ZeroChurn Factory
+            </h1>
+            <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
+              Select a skill to get started
+            </p>
+          </div>
+          <Link
+            href="/history"
+            className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          >
+            View History &rarr;
+          </Link>
         </div>
 
         {skills.length === 0 ? (
