@@ -11,11 +11,13 @@
  */
 
 export type CustomerSegment = "smb" | "mid_market" | "enterprise" | "free" | "unknown"
-export type ServiceType = "black_car" | "shuttle" | "unknown"
+
+// ServiceType is defined in service-types.ts - using inline here to avoid circular imports
+type IcpServiceType = "black_car" | "shuttle" | "unknown"
 
 export interface SegmentProfile {
   segment: CustomerSegment
-  serviceType: ServiceType
+  serviceType: IcpServiceType
   revenueRange: { min: number; max: number | null }
   typicalPainPoints: string[]
   churnIndicators: string[]
