@@ -342,6 +342,9 @@ export async function getRecentActivity(companyId: string): Promise<HubSpotActiv
   }
 }
 
+// Helper to add delay between requests to avoid rate limits
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
 /**
  * List all CUSTOMERS (lifecycle stage = customer) with pagination
  * This is what CSMs care about - not all 50k companies
@@ -355,6 +358,7 @@ export async function listCustomers(): Promise<HubSpotCompany[]> {
 
   const allCustomers: HubSpotCompany[] = []
   let after: string | undefined
+  let pageCount = 0
 
   // Use search API with filter for lifecycle stage = customer
   while (true) {
@@ -383,11 +387,16 @@ export async function listCustomers(): Promise<HubSpotCompany[]> {
     })
 
     allCustomers.push(...result.results)
+    pageCount++
 
     if (!result.paging?.next?.after) {
       break // No more pages
     }
     after = result.paging.next.after
+
+    // Rate limit: HubSpot allows 100 requests per 10 seconds
+    // Add 150ms delay between pages to stay under limit
+    await delay(150)
   }
 
   return allCustomers
