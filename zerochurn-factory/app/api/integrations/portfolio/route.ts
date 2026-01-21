@@ -42,32 +42,10 @@ export async function GET(request: NextRequest) {
     // Filter by segment based on lifecycle stage or revenue
     const filtered = filterBySegment(allCompanies, segment)
 
-    // Gather health data for each company (limit to 50 for performance)
-    const summaries: CompanyHealthSummary[] = []
-
-    for (const company of filtered.slice(0, 50)) {
-      try {
-        const summary = await gatherCompanyHealth(company)
-        summaries.push(summary)
-      } catch (error) {
-        console.error(`Error processing company ${company.id}:`, error)
-        // Add with unknown status
-        summaries.push({
-          companyId: company.id,
-          companyName: company.properties.name || "Unknown",
-          domain: company.properties.domain || null,
-          healthScore: "unknown",
-          mrr: null,
-          plan: null,
-          paymentStatus: "unknown",
-          lastActivity: null,
-          contactCount: 0,
-          riskSignals: ["Could not fetch data"],
-          positiveSignals: [],
-          customerSince: company.properties.createdate || null,
-        })
-      }
-    }
+    // Quick health scoring using only company-level data (no individual API calls)
+    const summaries: CompanyHealthSummary[] = filtered.map((company) =>
+      quickHealthScore(company)
+    )
 
     // Sort by health score (red first, then yellow, then green)
     summaries.sort((a, b) => {
@@ -90,6 +68,96 @@ export async function GET(request: NextRequest) {
       { summaries: [], error: "Failed to fetch portfolio data" },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * Quick health score using only company-level data (fast, no additional API calls)
+ */
+function quickHealthScore(company: HubSpotCompany): CompanyHealthSummary {
+  const riskSignals: string[] = []
+  const positiveSignals: string[] = []
+
+  const lifecycleStage = company.properties.lifecyclestage?.toLowerCase() || ""
+  const leadStatus = company.properties.hs_lead_status?.toLowerCase() || ""
+  const lastModified = company.properties.hs_lastmodifieddate
+  const notesLastUpdated = company.properties.notes_last_updated
+
+  // Lifecycle stage signals
+  if (lifecycleStage === "customer") {
+    positiveSignals.push("Active customer")
+  } else if (lifecycleStage === "opportunity") {
+    positiveSignals.push("Opportunity")
+  } else if (lifecycleStage === "evangelist") {
+    positiveSignals.push("Evangelist")
+  } else if (lifecycleStage === "lead" || lifecycleStage === "marketingqualifiedlead") {
+    positiveSignals.push("Lead")
+  }
+
+  // Lead status signals
+  if (leadStatus.includes("unqualified") || leadStatus.includes("bad")) {
+    riskSignals.push("Unqualified")
+  } else if (leadStatus.includes("connected") || leadStatus.includes("qualified")) {
+    positiveSignals.push("Qualified")
+  }
+
+  // Activity recency signals
+  const daysSinceUpdate = lastModified
+    ? Math.floor((Date.now() - new Date(lastModified).getTime()) / (1000 * 60 * 60 * 24))
+    : null
+
+  if (daysSinceUpdate !== null) {
+    if (daysSinceUpdate > 180) {
+      riskSignals.push("Inactive 6+ months")
+    } else if (daysSinceUpdate > 90) {
+      riskSignals.push("Inactive 3+ months")
+    } else if (daysSinceUpdate <= 30) {
+      positiveSignals.push("Recent activity")
+    }
+  }
+
+  // Notes activity
+  if (notesLastUpdated) {
+    const daysSinceNotes = Math.floor((Date.now() - new Date(notesLastUpdated).getTime()) / (1000 * 60 * 60 * 24))
+    if (daysSinceNotes <= 14) {
+      positiveSignals.push("Recent notes")
+    }
+  }
+
+  // Calculate health score
+  let healthScore: "green" | "yellow" | "red" | "unknown" = "unknown"
+
+  if (riskSignals.some((r) => r.includes("6+ months"))) {
+    healthScore = "red"
+  } else if (riskSignals.length >= 2) {
+    healthScore = "red"
+  } else if (riskSignals.length === 1 && positiveSignals.length < 2) {
+    healthScore = "yellow"
+  } else if (positiveSignals.length >= 2) {
+    healthScore = "green"
+  } else if (positiveSignals.length === 1 && riskSignals.length === 0) {
+    healthScore = "green"
+  } else if (lifecycleStage === "customer" && riskSignals.length === 0) {
+    healthScore = "green"
+  } else if (riskSignals.length === 0 && positiveSignals.length === 0) {
+    healthScore = "unknown"
+  } else {
+    healthScore = "yellow"
+  }
+
+  return {
+    companyId: company.id,
+    companyName: company.properties.name || "Unknown",
+    domain: company.properties.domain || null,
+    healthScore,
+    mrr: null,
+    plan: lifecycleStage || null,
+    paymentStatus: lifecycleStage === "customer" ? "current" : "unknown",
+    lastActivity: notesLastUpdated || lastModified || null,
+    contactCount: 0,
+    riskSignals,
+    positiveSignals,
+    customerSince: company.properties.createdate || null,
   }
 }
 
@@ -155,6 +223,55 @@ async function gatherCompanyHealth(company: HubSpotCompany): Promise<CompanyHeal
   let mrr: number | null = null
   let paymentStatus: "current" | "overdue" | "at_risk" | "unknown" = "unknown"
 
+  // --- HubSpot-based signals ---
+  const lifecycleStage = company.properties.lifecyclestage?.toLowerCase() || ""
+  const leadStatus = company.properties.hs_lead_status?.toLowerCase() || ""
+  const lastModified = company.properties.hs_lastmodifieddate
+  const notesLastUpdated = company.properties.notes_last_updated
+
+  // Lifecycle stage signals
+  if (lifecycleStage === "customer") {
+    positiveSignals.push("Active customer")
+    paymentStatus = "current"
+  } else if (lifecycleStage === "opportunity") {
+    positiveSignals.push("Opportunity stage")
+  } else if (lifecycleStage === "evangelist") {
+    positiveSignals.push("Evangelist")
+  }
+
+  // Lead status risk signals
+  if (leadStatus.includes("unqualified") || leadStatus.includes("bad")) {
+    riskSignals.push("Unqualified lead status")
+  } else if (leadStatus.includes("open") || leadStatus.includes("new") || leadStatus.includes("attempt")) {
+    // Neutral - no signal
+  } else if (leadStatus.includes("connected") || leadStatus.includes("qualified")) {
+    positiveSignals.push("Qualified status")
+  }
+
+  // Activity recency signals
+  const daysSinceUpdate = lastModified
+    ? Math.floor((Date.now() - new Date(lastModified).getTime()) / (1000 * 60 * 60 * 24))
+    : null
+
+  if (daysSinceUpdate !== null) {
+    if (daysSinceUpdate > 180) {
+      riskSignals.push("No activity in 6+ months")
+    } else if (daysSinceUpdate > 90) {
+      riskSignals.push("No activity in 3+ months")
+    } else if (daysSinceUpdate <= 30) {
+      positiveSignals.push("Recent activity")
+    }
+  }
+
+  // Notes activity
+  if (notesLastUpdated) {
+    const daysSinceNotes = Math.floor((Date.now() - new Date(notesLastUpdated).getTime()) / (1000 * 60 * 60 * 24))
+    if (daysSinceNotes <= 14) {
+      positiveSignals.push("Recent notes")
+    }
+  }
+
+  // --- Stripe-based signals ---
   if (subscriptions.length > 0) {
     const activeSub = subscriptions.find((s) => s.status === "active")
     if (activeSub) {
@@ -202,23 +319,42 @@ async function gatherCompanyHealth(company: HubSpotCompany): Promise<CompanyHeal
   // Contact signals
   if (contacts.length === 0) {
     riskSignals.push("No contacts on file")
-  } else if (contacts.length >= 2) {
+  } else if (contacts.length >= 3) {
     positiveSignals.push(`${contacts.length} contacts`)
+  } else if (contacts.length >= 1) {
+    positiveSignals.push("Has contacts")
   }
 
-  // Calculate health score
+  // --- Calculate health score ---
   let healthScore: "green" | "yellow" | "red" | "unknown" = "unknown"
 
-  if (riskSignals.some((r) => r.includes("past due") || r.includes("delinquent") || r.includes("Cancellation"))) {
+  // Critical risk signals = red
+  if (riskSignals.some((r) =>
+    r.includes("past due") ||
+    r.includes("delinquent") ||
+    r.includes("Cancellation") ||
+    r.includes("6+ months")
+  )) {
     healthScore = "red"
   } else if (riskSignals.length >= 2) {
     healthScore = "red"
-  } else if (riskSignals.length > 0) {
+  } else if (riskSignals.length === 1 && positiveSignals.length < 2) {
+    // One risk signal and not many positives = yellow
     healthScore = "yellow"
   } else if (positiveSignals.length >= 2) {
+    // Multiple positive signals = green
     healthScore = "green"
-  } else if (stripeCustomer) {
+  } else if (positiveSignals.length === 1 && riskSignals.length === 0) {
+    // One positive, no negatives = green
     healthScore = "green"
+  } else if (lifecycleStage === "customer" && riskSignals.length === 0) {
+    // Customer with no risk = green
+    healthScore = "green"
+  } else if (riskSignals.length === 0) {
+    // No signals either way = unknown (needs attention)
+    healthScore = "unknown"
+  } else {
+    healthScore = "yellow"
   }
 
   return {
@@ -229,7 +365,7 @@ async function gatherCompanyHealth(company: HubSpotCompany): Promise<CompanyHeal
     mrr,
     plan,
     paymentStatus,
-    lastActivity: company.properties.notes_last_updated || null,
+    lastActivity: company.properties.notes_last_updated || company.properties.hs_lastmodifieddate || null,
     contactCount: contacts.length,
     riskSignals,
     positiveSignals,

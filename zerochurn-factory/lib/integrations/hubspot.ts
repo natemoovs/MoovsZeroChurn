@@ -343,20 +343,37 @@ export async function getRecentActivity(companyId: string): Promise<HubSpotActiv
 }
 
 /**
- * List all companies (paginated)
+ * List all companies with full pagination
  */
-export async function listCompanies(limit = 100): Promise<HubSpotCompany[]> {
+export async function listCompanies(maxResults = 2000): Promise<HubSpotCompany[]> {
   const properties = [
     "name", "domain", "industry", "numberofemployees", "annualrevenue",
     "city", "state", "country", "phone", "website", "description",
     "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated"
   ].join(",")
 
-  const result = await hubspotFetch<{ results: HubSpotCompany[] }>(
-    `/crm/v3/objects/companies?limit=${limit}&properties=${properties}`
-  )
+  const allCompanies: HubSpotCompany[] = []
+  let after: string | undefined
 
-  return result.results
+  while (allCompanies.length < maxResults) {
+    const url = after
+      ? `/crm/v3/objects/companies?limit=100&properties=${properties}&after=${after}`
+      : `/crm/v3/objects/companies?limit=100&properties=${properties}`
+
+    const result = await hubspotFetch<{
+      results: HubSpotCompany[]
+      paging?: { next?: { after: string } }
+    }>(url)
+
+    allCompanies.push(...result.results)
+
+    if (!result.paging?.next?.after) {
+      break // No more pages
+    }
+    after = result.paging.next.after
+  }
+
+  return allCompanies.slice(0, maxResults)
 }
 
 /**
@@ -365,7 +382,7 @@ export async function listCompanies(limit = 100): Promise<HubSpotCompany[]> {
 export async function searchCompanies(query: string): Promise<HubSpotCompany[]> {
   // If query is "*" or empty, list all companies instead
   if (!query || query === "*") {
-    return listCompanies(100)
+    return listCompanies(2000)
   }
 
   const result = await hubspotFetch<HubSpotSearchResult>(
