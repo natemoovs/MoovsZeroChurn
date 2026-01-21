@@ -1,6 +1,66 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 
+// Playbook action type
+interface PlaybookAction {
+  type: "create_task"
+  title: string
+  description?: string
+  priority: "low" | "medium" | "high" | "urgent"
+  dueInDays?: number
+}
+
+/**
+ * Execute playbooks based on triggers
+ */
+async function executePlaybooks(
+  trigger: string,
+  context: { companyId: string; companyName: string; mrr: number | null }
+) {
+  try {
+    // Find active playbooks matching this trigger
+    const playbooks = await prisma.playbook.findMany({
+      where: {
+        trigger,
+        isActive: true,
+      },
+    })
+
+    for (const playbook of playbooks) {
+      const actions = playbook.actions as PlaybookAction[]
+
+      for (const action of actions) {
+        if (action.type === "create_task") {
+          // Calculate due date
+          const dueDate = action.dueInDays
+            ? new Date(Date.now() + action.dueInDays * 24 * 60 * 60 * 1000)
+            : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // Default 3 days
+
+          await prisma.task.create({
+            data: {
+              companyId: context.companyId,
+              companyName: context.companyName,
+              title: action.title.replace("{companyName}", context.companyName),
+              description: action.description?.replace("{companyName}", context.companyName),
+              priority: action.priority || "medium",
+              status: "pending",
+              dueDate,
+              playbookId: playbook.id,
+              metadata: {
+                trigger,
+                mrr: context.mrr,
+                createdBy: "playbook",
+              },
+            },
+          })
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Playbook execution error:", error)
+  }
+}
+
 interface PortfolioSummary {
   companyId: string
   companyName: string
@@ -99,11 +159,57 @@ export async function POST(request: NextRequest) {
       return scoreOrder[c.to as keyof typeof scoreOrder] < scoreOrder[c.from as keyof typeof scoreOrder]
     })
 
+    // Execute playbooks for health changes
+    let tasksCreated = 0
+    for (const downgrade of downgrades) {
+      const context = {
+        companyId: downgrade.companyId,
+        companyName: downgrade.companyName,
+        mrr: downgrade.mrr,
+      }
+
+      // Trigger appropriate playbook based on new health score
+      if (downgrade.to === "red") {
+        await executePlaybooks("health_drops_to_red", context)
+        tasksCreated++
+      } else if (downgrade.to === "yellow") {
+        await executePlaybooks("health_drops_to_yellow", context)
+        tasksCreated++
+      }
+    }
+
+    // Also check for inactivity triggers
+    for (const summary of summaries) {
+      if (summary.daysSinceLastLogin && summary.daysSinceLastLogin >= 60) {
+        await executePlaybooks("inactive_60_days", {
+          companyId: summary.companyId,
+          companyName: summary.companyName,
+          mrr: summary.mrr,
+        })
+      } else if (summary.daysSinceLastLogin && summary.daysSinceLastLogin >= 30) {
+        await executePlaybooks("inactive_30_days", {
+          companyId: summary.companyId,
+          companyName: summary.companyName,
+          mrr: summary.mrr,
+        })
+      }
+
+      // Low usage trigger
+      if (summary.totalTrips !== undefined && summary.totalTrips < 5) {
+        await executePlaybooks("low_usage", {
+          companyId: summary.companyId,
+          companyName: summary.companyName,
+          mrr: summary.mrr,
+        })
+      }
+    }
+
     return NextResponse.json({
       success: true,
       snapshotsCreated: result.count,
       changesDetected: changes.length,
       downgradesCount: downgrades.length,
+      playbookTasksCreated: tasksCreated,
       changes,
       downgrades,
     })
@@ -228,11 +334,30 @@ async function triggerSnapshot() {
       return scoreOrder[c.to as keyof typeof scoreOrder] < scoreOrder[c.from as keyof typeof scoreOrder]
     })
 
+    // Execute playbooks for health changes (same logic as POST)
+    let tasksCreated = 0
+    for (const downgrade of downgrades) {
+      const context = {
+        companyId: downgrade.companyId,
+        companyName: downgrade.companyName,
+        mrr: downgrade.mrr,
+      }
+
+      if (downgrade.to === "red") {
+        await executePlaybooks("health_drops_to_red", context)
+        tasksCreated++
+      } else if (downgrade.to === "yellow") {
+        await executePlaybooks("health_drops_to_yellow", context)
+        tasksCreated++
+      }
+    }
+
     return NextResponse.json({
       success: true,
       snapshotsCreated: result.count,
       changesDetected: changes.length,
       downgradesCount: downgrades.length,
+      playbookTasksCreated: tasksCreated,
       changes,
       downgrades,
     })

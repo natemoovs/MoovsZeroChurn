@@ -25,8 +25,8 @@ interface CSM {
 }
 
 const CSM_ASSIGNMENTS: CSM[] = [
-  { name: "Nate", email: "nate@moovs.com", segments: ["enterprise"] },
-  { name: "Andrea", email: "andrea@moovs.com", segments: ["smb", "mid-market", "smb/mid-market"] },
+  { name: "Nate", email: "nate@moovs.com", segments: ["vip"] },
+  { name: "Andrea", email: "andrea@moovs.com", segments: ["pro", "standard"] },
 ]
 
 function assignCSM(segment: string | null): CSM | null {
