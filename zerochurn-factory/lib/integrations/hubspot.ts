@@ -394,9 +394,9 @@ export async function listCustomers(): Promise<HubSpotCompany[]> {
     }
     after = result.paging.next.after
 
-    // Rate limit: HubSpot allows 100 requests per 10 seconds
-    // Add 150ms delay between pages to stay under limit
-    await delay(150)
+    // Rate limit: HubSpot Search API allows only 5 requests per second
+    // Add 250ms delay between pages to stay safely under limit
+    await delay(250)
   }
 
   return allCustomers
