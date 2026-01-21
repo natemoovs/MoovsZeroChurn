@@ -24,25 +24,34 @@ interface CSM {
   segments: string[]
 }
 
+// CSM Assignments based on customer segment
+// Nate handles Enterprise accounts ($500+ MRR)
+// Andrea handles Mid-Market and SMB accounts
 const CSM_ASSIGNMENTS: CSM[] = [
-  { name: "Nate", email: "nate@moovs.com", segments: ["vip"] },
-  { name: "Andrea", email: "andrea@moovs.com", segments: ["pro", "standard"] },
+  { name: "Nate", email: "nate@moovs.com", segments: ["enterprise"] },
+  { name: "Andrea", email: "andrea@moovs.com", segments: ["mid-market", "smb"] },
 ]
 
-function assignCSM(segment: string | null): CSM | null {
-  if (!segment) return null
-  const normalized = segment.toLowerCase()
+function assignCSM(segment: string | null, mrr: number | null): CSM | null {
+  // Free accounts (no MRR) have no dedicated CSM
+  if (!mrr || mrr <= 0) return null
 
-  // Free accounts have no CSM
-  if (normalized.includes("free")) return null
+  const normalized = segment?.toLowerCase() || ""
 
+  // First try to match by segment name
   for (const csm of CSM_ASSIGNMENTS) {
     if (csm.segments.some(s => normalized.includes(s))) {
       return csm
     }
   }
 
-  // Default: if paying but segment unclear, assign to Andrea
+  // Fallback: assign by MRR threshold if segment not set
+  // Enterprise: $500+ MRR, everyone else to Andrea
+  if (mrr >= 500) {
+    return CSM_ASSIGNMENTS[0] // Nate
+  }
+
+  // Default: Mid-Market and SMB go to Andrea
   return CSM_ASSIGNMENTS[1]
 }
 
@@ -77,15 +86,19 @@ export default function TeamPage() {
   // Group accounts by CSM
   const accountsByCSM = new Map<string, Account[]>()
   const unassigned: Account[] = []
+  const freeAccounts: Account[] = []
 
   for (const account of accounts) {
-    const csm = assignCSM(account.customerSegment)
+    const csm = assignCSM(account.customerSegment, account.mrr)
     if (csm) {
       const existing = accountsByCSM.get(csm.name) || []
       existing.push(account)
       accountsByCSM.set(csm.name, existing)
-    } else if (!account.customerSegment?.toLowerCase().includes("free")) {
-      // Only add to unassigned if not free
+    } else if (!account.mrr || account.mrr <= 0) {
+      // Free accounts (no CSM assigned)
+      freeAccounts.push(account)
+    } else {
+      // Paying accounts without proper assignment
       unassigned.push(account)
     }
   }
@@ -144,7 +157,7 @@ export default function TeamPage() {
                     <div>
                       <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{csm.name}</h2>
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {csm.segments.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(", ")}
+                        {csm.name === "Nate" ? "Enterprise ($500+ MRR)" : "Mid-Market & SMB"}
                       </p>
                     </div>
                   </div>
@@ -231,14 +244,26 @@ export default function TeamPage() {
           })}
         </div>
 
-        {/* Unassigned (if any non-free accounts without segment) */}
-        {unassigned.length > 0 && (
+        {/* Free Accounts (no CSM assigned) */}
+        {freeAccounts.length > 0 && (
           <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <h3 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
-              Unassigned ({unassigned.length})
+              Free Accounts ({freeAccounts.length})
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              These accounts need segment classification in Metabase.
+              Accounts with no MRR. No dedicated CSM assigned.
+            </p>
+          </div>
+        )}
+
+        {/* Unassigned (if any paying accounts without proper assignment) */}
+        {unassigned.length > 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+            <h3 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+              Needs Assignment ({unassigned.length})
+            </h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              These paying accounts need CSM assignment review.
             </p>
           </div>
         )}
