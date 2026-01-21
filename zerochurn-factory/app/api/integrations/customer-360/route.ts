@@ -310,7 +310,7 @@ async function fetchBillingData(
     const lastSuccessful = charges.find((c) => c.status === "succeeded")
 
     // Determine status
-    let status: Customer360["billing"]["status"] = "unknown"
+    let status: "healthy" | "at_risk" | "failed" | "unknown" = "unknown"
     if (hasFailedPayments) {
       status = "failed"
     } else if (subscriptions.some((s) => s.status === "past_due" || s.cancel_at_period_end)) {
