@@ -179,7 +179,41 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const tweaksSection = tweaks ? `\n\n## Additional Instructions\n${tweaks}` : ""
 
-    const prompt = `You are helping generate content for a business tool called Success Factory.
+    // For batch/portfolio skills, prioritize live data over knowledge base
+    // The knowledge base contains templates/guides, but we want ACTUAL account data
+    const isBatchSkill = skill.data?.batch === true
+
+    let prompt: string
+    if (isBatchSkill && integrationContext) {
+      // Portfolio/batch skill - focus on the actual data
+      prompt = `You are a Customer Success Manager reviewing your portfolio of accounts.
+
+## CRITICAL INSTRUCTIONS
+You are generating a REAL portfolio review using ACTUAL customer data provided below.
+- Every company name, MRR value, health score, and signal MUST come from the "Live Account Data" section
+- Do NOT use placeholder text like "[Company 1]" or "[Count from data]" - use the REAL data
+- Do NOT generate hypothetical or example accounts - only use accounts from the data
+- If there are no accounts for a category (e.g., no red accounts), say so explicitly
+
+## Live Account Data
+${integrationContext}
+
+## User Responses
+${answersText}
+
+## Output Template
+${skill.template}${tweaksSection}
+
+Generate the portfolio review using ONLY the real account data above.
+- Replace all placeholders with actual values from the data
+- List real companies by name with their actual health scores and MRR
+- Provide specific, actionable recommendations based on the actual risk signals for each account
+- If the portfolio data shows 0 accounts or limited data, acknowledge this in the output
+
+Output only the completed markdown content with real data filled in.`
+    } else {
+      // Regular skill - use knowledge base for context
+      prompt = `You are helping generate content for a business tool called Success Factory.
 
 ${knowledgeBase ? `## Knowledge Base\n${knowledgeBase}\n\n` : ""}${integrationContext ? `## Live Data from Integrations\n${integrationContext}\n\n` : ""}## User Responses
 ${answersText}
@@ -190,6 +224,7 @@ ${skill.template}${tweaksSection}
 Based on the user's responses and any live data provided above, generate content following the template format. Replace all {{placeholders}} with appropriate content derived from the user's answers and integration data. Make the output practical, specific, and actionable.
 
 Output only the generated markdown content, nothing else.`
+    }
 
     let anthropic
     try {
