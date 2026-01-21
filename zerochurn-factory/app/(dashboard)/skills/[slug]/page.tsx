@@ -1,0 +1,370 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { DashboardLayout } from "@/components/dashboard-layout"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Progress } from "@/components/ui/progress"
+import { CompanySelect } from "@/components/company-select"
+import { getSkill, type Skill } from "@/lib/skills"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Sparkles,
+  Check,
+  Loader2,
+  Copy,
+  Download,
+  ThumbsUp,
+  ThumbsDown,
+  RotateCcw,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+
+function isCompanyQuestion(id: string, question: string): boolean {
+  const idPatterns = ["customer", "company", "account", "client"]
+  const questionPatterns = ["company", "customer", "account", "domain", "client name"]
+  const idLower = id.toLowerCase()
+  const questionLower = question.toLowerCase()
+  return (
+    idPatterns.some((p) => idLower.includes(p)) ||
+    questionPatterns.some((p) => questionLower.includes(p))
+  )
+}
+
+export default function SkillPage() {
+  const params = useParams()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [skill, setSkill] = useState<Skill | null>(null)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    const s = getSkill(params.slug as string)
+    setSkill(s)
+
+    // Pre-fill from URL params
+    const customer = searchParams.get("customer")
+    if (customer && s) {
+      setAnswers((prev) => ({ ...prev, customer }))
+    }
+  }, [params.slug, searchParams])
+
+  if (!skill) {
+    return (
+      <DashboardLayout>
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  const totalSteps = skill.questions.length
+  const isLastStep = currentStep === totalSteps - 1
+  const currentQuestion = skill.questions[currentStep]
+  const progress = result ? 100 : ((currentStep + 1) / totalSteps) * 100
+  const currentAnswer = answers[currentQuestion?.id] || ""
+  const hasLongExamples = currentQuestion?.examples && currentQuestion.examples.some((e) => e.length > 50)
+
+  const handleAnswer = (value: string) => {
+    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }))
+  }
+
+  const handleNext = () => {
+    if (isLastStep) {
+      handleGenerate()
+    } else {
+      setCurrentStep((prev) => prev + 1)
+    }
+  }
+
+  const handleBack = () => {
+    setCurrentStep((prev) => Math.max(0, prev - 1))
+  }
+
+  const handleGenerate = async () => {
+    setIsGenerating(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/skill/${skill.slug}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Something went wrong")
+      } else {
+        setResult(data.result)
+      }
+    } catch {
+      setError("Failed to connect. Please try again.")
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const handleCopy = async () => {
+    if (result) {
+      await navigator.clipboard.writeText(result)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleDownload = () => {
+    if (result) {
+      const blob = new Blob([result], { type: "text/markdown" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `${skill.slug}-${new Date().toISOString().split("T")[0]}.md`
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  }
+
+  const handleReset = () => {
+    setResult(null)
+    setCurrentStep(0)
+    setAnswers({})
+    setFeedback(null)
+    setError(null)
+  }
+
+  // Result View
+  if (result) {
+    return (
+      <DashboardLayout>
+        <div className="mx-auto max-w-4xl space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Link
+                href="/skills"
+                className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Skills
+              </Link>
+              <h1 className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                {skill.name}
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleReset}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Start Over
+              </Button>
+            </div>
+          </div>
+
+          {/* Result Card */}
+          <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            {/* Actions Bar */}
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
+                  <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  Generated successfully
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFeedback("up")}
+                  className={cn(feedback === "up" && "bg-emerald-50 dark:bg-emerald-950")}
+                >
+                  <ThumbsUp className={cn("h-4 w-4", feedback === "up" && "text-emerald-600")} />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFeedback("down")}
+                  className={cn(feedback === "down" && "bg-red-50 dark:bg-red-950")}
+                >
+                  <ThumbsDown className={cn("h-4 w-4", feedback === "down" && "text-red-600")} />
+                </Button>
+                <div className="mx-2 h-6 w-px bg-zinc-200 dark:bg-zinc-700" />
+                <Button variant="outline" size="sm" onClick={handleCopy}>
+                  {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                  {copied ? "Copied!" : "Copy"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleDownload}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </Button>
+              </div>
+            </div>
+
+            {/* Result Content */}
+            <div className="p-6">
+              <div className="prose prose-zinc dark:prose-invert max-w-none">
+                <pre className="whitespace-pre-wrap rounded-lg bg-zinc-50 p-4 text-sm dark:bg-zinc-800/50">
+                  {result}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  // Wizard View
+  return (
+    <DashboardLayout>
+      <div className="mx-auto max-w-2xl space-y-6">
+        {/* Header */}
+        <div>
+          <Link
+            href="/skills"
+            className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Skills
+          </Link>
+          <h1 className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            {skill.name}
+          </h1>
+          <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            {skill.description}
+          </p>
+        </div>
+
+        {/* Progress */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-zinc-500 dark:text-zinc-400">
+              Step {currentStep + 1} of {totalSteps}
+            </span>
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              {Math.round(progress)}%
+            </span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+
+        {/* Question Card */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          {/* Steps indicator */}
+          <div className="mb-6 flex items-center justify-center gap-2">
+            {skill.questions.map((_, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "h-2 w-2 rounded-full transition-all",
+                  index === currentStep
+                    ? "w-6 bg-emerald-500"
+                    : index < currentStep
+                    ? "bg-emerald-500"
+                    : "bg-zinc-200 dark:bg-zinc-700"
+                )}
+              />
+            ))}
+          </div>
+
+          {/* Question */}
+          <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+            {currentQuestion.question}
+          </h2>
+
+          {/* Examples */}
+          {currentQuestion.examples && currentQuestion.examples.length > 0 && (
+            <div className="mb-4 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
+              <p className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                Examples:
+              </p>
+              <ul className="space-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                {currentQuestion.examples.map((example, i) => (
+                  <li key={i}>• {example}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Input */}
+          {hasLongExamples ? (
+            <Textarea
+              value={currentAnswer}
+              onChange={(e) => handleAnswer(e.target.value)}
+              placeholder="Your answer..."
+              className="min-h-[120px]"
+            />
+          ) : isCompanyQuestion(currentQuestion.id, currentQuestion.question) ? (
+            <CompanySelect
+              value={currentAnswer}
+              onChange={handleAnswer}
+              placeholder="Search or type company name..."
+            />
+          ) : (
+            <Input
+              value={currentAnswer}
+              onChange={(e) => handleAnswer(e.target.value)}
+              placeholder="Your answer..."
+              className="h-12"
+            />
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-400">
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={currentStep === 0}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+
+          <Button
+            onClick={handleNext}
+            disabled={!currentAnswer.trim() || isGenerating}
+            className="min-w-[140px]"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : isLastStep ? (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate
+              </>
+            ) : (
+              <>
+                Next
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </DashboardLayout>
+  )
+}

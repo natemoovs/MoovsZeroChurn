@@ -38,6 +38,7 @@ export interface SkillDataRequirements {
   notion?: {
     databases?: string[]   // database IDs to query
   }
+  batch?: boolean          // if true, fetch all companies in segment (portfolio view)
 }
 
 export interface GatheredContext {
@@ -71,14 +72,31 @@ export async function gatherContext(
 ): Promise<string> {
   const context: GatheredContext = { errors: [] }
 
-  // Gather HubSpot data
+  // Gather HubSpot data first (we may need contact emails for Stripe)
   if (requirements.hubspot) {
     context.hubspot = await gatherHubSpotContext(requirements.hubspot, formData, context.errors)
   }
 
-  // Gather Stripe data
+  // Gather Stripe data - use HubSpot contact emails if no email in form data
   if (requirements.stripe) {
-    context.stripe = await gatherStripeContext(requirements.stripe, formData, context.errors)
+    // Try to get email from form data first, then fall back to HubSpot contacts
+    let emailForStripe = extractEmail(formData)
+
+    if (!emailForStripe && context.hubspot?.contacts?.length) {
+      // Use the first contact's email from HubSpot
+      for (const contact of context.hubspot.contacts) {
+        if (contact.properties.email) {
+          emailForStripe = contact.properties.email
+          break
+        }
+      }
+    }
+
+    context.stripe = await gatherStripeContext(
+      requirements.stripe,
+      emailForStripe ? { ...formData, _derivedEmail: emailForStripe } : formData,
+      context.errors
+    )
   }
 
   // Gather Notion data
@@ -447,6 +465,11 @@ function extractCompanyIdentifier(formData: Record<string, string>): string | nu
  * Extract email from form data
  */
 function extractEmail(formData: Record<string, string>): string | null {
+  // Check for derived email first (from HubSpot contacts)
+  if (formData._derivedEmail) {
+    return formData._derivedEmail
+  }
+
   const fields = ["email", "customerEmail", "contactEmail"]
   for (const field of fields) {
     const value = formData[field]
@@ -525,6 +548,241 @@ function truncate(str: string, maxLength: number): string {
 }
 
 // ============================================================================
+// Batch Context Gathering (for portfolio views)
+// ============================================================================
+
+export interface CompanyHealthSummary {
+  companyId: string
+  companyName: string
+  domain: string | null
+  healthScore: "green" | "yellow" | "red" | "unknown"
+  mrr: number | null
+  plan: string | null
+  paymentStatus: "current" | "overdue" | "at_risk" | "unknown"
+  lastActivity: string | null
+  contactCount: number
+  riskSignals: string[]
+  positiveSignals: string[]
+}
+
+/**
+ * Gather health summaries for multiple companies
+ * Used for portfolio/segment views
+ */
+export async function gatherBatchContext(
+  companyIds: string[]
+): Promise<CompanyHealthSummary[]> {
+  const summaries: CompanyHealthSummary[] = []
+
+  for (const companyId of companyIds) {
+    try {
+      const company = await hubspot.getCompany(companyId)
+      if (!company) continue
+
+      // Get contacts for this company
+      let contacts: HubSpotContact[] = []
+      try {
+        contacts = await hubspot.getContacts(companyId)
+      } catch {
+        // Continue without contacts
+      }
+
+      // Try to get Stripe data using contact email
+      let stripeCustomer: StripeCustomer | null = null
+      let subscriptions: StripeSubscription[] = []
+      let invoices: StripeInvoice[] = []
+
+      const contactEmail = contacts.find((c) => c.properties.email)?.properties.email
+      if (contactEmail) {
+        try {
+          stripeCustomer = await stripe.getCustomerByEmail(contactEmail)
+          if (stripeCustomer) {
+            subscriptions = await stripe.getSubscriptions(stripeCustomer.id)
+            invoices = await stripe.getInvoices(stripeCustomer.id, { limit: 5 })
+          }
+        } catch {
+          // Continue without Stripe data
+        }
+      }
+
+      // Calculate health metrics
+      const summary = calculateHealthSummary(company, contacts, stripeCustomer, subscriptions, invoices)
+      summaries.push(summary)
+    } catch (error) {
+      console.error(`Error gathering context for company ${companyId}:`, error)
+    }
+  }
+
+  return summaries
+}
+
+/**
+ * Calculate health summary for a single company
+ */
+function calculateHealthSummary(
+  company: HubSpotCompany,
+  contacts: HubSpotContact[],
+  stripeCustomer: StripeCustomer | null,
+  subscriptions: StripeSubscription[],
+  invoices: StripeInvoice[]
+): CompanyHealthSummary {
+  const riskSignals: string[] = []
+  const positiveSignals: string[] = []
+
+  // Determine plan and MRR from Stripe
+  let plan: string | null = null
+  let mrr: number | null = null
+  let paymentStatus: "current" | "overdue" | "at_risk" | "unknown" = "unknown"
+
+  if (subscriptions.length > 0) {
+    const activeSub = subscriptions.find((s) => s.status === "active")
+    if (activeSub) {
+      plan = activeSub.items.data[0]?.price?.nickname || "Active Plan"
+      mrr = activeSub.items.data.reduce((sum, item) => {
+        const amount = item.price?.unit_amount || 0
+        const interval = item.price?.recurring?.interval
+        // Normalize to monthly
+        if (interval === "year") return sum + amount / 12
+        return sum + amount
+      }, 0) / 100
+
+      positiveSignals.push("Active subscription")
+    }
+
+    // Check for cancellation pending
+    if (subscriptions.some((s) => s.cancel_at_period_end)) {
+      riskSignals.push("Cancellation pending at period end")
+    }
+
+    // Check subscription status
+    if (subscriptions.some((s) => s.status === "past_due")) {
+      riskSignals.push("Subscription past due")
+      paymentStatus = "overdue"
+    } else if (subscriptions.some((s) => s.status === "active")) {
+      paymentStatus = "current"
+    }
+  }
+
+  // Check invoice payment history
+  if (invoices.length > 0) {
+    const failedInvoices = invoices.filter((i) => i.status === "uncollectible" || i.status === "open")
+    if (failedInvoices.length >= 2) {
+      riskSignals.push(`${failedInvoices.length} unpaid invoices`)
+      paymentStatus = "at_risk"
+    } else if (failedInvoices.length === 1) {
+      riskSignals.push("1 pending invoice")
+    }
+
+    const recentPaid = invoices.filter((i) => i.status === "paid").slice(0, 3)
+    if (recentPaid.length >= 3) {
+      positiveSignals.push("Consistent payment history")
+    }
+  }
+
+  // Check Stripe customer status
+  if (stripeCustomer?.delinquent) {
+    riskSignals.push("Customer marked delinquent")
+    paymentStatus = "overdue"
+  }
+
+  // Contact signals
+  if (contacts.length === 0) {
+    riskSignals.push("No contacts on file")
+  } else if (contacts.length >= 2) {
+    positiveSignals.push(`${contacts.length} contacts engaged`)
+  }
+
+  // Calculate overall health score
+  let healthScore: "green" | "yellow" | "red" | "unknown" = "unknown"
+
+  if (riskSignals.length === 0 && positiveSignals.length >= 2) {
+    healthScore = "green"
+  } else if (riskSignals.length >= 2 || riskSignals.some((r) => r.includes("past due") || r.includes("delinquent") || r.includes("Cancellation"))) {
+    healthScore = "red"
+  } else if (riskSignals.length > 0 || positiveSignals.length < 2) {
+    healthScore = "yellow"
+  } else if (stripeCustomer) {
+    healthScore = "green"
+  }
+
+  return {
+    companyId: company.id,
+    companyName: company.properties.name || "Unknown",
+    domain: company.properties.domain || null,
+    healthScore,
+    mrr,
+    plan,
+    paymentStatus,
+    lastActivity: company.properties.notes_last_updated || company.properties.createdate || null,
+    contactCount: contacts.length,
+    riskSignals,
+    positiveSignals,
+  }
+}
+
+/**
+ * Format batch summaries as markdown table
+ */
+export function formatBatchContextAsMarkdown(summaries: CompanyHealthSummary[]): string {
+  if (summaries.length === 0) {
+    return "No companies found for this segment."
+  }
+
+  const lines: string[] = []
+
+  // Summary stats
+  const green = summaries.filter((s) => s.healthScore === "green").length
+  const yellow = summaries.filter((s) => s.healthScore === "yellow").length
+  const red = summaries.filter((s) => s.healthScore === "red").length
+  const totalMrr = summaries.reduce((sum, s) => sum + (s.mrr || 0), 0)
+
+  lines.push("## Portfolio Summary")
+  lines.push("")
+  lines.push(`| Metric | Value |`)
+  lines.push(`|--------|-------|`)
+  lines.push(`| **Total Accounts** | ${summaries.length} |`)
+  lines.push(`| **Healthy (Green)** | ${green} |`)
+  lines.push(`| **Monitor (Yellow)** | ${yellow} |`)
+  lines.push(`| **At Risk (Red)** | ${red} |`)
+  lines.push(`| **Total MRR** | $${totalMrr.toLocaleString()} |`)
+  lines.push("")
+
+  // Detailed table
+  lines.push("## Account Details")
+  lines.push("")
+  lines.push("| Company | Health | MRR | Plan | Payment | Risks |")
+  lines.push("|---------|--------|-----|------|---------|-------|")
+
+  for (const summary of summaries) {
+    const healthIcon = summary.healthScore === "green" ? "🟢" : summary.healthScore === "yellow" ? "🟡" : summary.healthScore === "red" ? "🔴" : "⚪"
+    const mrr = summary.mrr ? `$${summary.mrr.toLocaleString()}` : "—"
+    const risks = summary.riskSignals.length > 0 ? summary.riskSignals.slice(0, 2).join("; ") : "None"
+
+    lines.push(`| ${summary.companyName} | ${healthIcon} | ${mrr} | ${summary.plan || "—"} | ${summary.paymentStatus} | ${risks} |`)
+  }
+
+  // At-risk accounts detail
+  const atRisk = summaries.filter((s) => s.healthScore === "red")
+  if (atRisk.length > 0) {
+    lines.push("")
+    lines.push("## At-Risk Accounts (Action Required)")
+    lines.push("")
+    for (const account of atRisk) {
+      lines.push(`### ${account.companyName}`)
+      lines.push(`- **Health:** 🔴 Red`)
+      lines.push(`- **MRR:** ${account.mrr ? `$${account.mrr.toLocaleString()}` : "Unknown"}`)
+      lines.push(`- **Risk Signals:**`)
+      for (const risk of account.riskSignals) {
+        lines.push(`  - ${risk}`)
+      }
+      lines.push("")
+    }
+  }
+
+  return lines.join("\n")
+}
+
+// ============================================================================
 // Exports
 // ============================================================================
 
@@ -535,4 +793,5 @@ export {
   formatContextAsMarkdown,
   extractCompanyIdentifier,
   extractEmail,
+  calculateHealthSummary,
 }

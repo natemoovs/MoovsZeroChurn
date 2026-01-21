@@ -1,0 +1,217 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { DashboardLayout } from "@/components/dashboard-layout"
+import { Button } from "@/components/ui/button"
+import {
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Trash2,
+  RotateCcw,
+  ThumbsUp,
+  ThumbsDown,
+  Search,
+} from "lucide-react"
+import { getHistory, deleteHistoryItem, clearHistory, type HistoryItem } from "@/lib/history"
+import { cn } from "@/lib/utils"
+
+export default function HistoryPage() {
+  const [history, setHistory] = useState<HistoryItem[]>([])
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    setHistory(getHistory())
+  }, [])
+
+  const handleDelete = (id: string) => {
+    deleteHistoryItem(id)
+    setHistory(getHistory())
+  }
+
+  const handleClearAll = () => {
+    if (confirm("Clear all history? This cannot be undone.")) {
+      clearHistory()
+      setHistory([])
+    }
+  }
+
+  const handleCopy = async (result: string) => {
+    await navigator.clipboard.writeText(result)
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    if (days === 0) {
+      return "Today at " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    } else if (days === 1) {
+      return "Yesterday at " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    } else if (days < 7) {
+      return `${days} days ago`
+    } else {
+      return date.toLocaleDateString()
+    }
+  }
+
+  const filteredHistory = history.filter((item) => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      item.skillName.toLowerCase().includes(query) ||
+      item.result.toLowerCase().includes(query)
+    )
+  })
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              History
+            </h1>
+            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+              Your recent generations (stored locally)
+            </p>
+          </div>
+          {history.length > 0 && (
+            <Button variant="outline" onClick={handleClearAll}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear All
+            </Button>
+          )}
+        </div>
+
+        {/* Search */}
+        {history.length > 0 && (
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Search history..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-10 w-full rounded-lg border border-zinc-200 bg-white pl-10 pr-4 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-emerald-500"
+            />
+          </div>
+        )}
+
+        {/* History List */}
+        {filteredHistory.length === 0 ? (
+          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
+              <Clock className="h-6 w-6 text-zinc-400" />
+            </div>
+            <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+              {searchQuery ? "No matching results" : "No history yet"}
+            </h3>
+            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+              {searchQuery
+                ? "Try a different search term"
+                : "Generate something to see it here"}
+            </p>
+            {!searchQuery && (
+              <Link href="/skills">
+                <Button className="mt-4">Browse Skills</Button>
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredHistory.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                {/* Header */}
+                <div
+                  className="flex cursor-pointer items-center justify-between p-4"
+                  onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                      <Clock className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {item.skillName}
+                      </h3>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {formatDate(item.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {item.feedback && (
+                      <span className={cn(
+                        "rounded-full p-1",
+                        item.feedback === "up"
+                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
+                          : "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400"
+                      )}>
+                        {item.feedback === "up" ? (
+                          <ThumbsUp className="h-4 w-4" />
+                        ) : (
+                          <ThumbsDown className="h-4 w-4" />
+                        )}
+                      </span>
+                    )}
+                    {expandedId === item.id ? (
+                      <ChevronUp className="h-5 w-5 text-zinc-400" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-zinc-400" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Expanded Content */}
+                {expandedId === item.id && (
+                  <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+                    <div className="mb-4 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                      <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
+                        {item.result}
+                      </pre>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopy(item.result)}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy
+                      </Button>
+                      <Link href={`/skills/${item.skillSlug}`}>
+                        <Button variant="outline" size="sm">
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Run Again
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(item.id)}
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950 dark:hover:text-red-300"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  )
+}
