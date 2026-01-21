@@ -195,6 +195,14 @@ function calculateWeightedHealthScore(
   const positiveSignals: string[] = []
 
   // =========================================================================
+  // EARLY DETECTION: Is this account churned or severely inactive?
+  // This affects what positive signals we can add
+  // =========================================================================
+  const isChurned = mbData?.churnStatus?.toLowerCase().includes("churn") || false
+  const isInactive = mbData?.engagementStatus?.toLowerCase().includes("inactive") || false
+  const isSeverelyInactive = (mbData?.daysSinceLastActivity ?? 0) > 90
+
+  // =========================================================================
   // Payment Health Score (40% weight)
   // =========================================================================
   let paymentScore = 100 // Start at 100
@@ -227,16 +235,21 @@ function calculateWeightedHealthScore(
       riskSignals.push("Elevated risk scores")
     }
 
-    // Positive signals
-    if (stripeData.successRate >= 98 && stripeData.totalCharges >= 10) {
-      positiveSignals.push("Excellent payment history")
-    }
-    if (stripeData.totalCharged > 10000) {
-      positiveSignals.push("High payment volume")
+    // Positive signals (only if not churned)
+    if (!isChurned) {
+      if (stripeData.successRate >= 98 && stripeData.totalCharges >= 10) {
+        positiveSignals.push("Excellent payment history")
+      }
+      if (stripeData.totalCharged > 10000) {
+        positiveSignals.push("High payment volume")
+      }
     }
   } else if (mbData?.mrr && mbData.mrr > 0) {
-    // If we have MRR but no Stripe data, assume payment is okay
-    positiveSignals.push("Paying customer")
+    // If we have MRR but no Stripe data
+    // Don't say "Paying customer" if they're churned - that's contradictory
+    if (!isChurned && !isSeverelyInactive) {
+      positiveSignals.push("Paying customer")
+    }
   } else {
     // No payment data at all
     paymentScore = 50 // Neutral
@@ -266,7 +279,7 @@ function calculateWeightedHealthScore(
       } else if (mbData.daysSinceLastActivity > 30) {
         engagementScore -= 15
         riskSignals.push("Inactive 30+ days")
-      } else if (mbData.daysSinceLastActivity <= 7) {
+      } else if (mbData.daysSinceLastActivity <= 7 && !isChurned) {
         positiveSignals.push("Recent activity")
       }
     }
@@ -305,8 +318,8 @@ function calculateWeightedHealthScore(
           // Down 50%+ - MODERATE DECLINE
           engagementScore -= 15
           riskSignals.push("Declining usage")
-        } else if (recentVsHistorical >= 1.2) {
-          // Growing 20%+ - POSITIVE
+        } else if (recentVsHistorical >= 1.2 && !isChurned) {
+          // Growing 20%+ - POSITIVE (only if not churned)
           engagementScore += 10
           positiveSignals.push("Growing usage")
         }
@@ -317,12 +330,13 @@ function calculateWeightedHealthScore(
       }
     }
 
-    // Positive signals for active usage
-    if (mbData.tripsLast30Days > 10) {
+    // Positive signals for active usage (only if not churned/inactive)
+    if (mbData.tripsLast30Days > 10 && !isChurned) {
       engagementScore += 10
       positiveSignals.push(`${mbData.tripsLast30Days} trips (30d)`)
     }
 
+    // Historical trips as context (not contradictory - it's past data)
     if (mbData.totalTrips > 100) {
       positiveSignals.push(`${mbData.totalTrips} total trips`)
     }
@@ -334,12 +348,14 @@ function calculateWeightedHealthScore(
         engagementScore -= 20
         riskSignals.push(`Engagement: ${mbData.engagementStatus}`)
       } else if (status.includes("active") || status.includes("engaged")) {
-        positiveSignals.push("Engaged")
+        if (!isChurned) {
+          positiveSignals.push("Engaged")
+        }
       }
     }
 
-    // Churn status
-    if (mbData.churnStatus && mbData.churnStatus.toLowerCase().includes("churn")) {
+    // Churn status - this is definitive
+    if (isChurned) {
       engagementScore -= 30
       riskSignals.push("Churned")
     }
@@ -378,16 +394,16 @@ function calculateWeightedHealthScore(
   let growthScore = 50 // Neutral base
 
   if (mbData) {
-    // High value customer
-    if (mbData.mrr && mbData.mrr >= 200) {
+    // High value customer (only if not churned - historical value isn't current)
+    if (mbData.mrr && mbData.mrr >= 200 && !isChurned) {
       growthScore += 15
       positiveSignals.push("High value")
-    } else if (mbData.mrr && mbData.mrr >= 100) {
+    } else if (mbData.mrr && mbData.mrr >= 100 && !isChurned) {
       growthScore += 10
     }
 
-    // Usage growth signals
-    if (mbData.totalTrips > 50 && mbData.tripsLast30Days > 10) {
+    // Usage growth signals (only if not churned)
+    if (mbData.totalTrips > 50 && mbData.tripsLast30Days > 10 && !isChurned) {
       growthScore += 10
     }
 
@@ -396,7 +412,9 @@ function calculateWeightedHealthScore(
       const planLower = mbData.plan.toLowerCase()
       if (planLower.includes("enterprise") || planLower.includes("premium")) {
         growthScore += 15
-        positiveSignals.push("Enterprise tier")
+        if (!isChurned) {
+          positiveSignals.push("Enterprise tier")
+        }
       } else if (planLower.includes("pro") || planLower.includes("professional")) {
         growthScore += 10
       } else if (planLower.includes("free") || planLower.includes("trial")) {
@@ -408,12 +426,9 @@ function calculateWeightedHealthScore(
     }
   }
 
-  // Lifecycle stage from HubSpot
-  const lifecycleStage = company.properties.lifecyclestage?.toLowerCase() || ""
-  if (lifecycleStage === "customer") {
-    growthScore += 5
-    positiveSignals.push("Active customer")
-  }
+  // NOTE: We intentionally ignore HubSpot's lifecycleStage here.
+  // HubSpot has no "ex-customer" stage - once "customer", always "customer"
+  // even after they churn. Metabase churnStatus is the source of truth.
 
   growthScore = Math.max(0, Math.min(100, growthScore))
 
