@@ -103,9 +103,9 @@ export async function POST(request: NextRequest) {
       success: true,
       snapshotsCreated: result.count,
       changesDetected: changes.length,
-      downgrades: downgrades.length,
+      downgradesCount: downgrades.length,
       changes,
-      downgrades: downgrades,
+      downgrades,
     })
   } catch (error) {
     console.error("Health snapshot error:", error)
