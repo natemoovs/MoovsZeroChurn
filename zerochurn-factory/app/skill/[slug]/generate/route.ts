@@ -14,12 +14,23 @@ function getAnthropicClient() {
 }
 
 async function gatherPortfolioContext(segment: string): Promise<string> {
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000"
+  // Use NEXT_PUBLIC_APP_URL if set, otherwise try VERCEL_URL, then localhost
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+    || "http://localhost:3000"
 
   try {
-    const response = await fetch(`${baseUrl}/api/integrations/portfolio?segment=${encodeURIComponent(segment)}`)
+    const response = await fetch(`${baseUrl}/api/integrations/portfolio?segment=${encodeURIComponent(segment)}`, {
+      headers: { "Content-Type": "application/json" },
+    })
+
+    // Check if we got HTML instead of JSON (indicates wrong URL)
+    const contentType = response.headers.get("content-type") || ""
+    if (!contentType.includes("application/json")) {
+      console.error(`Portfolio API returned non-JSON (${contentType}), URL: ${baseUrl}`)
+      return `Portfolio data unavailable (API returned non-JSON response)`
+    }
+
     const data = await response.json()
 
     if (!data.summaries || data.summaries.length === 0) {
