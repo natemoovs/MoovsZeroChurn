@@ -111,6 +111,17 @@ model UserPreference {
 }
 
 // ============================================================================
+// Global Settings - Site-wide configuration (singleton)
+// ============================================================================
+
+model GlobalSettings {
+  id          String   @id @default("default") // Always "default" for singleton
+  notifications Json   // NotificationPreferences object
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================================================
 // Customer Journey - Track lifecycle stages for accounts
 // ============================================================================
 

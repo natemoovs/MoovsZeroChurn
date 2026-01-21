@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
-
-// In production, this would be stored in the database per user
-// For now, we'll use a simple in-memory store / cookie approach
-const PREFS_COOKIE = "zerochurn_notification_prefs"
+import { prisma } from "@/lib/db"
 
 interface NotificationPreferences {
   channels: {
@@ -43,17 +39,19 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 }
 
 /**
- * Get notification preferences
+ * Get notification preferences from database
  * GET /api/settings/notifications
  */
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const prefsCookie = cookieStore.get(PREFS_COOKIE)
+    const settings = await prisma.globalSettings.findUnique({
+      where: { id: "default" },
+    })
 
-    if (prefsCookie?.value) {
-      const preferences = JSON.parse(prefsCookie.value) as NotificationPreferences
-      return NextResponse.json({ preferences })
+    if (settings?.notifications) {
+      return NextResponse.json({
+        preferences: settings.notifications as unknown as NotificationPreferences,
+      })
     }
 
     return NextResponse.json({ preferences: DEFAULT_PREFERENCES })
@@ -64,7 +62,7 @@ export async function GET() {
 }
 
 /**
- * Save notification preferences
+ * Save notification preferences to database
  * POST /api/settings/notifications
  */
 export async function POST(request: NextRequest) {
@@ -87,13 +85,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Store in cookie (in production, store in database)
-    const cookieStore = await cookies()
-    cookieStore.set(PREFS_COOKIE, JSON.stringify(preferences), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 365, // 1 year
+    // Upsert settings (create if doesn't exist, update if does)
+    await prisma.globalSettings.upsert({
+      where: { id: "default" },
+      update: {
+        notifications: JSON.parse(JSON.stringify(preferences)),
+      },
+      create: {
+        id: "default",
+        notifications: JSON.parse(JSON.stringify(preferences)),
+      },
     })
 
     return NextResponse.json({ success: true, preferences })
