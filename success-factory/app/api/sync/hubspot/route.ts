@@ -639,9 +639,32 @@ export async function POST(request: NextRequest) {
           return isNaN(date.getTime()) ? null : date
         }
 
-        // Get owner info
-        const ownerId = props.hubspot_owner_id
-        const owner = ownerId ? ownerMap[ownerId] : null
+        // CSM Assignment based on segment (overrides HubSpot owner)
+        // Nate = Enterprise, Andrea = rest
+        const CSM_ASSIGNMENTS = {
+          enterprise: { name: "Nate", email: "nate@moovs.com" },
+          mid_market: { name: "Andrea", email: "andrea@moovs.com" },
+          smb: { name: "Andrea", email: "andrea@moovs.com" },
+          free: { name: "Andrea", email: "andrea@moovs.com" },
+          unknown: { name: "Andrea", email: "andrea@moovs.com" },
+        }
+
+        // Get owner info - prefer segment-based assignment over HubSpot owner
+        const hubspotOwnerId = props.hubspot_owner_id
+        const hubspotOwner = hubspotOwnerId ? ownerMap[hubspotOwnerId] : null
+
+        // Determine segment for CSM assignment (use MRR from Metabase or HubSpot)
+        const customerMrr = mbData?.mrr ?? (parseFloat(props.mrr || props.monthly_recurring_revenue || "0") || 0)
+        const customerSegment = customerMrr >= 83000 ? "enterprise"
+          : customerMrr >= 21000 ? "mid_market"
+          : customerMrr >= 4000 ? "smb"
+          : customerMrr > 0 ? "free"
+          : "unknown"
+
+        // Use segment-based CSM assignment
+        const segmentCsm = CSM_ASSIGNMENTS[customerSegment]
+        const ownerId = hubspotOwnerId || null
+        const owner = segmentCsm // Always use segment-based CSM
 
         // Use Metabase data for usage metrics (preferred), fall back to HubSpot
         const mrr = mbData?.mrr ?? (parseFloat(props.mrr || props.monthly_recurring_revenue || "0") || null)
