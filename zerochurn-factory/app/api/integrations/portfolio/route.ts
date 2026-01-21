@@ -10,7 +10,6 @@ interface MetabaseAccountData {
   totalTrips: number
   daysSinceLastLogin: number | null
   churnStatus: string | null
-  predictiveRiskLevel: string | null
   mrr: number | null
   plan: string | null
   customerSegment: string | null
@@ -31,7 +30,6 @@ interface CompanyHealthSummary {
   customerSince: string | null
   // Metabase-enriched fields
   totalTrips?: number
-  predictiveRiskLevel?: string | null
   customerSegment?: string | null
 }
 
@@ -118,7 +116,6 @@ async function fetchMetabaseAccountData(): Promise<MetabaseAccountData[]> {
       totalTrips: (row.ALL_TRIPS_COUNT as number) || 0,
       daysSinceLastLogin: row.DAYS_SINCE_LAST_IDENTIFY as number | null,
       churnStatus: row.CHURN_STATUS as string | null,
-      predictiveRiskLevel: row.PREDICTIVE_RISK_LEVEL as string | null,
       mrr: row.TOTAL_MRR_NUMERIC as number | null,
       plan: row.LAGO_PLAN_NAME as string | null,
       customerSegment: row.CUSTOMER_SEGMENT as string | null,
@@ -143,43 +140,46 @@ function enrichedHealthScore(
   const lastModified = company.properties.hs_lastmodifieddate
   const notesLastUpdated = company.properties.notes_last_updated
 
-  // --- Metabase-based signals (higher priority) ---
+  // --- Metabase-based signals (product usage data) ---
   if (mb) {
-    // Risk level from Metabase's predictive model
-    if (mb.predictiveRiskLevel?.toLowerCase() === "high") {
-      riskSignals.push("High churn risk")
-    } else if (mb.predictiveRiskLevel?.toLowerCase() === "medium") {
-      riskSignals.push("Medium churn risk")
-    } else if (mb.predictiveRiskLevel?.toLowerCase() === "low") {
-      positiveSignals.push("Low churn risk")
-    }
-
-    // Churn status
+    // Churn status (explicit)
     if (mb.churnStatus && mb.churnStatus.toLowerCase().includes("churn")) {
       riskSignals.push("Churned")
     }
 
-    // Usage signals
+    // Usage signals based on trips
     if (mb.totalTrips > 100) {
       positiveSignals.push(`${mb.totalTrips} trips`)
-    } else if (mb.totalTrips > 10) {
+    } else if (mb.totalTrips > 20) {
       positiveSignals.push("Active usage")
+    } else if (mb.totalTrips > 0 && mb.totalTrips <= 5) {
+      riskSignals.push("Low usage")
     } else if (mb.totalTrips === 0) {
       riskSignals.push("No trips")
     }
 
     // Login recency
     if (mb.daysSinceLastLogin !== null) {
-      if (mb.daysSinceLastLogin > 30) {
+      if (mb.daysSinceLastLogin > 60) {
         riskSignals.push(`No login in ${mb.daysSinceLastLogin}d`)
+      } else if (mb.daysSinceLastLogin > 30) {
+        riskSignals.push("Inactive 30+ days")
       } else if (mb.daysSinceLastLogin <= 7) {
         positiveSignals.push("Recent login")
       }
     }
 
-    // MRR
+    // MRR / paying status
     if (mb.mrr && mb.mrr > 0) {
       positiveSignals.push("Paying customer")
+      if (mb.mrr >= 200) {
+        positiveSignals.push("High value")
+      }
+    } else if (mb.plan?.toLowerCase().includes("free")) {
+      // Free plan with no usage is risky
+      if (mb.totalTrips === 0) {
+        riskSignals.push("Free + no usage")
+      }
     }
   }
 
@@ -205,34 +205,39 @@ function enrichedHealthScore(
     }
   }
 
-  // --- Calculate health score ---
+  // --- Calculate health score based on signals ---
   let healthScore: "green" | "yellow" | "red" | "unknown" = "unknown"
 
-  // Use Metabase predictive risk if available
-  if (mb?.predictiveRiskLevel) {
-    const risk = mb.predictiveRiskLevel.toLowerCase()
-    if (risk === "high" || mb.churnStatus?.toLowerCase().includes("churn")) {
-      healthScore = "red"
-    } else if (risk === "medium") {
-      healthScore = "yellow"
-    } else if (risk === "low") {
-      healthScore = "green"
-    }
+  // Churned or severe issues = red
+  if (riskSignals.some((r) =>
+    r.includes("Churned") ||
+    r.includes("6+ months") ||
+    r.includes("No login in") && parseInt(r.match(/\d+/)?.[0] || "0") > 60
+  )) {
+    healthScore = "red"
+  } else if (riskSignals.length >= 2) {
+    // Multiple risk signals = red
+    healthScore = "red"
+  } else if (riskSignals.length === 1 && positiveSignals.length < 2) {
+    // One risk, few positives = yellow
+    healthScore = "yellow"
+  } else if (positiveSignals.length >= 3) {
+    // Many positive signals = green
+    healthScore = "green"
+  } else if (positiveSignals.length >= 2 && riskSignals.length === 0) {
+    // Multiple positives, no risk = green
+    healthScore = "green"
+  } else if (positiveSignals.length === 1 && riskSignals.length === 0) {
+    // One positive, no risk = green
+    healthScore = "green"
+  } else if (mb && mb.totalTrips > 10 && mb.mrr && mb.mrr > 0) {
+    // Paying with decent usage = green
+    healthScore = "green"
+  } else if (riskSignals.length === 0 && positiveSignals.length === 0) {
+    // No data = unknown
+    healthScore = "unknown"
   } else {
-    // Fallback to signal-based scoring
-    if (riskSignals.some((r) => r.includes("6+ months") || r.includes("Churned"))) {
-      healthScore = "red"
-    } else if (riskSignals.length >= 2) {
-      healthScore = "red"
-    } else if (riskSignals.length === 1 && positiveSignals.length < 2) {
-      healthScore = "yellow"
-    } else if (positiveSignals.length >= 2) {
-      healthScore = "green"
-    } else if (positiveSignals.length === 1 && riskSignals.length === 0) {
-      healthScore = "green"
-    } else if (lifecycleStage === "customer" && riskSignals.length === 0) {
-      healthScore = "green"
-    }
+    healthScore = "yellow"
   }
 
   return {
@@ -249,7 +254,6 @@ function enrichedHealthScore(
     positiveSignals,
     customerSince: company.properties.createdate || null,
     totalTrips: mb?.totalTrips,
-    predictiveRiskLevel: mb?.predictiveRiskLevel,
     customerSegment: mb?.customerSegment,
   }
 }
