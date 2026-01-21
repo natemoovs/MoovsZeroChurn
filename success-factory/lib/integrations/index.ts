@@ -81,11 +81,22 @@ export type {
   MetabaseCard,
 } from "./metabase"
 
+export { lago } from "./lago"
+export type {
+  LagoCustomer,
+  LagoSubscription,
+  LagoPlan,
+  LagoInvoice,
+  LagoError,
+  BillingHealthSummary,
+} from "./lago"
+
 // Import clients for unified export
 import { hubspot } from "./hubspot"
 import { stripe } from "./stripe"
 import { notion } from "./notion"
 import { metabase } from "./metabase"
+import { lago } from "./lago"
 
 /**
  * Unified integrations client
@@ -97,6 +108,7 @@ export const integrations = {
   stripe,
   notion,
   metabase,
+  lago,
 }
 
 /**
@@ -107,12 +119,14 @@ export function getConfiguredIntegrations(): {
   stripe: boolean
   notion: boolean
   metabase: boolean
+  lago: boolean
 } {
   return {
-    hubspot: !!process.env.HUBSPOT_API_KEY,
+    hubspot: !!process.env.HUBSPOT_ACCESS_TOKEN,
     stripe: !!process.env.STRIPE_SECRET_KEY,
     notion: !!process.env.NOTION_API_KEY,
     metabase: !!(process.env.METABASE_URL && process.env.METABASE_API_KEY),
+    lago: !!process.env.LAGO_API_KEY,
   }
 }
 
@@ -123,13 +137,14 @@ export function getMissingIntegrations(): string[] {
   const configured = getConfiguredIntegrations()
   const missing: string[] = []
 
-  if (!configured.hubspot) missing.push("HUBSPOT_API_KEY")
+  if (!configured.hubspot) missing.push("HUBSPOT_ACCESS_TOKEN")
   if (!configured.stripe) missing.push("STRIPE_SECRET_KEY")
   if (!configured.notion) missing.push("NOTION_API_KEY")
   if (!configured.metabase) {
     if (!process.env.METABASE_URL) missing.push("METABASE_URL")
     if (!process.env.METABASE_API_KEY) missing.push("METABASE_API_KEY")
   }
+  if (!configured.lago) missing.push("LAGO_API_KEY")
 
   return missing
 }
