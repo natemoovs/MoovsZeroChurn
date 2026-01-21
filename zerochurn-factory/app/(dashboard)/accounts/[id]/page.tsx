@@ -16,6 +16,8 @@ import {
   DollarSign,
   Users,
   TrendingUp,
+  TrendingDown,
+  Minus,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -27,8 +29,45 @@ import {
   Sparkles,
   RefreshCw,
   MessageSquare,
+  BarChart3,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+interface HealthSnapshot {
+  id: string
+  healthScore: string
+  mrr: number | null
+  totalTrips: number | null
+  daysSinceLastLogin: number | null
+  riskSignals: string[]
+  positiveSignals: string[]
+  createdAt: string
+}
+
+interface HealthHistory {
+  companyId: string
+  snapshots: HealthSnapshot[]
+  trend: "improving" | "declining" | "stable" | "unknown"
+  current: {
+    healthScore: string
+    mrr: number | null
+    riskSignals: string[]
+    positiveSignals: string[]
+    asOf: string
+  } | null
+  distribution: {
+    green: number
+    yellow: number
+    red: number
+    unknown: number
+  }
+  changes: Array<{
+    from: string
+    to: string
+    date: string
+  }>
+  totalSnapshots: number
+}
 
 interface AccountDetail {
   id: string
@@ -85,19 +124,27 @@ export default function AccountDetailPage() {
   const id = params.id as string
 
   const [account, setAccount] = useState<AccountDetail | null>(null)
+  const [healthHistory, setHealthHistory] = useState<HealthHistory | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
 
-    fetch(`/api/integrations/accounts/${id}`)
-      .then((res) => {
+    // Fetch account details and health history in parallel
+    Promise.all([
+      fetch(`/api/integrations/accounts/${id}`).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch account")
         return res.json()
-      })
-      .then((data) => {
-        setAccount(data)
+      }),
+      fetch(`/api/health-history/${id}?days=30`).then((res) => {
+        if (!res.ok) return null
+        return res.json()
+      }).catch(() => null),
+    ])
+      .then(([accountData, historyData]) => {
+        setAccount(accountData)
+        if (historyData) setHealthHistory(historyData)
         setLoading(false)
       })
       .catch((err) => {
@@ -294,6 +341,11 @@ export default function AccountDetailPage() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Health Score Trend */}
+        {healthHistory && healthHistory.snapshots.length > 0 && (
+          <HealthTrendCard history={healthHistory} />
         )}
 
         {/* Main Content Grid */}
@@ -639,6 +691,148 @@ function TimelineItem({
           </p>
         )}
       </div>
+    </div>
+  )
+}
+
+function HealthTrendCard({ history }: { history: HealthHistory }) {
+  const { snapshots, trend, distribution, changes } = history
+  const totalSnapshots = distribution.green + distribution.yellow + distribution.red + distribution.unknown
+
+  const TrendIcon = trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus
+  const trendColor = trend === "improving"
+    ? "text-emerald-600 dark:text-emerald-400"
+    : trend === "declining"
+    ? "text-red-600 dark:text-red-400"
+    : "text-zinc-500 dark:text-zinc-400"
+  const trendBg = trend === "improving"
+    ? "bg-emerald-100 dark:bg-emerald-900/30"
+    : trend === "declining"
+    ? "bg-red-100 dark:bg-red-900/30"
+    : "bg-zinc-100 dark:bg-zinc-800"
+
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="h-5 w-5 text-zinc-400" />
+          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
+            Health Score Trend
+          </h2>
+        </div>
+        <div className={cn("flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium", trendBg, trendColor)}>
+          <TrendIcon className="h-4 w-4" />
+          <span className="capitalize">{trend}</span>
+        </div>
+      </div>
+
+      {/* Visual Timeline */}
+      <div className="mb-6">
+        <div className="flex items-end gap-1" style={{ height: "60px" }}>
+          {snapshots.slice(-30).map((snapshot, i) => {
+            const colors = {
+              green: "bg-emerald-500",
+              yellow: "bg-yellow-500",
+              red: "bg-red-500",
+              unknown: "bg-zinc-300 dark:bg-zinc-600",
+            }
+            const heights = {
+              green: "100%",
+              yellow: "66%",
+              red: "33%",
+              unknown: "20%",
+            }
+            const score = snapshot.healthScore as keyof typeof colors
+            return (
+              <div
+                key={snapshot.id || i}
+                className="flex-1 min-w-1 rounded-t transition-all hover:opacity-80"
+                style={{ height: heights[score] }}
+                title={`${new Date(snapshot.createdAt).toLocaleDateString()}: ${score}`}
+              >
+                <div className={cn("h-full w-full rounded-t", colors[score])} />
+              </div>
+            )
+          })}
+        </div>
+        <div className="mt-2 flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+          <span>30 days ago</span>
+          <span>Today</span>
+        </div>
+      </div>
+
+      {/* Distribution */}
+      <div className="mb-4">
+        <div className="mb-2 flex h-3 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+          {distribution.green > 0 && (
+            <div
+              className="bg-emerald-500"
+              style={{ width: `${(distribution.green / totalSnapshots) * 100}%` }}
+            />
+          )}
+          {distribution.yellow > 0 && (
+            <div
+              className="bg-yellow-500"
+              style={{ width: `${(distribution.yellow / totalSnapshots) * 100}%` }}
+            />
+          )}
+          {distribution.red > 0 && (
+            <div
+              className="bg-red-500"
+              style={{ width: `${(distribution.red / totalSnapshots) * 100}%` }}
+            />
+          )}
+        </div>
+        <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+          <span>{distribution.green} green</span>
+          <span>{distribution.yellow} yellow</span>
+          <span>{distribution.red} red</span>
+        </div>
+      </div>
+
+      {/* Recent Changes */}
+      {changes.length > 0 && (
+        <div className="border-t border-zinc-200 pt-4 dark:border-zinc-700">
+          <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Recent Changes
+          </h3>
+          <div className="space-y-2">
+            {changes.slice(-3).reverse().map((change, i) => {
+              const isDowngrade =
+                (change.from === "green" && (change.to === "yellow" || change.to === "red")) ||
+                (change.from === "yellow" && change.to === "red")
+              return (
+                <div
+                  key={i}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "inline-block h-2 w-2 rounded-full",
+                      change.from === "green" ? "bg-emerald-500" :
+                      change.from === "yellow" ? "bg-yellow-500" :
+                      change.from === "red" ? "bg-red-500" : "bg-zinc-400"
+                    )} />
+                    <span className="text-zinc-500 dark:text-zinc-400">→</span>
+                    <span className={cn(
+                      "inline-block h-2 w-2 rounded-full",
+                      change.to === "green" ? "bg-emerald-500" :
+                      change.to === "yellow" ? "bg-yellow-500" :
+                      change.to === "red" ? "bg-red-500" : "bg-zinc-400"
+                    )} />
+                    <span className={isDowngrade ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}>
+                      {change.from} → {change.to}
+                    </span>
+                  </div>
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    {new Date(change.date).toLocaleDateString()}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
