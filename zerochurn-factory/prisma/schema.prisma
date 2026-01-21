@@ -159,3 +159,46 @@ model JourneyStageHistory {
   @@index([journeyId])
   @@index([createdAt])
 }
+
+// ============================================================================
+// NPS Surveys - Track Net Promoter Score responses
+// ============================================================================
+
+model NPSSurvey {
+  id          String   @id @default(cuid())
+  companyId   String   // HubSpot company ID
+  companyName String
+  contactEmail String  // Email of person who received survey
+  contactName  String?
+  token       String   @unique // Unique token for response URL
+  sentAt      DateTime @default(now())
+  respondedAt DateTime?
+  score       Int?     // 0-10 NPS score
+  comment     String?  // Optional follow-up comment
+  category    String?  // promoter (9-10), passive (7-8), detractor (0-6)
+
+  @@index([companyId])
+  @@index([token])
+  @@index([sentAt])
+  @@index([category])
+}
+
+// ============================================================================
+// AI Predictions - Claude-powered churn risk analysis
+// ============================================================================
+
+model AIPrediction {
+  id            String   @id @default(cuid())
+  companyId     String   // HubSpot company ID
+  companyName   String
+  riskScore     Float    // 0-100 churn probability
+  riskLevel     String   // low, medium, high, critical
+  reasoning     String   // Claude's explanation
+  signals       Json     // Input signals used for prediction
+  recommendations Json?  // Suggested actions
+  createdAt     DateTime @default(now())
+
+  @@index([companyId])
+  @@index([riskLevel])
+  @@index([createdAt])
+}

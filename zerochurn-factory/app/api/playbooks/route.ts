@@ -83,6 +83,33 @@ export const TRIGGER_TYPES = {
     description: "When a new customer is added",
     category: "lifecycle",
   },
+  // NPS triggers
+  nps_detractor: {
+    label: "NPS Detractor (0-6)",
+    description: "When a customer submits a detractor NPS score",
+    category: "nps",
+  },
+  nps_passive: {
+    label: "NPS Passive (7-8)",
+    description: "When a customer submits a passive NPS score",
+    category: "nps",
+  },
+  nps_promoter: {
+    label: "NPS Promoter (9-10)",
+    description: "When a customer submits a promoter NPS score",
+    category: "nps",
+  },
+  // AI triggers
+  ai_high_churn_risk: {
+    label: "AI: High Churn Risk",
+    description: "When AI predicts high churn probability (>70%)",
+    category: "ai",
+  },
+  ai_critical_churn_risk: {
+    label: "AI: Critical Churn Risk",
+    description: "When AI predicts critical churn probability (>90%)",
+    category: "ai",
+  },
 }
 
 /**

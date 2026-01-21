@@ -1,14 +1,18 @@
 "use client"
 
 import { Suspense, useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
 function LoginContent() {
   const [authUrl, setAuthUrl] = useState<string | null>(null)
+  const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   useEffect(() => {
     // Check for error from callback
@@ -20,16 +24,35 @@ function LoginContent() {
     // Get the Neon Auth URL from environment
     const neonAuthUrl = process.env.NEXT_PUBLIC_NEON_AUTH_URL
     if (neonAuthUrl) {
-      // Add callback URL
       const callbackUrl = `${window.location.origin}/api/auth/callback`
       setAuthUrl(`${neonAuthUrl}/signin?redirect_uri=${encodeURIComponent(callbackUrl)}`)
     }
   }, [searchParams])
 
-  const handleSignIn = () => {
+  const handleNeonSignIn = () => {
     if (authUrl) {
       window.location.href = authUrl
     }
+  }
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null)
+
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    })
+
+    if (res.ok) {
+      router.push("/")
+      router.refresh()
+    } else {
+      setError("Invalid password")
+    }
+    setIsLoading(false)
   }
 
   return (
@@ -44,17 +67,40 @@ function LoginContent() {
             {error}
           </p>
         )}
-        <Button
-          onClick={handleSignIn}
-          className="w-full"
-          disabled={!authUrl}
-        >
-          {authUrl ? "Sign in with Neon" : "Loading..."}
-        </Button>
-        {!authUrl && (
-          <p className="text-xs text-zinc-500 text-center">
-            Neon Auth not configured. Check NEXT_PUBLIC_NEON_AUTH_URL.
-          </p>
+
+        {/* Password login (always available) */}
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <Input
+            type="password"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus
+          />
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "..." : "Sign in"}
+          </Button>
+        </form>
+
+        {/* Neon Auth (if configured) */}
+        {authUrl && (
+          <>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white dark:bg-zinc-950 px-2 text-zinc-500">Or</span>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleNeonSignIn}
+              className="w-full"
+            >
+              Sign in with Google
+            </Button>
+          </>
         )}
       </CardContent>
     </Card>
