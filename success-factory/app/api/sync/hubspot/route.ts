@@ -426,13 +426,9 @@ function calculateWeightedHealthScore(
     }
   }
 
-  // Lifecycle stage from HubSpot
-  // Don't say "Active customer" if Metabase says they're churned - Metabase is more current
-  const lifecycleStage = company.properties.lifecyclestage?.toLowerCase() || ""
-  if (lifecycleStage === "customer" && !isChurned && !isSeverelyInactive) {
-    growthScore += 5
-    positiveSignals.push("Active customer")
-  }
+  // NOTE: We intentionally ignore HubSpot's lifecycleStage here.
+  // HubSpot has no "ex-customer" stage - once "customer", always "customer"
+  // even after they churn. Metabase churnStatus is the source of truth.
 
   growthScore = Math.max(0, Math.min(100, growthScore))
 
