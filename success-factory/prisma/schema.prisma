@@ -31,6 +31,27 @@ model HealthScoreSnapshot {
 }
 
 // ============================================================================
+// Health Change Log - Track when health scores change (for alerts/digests)
+// ============================================================================
+
+model HealthChangeLog {
+  id                 String   @id @default(cuid())
+  companyId          String   // Reference to HubSpotCompany.id
+  company            HubSpotCompany @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  previousScore      String?  // green, yellow, red, unknown (null if first sync)
+  newScore           String   // green, yellow, red, unknown
+  previousNumericScore Int?
+  newNumericScore    Int?
+  riskSignals        String[] // Risk signals at time of change
+  trigger            String?  // What caused the change (sync, manual, etc.)
+  changedAt          DateTime @default(now())
+
+  @@index([companyId])
+  @@index([changedAt])
+  @@index([newScore])
+}
+
+// ============================================================================
 // Playbooks - Automated workflows triggered by conditions
 // ============================================================================
 
@@ -274,6 +295,9 @@ model HubSpotCompany {
   lastSyncedAt        DateTime @default(now())
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  // Relations
+  healthChanges       HealthChangeLog[]
 
   @@index([hubspotId])
   @@index([ownerId])
