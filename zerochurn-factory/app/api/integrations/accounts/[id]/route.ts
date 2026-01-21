@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hubspot, metabase } from "@/lib/integrations"
+import { hubspot, metabase, stripe } from "@/lib/integrations"
+import type { StripeSubscription, StripeInvoice, StripeCharge } from "@/lib/integrations"
 
 // Metabase query IDs
 const ACCOUNT_DATA_QUERY_ID = 948
@@ -38,6 +39,8 @@ interface AccountDetail {
   deals: DealInfo[]
   // Activity timeline
   timeline: TimelineEvent[]
+  // Payment health (from Stripe)
+  paymentHealth: PaymentHealth | null
 }
 
 interface ContactInfo {
@@ -61,11 +64,42 @@ interface DealInfo {
 
 interface TimelineEvent {
   id: string
-  type: "note" | "email" | "call" | "meeting" | "deal" | "health_change"
+  type: "note" | "email" | "call" | "meeting" | "deal" | "health_change" | "payment"
   title: string
   description?: string
   timestamp: string
   metadata?: Record<string, unknown>
+}
+
+interface PaymentHealth {
+  stripeCustomerId: string | null
+  subscriptions: SubscriptionInfo[]
+  recentInvoices: InvoiceInfo[]
+  paymentStatus: "healthy" | "at_risk" | "failed" | "unknown"
+  totalMrr: number
+  hasFailedPayments: boolean
+  lastPaymentDate: string | null
+  lastPaymentAmount: number | null
+}
+
+interface SubscriptionInfo {
+  id: string
+  status: string
+  currentPeriodEnd: string
+  cancelAtPeriodEnd: boolean
+  planName: string | null
+  amount: number | null
+  interval: string | null
+}
+
+interface InvoiceInfo {
+  id: string
+  status: string
+  amount: number
+  currency: string
+  dueDate: string | null
+  paidAt: string | null
+  invoiceUrl: string | null
 }
 
 /**
@@ -100,16 +134,23 @@ export async function GET(
       })),
     ])
 
-    // Fetch Metabase data for this company
-    const metabaseData = await fetchMetabaseDataForCompany(company.properties.name || "")
+    // Fetch Metabase and Stripe data in parallel
+    const companyEmail = company.properties.domain
+      ? `@${company.properties.domain}`
+      : null
+    const [metabaseData, paymentHealth] = await Promise.all([
+      fetchMetabaseDataForCompany(company.properties.name || ""),
+      fetchStripeData(companyEmail),
+    ])
 
-    // Build timeline from activity
-    const timeline = buildTimeline(activity, deals)
+    // Build timeline from activity (including payments)
+    const timeline = buildTimeline(activity, deals, paymentHealth)
 
     // Calculate health score
     const { healthScore, riskSignals, positiveSignals } = calculateHealth(
       company,
-      metabaseData
+      metabaseData,
+      paymentHealth
     )
 
     const accountDetail: AccountDetail = {
@@ -161,6 +202,8 @@ export async function GET(
       })),
       // Timeline
       timeline,
+      // Payment health
+      paymentHealth,
     }
 
     return NextResponse.json(accountDetail)
@@ -218,6 +261,113 @@ async function fetchMetabaseDataForCompany(
   }
 }
 
+/**
+ * Fetch Stripe payment data for a company
+ * Attempts to find customer by domain-based email pattern
+ */
+async function fetchStripeData(
+  companyDomainEmail: string | null
+): Promise<PaymentHealth | null> {
+  if (!process.env.STRIPE_SECRET_KEY || !companyDomainEmail) {
+    return null
+  }
+
+  try {
+    // Try to find customer by email domain pattern
+    const customer = await stripe.getCustomerByEmail(companyDomainEmail)
+
+    if (!customer) {
+      return null
+    }
+
+    // Fetch subscriptions, invoices, and recent charges
+    const [subscriptions, invoices, charges] = await Promise.all([
+      stripe.getSubscriptions(customer.id).catch(() => []),
+      stripe.getInvoices(customer.id, { limit: 10 }).catch(() => []),
+      stripe.getPaymentHistory(customer.id, { limit: 5 }).catch(() => []),
+    ])
+
+    // Calculate total MRR from active subscriptions
+    const totalMrr = subscriptions
+      .filter((s) => s.status === "active" || s.status === "trialing")
+      .reduce((sum, sub) => {
+        const item = sub.items.data[0]
+        if (!item?.price?.unit_amount) return sum
+        const amount = item.price.unit_amount / 100 // Convert cents to dollars
+        // Normalize to monthly
+        if (item.price.recurring?.interval === "year") {
+          return sum + amount / 12
+        }
+        return sum + amount
+      }, 0)
+
+    // Check for failed payments
+    const hasFailedPayments = charges.some(
+      (c) => c.status === "failed" || c.refunded
+    )
+
+    // Determine payment status
+    let paymentStatus: PaymentHealth["paymentStatus"] = "unknown"
+    const hasOverdueInvoice = invoices.some(
+      (i) => i.status === "open" && i.due_date && i.due_date < Date.now() / 1000
+    )
+    const hasAtRiskSubscription = subscriptions.some(
+      (s) => s.status === "past_due" || s.cancel_at_period_end
+    )
+
+    if (hasFailedPayments || hasOverdueInvoice) {
+      paymentStatus = "failed"
+    } else if (hasAtRiskSubscription) {
+      paymentStatus = "at_risk"
+    } else if (subscriptions.some((s) => s.status === "active")) {
+      paymentStatus = "healthy"
+    }
+
+    // Get last successful payment
+    const lastSuccessfulCharge = charges.find((c) => c.status === "succeeded")
+
+    return {
+      stripeCustomerId: customer.id,
+      subscriptions: subscriptions.map((s) => ({
+        id: s.id,
+        status: s.status,
+        currentPeriodEnd: new Date(s.current_period_end * 1000).toISOString(),
+        cancelAtPeriodEnd: s.cancel_at_period_end,
+        planName: s.items.data[0]?.price?.nickname || null,
+        amount: s.items.data[0]?.price?.unit_amount
+          ? s.items.data[0].price.unit_amount / 100
+          : null,
+        interval: s.items.data[0]?.price?.recurring?.interval || null,
+      })),
+      recentInvoices: invoices.slice(0, 5).map((i) => ({
+        id: i.id,
+        status: i.status,
+        amount: i.amount_due / 100,
+        currency: i.currency,
+        dueDate: i.due_date
+          ? new Date(i.due_date * 1000).toISOString()
+          : null,
+        paidAt: i.paid
+          ? new Date(i.period_end * 1000).toISOString()
+          : null,
+        invoiceUrl: i.hosted_invoice_url,
+      })),
+      paymentStatus,
+      totalMrr,
+      hasFailedPayments,
+      lastPaymentDate: lastSuccessfulCharge
+        ? new Date(lastSuccessfulCharge.created * 1000).toISOString()
+        : null,
+      lastPaymentAmount: lastSuccessfulCharge
+        ? lastSuccessfulCharge.amount / 100
+        : null,
+    }
+  } catch (error) {
+    console.error("Stripe fetch error:", error)
+    return null
+  }
+}
+
 function buildTimeline(
   activity: {
     notes: Array<{ id: string; body: string; timestamp: string }>
@@ -238,7 +388,8 @@ function buildTimeline(
   deals: Array<{
     id: string
     properties: { dealname: string; createdate: string; amount?: string }
-  }>
+  }>,
+  paymentHealth: PaymentHealth | null
 ): TimelineEvent[] {
   const events: TimelineEvent[] = []
 
@@ -297,6 +448,26 @@ function buildTimeline(
     })
   }
 
+  // Add payment events from Stripe
+  if (paymentHealth) {
+    for (const invoice of paymentHealth.recentInvoices) {
+      const statusLabel =
+        invoice.status === "paid"
+          ? "Payment received"
+          : invoice.status === "open"
+            ? "Invoice pending"
+            : `Invoice ${invoice.status}`
+      events.push({
+        id: `payment-${invoice.id}`,
+        type: "payment",
+        title: statusLabel,
+        description: `$${invoice.amount.toLocaleString()} ${invoice.currency.toUpperCase()}`,
+        timestamp: invoice.paidAt || invoice.dueDate || new Date().toISOString(),
+        metadata: { invoiceUrl: invoice.invoiceUrl },
+      })
+    }
+  }
+
   // Sort by timestamp (newest first)
   events.sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -307,7 +478,8 @@ function buildTimeline(
 
 function calculateHealth(
   company: { properties: Record<string, string | undefined> },
-  mb: MetabaseAccountData | null
+  mb: MetabaseAccountData | null,
+  payment: PaymentHealth | null = null
 ): {
   healthScore: "green" | "yellow" | "red" | "unknown"
   riskSignals: string[]
@@ -318,6 +490,31 @@ function calculateHealth(
 
   const lifecycleStage = company.properties.lifecyclestage?.toLowerCase() || ""
   const lastModified = company.properties.hs_lastmodifieddate
+
+  // Payment-based signals (Stripe)
+  if (payment) {
+    if (payment.paymentStatus === "failed") {
+      riskSignals.push("Failed payments")
+    } else if (payment.paymentStatus === "at_risk") {
+      riskSignals.push("Payment at risk")
+    } else if (payment.paymentStatus === "healthy") {
+      positiveSignals.push("Healthy payments")
+    }
+
+    if (payment.hasFailedPayments) {
+      riskSignals.push("Recent payment failure")
+    }
+
+    if (payment.totalMrr > 0) {
+      positiveSignals.push(`$${payment.totalMrr.toFixed(0)} MRR`)
+    }
+
+    // Check for upcoming cancellation
+    const cancelingSub = payment.subscriptions.find((s) => s.cancelAtPeriodEnd)
+    if (cancelingSub) {
+      riskSignals.push("Subscription canceling")
+    }
+  }
 
   // Metabase-based signals
   if (mb) {

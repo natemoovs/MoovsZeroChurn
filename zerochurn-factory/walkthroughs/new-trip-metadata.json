@@ -1,0 +1,54 @@
+{
+  "workflow": "Create New Trip",
+  "environment": "staging",
+  "base_url": "https://operator-staging.moovs.app",
+  "timestamp": "20260107_204051",
+  "steps": [
+    {
+      "step": 1,
+      "label": "Reservations List",
+      "action": "navigate",
+      "success": true
+    },
+    {
+      "step": 2,
+      "label": "Open Create Form",
+      "action": "click",
+      "success": false,
+      "error": "Page.wait_for_selector: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\".MuiDrawer-root\") to be visible\n    25 \u00d7 locator resolved to 3 elements. Proceeding with the first one: <div class=\"MuiDrawer-root MuiDrawer-docked css-1w6aglr\">\u2026</div>\n"
+    },
+    {
+      "step": 3,
+      "label": "Step 3",
+      "action": "wait",
+      "success": true
+    },
+    {
+      "step": 4,
+      "label": "New Reservation Form",
+      "action": "screenshot",
+      "success": true
+    }
+  ],
+  "frames": [
+    {
+      "path": "walkthroughs/new-trip-frames-20260107_204051/step_001_reservations_list.png",
+      "label": "Reservations List",
+      "step": 1
+    },
+    {
+      "path": "walkthroughs/new-trip-frames-20260107_204051/step_003_step_3.png",
+      "label": "Step 3",
+      "step": 3
+    },
+    {
+      "path": "walkthroughs/new-trip-frames-20260107_204051/step_004_new_reservation_form.png",
+      "label": "New Reservation Form",
+      "step": 4
+    }
+  ],
+  "errors": [
+    "Step 2 (Open Create Form): Page.wait_for_selector: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\".MuiDrawer-root\") to be visible\n    25 \u00d7 locator resolved to 3 elements. Proceeding with the first one: <div class=\"MuiDrawer-root MuiDrawer-docked css-1w6aglr\">\u2026</div>\n"
+  ],
+  "output_gif": "walkthroughs/new-trip.gif"
+}
