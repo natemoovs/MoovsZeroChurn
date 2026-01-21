@@ -11,12 +11,12 @@ function createPrismaClient() {
   const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL
 
   if (!connectionString) {
-    // Return a PrismaClient that will fail on first query (for build time)
     return new PrismaClient()
   }
 
   const sql = neon(connectionString)
-  const adapter = new PrismaNeonHTTP(sql)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const adapter = new PrismaNeonHTTP(sql as any)
 
   return new PrismaClient({
     adapter,
