@@ -33,7 +33,7 @@ interface WinBackCandidate {
     lostMrr: number | null
     churnDate: Date
     winBackAttempted: boolean
-    winBackStatus: string | null
+    winBackSuccessful: boolean | null
     featureGaps: string[]
     competitorName: string | null
   }
@@ -98,11 +98,8 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // Skip if already marked as "not_interested" or "won_back"
-        if (
-          candidate.churnRecord.winBackStatus === "not_interested" ||
-          candidate.churnRecord.winBackStatus === "won_back"
-        ) {
+        // Skip if already has a definitive outcome (won back or not interested)
+        if (candidate.churnRecord.winBackSuccessful !== null) {
           continue
         }
 
@@ -142,7 +139,6 @@ export async function POST(request: NextRequest) {
           data: {
             winBackAttempted: true,
             winBackDate: new Date(),
-            winBackStatus: "in_progress",
           },
         })
         churnRecordsUpdated.push(candidate.churnRecord.id)
@@ -200,13 +196,13 @@ export async function GET() {
     // Get win-back stats
     const allChurnRecords = await prisma.churnRecord.count()
     const inProgress = await prisma.churnRecord.count({
-      where: { winBackStatus: "in_progress" },
+      where: { winBackAttempted: true, winBackSuccessful: null },
     })
     const wonBack = await prisma.churnRecord.count({
-      where: { winBackStatus: "won_back" },
+      where: { winBackSuccessful: true },
     })
     const notInterested = await prisma.churnRecord.count({
-      where: { winBackStatus: "not_interested" },
+      where: { winBackSuccessful: false },
     })
 
     // Get recent tasks
@@ -220,7 +216,7 @@ export async function GET() {
 
     // Calculate MRR won back
     const wonBackRecords = await prisma.churnRecord.findMany({
-      where: { winBackStatus: "won_back" },
+      where: { winBackSuccessful: true },
       select: { lostMrr: true },
     })
     const mrrRecovered = wonBackRecords.reduce((sum, r) => sum + (r.lostMrr || 0), 0)
@@ -251,12 +247,10 @@ async function findWinBackCandidates(): Promise<WinBackCandidate[]> {
   const now = new Date()
   const candidates: WinBackCandidate[] = []
 
-  // Get all churn records
+  // Get all churn records that haven't been resolved (won back or not interested)
   const churnRecords = await prisma.churnRecord.findMany({
     where: {
-      winBackStatus: {
-        notIn: ["won_back", "not_interested"],
-      },
+      winBackSuccessful: null, // null = not yet resolved
     },
     orderBy: { lostMrr: "desc" },
   })
