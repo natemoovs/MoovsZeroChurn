@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/*': ['./factory/**/*'],
   },
+  // Enable instrumentation hook for neonConfig setup
+  experimental: {
+    instrumentationHook: true,
+  },
 };
 
 export default nextConfig;
