@@ -2,7 +2,8 @@
  * Segment Intelligence Module
  *
  * Provides ICP-based customer segmentation, health scoring adjustments,
- * and segment-specific recommendations.
+ * segment-specific recommendations, and pricing intelligence.
  */
 
 export * from "./icp"
+export * from "./pricing"
