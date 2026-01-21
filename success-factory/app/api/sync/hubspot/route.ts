@@ -660,8 +660,8 @@ export async function POST(request: NextRequest) {
 
         const segmentCsm = CSM_ASSIGNMENTS[customerSegment]
 
-        // Get HubSpot props (if available)
-        const hsProps = hsCompany?.properties || {}
+        // Get HubSpot props (if available) - cast to Record for safe access
+        const hsProps: Record<string, string | undefined> = hsCompany?.properties || {}
 
         // Calculate lastLoginAt from daysSinceLastActivity
         const lastLoginAt = mbData.daysSinceLastActivity !== null
