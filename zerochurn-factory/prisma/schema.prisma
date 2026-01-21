@@ -1,0 +1,111 @@
+// Prisma schema for ZeroChurn Factory
+// Uses Neon Postgres
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// Health Score History - Track health over time for trend analysis
+// ============================================================================
+
+model HealthScoreSnapshot {
+  id            String   @id @default(cuid())
+  companyId     String   // HubSpot company ID
+  companyName   String
+  healthScore   String   // green, yellow, red, unknown
+  mrr           Float?
+  totalTrips    Int?
+  daysSinceLastLogin Int?
+  riskSignals   String[] // Array of risk signal strings
+  positiveSignals String[] // Array of positive signal strings
+  createdAt     DateTime @default(now())
+
+  @@index([companyId])
+  @@index([createdAt])
+  @@index([companyId, createdAt])
+}
+
+// ============================================================================
+// Playbooks - Automated workflows triggered by conditions
+// ============================================================================
+
+model Playbook {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  trigger     String   // e.g., "health_drops_to_red", "renewal_30_days", "inactive_60_days"
+  isActive    Boolean  @default(true)
+  actions     Json     // Array of action definitions
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tasks       Task[]
+}
+
+// ============================================================================
+// Tasks - CSM action items (manual or from playbooks)
+// ============================================================================
+
+model Task {
+  id          String    @id @default(cuid())
+  companyId   String    // HubSpot company ID
+  companyName String
+  title       String
+  description String?
+  priority    String    @default("medium") // low, medium, high, urgent
+  status      String    @default("pending") // pending, in_progress, completed, cancelled
+  dueDate     DateTime?
+  completedAt DateTime?
+  ownerId     String?   // HubSpot owner ID (CSM)
+  ownerEmail  String?
+  playbook    Playbook? @relation(fields: [playbookId], references: [id])
+  playbookId  String?
+  metadata    Json?     // Additional context
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// ============================================================================
+// Alert Log - Track sent notifications
+// ============================================================================
+
+model AlertLog {
+  id          String   @id @default(cuid())
+  type        String   // at_risk, health_change, renewal_upcoming, etc.
+  companyId   String?
+  companyName String?
+  channel     String   // slack, email
+  payload     Json     // Full alert payload
+  success     Boolean
+  error       String?
+  createdAt   DateTime @default(now())
+
+  @@index([companyId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// User Preferences - Settings for CSMs
+// ============================================================================
+
+model UserPreference {
+  id              String   @id @default(cuid())
+  hubspotOwnerId  String   @unique // HubSpot owner ID
+  email           String
+  name            String?
+  slackUserId     String?  // For direct Slack notifications
+  alertPreferences Json?   // What alerts they want
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

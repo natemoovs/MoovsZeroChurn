@@ -7,7 +7,8 @@ import {
   Users,
   Sparkles,
   History,
-  Settings,
+  CalendarClock,
+  CheckSquare,
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
@@ -17,6 +18,8 @@ import { useState } from "react"
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/accounts", icon: Users, label: "Accounts" },
+  { href: "/tasks", icon: CheckSquare, label: "Tasks" },
+  { href: "/renewals", icon: CalendarClock, label: "Renewals" },
   { href: "/skills", icon: Sparkles, label: "Skills" },
   { href: "/history", icon: History, label: "History" },
 ]
