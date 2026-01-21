@@ -1,5 +1,5 @@
-import { neon } from "@neondatabase/serverless"
-import { PrismaNeonHTTP } from "@prisma/adapter-neon"
+import { Pool } from "@neondatabase/serverless"
+import { PrismaNeon } from "@prisma/adapter-neon"
 import { PrismaClient } from "@prisma/client"
 
 // Prevent multiple instances of Prisma Client in development
@@ -14,9 +14,9 @@ function createPrismaClient() {
     return new PrismaClient()
   }
 
-  const sql = neon(connectionString)
+  const pool = new Pool({ connectionString })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const adapter = new PrismaNeonHTTP(sql as any)
+  const adapter = new PrismaNeon(pool as any)
 
   return new PrismaClient({
     adapter,
