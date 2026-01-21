@@ -205,14 +205,86 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Get digest configuration
+ * Get digest configuration OR trigger digest (for Vercel Cron)
  * GET /api/alerts/digest
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("authorization")
+  const cronSecret = process.env.CRON_SECRET
+
+  // If called from Vercel Cron with proper auth, trigger digest
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+    if (!SLACK_WEBHOOK_URL) {
+      return NextResponse.json({ error: "Slack webhook not configured" }, { status: 400 })
+    }
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+      const portfolioRes = await fetch(`${baseUrl}/api/integrations/portfolio?segment=all`)
+      const portfolioData = await portfolioRes.json()
+
+      if (!portfolioData.summaries) {
+        return NextResponse.json({ error: "Failed to fetch portfolio" }, { status: 500 })
+      }
+
+      const summaries: PortfolioSummary[] = portfolioData.summaries
+      const atRisk = summaries.filter((s) => s.healthScore === "red")
+      const monitor = summaries.filter((s) => s.healthScore === "yellow")
+      const healthy = summaries.filter((s) => s.healthScore === "green")
+      const totalMrr = summaries.reduce((sum, s) => sum + (s.mrr || 0), 0)
+      const atRiskMrr = atRisk.reduce((sum, s) => sum + (s.mrr || 0), 0)
+
+      const blocks = [
+        {
+          type: "header",
+          text: { type: "plain_text", text: ":chart_with_upwards_trend: Daily Portfolio Health Digest", emoji: true },
+        },
+        {
+          type: "section",
+          fields: [
+            { type: "mrkdwn", text: `*Total Accounts:*\n${summaries.length}` },
+            { type: "mrkdwn", text: `*Total MRR:*\n$${totalMrr.toLocaleString()}` },
+            { type: "mrkdwn", text: `*:red_circle: At Risk:*\n${atRisk.length} accounts` },
+            { type: "mrkdwn", text: `*:large_yellow_circle: Monitor:*\n${monitor.length} accounts` },
+          ],
+        },
+        { type: "divider" },
+        {
+          type: "context",
+          elements: [{
+            type: "mrkdwn",
+            text: `:large_green_circle: ${healthy.length} Healthy · :large_yellow_circle: ${monitor.length} Monitor · :red_circle: ${atRisk.length} At Risk`,
+          }],
+        },
+        {
+          type: "actions",
+          elements: [
+            { type: "button", text: { type: "plain_text", text: "View Dashboard", emoji: true }, url: baseUrl, style: "primary" },
+          ],
+        },
+      ]
+
+      await fetch(SLACK_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blocks }),
+      })
+
+      return NextResponse.json({
+        success: true,
+        stats: { total: summaries.length, atRisk: atRisk.length, monitor: monitor.length, healthy: healthy.length, totalMrr, atRiskMrr },
+      })
+    } catch (error) {
+      console.error("Digest cron error:", error)
+      return NextResponse.json({ error: "Failed to send digest" }, { status: 500 })
+    }
+  }
+
   return NextResponse.json({
     configured: !!SLACK_WEBHOOK_URL,
     description: "Sends daily portfolio health summary to Slack",
-    triggerMethod: "POST /api/alerts/digest",
-    cronSchedule: "Can be triggered via Vercel Cron or external scheduler",
+    triggerMethod: "POST /api/alerts/digest or GET with CRON_SECRET",
+    cronSchedule: "Weekdays at 8 AM UTC via Vercel Cron",
   })
 }

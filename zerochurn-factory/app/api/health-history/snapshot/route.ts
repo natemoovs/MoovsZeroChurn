@@ -117,10 +117,22 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Get snapshot status
+ * Get snapshot status OR trigger snapshot (for Vercel Cron)
  * GET /api/health-history/snapshot
+ *
+ * If called with CRON_SECRET authorization, triggers a snapshot.
+ * Otherwise returns status info.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("authorization")
+  const cronSecret = process.env.CRON_SECRET
+
+  // If called from Vercel Cron with proper auth, trigger snapshot
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+    return triggerSnapshot()
+  }
+
+  // Otherwise return status
   try {
     const latestSnapshot = await prisma.healthScoreSnapshot.findFirst({
       orderBy: { createdAt: "desc" },
@@ -144,5 +156,91 @@ export async function GET() {
       configured: false,
       error: "Database not configured or accessible",
     })
+  }
+}
+
+async function triggerSnapshot() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000"
+    const portfolioRes = await fetch(`${baseUrl}/api/integrations/portfolio?segment=all&refresh=true`)
+    const portfolioData = await portfolioRes.json()
+
+    if (!portfolioData.summaries) {
+      return NextResponse.json({ error: "Failed to fetch portfolio" }, { status: 500 })
+    }
+
+    const summaries: PortfolioSummary[] = portfolioData.summaries
+
+    const previousSnapshots = await prisma.healthScoreSnapshot.findMany({
+      where: {
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      distinct: ["companyId"],
+    })
+
+    const previousMap = new Map(
+      previousSnapshots.map((s) => [s.companyId, s])
+    )
+
+    const snapshots = summaries.map((s) => ({
+      companyId: s.companyId,
+      companyName: s.companyName,
+      healthScore: s.healthScore,
+      mrr: s.mrr,
+      totalTrips: s.totalTrips || null,
+      daysSinceLastLogin: s.daysSinceLastLogin || null,
+      riskSignals: s.riskSignals,
+      positiveSignals: s.positiveSignals,
+    }))
+
+    const result = await prisma.healthScoreSnapshot.createMany({
+      data: snapshots,
+    })
+
+    const changes: Array<{
+      companyId: string
+      companyName: string
+      from: string
+      to: string
+      mrr: number | null
+    }> = []
+
+    for (const summary of summaries) {
+      const previous = previousMap.get(summary.companyId)
+      if (previous && previous.healthScore !== summary.healthScore) {
+        changes.push({
+          companyId: summary.companyId,
+          companyName: summary.companyName,
+          from: previous.healthScore,
+          to: summary.healthScore,
+          mrr: summary.mrr,
+        })
+      }
+    }
+
+    const downgrades = changes.filter((c) => {
+      const scoreOrder = { green: 3, yellow: 2, red: 1, unknown: 0 }
+      return scoreOrder[c.to as keyof typeof scoreOrder] < scoreOrder[c.from as keyof typeof scoreOrder]
+    })
+
+    return NextResponse.json({
+      success: true,
+      snapshotsCreated: result.count,
+      changesDetected: changes.length,
+      downgradesCount: downgrades.length,
+      changes,
+      downgrades,
+    })
+  } catch (error) {
+    console.error("Health snapshot error:", error)
+    return NextResponse.json(
+      { error: "Failed to create health snapshots" },
+      { status: 500 }
+    )
   }
 }
