@@ -1,11 +1,16 @@
-"use client"
-
 import { AuthView } from "@neondatabase/auth/react/ui"
+import "@neondatabase/auth/ui/css"
 
-export default function AuthPage() {
+export default async function AuthPage({
+  params,
+}: {
+  params: Promise<{ path: string }>
+}) {
+  const { path } = await params
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-      <div className="w-full max-w-md p-4">
+    <main className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4">
+      <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             ZeroChurn Factory
@@ -14,8 +19,8 @@ export default function AuthPage() {
             Sign in to access your CSM dashboard
           </p>
         </div>
-        <AuthView />
+        <AuthView path={path} />
       </div>
-    </div>
+    </main>
   )
 }
