@@ -32,7 +32,7 @@ interface WinBackCandidate {
     reasonDetails: string | null
     lostMrr: number | null
     churnDate: Date
-    winBackAttempts: number
+    winBackAttempted: boolean
     winBackStatus: string | null
     featureGaps: string[]
     competitorName: string | null
@@ -136,11 +136,12 @@ export async function POST(request: NextRequest) {
 
         tasksCreated.push(task.id)
 
-        // Update churn record with attempt count
+        // Update churn record to mark win-back attempted
         await prisma.churnRecord.update({
           where: { id: candidate.churnRecord.id },
           data: {
-            winBackAttempts: candidate.churnRecord.winBackAttempts + 1,
+            winBackAttempted: true,
+            winBackDate: new Date(),
             winBackStatus: "in_progress",
           },
         })
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest) {
         outreachType: c.outreachType,
         lostMrr: c.churnRecord.lostMrr,
         churnReason: c.churnRecord.primaryReason,
-        previousAttempts: c.churnRecord.winBackAttempts,
+        previouslyAttempted: c.churnRecord.winBackAttempted,
       })),
     })
   } catch (error) {
@@ -321,7 +322,7 @@ function buildTaskDescription(candidate: WinBackCandidate, outreachContent: stri
   lines.push(`- **Days Since Churn:** ${candidate.daysSinceChurn}`)
   lines.push(`- **Milestone:** Day ${candidate.milestone}`)
   lines.push(`- **Outreach Type:** ${candidate.outreachType.replace("_", " ")}`)
-  lines.push(`- **Previous Attempts:** ${candidate.churnRecord.winBackAttempts}`)
+  lines.push(`- **Previously Attempted:** ${candidate.churnRecord.winBackAttempted ? "Yes" : "No"}`)
 
   if (candidate.churnRecord.lostMrr) {
     lines.push(`- **Lost MRR:** $${candidate.churnRecord.lostMrr.toLocaleString()}`)
