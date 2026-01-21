@@ -1,39 +1,23 @@
 "use client"
 
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { AuthView } from "@neondatabase/auth/react/ui"
+import "@neondatabase/auth/ui/css"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
 function LoginContent() {
-  const [authUrl, setAuthUrl] = useState<string | null>(null)
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [showNeonAuth, setShowNeonAuth] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  useEffect(() => {
-    // Check for error from callback
-    const errorParam = searchParams.get("error")
-    if (errorParam) {
-      setError(errorParam === "no_token" ? "Authentication failed" : "Invalid token")
-    }
-
-    // Get the Neon Auth URL from environment
-    const neonAuthUrl = process.env.NEXT_PUBLIC_NEON_AUTH_URL
-    if (neonAuthUrl) {
-      const callbackUrl = `${window.location.origin}/api/auth/callback`
-      setAuthUrl(`${neonAuthUrl}/signin?redirect_uri=${encodeURIComponent(callbackUrl)}`)
-    }
-  }, [searchParams])
-
-  const handleNeonSignIn = () => {
-    if (authUrl) {
-      window.location.href = authUrl
-    }
-  }
+  // Check for error from callback
+  const errorParam = searchParams.get("error")
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +39,24 @@ function LoginContent() {
     setIsLoading(false)
   }
 
+  // Show Neon Auth view when user clicks sign up or SSO
+  if (showNeonAuth) {
+    return (
+      <div className="w-full max-w-md">
+        <AuthView
+          view="SIGN_UP"
+          redirectTo="/"
+        />
+        <button
+          onClick={() => setShowNeonAuth(false)}
+          className="mt-4 w-full text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+        >
+          Back to password login
+        </button>
+      </div>
+    )
+  }
+
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
@@ -62,9 +64,9 @@ function LoginContent() {
         <CardDescription>Sign in to access your CSM dashboard</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {error && (
+        {(error || errorParam) && (
           <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-            {error}
+            {error || (errorParam === "no_token" ? "Authentication failed" : "Invalid token")}
           </p>
         )}
 
@@ -82,26 +84,23 @@ function LoginContent() {
           </Button>
         </form>
 
-        {/* Neon Auth (if configured) */}
-        {authUrl && (
-          <>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white dark:bg-zinc-950 px-2 text-zinc-500">Or</span>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              onClick={handleNeonSignIn}
-              className="w-full"
-            >
-              Sign in with Google
-            </Button>
-          </>
-        )}
+        {/* Neon Auth SSO */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white dark:bg-zinc-950 px-2 text-zinc-500">Or</span>
+          </div>
+        </div>
+
+        <Button
+          variant="outline"
+          onClick={() => setShowNeonAuth(true)}
+          className="w-full"
+        >
+          Sign up / Sign in with SSO
+        </Button>
       </CardContent>
     </Card>
   )
