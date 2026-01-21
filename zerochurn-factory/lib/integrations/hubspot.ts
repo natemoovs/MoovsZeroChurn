@@ -353,7 +353,8 @@ export async function listCustomers(): Promise<HubSpotCompany[]> {
   const properties = [
     "name", "domain", "industry", "numberofemployees", "annualrevenue",
     "city", "state", "country", "phone", "website", "description",
-    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated"
+    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated",
+    "hubspot_owner_id"
   ]
 
   const allCustomers: HubSpotCompany[] = []
@@ -410,7 +411,8 @@ export async function listCompanies(): Promise<HubSpotCompany[]> {
   const properties = [
     "name", "domain", "industry", "numberofemployees", "annualrevenue",
     "city", "state", "country", "phone", "website", "description",
-    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated"
+    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated",
+    "hubspot_owner_id"
   ].join(",")
 
   const allCompanies: HubSpotCompany[] = []
@@ -468,6 +470,100 @@ export async function searchCompanies(query: string): Promise<HubSpotCompany[]> 
 }
 
 // ============================================================================
+// Owner (CSM) Management
+// ============================================================================
+
+export interface HubSpotOwner {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  userId: number
+  createdAt: string
+  updatedAt: string
+  archived: boolean
+}
+
+/**
+ * Get all HubSpot owners (users/CSMs)
+ */
+export async function getOwners(): Promise<HubSpotOwner[]> {
+  const result = await hubspotFetch<{ results: HubSpotOwner[] }>(
+    "/crm/v3/owners?limit=100"
+  )
+  return result.results
+}
+
+/**
+ * Get a specific owner by ID
+ */
+export async function getOwner(ownerId: string): Promise<HubSpotOwner | null> {
+  try {
+    return await hubspotFetch<HubSpotOwner>(`/crm/v3/owners/${ownerId}`)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Get companies owned by a specific CSM (owner)
+ */
+export async function getCompaniesByOwner(ownerId: string): Promise<HubSpotCompany[]> {
+  const properties = [
+    "name", "domain", "industry", "numberofemployees", "annualrevenue",
+    "city", "state", "country", "phone", "website", "description",
+    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated",
+    "hubspot_owner_id"
+  ]
+
+  const allCompanies: HubSpotCompany[] = []
+  let after: string | undefined
+
+  while (true) {
+    const body: Record<string, unknown> = {
+      filterGroups: [{
+        filters: [
+          {
+            propertyName: "hubspot_owner_id",
+            operator: "EQ",
+            value: ownerId
+          },
+          {
+            propertyName: "lifecyclestage",
+            operator: "EQ",
+            value: "customer"
+          }
+        ]
+      }],
+      properties,
+      limit: 100,
+    }
+
+    if (after) {
+      body.after = after
+    }
+
+    const result = await hubspotFetch<{
+      results: HubSpotCompany[]
+      paging?: { next?: { after: string } }
+    }>("/crm/v3/objects/companies/search", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+
+    allCompanies.push(...result.results)
+
+    if (!result.paging?.next?.after) {
+      break
+    }
+    after = result.paging.next.after
+    await delay(250)
+  }
+
+  return allCompanies
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -480,4 +576,7 @@ export const hubspot = {
   listCustomers,
   listCompanies,
   searchCompanies,
+  getOwners,
+  getOwner,
+  getCompaniesByOwner,
 }
