@@ -5,6 +5,39 @@ import type { HubSpotCompany } from "@/lib/integrations"
 // Metabase query IDs
 const ACCOUNT_DATA_QUERY_ID = 948 // "Moovs Account Data - Detail"
 
+// ============================================================================
+// Cache - stores portfolio data for 5 minutes to avoid rate limits
+// ============================================================================
+interface CacheEntry {
+  data: {
+    companies: HubSpotCompany[]
+    metabase: MetabaseAccountData[]
+  }
+  timestamp: number
+}
+
+const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
+let portfolioCache: CacheEntry | null = null
+
+function isCacheValid(): boolean {
+  if (!portfolioCache) return false
+  return Date.now() - portfolioCache.timestamp < CACHE_TTL_MS
+}
+
+function getCache() {
+  if (isCacheValid()) {
+    return portfolioCache!.data
+  }
+  return null
+}
+
+function setCache(companies: HubSpotCompany[], metabaseData: MetabaseAccountData[]) {
+  portfolioCache = {
+    data: { companies, metabase: metabaseData },
+    timestamp: Date.now(),
+  }
+}
+
 interface MetabaseAccountData {
   companyName: string
   totalTrips: number
@@ -40,6 +73,7 @@ interface CompanyHealthSummary {
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const segment = searchParams.get("segment") || "all"
+  const forceRefresh = searchParams.get("refresh") === "true"
 
   if (!process.env.HUBSPOT_ACCESS_TOKEN) {
     return NextResponse.json({
@@ -50,11 +84,27 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Fetch HubSpot companies and Metabase data in parallel
-    const [allCompanies, metabaseData] = await Promise.all([
-      hubspot.searchCompanies("*"),
-      fetchMetabaseAccountData(),
-    ])
+    // Check cache first (unless force refresh requested)
+    let allCompanies: HubSpotCompany[]
+    let metabaseData: MetabaseAccountData[]
+    const cached = !forceRefresh ? getCache() : null
+
+    if (cached) {
+      // Use cached data
+      allCompanies = cached.companies
+      metabaseData = cached.metabase
+    } else {
+      // Fetch fresh data from HubSpot and Metabase in parallel
+      const [companies, mbData] = await Promise.all([
+        hubspot.searchCompanies("*"),
+        fetchMetabaseAccountData(),
+      ])
+      allCompanies = companies
+      metabaseData = mbData
+
+      // Update cache
+      setCache(allCompanies, metabaseData)
+    }
 
     // Build a map of Metabase data by company name for quick lookup
     const metabaseMap = new Map<string, MetabaseAccountData>()
@@ -88,6 +138,11 @@ export async function GET(request: NextRequest) {
         hubspot: true,
         stripe: !!process.env.STRIPE_SECRET_KEY,
         metabase: metabaseData.length > 0,
+      },
+      cache: {
+        hit: !!cached,
+        ageMinutes: portfolioCache ? Math.round((Date.now() - portfolioCache.timestamp) / 60000) : 0,
+        ttlMinutes: 60,
       },
     })
   } catch (error) {
