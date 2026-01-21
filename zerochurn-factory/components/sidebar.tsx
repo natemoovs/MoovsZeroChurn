@@ -11,7 +11,8 @@ import {
   CheckSquare,
   ChevronLeft,
   ChevronRight,
-  UsersRound
+  UsersRound,
+  Zap
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -21,6 +22,7 @@ const navItems = [
   { href: "/accounts", icon: Users, label: "Accounts" },
   { href: "/team", icon: UsersRound, label: "CSM Workload" },
   { href: "/tasks", icon: CheckSquare, label: "Tasks" },
+  { href: "/playbooks", icon: Zap, label: "Playbooks" },
   { href: "/renewals", icon: CalendarClock, label: "Renewals" },
   { href: "/skills", icon: Sparkles, label: "Skills" },
   { href: "/history", icon: History, label: "History" },
