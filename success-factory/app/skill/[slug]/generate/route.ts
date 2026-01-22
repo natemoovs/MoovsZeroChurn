@@ -13,28 +13,106 @@ function getAnthropicClient() {
   return new Anthropic({ apiKey })
 }
 
-async function gatherPortfolioContext(segment: string): Promise<string> {
+/**
+ * Normalize segment input to match API expectations
+ * Handles variations like "Enterprise (accounts $1M+)" -> "enterprise"
+ */
+function normalizeSegment(input: string): string {
+  const lower = input.toLowerCase().trim()
+
+  // Check for enterprise
+  if (lower.includes("enterprise")) {
+    return "enterprise"
+  }
+
+  // Check for mid-market (various formats)
+  if (lower.includes("mid-market") || lower.includes("midmarket") || lower.includes("mid market")) {
+    return "mid-market"
+  }
+
+  // Check for SMB
+  if (lower.includes("smb") || lower.includes("small")) {
+    return "smb"
+  }
+
+  // Check for specific health filters
+  if (lower.includes("at-risk") || lower.includes("at risk") || lower.includes("red")) {
+    return "at-risk"
+  }
+
+  if (lower.includes("healthy") || lower.includes("green")) {
+    return "healthy"
+  }
+
+  if (lower.includes("monitor") || lower.includes("warning") || lower.includes("yellow")) {
+    return "warning"
+  }
+
+  if (lower.includes("churn")) {
+    return "churned"
+  }
+
+  // Default to all
+  return "all"
+}
+
+async function gatherPortfolioContext(rawSegment: string): Promise<string> {
+  const segment = normalizeSegment(rawSegment)
+  console.log(`[Portfolio] Normalized segment: "${rawSegment}" -> "${segment}"`)
+
   // Use NEXT_PUBLIC_APP_URL if set, otherwise try VERCEL_URL, then localhost
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL
     || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
     || "http://localhost:3000"
 
+  const portfolioUrl = `${baseUrl}/api/integrations/portfolio?segment=${encodeURIComponent(segment)}`
+  console.log(`[Portfolio] Fetching from: ${portfolioUrl}`)
+
   try {
-    const response = await fetch(`${baseUrl}/api/integrations/portfolio?segment=${encodeURIComponent(segment)}`, {
+    const response = await fetch(portfolioUrl, {
       headers: { "Content-Type": "application/json" },
+      // Add cache: no-store to ensure fresh data
+      cache: "no-store",
     })
 
-    // Check if we got HTML instead of JSON (indicates wrong URL)
+    console.log(`[Portfolio] Response status: ${response.status}, content-type: ${response.headers.get("content-type")}`)
+
+    // Check if we got HTML instead of JSON (indicates wrong URL or auth redirect)
     const contentType = response.headers.get("content-type") || ""
     if (!contentType.includes("application/json")) {
-      console.error(`Portfolio API returned non-JSON (${contentType}), URL: ${baseUrl}`)
-      return `Portfolio data unavailable (API returned non-JSON response)`
+      const bodyPreview = await response.text()
+      console.error(`[Portfolio] Non-JSON response (${contentType}), URL: ${baseUrl}`)
+      console.error(`[Portfolio] Body preview: ${bodyPreview.slice(0, 200)}`)
+      return `## Portfolio Data Error
+
+Unable to fetch portfolio data. The API returned a non-JSON response.
+
+**Debug Info:**
+- URL: ${portfolioUrl}
+- Status: ${response.status}
+- Content-Type: ${contentType}
+- This may indicate an authentication redirect or incorrect URL.
+
+Please check that NEXT_PUBLIC_APP_URL is set correctly in your environment variables.`
     }
 
     const data = await response.json()
 
+    console.log(`[Portfolio] Got ${data.summaries?.length || 0} companies`)
+
     if (!data.summaries || data.summaries.length === 0) {
-      return `No companies found for segment: ${segment}`
+      return `## Portfolio Data
+
+No companies found for segment: **${segment}**
+
+**Possible reasons:**
+- The database sync hasn't completed yet (run POST /api/sync/hubspot)
+- The segment filter is too restrictive
+- All accounts in this segment have been filtered out (churned, etc.)
+
+**Sync Status:**
+${data.sync ? `- Last sync: ${data.sync.lastSyncAt || "Never"}\n- Records synced: ${data.sync.recordsSynced || 0}` : "- Sync info not available"}
+`
     }
 
     // Format as markdown
