@@ -32,6 +32,8 @@ import {
   BarChart3,
   Route,
   ChevronDown,
+  Database,
+  Info,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -148,6 +150,7 @@ interface AccountDetail {
     description?: string
     timestamp: string
   }>
+  hasHubSpotRecord: boolean
 }
 
 export default function AccountDetailPage() {
@@ -266,6 +269,21 @@ export default function AccountDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to accounts
         </Link>
+
+        {/* No HubSpot record indicator */}
+        {!account.hasHubSpotRecord && (
+          <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/30">
+            <Database className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                Metabase data only
+              </p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                This operator doesn&apos;t have a HubSpot company record. Contacts, deals, and activity timeline may be limited.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

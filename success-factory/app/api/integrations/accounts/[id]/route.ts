@@ -42,6 +42,8 @@ interface AccountDetail {
   timeline: TimelineEvent[]
   // Payment health (from Stripe)
   paymentHealth: PaymentHealth | null
+  // Data source indicator
+  hasHubSpotRecord: boolean
 }
 
 interface ContactInfo {
@@ -292,6 +294,8 @@ export async function GET(
       timeline,
       // Payment health
       paymentHealth,
+      // Data source - true if we have actual HubSpot data OR synced record indicates HubSpot match
+      hasHubSpotRecord: !!company || syncedCompany?.hasHubSpotRecord === true,
     }
 
     return NextResponse.json(accountDetail)
