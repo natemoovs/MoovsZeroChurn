@@ -39,6 +39,7 @@ export interface SkillDataRequirements {
     databases?: string[]   // database IDs to query
   }
   batch?: boolean          // if true, fetch all companies in segment (portfolio view)
+  useTools?: boolean       // if true, use dynamic tool calling (like MCP) instead of pre-gathering
 }
 
 export interface GatheredContext {

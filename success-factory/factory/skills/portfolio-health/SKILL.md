@@ -3,6 +3,7 @@ name: Portfolio Health Review
 description: Health overview for your entire book of business — Enterprise or SMB/Mid-Market
 outputPath: factory/knowledge/success-factory/portfolio-reviews/{{segment}}-{{date}}.md
 data:
+  useTools: true
   batch: true
   hubspot:
     company: true

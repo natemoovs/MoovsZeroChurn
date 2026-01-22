@@ -40,26 +40,25 @@ export async function GET(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
     })
 
-    debug.portfolioFetch = {
-      status: response.status,
-      statusText: response.statusText,
-      contentType: response.headers.get("content-type"),
-      ok: response.ok,
-    }
-
     // Check content type
     const contentType = response.headers.get("content-type") || ""
     if (!contentType.includes("application/json")) {
       const textPreview = await response.text()
       debug.portfolioFetch = {
-        ...debug.portfolioFetch,
+        status: response.status,
+        statusText: response.statusText,
+        contentType: response.headers.get("content-type"),
+        ok: response.ok,
         error: "Non-JSON response",
         bodyPreview: textPreview.slice(0, 500),
       }
     } else {
       const data = await response.json()
       debug.portfolioFetch = {
-        ...debug.portfolioFetch,
+        status: response.status,
+        statusText: response.statusText,
+        contentType: response.headers.get("content-type"),
+        ok: response.ok,
         summaryCount: data.summaries?.length || 0,
         total: data.total,
         configured: data.configured,
