@@ -106,6 +106,8 @@ interface InvoiceInfo {
 /**
  * Get detailed account information
  * GET /api/integrations/accounts/[id]
+ *
+ * Handles both HubSpot IDs (numeric) and synthetic operator IDs (operator-xxx)
  */
 export async function GET(
   request: NextRequest,
@@ -113,54 +115,90 @@ export async function GET(
 ) {
   const { id } = await params
 
-  if (!process.env.HUBSPOT_ACCESS_TOKEN) {
-    return NextResponse.json(
-      { error: "HubSpot not configured" },
-      { status: 500 }
-    )
-  }
+  // Check if this is a synthetic operator ID (for operators without HubSpot records)
+  const isSyntheticId = id.startsWith("operator-")
 
   try {
-    // Fetch company, contacts, deals, and activity in parallel
-    const [company, contacts, deals, activity] = await Promise.all([
-      hubspot.getCompany(id),
-      hubspot.getContacts(id).catch(() => []),
-      hubspot.getDeals(id).catch(() => []),
-      hubspot.getRecentActivity(id).catch(() => ({
-        engagements: [],
-        notes: [],
-        emails: [],
-        calls: [],
-        meetings: [],
-      })),
-    ])
+    // First, try to get data from our synced database
+    const syncedCompany = await prisma.hubSpotCompany.findUnique({
+      where: { hubspotId: id },
+    })
+
+    // For synthetic IDs, we MUST have synced data (no HubSpot to fall back to)
+    if (isSyntheticId && !syncedCompany) {
+      return NextResponse.json(
+        { error: "Account not found in database" },
+        { status: 404 }
+      )
+    }
+
+    // Determine the actual HubSpot ID to use for API calls
+    // Could be the ID passed in, or the hubspotRecordId from sync (if operator was matched to HubSpot)
+    const hubspotId = isSyntheticId
+      ? syncedCompany?.hubspotRecordId // May be null if no HubSpot match
+      : id
+
+    // Only fetch from HubSpot if we have a valid HubSpot ID and the token
+    let company: Awaited<ReturnType<typeof hubspot.getCompany>> | null = null
+    let contacts: Awaited<ReturnType<typeof hubspot.getContacts>> = []
+    let deals: Awaited<ReturnType<typeof hubspot.getDeals>> = []
+    let activity: Awaited<ReturnType<typeof hubspot.getRecentActivity>> = {
+      engagements: [],
+      notes: [],
+      emails: [],
+      calls: [],
+      meetings: [],
+    }
+
+    if (hubspotId && process.env.HUBSPOT_ACCESS_TOKEN) {
+      try {
+        // Fetch company, contacts, deals, and activity in parallel
+        const results = await Promise.all([
+          hubspot.getCompany(hubspotId).catch(() => null),
+          hubspot.getContacts(hubspotId).catch(() => []),
+          hubspot.getDeals(hubspotId).catch(() => []),
+          hubspot.getRecentActivity(hubspotId).catch(() => ({
+            engagements: [],
+            notes: [],
+            emails: [],
+            calls: [],
+            meetings: [],
+          })),
+        ])
+        company = results[0]
+        contacts = results[1]
+        deals = results[2]
+        activity = results[3]
+      } catch (hubspotError) {
+        console.log("HubSpot fetch failed, using synced data:", hubspotError)
+      }
+    }
+
+    // If no HubSpot data and no synced data, return 404
+    if (!company && !syncedCompany) {
+      return NextResponse.json(
+        { error: "Account not found" },
+        { status: 404 }
+      )
+    }
+
+    // Determine company name and domain for Metabase/Stripe lookups
+    const companyName = company?.properties.name || syncedCompany?.name || "Unknown"
+    const companyDomain = company?.properties.domain || syncedCompany?.domain || null
+    const companyEmail = companyDomain
+      ? `@${companyDomain}`
+      : syncedCompany?.primaryContactEmail
+        ? `@${syncedCompany.primaryContactEmail.split("@")[1]}`
+        : null
 
     // Fetch Metabase and Stripe data in parallel
-    const companyEmail = company.properties.domain
-      ? `@${company.properties.domain}`
-      : null
     const [metabaseData, paymentHealth] = await Promise.all([
-      fetchMetabaseDataForCompany(company.properties.name || ""),
+      fetchMetabaseDataForCompany(companyName),
       fetchStripeData(companyEmail),
     ])
 
     // Build timeline from activity (including payments)
     const timeline = buildTimeline(activity, deals, paymentHealth)
-
-    // Get health score from synced database FIRST (for consistency with CSM Workload)
-    // This ensures the same health score is shown everywhere
-    const syncedCompany = await prisma.hubSpotCompany.findUnique({
-      where: { hubspotId: id },
-      select: {
-        healthScore: true,
-        riskSignals: true,
-        positiveSignals: true,
-        mrr: true,
-        plan: true,
-        totalTrips: true,
-        daysSinceLastLogin: true,
-      },
-    })
 
     // Use synced data if available, otherwise calculate (for companies not yet synced)
     let healthScore: "green" | "yellow" | "red" | "unknown"
@@ -172,12 +210,17 @@ export async function GET(
       healthScore = syncedCompany.healthScore as "green" | "yellow" | "red" | "unknown"
       riskSignals = syncedCompany.riskSignals || []
       positiveSignals = syncedCompany.positiveSignals || []
-    } else {
+    } else if (company) {
       // Fallback: calculate health for companies not yet synced
       const calculated = calculateHealth(company, metabaseData, paymentHealth)
       healthScore = calculated.healthScore
       riskSignals = calculated.riskSignals
       positiveSignals = calculated.positiveSignals
+    } else {
+      // No HubSpot data and no synced health - use defaults
+      healthScore = "unknown"
+      riskSignals = []
+      positiveSignals = []
     }
 
     // Prefer synced data for usage metrics if available
@@ -187,21 +230,21 @@ export async function GET(
     const finalDaysSinceLastLogin = syncedCompany?.daysSinceLastLogin ?? metabaseData?.daysSinceLastLogin ?? null
 
     const accountDetail: AccountDetail = {
-      // Core info
-      id: company.id,
-      name: company.properties.name || "Unknown",
-      domain: company.properties.domain || null,
-      industry: company.properties.industry || null,
-      website: company.properties.website || null,
-      phone: company.properties.phone || null,
-      city: company.properties.city || null,
-      state: company.properties.state || null,
-      country: company.properties.country || null,
-      description: company.properties.description || null,
+      // Core info - prefer HubSpot, fall back to synced data
+      id: id, // Use the original ID (could be HubSpot or synthetic)
+      name: company?.properties.name || syncedCompany?.name || "Unknown",
+      domain: company?.properties.domain || syncedCompany?.domain || null,
+      industry: company?.properties.industry || syncedCompany?.industry || null,
+      website: company?.properties.website || null,
+      phone: company?.properties.phone || null,
+      city: company?.properties.city || syncedCompany?.city || null,
+      state: company?.properties.state || syncedCompany?.state || null,
+      country: company?.properties.country || syncedCompany?.country || null,
+      description: company?.properties.description || null,
       // Lifecycle
-      lifecycleStage: company.properties.lifecyclestage || null,
-      customerSince: company.properties.createdate || null,
-      lastModified: company.properties.hs_lastmodifieddate || null,
+      lifecycleStage: company?.properties.lifecyclestage || syncedCompany?.subscriptionStatus || null,
+      customerSince: company?.properties.createdate || syncedCompany?.hubspotCreatedAt?.toISOString() || null,
+      lastModified: company?.properties.hs_lastmodifieddate || syncedCompany?.hubspotUpdatedAt?.toISOString() || null,
       // Health (from synced database for consistency)
       healthScore,
       riskSignals,
@@ -213,17 +256,29 @@ export async function GET(
       // Usage (prefer synced data)
       totalTrips: finalTotalTrips,
       daysSinceLastLogin: finalDaysSinceLastLogin,
-      churnStatus: metabaseData?.churnStatus || null,
-      // Contacts
-      contacts: contacts.map((c) => ({
-        id: c.id,
-        firstName: c.properties.firstname || null,
-        lastName: c.properties.lastname || null,
-        email: c.properties.email || null,
-        phone: c.properties.phone || null,
-        jobTitle: c.properties.jobtitle || null,
-        lastModified: c.properties.lastmodifieddate || null,
-      })),
+      churnStatus: metabaseData?.churnStatus || syncedCompany?.subscriptionStatus || null,
+      // Contacts - from HubSpot if available, otherwise show primary contact from sync
+      contacts: contacts.length > 0
+        ? contacts.map((c) => ({
+            id: c.id,
+            firstName: c.properties.firstname || null,
+            lastName: c.properties.lastname || null,
+            email: c.properties.email || null,
+            phone: c.properties.phone || null,
+            jobTitle: c.properties.jobtitle || null,
+            lastModified: c.properties.lastmodifieddate || null,
+          }))
+        : syncedCompany?.primaryContactEmail
+          ? [{
+              id: "primary",
+              firstName: null,
+              lastName: null,
+              email: syncedCompany.primaryContactEmail,
+              phone: null,
+              jobTitle: null,
+              lastModified: null,
+            }]
+          : [],
       // Deals
       deals: deals.map((d) => ({
         id: d.id,
