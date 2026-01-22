@@ -2,6 +2,9 @@
 name: Customer Health Summary
 description: Full customer context for calls, QBRs, or renewals — data fetched automatically
 outputPath: factory/knowledge/success-factory/health-summaries/{{customer}}.md
+knowledge:
+  - success-factory/csm-playbook.md
+  - success-factory/health-scoring.md
 data:
   hubspot:
     company: true

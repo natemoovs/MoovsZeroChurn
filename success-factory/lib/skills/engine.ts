@@ -98,6 +98,7 @@ function loadSkill(skillDir: string): Skill | null {
     outputPath: frontmatter.outputPath || `factory/knowledge/${skillDir}.md`,
     template: parseTemplate(content),
     data: frontmatter.data,
+    knowledge: frontmatter.knowledge,
   }
 }
 

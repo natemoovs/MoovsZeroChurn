@@ -2,6 +2,9 @@
 name: Customer Health Summary
 description: Generate a quick health summary for a customer account to prep for a call or QBR
 outputPath: factory/knowledge/success-factory/health-summaries/{{customerName}}.md
+knowledge:
+  - success-factory/csm-playbook.md
+  - success-factory/health-scoring.md
 data:
   hubspot:
     company: true

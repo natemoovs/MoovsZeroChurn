@@ -2,6 +2,10 @@
 name: Churn Risk Analysis
 description: Analyze churn signals and create an intervention plan to save an at-risk account
 outputPath: factory/knowledge/success-factory/risk-analysis/{{customerName}}.md
+knowledge:
+  - success-factory/csm-playbook.md
+  - success-factory/health-scoring.md
+  - csm-playbooks/churn-save.md
 data:
   hubspot:
     company: true

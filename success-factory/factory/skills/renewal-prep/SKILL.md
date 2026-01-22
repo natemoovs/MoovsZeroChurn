@@ -2,6 +2,10 @@
 name: Renewal Prep Summary
 description: Prepare a comprehensive renewal strategy document before contract discussions
 outputPath: factory/knowledge/success-factory/renewals/{{customerName}}.md
+knowledge:
+  - success-factory/csm-playbook.md
+  - success-factory/health-scoring.md
+  - csm-playbooks/renewal.md
 data:
   hubspot:
     company: true
