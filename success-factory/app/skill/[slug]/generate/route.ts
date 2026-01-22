@@ -321,10 +321,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       )
     }
 
-    const knowledgeBase = loadKnowledgeBase()
-
     // Check if skill wants to use dynamic tool use (like MCP)
     const useTools = skill.data?.useTools === true
+
+    // Only load knowledge base for non-tool skills (tool skills query data dynamically)
+    // This avoids hitting rate limits by not sending 96KB+ of docs in every request
+    const knowledgeBase = useTools ? "" : loadKnowledgeBase()
 
     // Determine base URL for tool execution
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL
@@ -350,6 +352,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
         )
       }
 
+      // NOTE: We intentionally do NOT include the full knowledge base here.
+      // Tool-based skills gather data dynamically, and including 96KB+ of
+      // reference docs causes rate limit errors (30k token/min limit).
+      // Claude has tools to query what it needs.
       const systemPrompt = `You are a Customer Success Manager with access to tools that let you query real customer data.
 
 You have access to tools that can:
@@ -365,9 +371,7 @@ IMPORTANT INSTRUCTIONS:
 4. Use query_metabase for usage trends if needed
 5. Only after gathering sufficient data, generate your final response
 6. Every company name, MRR value, and signal MUST come from tool results
-7. Do NOT use placeholder text - use REAL data from tools
-
-${knowledgeBase ? `## Reference Knowledge\n${knowledgeBase}\n\n` : ""}`
+7. Do NOT use placeholder text - use REAL data from tools`
 
       const userPrompt = `## Task: ${skill.name}
 
