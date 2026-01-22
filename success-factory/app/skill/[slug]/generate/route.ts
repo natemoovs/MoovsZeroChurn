@@ -170,13 +170,43 @@ ${data.sync ? `- Last sync: ${data.sync.lastSyncAt || "Never"}\n- Records synced
   }
 }
 
-function loadKnowledgeBase(): string {
+/**
+ * Load knowledge base files for a skill
+ * @param fileList - Optional list of files to load (paths relative to factory/knowledge/)
+ *                   If not provided, loads ALL knowledge files (legacy behavior)
+ * @returns Concatenated markdown content from all loaded files
+ */
+function loadKnowledgeBase(fileList?: string[]): string {
   const knowledgePath = path.join(process.cwd(), "factory", "knowledge")
 
   if (!fs.existsSync(knowledgePath)) {
     return ""
   }
 
+  // If a specific file list is provided, only load those files
+  if (fileList && fileList.length > 0) {
+    const results: string[] = []
+
+    for (const relativePath of fileList) {
+      const fullPath = path.join(knowledgePath, relativePath)
+
+      if (fs.existsSync(fullPath) && fullPath.endsWith(".md")) {
+        try {
+          const content = fs.readFileSync(fullPath, "utf-8")
+          results.push(`## ${relativePath}\n${content}`)
+        } catch (error) {
+          console.warn(`[Knowledge] Failed to load ${relativePath}:`, error)
+        }
+      } else {
+        console.warn(`[Knowledge] File not found or not .md: ${relativePath}`)
+      }
+    }
+
+    console.log(`[Knowledge] Loaded ${results.length}/${fileList.length} specified files`)
+    return results.join("\n\n")
+  }
+
+  // Legacy behavior: load all files recursively
   const loadFilesRecursively = (dir: string, prefix = ""): string[] => {
     const entries = fs.readdirSync(dir, { withFileTypes: true })
     const results: string[] = []
@@ -195,6 +225,7 @@ function loadKnowledgeBase(): string {
   }
 
   const files = loadFilesRecursively(knowledgePath)
+  console.log(`[Knowledge] Loaded all ${files.length} knowledge files (no selective list provided)`)
   return files.join("\n\n")
 }
 
@@ -321,10 +352,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       )
     }
 
-    const knowledgeBase = loadKnowledgeBase()
-
     // Check if skill wants to use dynamic tool use (like MCP)
     const useTools = skill.data?.useTools === true
+
+    // Only load knowledge base for non-tool skills (tool skills query data dynamically)
+    // This avoids hitting rate limits by not sending 96KB+ of docs in every request
+    // If skill declares specific knowledge files, only load those (selective loading)
+    const knowledgeBase = useTools ? "" : loadKnowledgeBase(skill.knowledge)
 
     // Determine base URL for tool execution
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL
@@ -350,6 +384,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
         )
       }
 
+      // NOTE: We intentionally do NOT include the full knowledge base here.
+      // Tool-based skills gather data dynamically, and including 96KB+ of
+      // reference docs causes rate limit errors (30k token/min limit).
+      // Claude has tools to query what it needs.
       const systemPrompt = `You are a Customer Success Manager with access to tools that let you query real customer data.
 
 You have access to tools that can:
@@ -365,9 +403,7 @@ IMPORTANT INSTRUCTIONS:
 4. Use query_metabase for usage trends if needed
 5. Only after gathering sufficient data, generate your final response
 6. Every company name, MRR value, and signal MUST come from tool results
-7. Do NOT use placeholder text - use REAL data from tools
-
-${knowledgeBase ? `## Reference Knowledge\n${knowledgeBase}\n\n` : ""}`
+7. Do NOT use placeholder text - use REAL data from tools`
 
       const userPrompt = `## Task: ${skill.name}
 

@@ -14,6 +14,8 @@ export interface Skill {
   outputPath: string
   template: string
   data?: SkillDataRequirements
+  /** List of knowledge files to load for this skill (paths relative to factory/knowledge/) */
+  knowledge?: string[]
 }
 
 export interface SkillFrontmatter {
@@ -21,4 +23,6 @@ export interface SkillFrontmatter {
   description: string
   outputPath: string
   data?: SkillDataRequirements
+  /** List of knowledge files to load for this skill (paths relative to factory/knowledge/) */
+  knowledge?: string[]
 }

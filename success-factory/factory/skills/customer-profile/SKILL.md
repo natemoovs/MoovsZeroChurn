@@ -2,6 +2,7 @@
 name: Customer Profile
 description: Gather key information about the customer's business to personalize their Success Factory experience
 outputPath: factory/knowledge/customer-profile.md
+knowledge: []
 ---
 
 ## Questions

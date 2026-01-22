@@ -2,6 +2,9 @@
 name: Success Story Draft
 description: Draft a customer success story or case study for marketing and sales use
 outputPath: factory/knowledge/success-factory/success-stories/{{customerName}}.md
+knowledge:
+  - success-factory/csm-playbook.md
+  - voice.md
 ---
 
 # Success Story Draft Skill
