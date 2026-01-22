@@ -3,6 +3,7 @@ name: Portfolio Health Review
 description: Health overview for your entire book of business — Enterprise or SMB/Mid-Market
 outputPath: factory/knowledge/success-factory/portfolio-reviews/{{segment}}-{{date}}.md
 data:
+  useTools: true
   batch: true
   hubspot:
     company: true
@@ -49,18 +50,20 @@ At Moovs, CSMs are assigned by segment:
 
 ## Questions
 
-### segment: Which book of business?
+### segment: Which segment do you want to review?
 Examples:
-- Enterprise (accounts $1M+ revenue)
-- SMB/Mid-Market (accounts $50K-$1M revenue)
-- All (full portfolio view)
+- All
+- Enterprise
+- Mid-Market
+- SMB
+- At-Risk
 
-### focus: Any specific focus for this review? (optional)
+### focus: Any specific focus? (optional)
 Examples:
-- Accounts up for renewal this quarter
-- Accounts with payment issues
-- Recently onboarded accounts
-- Just want the full picture
+- Renewals this quarter
+- Payment issues
+- Recently onboarded
+- Full picture
 
 ---
 
