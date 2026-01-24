@@ -3,7 +3,13 @@ import { prisma } from "@/lib/db"
 
 /**
  * Get portfolio health data from synced database
- * GET /api/integrations/portfolio?segment=enterprise|mid-market|smb|all
+ * GET /api/integrations/portfolio?segment=enterprise|mid-market|smb|free|all
+ *
+ * Segments based on Lago Plan Code:
+ * - Enterprise: vip-monthly (Elite)
+ * - Mid-Market: pro-monthly, pro-annual, pro-legacy
+ * - SMB: standard-monthly, standard-annual (Starter)
+ * - Free: free plan or no plan (not actively monitored by CSM)
  *
  * Uses the HubSpotCompany table which is synced daily via /api/sync/hubspot
  */
@@ -178,7 +184,17 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
             OR: [
               { plan: { contains: "standard", mode: "insensitive" } },
               { plan: { contains: "starter", mode: "insensitive" } },
-              // Include accounts with no plan or free plans
+            ],
+          },
+        ],
+      }
+    case "free":
+      // Free = free plan or no plan (own portfolio, not actively monitored)
+      return {
+        AND: [
+          excludeChurned,
+          {
+            OR: [
               { plan: null },
               { plan: { contains: "free", mode: "insensitive" } },
             ],
@@ -209,7 +225,7 @@ function getPaymentStatus(subscriptionStatus: string | null): "current" | "overd
 }
 
 function getSegmentFromPlan(plan: string | null): string {
-  if (!plan) return "SMB"
+  if (!plan) return "Free"
   const planLower = plan.toLowerCase()
 
   // Enterprise = VIP/Elite plans
@@ -220,6 +236,10 @@ function getSegmentFromPlan(plan: string | null): string {
   if (planLower.includes("pro")) {
     return "Mid-Market"
   }
-  // SMB = Standard/Starter/Free plans
+  // Free plan
+  if (planLower.includes("free")) {
+    return "Free"
+  }
+  // SMB = Standard/Starter plans
   return "SMB"
 }

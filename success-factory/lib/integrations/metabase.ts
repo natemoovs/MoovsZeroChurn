@@ -427,7 +427,7 @@ export interface MoovsCustomerRow {
  * Query the master customer table with optional filters
  */
 export async function queryCustomers(options?: {
-  segment?: "enterprise" | "mid-market" | "smb" | "all"
+  segment?: "enterprise" | "mid-market" | "smb" | "free" | "all"
   status?: "active" | "churned" | "all"
   limit?: number
 }): Promise<MoovsCustomerRow[]> {
@@ -448,7 +448,9 @@ export async function queryCustomers(options?: {
   } else if (segment === "mid-market") {
     conditions.push(`"Lago Plan Code" IN ('pro-monthly', 'pro-annual', 'pro-legacy')`)
   } else if (segment === "smb") {
-    conditions.push(`("Lago Plan Code" IN ('standard-monthly', 'standard-annual') OR "Lago Plan Code" IS NULL)`)
+    conditions.push(`"Lago Plan Code" IN ('standard-monthly', 'standard-annual')`)
+  } else if (segment === "free") {
+    conditions.push(`("P Plan" = 'free' OR "Lago Plan Code" IS NULL)`)
   }
 
   const whereClause = conditions.length > 0
