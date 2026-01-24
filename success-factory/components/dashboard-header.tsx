@@ -3,7 +3,6 @@
 import { Search, Bell, Menu } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 interface DashboardHeaderProps {
@@ -11,9 +10,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
-  const [searchQuery, setSearchQuery] = useState("")
   const [atRiskCount, setAtRiskCount] = useState(0)
-  const router = useRouter()
 
   useEffect(() => {
     // Fetch at-risk account count for notification badge
@@ -27,13 +24,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       .catch(() => {})
   }, [])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/accounts?q=${encodeURIComponent(searchQuery)}`)
-    }
-  }
-
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-zinc-200 bg-white/80 px-4 backdrop-blur-sm sm:h-16 sm:gap-4 sm:px-6 dark:border-zinc-800 dark:bg-zinc-950/80">
       {/* Left side - menu button + search */}
@@ -46,17 +36,20 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <Menu className="h-5 w-5" />
         </button>
 
-        {/* Search */}
-        <form onSubmit={handleSearch} className="relative min-w-0 flex-1 sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Search accounts..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 sm:h-10 sm:pl-10 sm:pr-4 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-emerald-500 dark:focus:bg-zinc-800"
-          />
-        </form>
+        {/* Search - opens command palette */}
+        <button
+          onClick={() => {
+            // Trigger Cmd+K programmatically
+            document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))
+          }}
+          className="flex h-9 w-full items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-400 transition-colors hover:border-zinc-300 hover:bg-zinc-100 sm:h-10 sm:max-w-md sm:px-4 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
+        >
+          <Search className="h-4 w-4" />
+          <span className="flex-1 text-left">Search...</span>
+          <kbd className="hidden rounded bg-zinc-200 px-1.5 py-0.5 text-xs font-medium text-zinc-500 sm:inline-block dark:bg-zinc-700 dark:text-zinc-400">
+            ⌘K
+          </kbd>
+        </button>
       </div>
 
       {/* Right side */}

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Sidebar } from "./sidebar"
 import { DashboardHeader } from "./dashboard-header"
+import { CommandPalette } from "./command-palette"
 import { cn } from "@/lib/utils"
 
 interface DashboardLayoutProps {
@@ -15,6 +16,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-zinc-50 dark:bg-zinc-950">
+      <CommandPalette />
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

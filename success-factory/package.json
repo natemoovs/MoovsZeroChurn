@@ -22,6 +22,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "gray-matter": "^4.0.3",
     "inngest": "^3.49.3",
     "jose": "^6.1.3",
