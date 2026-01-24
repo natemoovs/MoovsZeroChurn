@@ -272,12 +272,46 @@ export const overdueTaskCheck = inngest.createFunction(
   }
 )
 
-// Handle health dropped event - could send Slack/email notification
+// Handle health dropped event - send Slack notification and create task
 export const handleHealthDropped = inngest.createFunction(
   { id: "handle-health-dropped", name: "Handle health score drop" },
   { event: "health/dropped" },
   async ({ event, step }) => {
     const { companyId, companyName, previousScore, currentScore } = event.data
+
+    // Convert numeric scores back to health status
+    const scoreToHealth = (score: number): "green" | "yellow" | "red" | "unknown" => {
+      if (score >= 90) return "green"
+      if (score >= 60) return "yellow"
+      if (score > 0) return "red"
+      return "unknown"
+    }
+    const previousHealth = scoreToHealth(previousScore)
+    const currentHealth = scoreToHealth(currentScore)
+
+    // Send Slack notification
+    await step.run("notify-slack", async () => {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      try {
+        await fetch(`${appUrl}/api/alerts/slack`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "health_change",
+            companyName,
+            companyId,
+            details: {
+              healthScore: currentHealth,
+              previousHealthScore: previousHealth,
+              message: `Health score dropped from ${previousHealth} to ${currentHealth}. An investigation task has been created.`,
+            },
+          }),
+        })
+      } catch (error) {
+        console.error("Failed to send Slack notification:", error)
+        // Don't throw - we still want to create the task even if Slack fails
+      }
+    })
 
     // Create a task for the CSM to investigate
     await step.run("create-investigation-task", async () => {
@@ -286,18 +320,15 @@ export const handleHealthDropped = inngest.createFunction(
           companyId,
           companyName,
           title: `Investigate health score drop: ${companyName}`,
-          description: `Health score dropped from ${previousScore} to ${currentScore} (${previousScore - currentScore} points). Please investigate and take action.`,
-          priority: currentScore < 50 ? "urgent" : "high",
+          description: `Health score dropped from ${previousHealth} to ${currentHealth}. Please investigate and take action.`,
+          priority: currentHealth === "red" ? "urgent" : "high",
           status: "pending",
           dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
         },
       })
     })
 
-    // TODO: Add Slack notification here
-    // await step.run("notify-slack", async () => { ... })
-
-    return { taskCreated: true }
+    return { taskCreated: true, slackNotified: true }
   }
 )
 
