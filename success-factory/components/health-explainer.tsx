@@ -1,0 +1,134 @@
+"use client"
+
+import { useState } from "react"
+import { Sparkles, Loader2, ChevronDown, ChevronUp, AlertTriangle, TrendingUp, TrendingDown, Lightbulb } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+
+interface HealthExplainerProps {
+  companyId: string
+  healthScore: string
+  compact?: boolean
+}
+
+export function HealthExplainer({ companyId, healthScore, compact = false }: HealthExplainerProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [explanation, setExplanation] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchExplanation = async () => {
+    if (explanation) {
+      setIsOpen(!isOpen)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const res = await fetch("/api/ai/explain-health", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyId }),
+      })
+
+      if (!res.ok) throw new Error("Failed to get explanation")
+
+      const data = await res.json()
+      setExplanation(data.explanation)
+      setIsOpen(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to explain")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (compact) {
+    return (
+      <button
+        onClick={fetchExplanation}
+        disabled={loading}
+        className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50"
+        title="Explain this health score with AI"
+      >
+        {loading ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : (
+          <Sparkles className="h-3 w-3" />
+        )}
+        <span>Explain</span>
+      </button>
+    )
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <button
+        onClick={fetchExplanation}
+        disabled={loading}
+        className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+              AI Health Analysis
+            </h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Understand why this account is {healthScore}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {loading && <Loader2 className="h-5 w-5 animate-spin text-purple-500" />}
+          {isOpen ? (
+            <ChevronUp className="h-5 w-5 text-zinc-400" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-zinc-400" />
+          )}
+        </div>
+      </button>
+
+      {error && (
+        <div className="border-t border-zinc-200 bg-red-50 p-4 dark:border-zinc-800 dark:bg-red-900/20">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
+
+      {isOpen && explanation && (
+        <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+          <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-base prose-headings:font-semibold prose-p:my-2 prose-ul:my-2 prose-li:my-0">
+            <ReactMarkdown
+              components={{
+                h1: ({ children }) => (
+                  <h3 className="mt-4 flex items-center gap-2 text-base font-semibold text-zinc-900 first:mt-0 dark:text-zinc-100">
+                    {children}
+                  </h3>
+                ),
+                h2: ({ children }) => (
+                  <h4 className="mt-3 flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                    {String(children).includes("Risk") && <AlertTriangle className="h-4 w-4 text-red-500" />}
+                    {String(children).includes("Trend") && <TrendingUp className="h-4 w-4 text-blue-500" />}
+                    {String(children).includes("Recommend") && <Lightbulb className="h-4 w-4 text-amber-500" />}
+                    {children}
+                  </h4>
+                ),
+                strong: ({ children }) => (
+                  <strong className="font-semibold text-zinc-900 dark:text-zinc-100">{children}</strong>
+                ),
+              }}
+            >
+              {explanation}
+            </ReactMarkdown>
+          </div>
+          <p className="mt-4 text-xs text-zinc-400 dark:text-zinc-500">
+            Generated by Claude AI • Analysis based on current data
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}

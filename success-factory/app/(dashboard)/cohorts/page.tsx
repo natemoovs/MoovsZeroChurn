@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { CohortSurvivalChart } from "@/components/cohort-survival-chart"
 import {
   BarChart3,
   Users,
@@ -10,6 +11,8 @@ import {
   TrendingUp,
   RefreshCw,
   Calendar,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -33,6 +36,8 @@ interface CohortSummary {
 
 type ViewMode = "monthly" | "quarterly"
 type MetricView = "retention" | "mrr" | "companies"
+type SortField = "cohort" | "companies" | "retention" | "mrr"
+type SortDir = "asc" | "desc"
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -70,6 +75,8 @@ export default function CohortsPage() {
   const [syncing, setSyncing] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>("monthly")
   const [metricView, setMetricView] = useState<MetricView>("retention")
+  const [sortField, setSortField] = useState<SortField>("cohort")
+  const [sortDir, setSortDir] = useState<SortDir>("desc")
 
   useEffect(() => {
     fetchCohorts()
@@ -104,12 +111,47 @@ export default function CohortsPage() {
     }
   }
 
+  // Sort cohorts based on current sort settings
+  const sortedCohorts = [...cohorts].sort((a, b) => {
+    const mult = sortDir === "asc" ? 1 : -1
+    switch (sortField) {
+      case "cohort":
+        return mult * a.cohort.localeCompare(b.cohort)
+      case "companies":
+        return mult * (a.totalCompanies - b.totalCompanies)
+      case "retention":
+        return mult * (a.retentionRate - b.retentionRate)
+      case "mrr":
+        return mult * (a.totalMrr - b.totalMrr)
+      default:
+        return 0
+    }
+  })
+
   // Find best and worst performing cohorts
   const sortedByRetention = [...cohorts].sort(
     (a, b) => b.retentionRate - a.retentionRate
   )
   const bestCohort = sortedByRetention[0]
   const worstCohort = sortedByRetention[sortedByRetention.length - 1]
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc")
+    } else {
+      setSortField(field)
+      setSortDir("desc")
+    }
+  }
+
+  function SortIcon({ field }: { field: SortField }) {
+    if (sortField !== field) return null
+    return sortDir === "asc" ? (
+      <ChevronUp className="ml-1 inline h-3 w-3" />
+    ) : (
+      <ChevronDown className="ml-1 inline h-3 w-3" />
+    )
+  }
 
   return (
     <DashboardLayout>
@@ -306,6 +348,11 @@ export default function CohortsPage() {
           </div>
         </div>
 
+        {/* Survival Curves Chart */}
+        {!loading && cohorts.length > 0 && (
+          <CohortSurvivalChart cohorts={cohorts} />
+        )}
+
         {/* Cohort Table/Chart */}
         {loading ? (
           <div className="space-y-4">
@@ -329,157 +376,192 @@ export default function CohortsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                    Cohort
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                    Companies
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                    Active
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                    Churned
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                    Retention
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                    Total MRR
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                    Visualization
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {cohorts.map((cohort, idx) => (
-                  <tr
-                    key={cohort.cohort}
-                    className={cn(
-                      "border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800/50 dark:hover:bg-zinc-800/50",
-                      idx === cohorts.length - 1 && "border-b-0"
-                    )}
-                  >
-                    <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                      {cohort.cohort}
-                    </td>
-                    <td className="px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
-                      {cohort.totalCompanies}
-                    </td>
-                    <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400">
-                      {cohort.activeCompanies}
-                    </td>
-                    <td className="px-4 py-3 text-right text-red-600 dark:text-red-400">
-                      {cohort.churnedCompanies}
-                    </td>
-                    <td
-                      className={cn(
-                        "px-4 py-3 text-right font-semibold",
-                        getRetentionTextColor(cohort.retentionRate)
-                      )}
+          <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
+                <thead>
+                  <tr className="border-b border-zinc-200 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-800/50">
+                    <th
+                      onClick={() => toggleSort("cohort")}
+                      className="cursor-pointer px-4 py-3 text-left text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                     >
-                      {formatPercent(cohort.retentionRate)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(cohort.totalMrr)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-24 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                          <div
-                            className={cn(
-                              "h-full rounded-full transition-all",
-                              getRetentionColor(cohort.retentionRate)
-                            )}
-                            style={{
-                              width: `${cohort.retentionRate}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </td>
+                      Cohort
+                      <SortIcon field="cohort" />
+                    </th>
+                    <th
+                      onClick={() => toggleSort("companies")}
+                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    >
+                      Companies
+                      <SortIcon field="companies" />
+                    </th>
+                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-zinc-400 sm:table-cell">
+                      Active
+                    </th>
+                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-zinc-400 sm:table-cell">
+                      Churned
+                    </th>
+                    <th
+                      onClick={() => toggleSort("retention")}
+                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    >
+                      Retention
+                      <SortIcon field="retention" />
+                    </th>
+                    <th
+                      onClick={() => toggleSort("mrr")}
+                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    >
+                      Total MRR
+                      <SortIcon field="mrr" />
+                    </th>
+                    <th className="hidden px-4 py-3 text-left text-sm font-medium text-zinc-500 dark:text-zinc-400 lg:table-cell">
+                      Retention
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {sortedCohorts.map((cohort) => (
+                    <tr
+                      key={cohort.cohort}
+                      className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    >
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                        {cohort.cohort}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
+                        {cohort.totalCompanies}
+                      </td>
+                      <td className="hidden whitespace-nowrap px-4 py-3 text-right text-emerald-600 dark:text-emerald-400 sm:table-cell">
+                        {cohort.activeCompanies}
+                      </td>
+                      <td className="hidden whitespace-nowrap px-4 py-3 text-right text-red-600 dark:text-red-400 sm:table-cell">
+                        {cohort.churnedCompanies}
+                      </td>
+                      <td
+                        className={cn(
+                          "whitespace-nowrap px-4 py-3 text-right font-semibold",
+                          getRetentionTextColor(cohort.retentionRate)
+                        )}
+                      >
+                        {formatPercent(cohort.retentionRate)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-100">
+                        {formatCurrency(cohort.totalMrr)}
+                      </td>
+                      <td className="hidden px-4 py-3 lg:table-cell">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2.5 w-28 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all",
+                                getRetentionColor(cohort.retentionRate)
+                              )}
+                              style={{
+                                width: `${cohort.retentionRate}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                            {formatPercent(cohort.retentionRate)}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {/* Segment Breakdown */}
-        {cohorts.length > 0 && (
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-            <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Segment Distribution by Cohort
-            </h3>
-            <div className="space-y-4">
-              {cohorts.slice(0, 6).map((cohort) => (
-                <div key={cohort.cohort}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
+        {cohorts.length > 0 && Object.keys(cohorts[0]?.segments || {}).length > 0 && (
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                  Segment Distribution by Cohort
+                </h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Customer segments within each cohort
+                </p>
+              </div>
+              {/* Legend - shown at top on mobile */}
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                {cohorts[0] &&
+                  Object.keys(cohorts[0].segments).map((segment, idx) => {
+                    const colors = [
+                      "bg-blue-500",
+                      "bg-purple-500",
+                      "bg-emerald-500",
+                      "bg-amber-500",
+                      "bg-red-500",
+                    ]
+                    return (
+                      <div key={segment} className="flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            "h-2.5 w-2.5 rounded-full",
+                            colors[idx % colors.length]
+                          )}
+                        />
+                        <span className="text-xs text-zinc-600 dark:text-zinc-400 sm:text-sm">
+                          {segment || "Unknown"}
+                        </span>
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+            <div className="space-y-3">
+              {sortedCohorts.slice(0, 6).map((cohort) => (
+                <div key={cohort.cohort} className="group">
+                  <div className="mb-1.5 flex items-center justify-between text-sm">
                     <span className="font-medium text-zinc-700 dark:text-zinc-300">
                       {cohort.cohort}
                     </span>
-                    <span className="text-zinc-500 dark:text-zinc-400">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400 sm:text-sm">
                       {cohort.totalCompanies} companies
                     </span>
                   </div>
-                  <div className="flex h-4 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                  <div className="flex h-5 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800 sm:h-6">
                     {Object.entries(cohort.segments).map(
                       ([segment, count], idx) => {
                         const percent =
-                          (count / cohort.totalCompanies) * 100
+                          cohort.totalCompanies > 0
+                            ? (count / cohort.totalCompanies) * 100
+                            : 0
                         const colors = [
-                          "bg-blue-500",
-                          "bg-purple-500",
-                          "bg-emerald-500",
-                          "bg-amber-500",
-                          "bg-red-500",
+                          "bg-blue-500 hover:bg-blue-600",
+                          "bg-purple-500 hover:bg-purple-600",
+                          "bg-emerald-500 hover:bg-emerald-600",
+                          "bg-amber-500 hover:bg-amber-600",
+                          "bg-red-500 hover:bg-red-600",
                         ]
                         return (
                           <div
                             key={segment}
                             className={cn(
-                              "transition-all",
-                              colors[idx % colors.length]
+                              "relative flex items-center justify-center transition-all",
+                              colors[idx % colors.length],
+                              percent >= 15 && "group/seg"
                             )}
-                            style={{ width: `${percent}%` }}
-                            title={`${segment}: ${count}`}
-                          />
+                            style={{ width: `${Math.max(percent, 1)}%` }}
+                            title={`${segment || "Unknown"}: ${count} (${Math.round(percent)}%)`}
+                          >
+                            {percent >= 15 && (
+                              <span className="hidden text-[10px] font-medium text-white sm:block">
+                                {Math.round(percent)}%
+                              </span>
+                            )}
+                          </div>
                         )
                       }
                     )}
                   </div>
                 </div>
               ))}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-4">
-              {cohorts[0] &&
-                Object.keys(cohorts[0].segments).map((segment, idx) => {
-                  const colors = [
-                    "bg-blue-500",
-                    "bg-purple-500",
-                    "bg-emerald-500",
-                    "bg-amber-500",
-                    "bg-red-500",
-                  ]
-                  return (
-                    <div key={segment} className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "h-3 w-3 rounded-full",
-                          colors[idx % colors.length]
-                        )}
-                      />
-                      <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {segment || "Unknown"}
-                      </span>
-                    </div>
-                  )
-                })}
             </div>
           </div>
         )}

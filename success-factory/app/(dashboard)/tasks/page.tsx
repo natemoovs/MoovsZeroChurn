@@ -203,6 +203,27 @@ export default function TasksPage() {
     fetchNotionUsers()
   }, [filter])
 
+  // Helper function to get assignee display name
+  // Priority: notionAssigneeName > lookup by notionAssigneeId > ownerEmail > "Unassigned"
+  function getAssigneeDisplayName(task: Task): string {
+    // First check if we have the name stored
+    if (task.metadata?.notionAssigneeName) {
+      return task.metadata.notionAssigneeName
+    }
+    // Then try to look up by ID from notionUsers
+    if (task.metadata?.notionAssigneeId && notionUsers.length > 0) {
+      const user = notionUsers.find((u) => u.id === task.metadata?.notionAssigneeId)
+      if (user?.name) {
+        return user.name
+      }
+    }
+    // Fall back to ownerEmail
+    if (task.ownerEmail) {
+      return task.ownerEmail
+    }
+    return "Unassigned"
+  }
+
   // Filter tasks client-side for assignee and search
   const filteredTasks = tasks.filter((task) => {
     // Search filter
@@ -219,9 +240,9 @@ export default function TasksPage() {
     if (assigneeFilter === "mine" && currentUserEmail) {
       // Match by email or Notion assignee name containing current user's name
       const userFirstName = currentUserEmail.split("@")[0].toLowerCase()
-      const assigneeName = task.metadata?.notionAssigneeName?.toLowerCase() || ""
+      const assigneeDisplayName = getAssigneeDisplayName(task).toLowerCase()
       const ownerEmail = task.ownerEmail?.toLowerCase() || ""
-      return assigneeName.includes(userFirstName) || ownerEmail.includes(userFirstName)
+      return assigneeDisplayName.includes(userFirstName) || ownerEmail.includes(userFirstName)
     } else if (assigneeFilter !== "all" && assigneeFilter !== "mine") {
       // Filter by specific Notion user ID
       return task.metadata?.notionAssigneeId === assigneeFilter
@@ -682,7 +703,7 @@ export default function TasksPage() {
                             className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-zinc-500 focus:ring-1 focus:ring-emerald-500 dark:text-zinc-400"
                           >
                             <option value="">
-                              {task.metadata?.notionAssigneeName || task.ownerEmail || "Unassigned"}
+                              {getAssigneeDisplayName(task)}
                             </option>
                             {notionUsers.map((user) => (
                               <option key={user.id} value={user.id}>
