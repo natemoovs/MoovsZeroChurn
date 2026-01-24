@@ -2,6 +2,7 @@
  * Task Sync - Creates tasks in both local DB and Notion
  */
 
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { notion } from "@/lib/integrations"
 
@@ -27,7 +28,7 @@ export interface CreateTaskInput {
   segment?: string           // enterprise, mid-market, smb, free
   tags?: string[]            // Optional tags for the task
   notionAssigneeId?: string  // Direct Notion user ID for assignment (overrides auto-assignment)
-  metadata?: Record<string, unknown>
+  metadata?: Prisma.InputJsonValue
 }
 
 interface CreateTaskResult {
