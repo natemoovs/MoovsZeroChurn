@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const companyId = searchParams.get("companyId")
-  const days = parseInt(searchParams.get("days") || "90")
+  // Validate days parameter - clamp to reasonable range (1-365 days)
+  const rawDays = parseInt(searchParams.get("days") || "90")
+  const days = Math.min(Math.max(isNaN(rawDays) ? 90 : rawDays, 1), 365)
 
   try {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)

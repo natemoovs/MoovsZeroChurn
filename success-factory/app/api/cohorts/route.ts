@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth } from "@/lib/auth/api-middleware"
 
 interface CohortMetrics {
   cohort: string
@@ -18,6 +19,9 @@ interface CohortMetrics {
  * Get cohort analysis data
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   const searchParams = request.nextUrl.searchParams
   const months = parseInt(searchParams.get("months") || "12")
   const segment = searchParams.get("segment")
@@ -206,6 +210,9 @@ export async function GET(request: NextRequest) {
  * Sync cohort data for all companies
  */
 export async function POST() {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const companies = await prisma.hubSpotCompany.findMany({
       select: {

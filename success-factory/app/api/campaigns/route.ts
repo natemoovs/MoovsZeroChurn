@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth } from "@/lib/auth/api-middleware"
 
 /**
  * GET /api/campaigns
  * Get all campaigns
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
@@ -49,6 +53,9 @@ export async function GET(request: NextRequest) {
  * Create a new campaign with steps
  */
 export async function POST(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const body = await request.json()
     const {

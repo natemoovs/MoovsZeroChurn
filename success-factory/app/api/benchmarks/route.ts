@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth } from "@/lib/auth/api-middleware"
 
 interface SegmentBenchmark {
   segment: string
@@ -47,6 +48,9 @@ interface CompanyBenchmark {
  * Get benchmarks for segment or specific company
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   const searchParams = request.nextUrl.searchParams
   const companyId = searchParams.get("companyId")
   const segmentFilter = searchParams.get("segment")

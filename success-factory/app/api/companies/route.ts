@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search")
   const page = parseInt(searchParams.get("page") || "1", 10)
   const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100)
-  const sortBy = searchParams.get("sortBy") || "name"
+
+  // Validate sortBy to prevent accessing unintended fields
+  const ALLOWED_SORT_FIELDS = ["name", "mrr", "healthScore", "createdAt", "hubspotCreatedAt", "daysSinceLastLogin", "totalTrips"]
+  const rawSortBy = searchParams.get("sortBy") || "name"
+  const sortBy = ALLOWED_SORT_FIELDS.includes(rawSortBy) ? rawSortBy : "name"
   const sortOrder = searchParams.get("sortOrder") === "desc" ? "desc" : "asc"
 
   try {

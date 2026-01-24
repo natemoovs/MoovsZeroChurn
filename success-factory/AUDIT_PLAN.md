@@ -25,7 +25,7 @@ This document outlines findings from a comprehensive audit covering security vul
 
 ### 1.1 CRITICAL: Missing Authentication on API Routes
 
-**Status:** [x] Partial - 6 critical routes protected, 83 remaining
+**Status:** [x] Partial - 17 routes protected (6 initial + 11 additional), ~70 remaining
 
 **Problem:** 89 of 91 API routes have no authentication checks. Anyone can access customer data, financial information, and perform CRUD operations.
 
@@ -279,7 +279,7 @@ if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
 
 ### 1.8 MEDIUM: Missing Input Validation
 
-**Status:** [ ] Not Started
+**Status:** [x] COMPLETED
 
 **Problem:** User-controlled parameters used directly in queries.
 
@@ -622,10 +622,11 @@ const isTouchDevice = 'ontouchstart' in window
 ## 4. Implementation Phases
 
 ### Phase 1: Critical Security (Week 1)
-- [x] 1.1 Add authentication middleware to all API routes (PARTIAL - 6 critical routes protected)
+- [x] 1.1 Add authentication middleware to API routes (PARTIAL - 17 routes protected)
 - [x] 1.2 Fix SQL injection in Metabase queries (DONE)
 - [x] 1.3 Implement Slack signature verification (DONE)
 - [x] 1.7 Fix CRON_SECRET logic (DONE - 8 routes fixed)
+- [x] 1.8 Add input validation (DONE - sortBy whitelist, days bounds)
 
 ### Phase 2: High Security + Critical Performance (Week 2)
 - [ ] 1.4 Improve password authentication
@@ -659,31 +660,45 @@ const isTouchDevice = 'ontouchstart' in window
 
 | Category | Critical | High | Medium | Low | Total |
 |----------|----------|------|--------|-----|-------|
-| Security | 3/3 | 0/3 | 1/2 | 0/0 | 4/8 |
+| Security | 3/3 | 0/3 | 2/2 | 0/0 | 5/8 |
 | Efficiency | 0/1 | 0/2 | 0/2 | 0/0 | 0/5 |
 | Mobile | 0/2 | 0/1 | 0/2 | 0/1 | 0/6 |
-| **Total** | **3/6** | **0/6** | **1/6** | **0/1** | **4/19** |
+| **Total** | **3/6** | **0/6** | **2/6** | **0/1** | **5/19** |
 
 ### Completed Fixes (January 24, 2026)
 
 1. **CRON_SECRET bypass** - Fixed in 8 API routes (agents/*, alerts/*, health-history, sync/hubspot)
 2. **Slack signature verification** - Added HMAC-SHA256 verification with timing-safe comparison
 3. **SQL injection in Metabase** - Added sanitizeIdForSql() helper for operatorId and stripeAccountId
-4. **Authentication middleware** - Created reusable middleware, protected 6 critical routes
+4. **Authentication middleware** - Created reusable middleware, protected 17 critical routes:
+   - Initial 6: customer/[id], customer/search, companies, tasks, dashboard, nps
+   - Additional 11: activity, benchmarks, campaigns, churn, cohorts, engagement, expansion, forecasting, leaderboard, playbooks, roi
+5. **Input validation** - Added sortBy whitelist for companies route, days bounds checking for nps route
 
 ### Files Modified
 - `lib/auth/api-middleware.ts` (new)
 - `app/api/customer/[id]/route.ts`
 - `app/api/customer/search/route.ts`
-- `app/api/companies/route.ts`
+- `app/api/companies/route.ts` (auth + input validation)
 - `app/api/tasks/route.ts`
 - `app/api/dashboard/route.ts`
-- `app/api/nps/route.ts`
+- `app/api/nps/route.ts` (auth + input validation)
 - `app/api/slack/commands/route.ts`
 - `app/api/agents/*.ts` (5 files)
 - `app/api/alerts/*.ts` (2 files)
 - `app/api/health-history/snapshot/route.ts`
 - `app/api/sync/hubspot/route.ts`
+- `app/api/activity/route.ts` (auth added)
+- `app/api/benchmarks/route.ts` (auth added)
+- `app/api/campaigns/route.ts` (auth added)
+- `app/api/churn/route.ts` (auth added)
+- `app/api/cohorts/route.ts` (auth added)
+- `app/api/engagement/route.ts` (auth added)
+- `app/api/expansion/route.ts` (auth added)
+- `app/api/forecasting/route.ts` (auth added)
+- `app/api/leaderboard/route.ts` (auth added)
+- `app/api/playbooks/route.ts` (auth added)
+- `app/api/roi/route.ts` (auth added)
 
 ---
 
@@ -693,7 +708,7 @@ const isTouchDevice = 'ontouchstart' in window
 - Security fixes should be deployed incrementally, not all at once
 - Consider feature flags for major changes
 - Test thoroughly in staging before production deployment
-- Remaining API routes still need authentication (83 routes)
+- Remaining API routes still need authentication (~70 routes)
 
 ---
 

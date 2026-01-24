@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth } from "@/lib/auth/api-middleware"
 
 // Trigger types for playbooks
 export const TRIGGER_TYPES = {
@@ -149,6 +150,9 @@ export const TRIGGER_TYPES = {
  * GET /api/playbooks?active=true
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   const searchParams = request.nextUrl.searchParams
   const active = searchParams.get("active")
 
@@ -192,6 +196,9 @@ export async function GET(request: NextRequest) {
  * POST /api/playbooks
  */
 export async function POST(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const body = await request.json()
 
