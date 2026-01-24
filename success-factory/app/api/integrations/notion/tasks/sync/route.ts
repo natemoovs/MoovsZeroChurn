@@ -43,11 +43,19 @@ export async function POST() {
       console.warn("Failed to fetch Notion users:", e)
     }
 
-    // Query all non-done tasks from Notion
+    // Query all non-done and non-archived tasks from Notion
     const result = await notion.queryDatabase(CSM_DATABASE_ID, {
       filter: {
-        property: "Status",
-        status: { does_not_equal: "Done" },
+        and: [
+          {
+            property: "Status",
+            status: { does_not_equal: "Done" },
+          },
+          {
+            property: "Status",
+            status: { does_not_equal: "Archived" },
+          },
+        ],
       },
       pageSize: 100,
     })
@@ -60,13 +68,15 @@ export async function POST() {
       const props = page.properties
 
       // Extract task data from Notion
-      const title = extractTitle(props["Task Name"] || props["Name"])
+      // Support various property name conventions
+      const title = extractTitle(props["Task Name"] || props["Name"] || props["Title"])
       const company = extractRichText(props["Company"])
       const status = extractStatus(props["Status"])
       const priority = extractSelect(props["Priority"])
       const dueDate = extractDate(props["Due"] || props["Due Date"])
-      const assigneeRaw = extractPerson(props["Assignee"])
-      const notes = extractRichText(props["Notes"])
+      // Check both "Assigned To" (user's convention) and "Assignee" (common convention)
+      const assigneeRaw = extractPerson(props["Assigned To"] || props["Assignee"])
+      const notes = extractRichText(props["Notes"] || props["Description"])
 
       // Enrich assignee with name/email from user map if not present
       const assignee = assigneeRaw
@@ -227,9 +237,14 @@ function extractPerson(prop: unknown): { id: string; name?: string; email?: stri
 function mapNotionStatus(status: string | null): "pending" | "in_progress" | "completed" | "cancelled" {
   if (!status) return "pending"
   const s = status.toLowerCase()
-  if (s === "done" || s === "complete" || s === "completed") return "completed"
-  if (s === "in progress" || s === "doing") return "in_progress"
-  if (s === "cancelled" || s === "canceled") return "cancelled"
+  // Completed states
+  if (s === "done" || s === "complete" || s === "completed" || s === "archived") return "completed"
+  // In progress states
+  if (s === "in progress" || s === "doing" || s === "in-progress" || s === "active") return "in_progress"
+  // Cancelled states
+  if (s === "cancelled" || s === "canceled" || s === "closed") return "cancelled"
+  // Open/pending states
+  if (s === "open" || s === "to do" || s === "todo" || s === "not started" || s === "backlog") return "pending"
   return "pending"
 }
 

@@ -308,6 +308,7 @@ model HubSpotCompany {
 
   // Relations
   healthChanges       HealthChangeLog[]
+  campaignEnrollments CampaignEnrollment[]
 
   @@index([hubspotId])
   @@index([ownerId])
@@ -553,4 +554,68 @@ model CustomerCohort {
   @@index([signupQuarter])
   @@index([initialSegment])
   @@index([isActive])
+}
+
+// ============================================================================
+// Campaign - Multi-step automated sequences
+// ============================================================================
+
+model Campaign {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  triggerType       String   @default("manual") // manual, health_change, renewal_upcoming, segment_change
+  triggerConditions Json?    // Conditions for auto-enrollment
+  status            String   @default("draft") // draft, active, paused, archived
+  ownerEmail        String?
+  ownerName         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  steps             CampaignStep[]
+  enrollments       CampaignEnrollment[]
+
+  @@index([status])
+  @@index([triggerType])
+  @@index([ownerEmail])
+}
+
+model CampaignStep {
+  id          String   @id @default(cuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  stepOrder   Int
+  type        String   // email, task, wait, condition, webhook
+  name        String
+  config      Json     // Step-specific configuration
+  delayDays   Int      @default(0)
+  delayHours  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([campaignId])
+  @@index([stepOrder])
+}
+
+model CampaignEnrollment {
+  id               String    @id @default(cuid())
+  campaignId       String
+  campaign         Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  companyId        String    // FK to HubSpotCompany.id
+  company          HubSpotCompany @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  status           String    @default("active") // active, paused, completed, exited
+  currentStepId    String?   // Current step ID
+  currentStepOrder Int       @default(1)
+  nextStepDue      DateTime?
+  enrolledAt       DateTime  @default(now())
+  completedAt      DateTime?
+  exitedAt         DateTime?
+  exitReason       String?
+  metadata         Json?
+
+  @@unique([campaignId, companyId])
+  @@index([campaignId])
+  @@index([companyId])
+  @@index([status])
+  @@index([nextStepDue])
 }
