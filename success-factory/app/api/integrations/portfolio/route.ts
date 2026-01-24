@@ -146,10 +146,17 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
   switch (segment.toLowerCase()) {
     case "enterprise":
       // Enterprise = vip-monthly plan
+      // Fallback to plan-based matching if customerSegment not populated
       return {
         AND: [
           excludeChurned,
-          { customerSegment: "enterprise" },
+          {
+            OR: [
+              { customerSegment: "enterprise" },
+              { plan: { contains: "vip", mode: "insensitive" } },
+              { plan: { contains: "elite", mode: "insensitive" } },
+            ],
+          },
         ],
       }
     case "mid-market":
@@ -157,7 +164,17 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
       return {
         AND: [
           excludeChurned,
-          { customerSegment: "mid_market" },
+          {
+            OR: [
+              { customerSegment: "mid_market" },
+              {
+                AND: [
+                  { plan: { contains: "pro", mode: "insensitive" } },
+                  { NOT: { plan: { contains: "vip", mode: "insensitive" } } },
+                ],
+              },
+            ],
+          },
         ],
       }
     case "smb":
@@ -165,7 +182,13 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
       return {
         AND: [
           excludeChurned,
-          { customerSegment: "smb" },
+          {
+            OR: [
+              { customerSegment: "smb" },
+              { plan: { contains: "standard", mode: "insensitive" } },
+              { plan: { contains: "starter", mode: "insensitive" } },
+            ],
+          },
         ],
       }
     case "free":
@@ -173,7 +196,13 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
       return {
         AND: [
           excludeChurned,
-          { customerSegment: "free" },
+          {
+            OR: [
+              { customerSegment: "free" },
+              { plan: null },
+              { plan: { contains: "free", mode: "insensitive" } },
+            ],
+          },
         ],
       }
     case "at-risk":
