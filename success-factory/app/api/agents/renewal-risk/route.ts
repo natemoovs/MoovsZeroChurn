@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hubspot, metabase, stripe } from "@/lib/integrations"
 import Anthropic from "@anthropic-ai/sdk"
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS } from "@/lib/ai"
 
 /**
  * Renewal Risk Agent
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
     analyses.sort((a, b) => b.riskScore - a.riskScore)
 
     // Generate playbooks for high-risk accounts (risk score >= 60)
-    const anthropic = new Anthropic({ apiKey })
+    const anthropic = getAnthropicClient(apiKey)
     const highRiskAccounts = analyses.filter(a => a.riskScore >= 60)
     const tasksCreated: string[] = []
 
@@ -488,9 +489,9 @@ ${analysis.paymentHealth
   : "No payment data available"}
 `
 
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1500,
+  const message = await createMessage(anthropic, {
+    model: AI_MODEL,
+    max_tokens: TOKEN_LIMITS.medium,
     messages: [
       {
         role: "user",

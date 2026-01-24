@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { stripe, hubspot } from "@/lib/integrations"
 import Anthropic from "@anthropic-ai/sdk"
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS } from "@/lib/ai"
 
 /**
  * Payment Recovery Agent
@@ -124,9 +125,12 @@ export async function POST(request: NextRequest) {
 
     // Create tasks for each recovery action
     const tasksCreated: string[] = []
-    const anthropic = process.env.ANTHROPIC_API_KEY
-      ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-      : null
+    let anthropic: Anthropic | null = null
+    try {
+      anthropic = getAnthropicClient()
+    } catch {
+      // API key not configured, continue without AI
+    }
 
     for (const action of recoveryActions) {
       try {
@@ -450,9 +454,9 @@ function buildTaskDescription(action: RecoveryAction, outreachMessage: string): 
 
 async function generateOutreach(anthropic: Anthropic, action: RecoveryAction): Promise<string> {
   try {
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 500,
+    const message = await createMessage(anthropic, {
+      model: AI_MODEL,
+      max_tokens: TOKEN_LIMITS.small,
       messages: [
         {
           role: "user",

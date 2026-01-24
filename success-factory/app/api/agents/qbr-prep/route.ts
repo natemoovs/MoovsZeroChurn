@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hubspot } from "@/lib/integrations"
-import Anthropic from "@anthropic-ai/sdk"
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS } from "@/lib/ai"
 
 /**
  * Pre-QBR Prep Agent
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`[QBR Prep Agent] Found ${upcomingQBRs.length} upcoming QBRs`)
 
-    const anthropic = new Anthropic({ apiKey })
+    const anthropic = getAnthropicClient(apiKey)
     const briefsGenerated: string[] = []
 
     // Generate briefs for each account
@@ -84,9 +84,9 @@ export async function POST(request: NextRequest) {
         const context = buildAccountContext(account, contacts, deals)
 
         // Generate QBR brief with Claude
-        const message = await anthropic.messages.create({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 2000,
+        const message = await createMessage(anthropic, {
+          model: AI_MODEL,
+          max_tokens: TOKEN_LIMITS.standard,
           messages: [
             {
               role: "user",

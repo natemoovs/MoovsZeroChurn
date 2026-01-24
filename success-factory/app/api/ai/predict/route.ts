@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import Anthropic from "@anthropic-ai/sdk"
-
-const anthropic = new Anthropic()
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS, getErrorResponse } from "@/lib/ai"
 
 // Playbook action type
 interface PlaybookAction {
@@ -99,9 +97,10 @@ export async function POST(request: NextRequest) {
     const prompt = buildPrompt(signals)
 
     // Call Claude for prediction
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
+    const anthropic = getAnthropicClient()
+    const message = await createMessage(anthropic, {
+      model: AI_MODEL,
+      max_tokens: TOKEN_LIMITS.medium,
       messages: [
         {
           role: "user",
