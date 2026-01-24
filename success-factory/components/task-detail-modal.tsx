@@ -17,6 +17,9 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  Building2,
+  Search,
+  Check,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
@@ -54,11 +57,21 @@ interface NotionPageData {
   comments: NotionComment[]
 }
 
+interface Company {
+  id: string
+  hubspotId: string
+  name: string
+  domain?: string | null
+}
+
 interface TaskDetailModalProps {
   isOpen: boolean
   onClose: () => void
   notionPageId: string
   taskTitle: string
+  taskId: string
+  companyId?: string
+  companyName?: string
   onUpdate?: () => void
 }
 
@@ -67,6 +80,9 @@ export function TaskDetailModal({
   onClose,
   notionPageId,
   taskTitle,
+  taskId,
+  companyId: initialCompanyId,
+  companyName: initialCompanyName,
   onUpdate,
 }: TaskDetailModalProps) {
   const [loading, setLoading] = useState(true)
@@ -75,6 +91,14 @@ export function TaskDetailModal({
   const [newComment, setNewComment] = useState("")
   const [postingComment, setPostingComment] = useState(false)
   const [showAllProperties, setShowAllProperties] = useState(false)
+
+  // Company association state
+  const [showCompanySearch, setShowCompanySearch] = useState(false)
+  const [companySearchQuery, setCompanySearchQuery] = useState("")
+  const [companySearchResults, setCompanySearchResults] = useState<Company[]>([])
+  const [searchingCompanies, setSearchingCompanies] = useState(false)
+  const [currentCompanyName, setCurrentCompanyName] = useState(initialCompanyName || "")
+  const [updatingCompany, setUpdatingCompany] = useState(false)
 
   useEffect(() => {
     if (isOpen && notionPageId) {
@@ -141,6 +165,56 @@ export function TaskDetailModal({
       onUpdate?.()
     } catch (err) {
       console.error("Failed to update status:", err)
+    }
+  }
+
+  // Company search with debounce
+  useEffect(() => {
+    if (!companySearchQuery.trim()) {
+      setCompanySearchResults([])
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchingCompanies(true)
+      try {
+        const res = await fetch(`/api/companies?search=${encodeURIComponent(companySearchQuery)}&limit=10`)
+        const data = await res.json()
+        setCompanySearchResults(data.companies || [])
+      } catch (err) {
+        console.error("Failed to search companies:", err)
+      } finally {
+        setSearchingCompanies(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [companySearchQuery])
+
+  async function updateCompany(company: Company) {
+    if (!taskId) return
+
+    setUpdatingCompany(true)
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/company`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyId: company.hubspotId,
+          companyName: company.name,
+        }),
+      })
+
+      if (res.ok) {
+        setCurrentCompanyName(company.name)
+        setShowCompanySearch(false)
+        setCompanySearchQuery("")
+        onUpdate?.()
+      }
+    } catch (err) {
+      console.error("Failed to update company:", err)
+    } finally {
+      setUpdatingCompany(false)
     }
   }
 
@@ -248,6 +322,81 @@ export function TaskDetailModal({
                   })}
                 </div>
               )}
+
+              {/* Company Association */}
+              <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="h-4 w-4 text-zinc-400" />
+                    <div>
+                      <p className="text-xs text-zinc-500">Company</p>
+                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {currentCompanyName || initialCompanyName || "No company linked"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowCompanySearch(!showCompanySearch)}
+                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  >
+                    {showCompanySearch ? "Cancel" : "Change"}
+                  </button>
+                </div>
+
+                {/* Company Search */}
+                {showCompanySearch && (
+                  <div className="mt-3 space-y-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                      <input
+                        type="text"
+                        value={companySearchQuery}
+                        onChange={(e) => setCompanySearchQuery(e.target.value)}
+                        placeholder="Search companies..."
+                        className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                        autoFocus
+                      />
+                      {searchingCompanies && (
+                        <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-zinc-400" />
+                      )}
+                    </div>
+
+                    {/* Search Results */}
+                    {companySearchResults.length > 0 && (
+                      <div className="max-h-48 overflow-y-auto rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800">
+                        {companySearchResults.map((company) => (
+                          <button
+                            key={company.id}
+                            onClick={() => updateCompany(company)}
+                            disabled={updatingCompany}
+                            className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-zinc-50 disabled:opacity-50 dark:hover:bg-zinc-700"
+                          >
+                            <div>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {company.name}
+                              </p>
+                              {company.domain && (
+                                <p className="text-xs text-zinc-500">{company.domain}</p>
+                              )}
+                            </div>
+                            {updatingCompany ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                            ) : (
+                              <Check className="h-4 w-4 text-emerald-500 opacity-0 group-hover:opacity-100" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {companySearchQuery && !searchingCompanies && companySearchResults.length === 0 && (
+                      <p className="text-center text-sm text-zinc-500 py-2">
+                        No companies found
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Key Properties */}
               <div className="grid gap-3 sm:grid-cols-2">

@@ -783,6 +783,9 @@ export default function TasksPage() {
           onClose={() => setDetailModalTask(null)}
           notionPageId={detailModalTask.metadata.notionPageId}
           taskTitle={detailModalTask.title}
+          taskId={detailModalTask.id}
+          companyId={detailModalTask.companyId}
+          companyName={detailModalTask.companyName}
           onUpdate={() => fetchTasks()}
         />
       )}
