@@ -17,6 +17,10 @@ import {
   RefreshCw,
   Database,
   Clock,
+  Plug,
+  CheckCircle2,
+  XCircle,
+  ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
