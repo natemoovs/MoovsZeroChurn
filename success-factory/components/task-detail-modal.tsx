@@ -294,7 +294,11 @@ export function TaskDetailModal({
                   <span className="text-sm text-zinc-500 mr-2">Status:</span>
                   {["Not Started", "In Progress", "Done"].map((status) => {
                     const currentStatus = String(statusProp.value || "").toLowerCase()
-                    const isActive = currentStatus === status.toLowerCase()
+                    // Handle both "Done" and "Completed" as completed states
+                    const isCompleteStatus = ["done", "completed"].includes(currentStatus)
+                    const isActive = status === "Done"
+                      ? isCompleteStatus
+                      : currentStatus === status.toLowerCase()
                     return (
                       <button
                         key={status}
