@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       positiveSignals: company.positiveSignals,
       customerSince: company.hubspotCreatedAt?.toISOString() || null,
       totalTrips: company.totalTrips || undefined,
-      customerSegment: getSegmentFromPlan(company.plan),
+      customerSegment: getSegmentFromMrr(company.mrr),
       ownerId: company.ownerId,
       ownerName: company.ownerName,
     }))
@@ -139,47 +139,32 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
 
   switch (segment.toLowerCase()) {
     case "enterprise":
-      // VIP/Elite plans = Enterprise segment
+      // Enterprise = MRR >= $499 (matches CSM Workload definition)
+      return {
+        AND: [
+          excludeChurned,
+          { mrr: { gte: 499 } },
+        ],
+      }
+    case "mid-market":
+      // Mid-Market = MRR $100-$498
+      return {
+        AND: [
+          excludeChurned,
+          { mrr: { gte: 100 } },
+          { mrr: { lt: 499 } },
+        ],
+      }
+    case "smb":
+      // SMB = MRR < $100
       return {
         AND: [
           excludeChurned,
           {
             OR: [
-              { plan: { contains: "VIP", mode: "insensitive" } },
-              { plan: { contains: "Elite", mode: "insensitive" } },
+              { mrr: { lt: 100 } },
+              { mrr: null },
             ],
-          },
-        ],
-      }
-    case "mid-market":
-      // Pro plans = Mid-Market segment
-      return {
-        AND: [
-          excludeChurned,
-          { plan: { contains: "Pro", mode: "insensitive" } },
-          {
-            NOT: {
-              OR: [
-                { plan: { contains: "VIP", mode: "insensitive" } },
-                { plan: { contains: "Elite", mode: "insensitive" } },
-              ],
-            },
-          },
-        ],
-      }
-    case "smb":
-      // Everything else that's not VIP/Elite/Pro = SMB
-      return {
-        AND: [
-          excludeChurned,
-          {
-            NOT: {
-              OR: [
-                { plan: { contains: "VIP", mode: "insensitive" } },
-                { plan: { contains: "Elite", mode: "insensitive" } },
-                { plan: { contains: "Pro", mode: "insensitive" } },
-              ],
-            },
           },
         ],
       }
@@ -206,10 +191,9 @@ function getPaymentStatus(subscriptionStatus: string | null): "current" | "overd
   return "unknown"
 }
 
-function getSegmentFromPlan(plan: string | null): string | null {
-  if (!plan) return null
-  const planLower = plan.toLowerCase()
-  if (planLower.includes("vip") || planLower.includes("elite")) return "Enterprise"
-  if (planLower.includes("pro")) return "Mid-Market"
+function getSegmentFromMrr(mrr: number | null): string {
+  if (mrr === null) return "SMB"
+  if (mrr >= 499) return "Enterprise"
+  if (mrr >= 100) return "Mid-Market"
   return "SMB"
 }
