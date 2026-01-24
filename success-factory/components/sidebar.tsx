@@ -65,7 +65,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-zinc-200 bg-white transition-all duration-300 dark:border-zinc-800 dark:bg-zinc-950",
+          "fixed left-0 top-0 z-50 flex h-screen flex-col glass-heavy border-r border-border-default transition-all duration-300",
           // Mobile: slide in/out
           "max-lg:-translate-x-full max-lg:w-64",
           isOpen && "max-lg:translate-x-0",
@@ -75,7 +75,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
+        <div className="flex h-16 items-center justify-between border-b border-border-default px-4">
           <Link href="/" className="flex items-center gap-3" onClick={onClose}>
             <Image
               src="/logo.jpg"
@@ -85,7 +85,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
               className="h-8 w-8 rounded-lg flex-shrink-0"
             />
             {!collapsed && (
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+              <span className="font-semibold text-content-primary">
                 Success Factory
               </span>
             )}
@@ -93,7 +93,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
           {/* Mobile close button */}
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 lg:hidden dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+            className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover hover:text-content-primary lg:hidden transition-colors-smooth"
           >
             <X className="h-5 w-5" />
           </button>
@@ -111,13 +111,13 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
                 href={item.href}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all-smooth",
                   isActive
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+                    ? "bg-primary-100 text-primary-700 glow-sm dark:bg-primary-50 dark:text-primary-500"
+                    : "text-content-secondary hover:bg-surface-hover hover:text-content-primary"
                 )}
               >
-                <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-blue-600 dark:text-blue-400")} />
+                <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-primary-600 dark:text-primary-500")} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             )
@@ -125,10 +125,10 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
         </nav>
 
         {/* Collapse Toggle - desktop only */}
-        <div className="hidden border-t border-zinc-200 p-3 lg:block dark:border-zinc-800">
+        <div className="hidden border-t border-border-default p-3 lg:block">
           <button
             onClick={onToggleCollapse}
-            className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+            className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-content-tertiary hover:bg-surface-hover hover:text-content-primary transition-colors-smooth"
           >
             {collapsed ? (
               <ChevronRight className="h-4 w-4" />

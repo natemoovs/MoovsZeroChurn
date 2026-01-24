@@ -15,24 +15,24 @@ interface StatCardProps {
 
 const variantStyles = {
   default: {
-    bg: "bg-white dark:bg-zinc-900",
-    iconBg: "bg-zinc-100 dark:bg-zinc-800",
-    iconColor: "text-zinc-600 dark:text-zinc-400",
+    bg: "card-sf",
+    iconBg: "bg-bg-tertiary",
+    iconColor: "text-content-secondary",
   },
   success: {
-    bg: "bg-white dark:bg-zinc-900",
-    iconBg: "bg-emerald-100 dark:bg-emerald-950",
-    iconColor: "text-emerald-600 dark:text-emerald-400",
+    bg: "card-sf",
+    iconBg: "bg-success-100 dark:bg-success-50",
+    iconColor: "text-success-600 dark:text-success-500",
   },
   warning: {
-    bg: "bg-white dark:bg-zinc-900",
-    iconBg: "bg-amber-100 dark:bg-amber-950",
-    iconColor: "text-amber-600 dark:text-amber-400",
+    bg: "card-sf",
+    iconBg: "bg-warning-100 dark:bg-warning-50",
+    iconColor: "text-warning-600 dark:text-warning-500",
   },
   danger: {
-    bg: "bg-white dark:bg-zinc-900",
-    iconBg: "bg-red-100 dark:bg-red-950",
-    iconColor: "text-red-600 dark:text-red-400",
+    bg: "card-sf",
+    iconBg: "bg-error-100 dark:bg-error-50",
+    iconColor: "text-error-600 dark:text-error-500",
   },
 }
 
@@ -49,28 +49,28 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-zinc-200 p-5 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800",
+        "p-5 transition-shadow-smooth",
         styles.bg
       )}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm font-medium text-content-secondary">
             {title}
           </p>
-          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <p className="text-2xl font-bold text-content-primary">
             {value}
           </p>
           {subtitle && (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+            <p className="text-sm text-content-secondary">{subtitle}</p>
           )}
           {trend && (
             <p
               className={cn(
                 "text-sm font-medium",
                 trend.value >= 0
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-red-600 dark:text-red-400"
+                  ? "text-success-600 dark:text-success-500"
+                  : "text-error-600 dark:text-error-500"
               )}
             >
               {trend.value >= 0 ? "+" : ""}

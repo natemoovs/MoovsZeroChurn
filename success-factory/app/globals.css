@@ -45,6 +45,89 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Moovs Success Factory Extended Theme Colors */
+  /* Backgrounds */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-elevated: var(--bg-elevated);
+
+  /* Surfaces */
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+  --color-surface-muted: var(--surface-muted);
+
+  /* Content (Text) */
+  --color-content-primary: var(--text-primary);
+  --color-content-secondary: var(--text-secondary);
+  --color-content-tertiary: var(--text-tertiary);
+  --color-content-inverse: var(--text-inverse);
+
+  /* Borders */
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-focus: var(--border-focus);
+
+  /* Primary - Moovs electric blue */
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+
+  /* Accent - electric cyan */
+  --color-accent-50: var(--accent-50);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+
+  /* Highlight - amber for CTAs */
+  --color-highlight-50: var(--highlight-50);
+  --color-highlight-100: var(--highlight-100);
+  --color-highlight-200: var(--highlight-200);
+  --color-highlight-300: var(--highlight-300);
+  --color-highlight-400: var(--highlight-400);
+  --color-highlight-500: var(--highlight-500);
+  --color-highlight-600: var(--highlight-600);
+
+  /* Success - emerald */
+  --color-success-50: var(--success-50);
+  --color-success-100: var(--success-100);
+  --color-success-500: var(--success-500);
+  --color-success-600: var(--success-600);
+  --color-success-700: var(--success-700);
+
+  /* Warning - orange */
+  --color-warning-50: var(--warning-50);
+  --color-warning-100: var(--warning-100);
+  --color-warning-500: var(--warning-500);
+  --color-warning-600: var(--warning-600);
+
+  /* Error - red */
+  --color-error-50: var(--error-50);
+  --color-error-100: var(--error-100);
+  --color-error-500: var(--error-500);
+  --color-error-600: var(--error-600);
+
+  /* Info - blue */
+  --color-info-50: var(--info-50);
+  --color-info-500: var(--info-500);
+  --color-info-600: var(--info-600);
+
+  /* Custom box shadows */
+  --shadow-glow: 0 0 20px -5px rgba(var(--glow-primary), 0.3), 0 0 40px -10px rgba(var(--glow-primary), 0.2);
+  --shadow-glow-lg: 0 0 30px -5px rgba(var(--glow-primary), 0.4), 0 0 60px -10px rgba(var(--glow-primary), 0.25);
+  --shadow-glow-intense: 0 0 30px -5px rgba(var(--glow-primary), 0.5), 0 0 60px -10px rgba(var(--glow-primary), 0.3), 0 0 100px -20px rgba(var(--glow-primary), 0.2);
 }
 
 /* ============================================
