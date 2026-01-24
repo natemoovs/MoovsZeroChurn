@@ -442,12 +442,13 @@ export async function queryCustomers(options?: {
     conditions.push(`"Lago Status" = 'terminated'`)
   }
 
+  // Segment filtering based on Lago Plan Code
   if (segment === "enterprise") {
-    conditions.push(`"Calculated Mrr" >= 499`)
+    conditions.push(`"Lago Plan Code" = 'vip-monthly'`)
   } else if (segment === "mid-market") {
-    conditions.push(`"Calculated Mrr" >= 100 AND "Calculated Mrr" < 499`)
+    conditions.push(`"Lago Plan Code" IN ('pro-monthly', 'pro-annual', 'pro-legacy')`)
   } else if (segment === "smb") {
-    conditions.push(`("Calculated Mrr" < 100 OR "Calculated Mrr" IS NULL)`)
+    conditions.push(`("Lago Plan Code" IN ('standard-monthly', 'standard-annual') OR "Lago Plan Code" IS NULL)`)
   }
 
   const whereClause = conditions.length > 0
