@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       positiveSignals: company.positiveSignals,
       customerSince: company.hubspotCreatedAt?.toISOString() || null,
       totalTrips: company.totalTrips || undefined,
-      customerSegment: getSegmentFromMrr(company.mrr),
+      customerSegment: getSegmentFromPlan(company.plan),
       ownerId: company.ownerId,
       ownerName: company.ownerName,
     }))
@@ -139,11 +139,50 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
 
   switch (segment.toLowerCase()) {
     case "enterprise":
-      return { AND: [excludeChurned, { mrr: { gte: 500 } }] }
+      // VIP/Elite plans = Enterprise segment
+      return {
+        AND: [
+          excludeChurned,
+          {
+            OR: [
+              { plan: { contains: "VIP", mode: "insensitive" } },
+              { plan: { contains: "Elite", mode: "insensitive" } },
+            ],
+          },
+        ],
+      }
     case "mid-market":
-      return { AND: [excludeChurned, { mrr: { gte: 100, lt: 500 } }] }
+      // Pro plans = Mid-Market segment
+      return {
+        AND: [
+          excludeChurned,
+          { plan: { contains: "Pro", mode: "insensitive" } },
+          {
+            NOT: {
+              OR: [
+                { plan: { contains: "VIP", mode: "insensitive" } },
+                { plan: { contains: "Elite", mode: "insensitive" } },
+              ],
+            },
+          },
+        ],
+      }
     case "smb":
-      return { AND: [excludeChurned, { mrr: { gte: 0, lt: 100 } }] }
+      // Everything else that's not VIP/Elite/Pro = SMB
+      return {
+        AND: [
+          excludeChurned,
+          {
+            NOT: {
+              OR: [
+                { plan: { contains: "VIP", mode: "insensitive" } },
+                { plan: { contains: "Elite", mode: "insensitive" } },
+                { plan: { contains: "Pro", mode: "insensitive" } },
+              ],
+            },
+          },
+        ],
+      }
     case "at-risk":
     case "at_risk":
       return { AND: [excludeChurned, { healthScore: "red" }] }
@@ -167,10 +206,10 @@ function getPaymentStatus(subscriptionStatus: string | null): "current" | "overd
   return "unknown"
 }
 
-function getSegmentFromMrr(mrr: number | null): string | null {
-  if (mrr === null) return null
-  if (mrr >= 500) return "Enterprise"
-  if (mrr >= 100) return "Mid-Market"
-  if (mrr > 0) return "SMB"
-  return "Free"
+function getSegmentFromPlan(plan: string | null): string | null {
+  if (!plan) return null
+  const planLower = plan.toLowerCase()
+  if (planLower.includes("vip") || planLower.includes("elite")) return "Enterprise"
+  if (planLower.includes("pro")) return "Mid-Market"
+  return "SMB"
 }
