@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { ExpansionOpportunity } from "@prisma/client"
+import { requireAuth } from "@/lib/auth/api-middleware"
 
 /**
  * GET /api/expansion
  * List expansion opportunities with filtering
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   const searchParams = request.nextUrl.searchParams
   const status = searchParams.get("status")
   const type = searchParams.get("type")
@@ -61,6 +65,9 @@ export async function GET(request: NextRequest) {
  * Create a new expansion opportunity
  */
 export async function POST(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const body = await request.json()
     const {

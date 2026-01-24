@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth } from "@/lib/auth/api-middleware"
 
 /**
  * GET /api/activity
  * Get activity feed for dashboard
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { searchParams } = new URL(request.url)
     const companyId = searchParams.get("companyId")

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth } from "@/lib/auth/api-middleware"
 
 /**
  * Churn Reason Documentation API
@@ -55,6 +56,9 @@ interface ChurnRecordInput {
  * Document a churn event
  */
 export async function POST(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const body: ChurnRecordInput = await request.json()
 
@@ -149,6 +153,9 @@ export async function POST(request: NextRequest) {
  * List churn records with filters
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   const searchParams = request.nextUrl.searchParams
   const reason = searchParams.get("reason")
   const startDate = searchParams.get("startDate")

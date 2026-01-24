@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth } from "@/lib/auth/api-middleware"
 
 interface ValueMetrics {
   // Core metrics
@@ -63,6 +64,9 @@ interface CompanyROI {
  * Get ROI/Value metrics for a specific company or all companies
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   const searchParams = request.nextUrl.searchParams
   const companyId = searchParams.get("companyId")
 
