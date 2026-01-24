@@ -3,6 +3,34 @@ import { prisma } from "@/lib/db"
 import { notion } from "@/lib/integrations"
 
 const CSM_DATABASE_ID = process.env.NOTION_CSM_DATABASE_ID
+const NOTION_API_KEY = process.env.NOTION_API_KEY
+
+// Fetch all Notion users to map IDs to names
+async function fetchNotionUsers(): Promise<Map<string, { name: string; email?: string }>> {
+  const userMap = new Map<string, { name: string; email?: string }>()
+  try {
+    const res = await fetch("https://api.notion.com/v1/users", {
+      headers: {
+        Authorization: `Bearer ${NOTION_API_KEY}`,
+        "Notion-Version": "2022-06-28",
+      },
+    })
+    const data = await res.json()
+    if (data.results) {
+      for (const user of data.results) {
+        if (user.id && user.name) {
+          userMap.set(user.id, {
+            name: user.name,
+            email: user.person?.email,
+          })
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to fetch Notion users:", err)
+  }
+  return userMap
+}
 
 /**
  * GET /api/sync/notion-tasks
@@ -10,7 +38,7 @@ const CSM_DATABASE_ID = process.env.NOTION_CSM_DATABASE_ID
  * Runs every hour to pull tasks created by other teams/automations
  */
 export async function GET() {
-  if (!process.env.NOTION_API_KEY || !CSM_DATABASE_ID) {
+  if (!NOTION_API_KEY || !CSM_DATABASE_ID) {
     return NextResponse.json(
       { error: "Notion not configured" },
       { status: 500 }
@@ -18,6 +46,9 @@ export async function GET() {
   }
 
   try {
+    // Fetch Notion users to map IDs to names
+    const notionUsers = await fetchNotionUsers()
+
     // Query all non-done tasks from Notion
     const result = await notion.queryDatabase(CSM_DATABASE_ID, {
       filter: {
@@ -40,8 +71,15 @@ export async function GET() {
       const status = extractStatus(props["Status"])
       const priority = extractSelect(props["Priority"])
       const dueDate = extractDate(props["Due"] || props["Due Date"])
-      const assignee = extractPerson(props["Assignee"])
+      const assigneeRaw = extractPerson(props["Assignee"])
       const notes = extractRichText(props["Notes"])
+
+      // Look up user name from our users map if not provided
+      const assignee = assigneeRaw ? {
+        ...assigneeRaw,
+        name: assigneeRaw.name || notionUsers.get(assigneeRaw.id)?.name,
+        email: assigneeRaw.email || notionUsers.get(assigneeRaw.id)?.email,
+      } : null
 
       if (!title) {
         skipped++
