@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { metabase, notion, lago } from "@/lib/integrations"
+import { requireAuth, isAuthError } from "@/lib/auth/api-middleware"
 
 // Snowflake database ID in Metabase
 const SNOWFLAKE_DB_ID = 2
+
+/**
+ * Sanitize an ID for safe use in SQL queries.
+ * Only allows alphanumeric characters, hyphens, and underscores.
+ * Returns null if the ID contains unsafe characters.
+ */
+function sanitizeIdForSql(id: string | null | undefined): string | null {
+  if (!id) return null
+  // Only allow alphanumeric, hyphens, underscores, and periods
+  if (!/^[a-zA-Z0-9_\-\.]+$/.test(id)) {
+    console.warn(`Unsafe characters in ID: ${id.slice(0, 20)}...`)
+    return null
+  }
+  return id
+}
 
 /**
  * Customer Research API
@@ -23,6 +39,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Require authentication
+  const authResult = await requireAuth()
+  if (isAuthError(authResult)) return authResult
+
   const { id } = await params
 
   if (!id) {
@@ -63,7 +83,8 @@ export async function GET(
     // Get reservation details and TRENDS from Metabase if we have operator ID
     let reservationDetails = null
     let reservationTrends = null
-    if (company.operatorId && process.env.METABASE_URL && process.env.METABASE_API_KEY) {
+    const safeOperatorId = sanitizeIdForSql(company.operatorId)
+    if (safeOperatorId && process.env.METABASE_URL && process.env.METABASE_API_KEY) {
       try {
         const reservationSql = `
           SELECT
@@ -75,7 +96,7 @@ export async function GET(
             MAX(CREATED_AT) as last_reservation_date,
             COUNT(DISTINCT TRIP_TYPE) as trip_types_used
           FROM MOZART_NEW.MOOVS_OPERATOR_RESERVATIONS
-          WHERE OPERATOR_ID = '${company.operatorId}'
+          WHERE OPERATOR_ID = '${safeOperatorId}'
         `
         const result = await metabase.runCustomQuery(SNOWFLAKE_DB_ID, reservationSql)
         const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
@@ -103,7 +124,7 @@ export async function GET(
             SUM(TOTAL_AMOUNT) as revenue,
             COUNT(DISTINCT TRIP_TYPE) as trip_types
           FROM MOZART_NEW.MOOVS_OPERATOR_RESERVATIONS
-          WHERE OPERATOR_ID = '${company.operatorId}'
+          WHERE OPERATOR_ID = '${safeOperatorId}'
             AND CREATED_AT >= DATEADD(month, -6, CURRENT_DATE())
           GROUP BY DATE_TRUNC('month', CREATED_AT)
           ORDER BY month DESC
@@ -156,7 +177,8 @@ export async function GET(
 
     // Get payment details from Metabase if we have Stripe account ID
     let paymentDetails = null
-    if (company.stripeAccountId && process.env.METABASE_URL && process.env.METABASE_API_KEY) {
+    const safeStripeAccountId = sanitizeIdForSql(company.stripeAccountId)
+    if (safeStripeAccountId && process.env.METABASE_URL && process.env.METABASE_API_KEY) {
       try {
         const paymentSql = `
           SELECT
@@ -169,7 +191,7 @@ export async function GET(
             MAX(CREATED) as last_charge_date,
             COUNT(CASE WHEN CREATED >= DATEADD(day, -30, CURRENT_DATE()) THEN 1 END) as charges_30_days
           FROM STRIPE_MOOVS.CHARGE
-          WHERE CONNECTED_ACCOUNT_ID = '${company.stripeAccountId}'
+          WHERE CONNECTED_ACCOUNT_ID = '${safeStripeAccountId}'
         `
         const result = await metabase.runCustomQuery(SNOWFLAKE_DB_ID, paymentSql)
         const rows = metabase.rowsToObjects<Record<string, unknown>>(result)

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth, isAuthError } from "@/lib/auth/api-middleware"
 
 /**
  * Combined dashboard endpoint with in-memory caching
@@ -106,6 +107,10 @@ let cache: CacheEntry | null = null
 const CACHE_TTL_MS = 60 * 1000 // 60 seconds
 
 export async function GET() {
+  // Require authentication
+  const authResult = await requireAuth()
+  if (isAuthError(authResult)) return authResult
+
   // Check cache
   if (cache && Date.now() - cache.timestamp < CACHE_TTL_MS) {
     return NextResponse.json({

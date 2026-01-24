@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
@@ -76,9 +77,13 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
           <Link href="/" className="flex items-center gap-3" onClick={onClose}>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-sm flex-shrink-0">
-              SF
-            </div>
+            <Image
+              src="/logo.jpg"
+              alt="Moovs"
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-lg flex-shrink-0"
+            />
             {!collapsed && (
               <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                 Success Factory
@@ -108,11 +113,11 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                   isActive
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400"
                     : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
                 )}
               >
-                <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-emerald-600 dark:text-emerald-400")} />
+                <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-blue-600 dark:text-blue-400")} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             )

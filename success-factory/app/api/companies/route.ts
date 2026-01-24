@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth, isAuthError } from "@/lib/auth/api-middleware"
 
 /**
  * Get companies from database (synced from HubSpot)
  * GET /api/companies?health=red&owner=123&search=acme&page=1&limit=50
  */
 export async function GET(request: NextRequest) {
+  // Require authentication
+  const authResult = await requireAuth()
+  if (isAuthError(authResult)) return authResult
+
   const { searchParams } = new URL(request.url)
 
   const health = searchParams.get("health")

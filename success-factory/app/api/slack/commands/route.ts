@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { getAnthropicClient, AI_MODEL, TOKEN_LIMITS, extractText } from "@/lib/ai"
+import crypto from "crypto"
 
 /**
  * Slack Slash Commands Handler
@@ -15,14 +16,70 @@ import { getAnthropicClient, AI_MODEL, TOKEN_LIMITS, extractText } from "@/lib/a
 
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET
 
+/**
+ * Verify Slack request signature
+ * See: https://api.slack.com/authentication/verifying-requests-from-slack
+ */
+function verifySlackSignature(
+  signature: string | null,
+  timestamp: string | null,
+  body: string
+): boolean {
+  if (!signature || !timestamp || !SLACK_SIGNING_SECRET) {
+    return false
+  }
+
+  // Check timestamp is within 5 minutes (prevent replay attacks)
+  const time = Math.floor(Date.now() / 1000)
+  if (Math.abs(time - parseInt(timestamp, 10)) > 300) {
+    return false
+  }
+
+  // Create the signature base string
+  const sigBasestring = `v0:${timestamp}:${body}`
+
+  // Compute HMAC SHA256
+  const mySignature =
+    "v0=" +
+    crypto
+      .createHmac("sha256", SLACK_SIGNING_SECRET)
+      .update(sigBasestring, "utf8")
+      .digest("hex")
+
+  // Use timing-safe comparison
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(mySignature, "utf8"),
+      Buffer.from(signature, "utf8")
+    )
+  } catch {
+    return false
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData()
-    const command = formData.get("command") as string
-    const text = formData.get("text") as string
-    const userId = formData.get("user_id") as string
-    const userName = formData.get("user_name") as string
-    const responseUrl = formData.get("response_url") as string
+    // Get raw body for signature verification
+    const rawBody = await request.text()
+
+    // Verify Slack signature (skip in development)
+    if (process.env.NODE_ENV !== "development") {
+      const signature = request.headers.get("x-slack-signature")
+      const timestamp = request.headers.get("x-slack-request-timestamp")
+
+      if (!verifySlackSignature(signature, timestamp, rawBody)) {
+        console.error("[Slack Commands] Invalid signature")
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+      }
+    }
+
+    // Parse form data from raw body
+    const formData = new URLSearchParams(rawBody)
+    const command = formData.get("command") || ""
+    const text = formData.get("text") || ""
+    const userId = formData.get("user_id") || ""
+    const userName = formData.get("user_name") || ""
+    const responseUrl = formData.get("response_url") || ""
 
     // Parse subcommand
     const parts = text?.trim().split(/\s+/) || []
