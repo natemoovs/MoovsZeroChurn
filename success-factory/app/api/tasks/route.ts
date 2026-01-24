@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { createTask } from "@/lib/tasks/sync"
+import { requireAuth, isAuthError } from "@/lib/auth/api-middleware"
 
 /**
  * Get all tasks with filtering
  * GET /api/tasks?status=pending&ownerId=123&companyId=456
  */
 export async function GET(request: NextRequest) {
+  // Require authentication
+  const authResult = await requireAuth()
+  if (isAuthError(authResult)) return authResult
+
   const searchParams = request.nextUrl.searchParams
   const status = searchParams.get("status")
   const ownerId = searchParams.get("ownerId")
@@ -81,6 +86,10 @@ export async function GET(request: NextRequest) {
  * POST /api/tasks
  */
 export async function POST(request: NextRequest) {
+  // Require authentication
+  const authResult = await requireAuth()
+  if (isAuthError(authResult)) return authResult
+
   try {
     const body = await request.json()
 

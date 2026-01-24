@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { metabase, notion, lago } from "@/lib/integrations"
+import { requireAuth, isAuthError } from "@/lib/auth/api-middleware"
 
 // Snowflake database ID in Metabase
 const SNOWFLAKE_DB_ID = 2
@@ -23,6 +24,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Require authentication
+  const authResult = await requireAuth()
+  if (isAuthError(authResult)) return authResult
+
   const { id } = await params
 
   if (!id) {

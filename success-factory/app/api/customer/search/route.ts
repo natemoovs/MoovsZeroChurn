@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth, isAuthError } from "@/lib/auth/api-middleware"
 
 /**
  * Customer Search API
@@ -9,6 +10,10 @@ import { prisma } from "@/lib/db"
  * Search for customers by name, domain, email, operator ID, or Stripe account ID
  */
 export async function GET(request: NextRequest) {
+  // Require authentication
+  const authResult = await requireAuth()
+  if (isAuthError(authResult)) return authResult
+
   const searchParams = request.nextUrl.searchParams
   const query = searchParams.get("q")
   const limit = parseInt(searchParams.get("limit") || "20", 10)

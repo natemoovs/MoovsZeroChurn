@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { randomBytes } from "crypto"
+import { requireAuth, isAuthError } from "@/lib/auth/api-middleware"
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const FROM_EMAIL = process.env.FROM_EMAIL || "nps@successfactory.app"
@@ -11,6 +12,10 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
  * GET /api/nps?companyId=xxx&days=90
  */
 export async function GET(request: NextRequest) {
+  // Require authentication
+  const authResult = await requireAuth()
+  if (isAuthError(authResult)) return authResult
+
   const { searchParams } = new URL(request.url)
   const companyId = searchParams.get("companyId")
   const days = parseInt(searchParams.get("days") || "90")
