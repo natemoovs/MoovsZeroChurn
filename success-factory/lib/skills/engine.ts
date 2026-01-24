@@ -25,7 +25,7 @@ function parseQuestions(content: string): SkillQuestion[] {
       if (currentQuestion?.id && currentQuestion?.question) {
         questions.push(currentQuestion as SkillQuestion)
       }
-      break
+      return questions // Return early to avoid duplicate push at end
     }
 
     if (!inQuestionsSection) continue
