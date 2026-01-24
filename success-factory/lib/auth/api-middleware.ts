@@ -33,7 +33,7 @@ export async function requireAuth() {
  */
 export function isAuthError(
   result: Awaited<ReturnType<typeof requireAuth>>
-): result is NextResponse {
+): result is NextResponse<{ error: string }> {
   return result instanceof NextResponse
 }
 
