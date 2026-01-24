@@ -237,7 +237,9 @@ model HubSpotCompany {
   // Subscription & Revenue
   mrr                 Float?   // Monthly recurring revenue
   subscriptionStatus  String?  // active, churned, trial, etc.
-  plan                String?  // Plan name/tier
+  plan                String?  // Plan name/tier (Lago Plan Name)
+  planCode            String?  // Lago Plan Code (vip-monthly, pro-annual, etc.)
+  customerSegment     String?  // enterprise, mid-market, smb, free (derived from plan)
   contractEndDate     DateTime? // Renewal date
 
   // Usage & Engagement
@@ -308,6 +310,7 @@ model HubSpotCompany {
   @@index([healthScore])
   @@index([numericHealthScore])
   @@index([subscriptionStatus])
+  @@index([customerSegment])
   @@index([contractEndDate])
   @@index([lastSyncedAt])
   @@index([operatorId])

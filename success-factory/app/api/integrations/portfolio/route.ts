@@ -3,7 +3,13 @@ import { prisma } from "@/lib/db"
 
 /**
  * Get portfolio health data from synced database
- * GET /api/integrations/portfolio?segment=enterprise|mid-market|smb|all
+ * GET /api/integrations/portfolio?segment=enterprise|mid-market|smb|free|all
+ *
+ * Segments based on Lago Plan Code:
+ * - Enterprise: vip-monthly (Elite)
+ * - Mid-Market: pro-monthly, pro-annual, pro-legacy
+ * - SMB: standard-monthly, standard-annual (Starter)
+ * - Free: free plan or no plan (not actively monitored by CSM)
  *
  * Uses the HubSpotCompany table which is synced daily via /api/sync/hubspot
  */
@@ -59,7 +65,7 @@ export async function GET(request: NextRequest) {
       positiveSignals: company.positiveSignals,
       customerSince: company.hubspotCreatedAt?.toISOString() || null,
       totalTrips: company.totalTrips || undefined,
-      customerSegment: getSegmentFromMrr(company.mrr),
+      customerSegment: getSegmentFromPlan(company.plan),
       ownerId: company.ownerId,
       ownerName: company.ownerName,
     }))
@@ -139,33 +145,35 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
 
   switch (segment.toLowerCase()) {
     case "enterprise":
-      // Enterprise = MRR >= $499 (matches CSM Workload definition)
+      // Enterprise = vip-monthly plan
       return {
         AND: [
           excludeChurned,
-          { mrr: { gte: 499 } },
+          { customerSegment: "enterprise" },
         ],
       }
     case "mid-market":
-      // Mid-Market = MRR $100-$498
+      // Mid-Market = pro-monthly, pro-annual, pro-legacy
       return {
         AND: [
           excludeChurned,
-          { mrr: { gte: 100 } },
-          { mrr: { lt: 499 } },
+          { customerSegment: "mid_market" },
         ],
       }
     case "smb":
-      // SMB = MRR < $100
+      // SMB = standard-monthly, standard-annual
       return {
         AND: [
           excludeChurned,
-          {
-            OR: [
-              { mrr: { lt: 100 } },
-              { mrr: null },
-            ],
-          },
+          { customerSegment: "smb" },
+        ],
+      }
+    case "free":
+      // Free = no plan (own portfolio, not actively monitored)
+      return {
+        AND: [
+          excludeChurned,
+          { customerSegment: "free" },
         ],
       }
     case "at-risk":
@@ -191,9 +199,22 @@ function getPaymentStatus(subscriptionStatus: string | null): "current" | "overd
   return "unknown"
 }
 
-function getSegmentFromMrr(mrr: number | null): string {
-  if (mrr === null) return "SMB"
-  if (mrr >= 499) return "Enterprise"
-  if (mrr >= 100) return "Mid-Market"
+function getSegmentFromPlan(plan: string | null): string {
+  if (!plan) return "Free"
+  const planLower = plan.toLowerCase()
+
+  // Enterprise = VIP/Elite plans
+  if (planLower.includes("vip") || planLower.includes("elite") || planLower.includes("enterprise")) {
+    return "Enterprise"
+  }
+  // Mid-Market = Pro plans
+  if (planLower.includes("pro")) {
+    return "Mid-Market"
+  }
+  // Free plan
+  if (planLower.includes("free")) {
+    return "Free"
+  }
+  // SMB = Standard/Starter plans
   return "SMB"
 }

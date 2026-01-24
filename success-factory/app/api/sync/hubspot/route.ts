@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hubspot, HubSpotCompany, getOwners } from "@/lib/integrations/hubspot"
 import { metabase } from "@/lib/integrations"
+import { isAuthenticated } from "@/lib/auth/server"
 
 // Metabase query ID for CSM_MOOVS master customer view (Card 1469)
 const METABASE_QUERY_ID = 1469
@@ -19,7 +20,8 @@ interface MetabaseAccountData {
   stripeAccountId: string | null
   // Billing
   mrr: number | null
-  plan: string | null
+  plan: string | null      // Lago Plan Name (e.g., "Pro (Annual)")
+  planCode: string | null  // Lago Plan Code (e.g., "pro-annual")
   billingStatus: string | null
   // Usage
   totalTrips: number
@@ -49,6 +51,24 @@ interface OwnerMap {
 }
 
 /**
+ * Derive customer segment from Lago Plan Code
+ * - Enterprise: vip-monthly
+ * - Mid-Market: pro-monthly, pro-annual, pro-legacy
+ * - SMB: standard-monthly, standard-annual
+ * - Free: null or unknown plan
+ */
+function getSegmentFromPlanCode(planCode: string | null): "enterprise" | "mid_market" | "smb" | "free" {
+  if (!planCode) return "free"
+  const code = planCode.toLowerCase()
+
+  if (code === "vip-monthly") return "enterprise"
+  if (code.startsWith("pro-")) return "mid_market"
+  if (code.startsWith("standard-")) return "smb"
+
+  return "free"
+}
+
+/**
  * Fetch account data from Metabase CSM_MOOVS view
  */
 async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
@@ -74,6 +94,7 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
     // Billing
     mrr: (row.CALCULATED_MRR as number) || null,
     plan: (row.LAGO_PLAN_NAME as string) || null,
+    planCode: (row.LAGO_PLAN_CODE as string) || null,
     billingStatus: (row.LAGO_STATUS as string) || (row.LAGO_CUSTOMER_STATUS as string) || null,
     // Usage
     totalTrips: (row.R_TOTAL_RESERVATIONS_COUNT as number) || 0,
@@ -491,12 +512,16 @@ export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
 
-  // Allow if: no secret configured, or secret matches, or is Vercel cron, or dev mode
+  // Check if user is logged in (for manual sync from settings page)
+  const userLoggedIn = await isAuthenticated()
+
+  // Allow if: no secret configured, or secret matches, or is Vercel cron, or dev mode, or logged in user
   const isAuthorized =
     !cronSecret ||  // No secret = allow (for testing)
     authHeader === `Bearer ${cronSecret}` ||
     request.headers.get("x-vercel-cron") === "1" ||
-    process.env.NODE_ENV === "development"
+    process.env.NODE_ENV === "development" ||
+    userLoggedIn  // Allow logged-in users to trigger sync
 
   if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -687,13 +712,8 @@ export async function POST(request: NextRequest) {
           select: { id: true, healthScore: true, numericHealthScore: true },
         })
 
-        // Determine segment for CSM assignment
-        const customerMrr = mbData.mrr ?? 0
-        const customerSegment = customerMrr >= 499 ? "enterprise"
-          : customerMrr >= 100 ? "mid_market"
-          : customerMrr > 0 ? "smb"
-          : "free"
-
+        // Determine segment based on Lago Plan Code
+        const customerSegment = getSegmentFromPlanCode(mbData.planCode)
         const segmentCsm = CSM_ASSIGNMENTS[customerSegment]
 
         // Get HubSpot props (if available) - cast to Record for safe access
@@ -713,6 +733,8 @@ export async function POST(request: NextRequest) {
             mrr: mbData.mrr,
             subscriptionStatus: mbData.billingStatus || mbData.churnStatus || hsProps.subscription_status || null,
             plan: mbData.plan || hsProps.plan_name || null,
+            planCode: mbData.planCode,
+            customerSegment,
             contractEndDate: parseDate(hsProps.contract_end_date || hsProps.renewal_date),
             totalTrips: mbData.totalTrips,
             lastLoginAt,
@@ -759,6 +781,8 @@ export async function POST(request: NextRequest) {
             mrr: mbData.mrr,
             subscriptionStatus: mbData.billingStatus || mbData.churnStatus || hsProps.subscription_status || null,
             plan: mbData.plan || hsProps.plan_name || null,
+            planCode: mbData.planCode,
+            customerSegment,
             contractEndDate: parseDate(hsProps.contract_end_date || hsProps.renewal_date),
             totalTrips: mbData.totalTrips,
             lastLoginAt,

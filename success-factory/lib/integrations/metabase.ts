@@ -8,6 +8,10 @@
 const METABASE_URL = process.env.METABASE_URL?.replace(/\/$/, "")
 const METABASE_API_KEY = process.env.METABASE_API_KEY
 
+// Moovs master customer view - swoop.metabaseapp.com db=3, table=5682
+export const METABASE_DATABASE_ID = parseInt(process.env.METABASE_DATABASE_ID || "3")
+export const METABASE_CUSTOMER_TABLE_ID = parseInt(process.env.METABASE_TABLE_ID || "5682")
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -388,6 +392,91 @@ export function getScalarValue<T = unknown>(result: MetabaseQueryResult): T | nu
 }
 
 // ============================================================================
+// Moovs Customer Data Queries
+// ============================================================================
+
+/**
+ * Master customer view columns from Metabase table 5682
+ */
+export interface MoovsCustomerRow {
+  "Lago ID": string
+  "Lago External ID": string
+  "Lago Plan Code": string
+  "Lago Status": string
+  "Calculated Mrr": number | null
+  "Lago Plan Name": string
+  "P Company Name": string
+  "P Plan": string
+  "P Vehicles Total": number | null
+  "P Total Members": number | null
+  "P Drivers Count": number | null
+  "P Setup Score": number | null
+  "Hs C ID": number | null
+  "Hs C Property Name": string | null
+  "Hs C Property Customer Segment": string | null
+  "Hs D Owner Name": string | null
+  "Hs D Churn Status": string | null
+  "R Total Reservations Count": number | null
+  "R Last 30 Days Reservations Count": number | null
+  "R Last Trip Created At": string | null
+  "Da Days Since Last Assignment": number | null
+  "Da Engagement Status": string | null
+}
+
+/**
+ * Query the master customer table with optional filters
+ */
+export async function queryCustomers(options?: {
+  segment?: "enterprise" | "mid-market" | "smb" | "free" | "all"
+  status?: "active" | "churned" | "all"
+  limit?: number
+}): Promise<MoovsCustomerRow[]> {
+  const { segment = "all", status = "active", limit = 1000 } = options || {}
+
+  // Build WHERE clauses
+  const conditions: string[] = []
+
+  if (status === "active") {
+    conditions.push(`"Lago Status" = 'active'`)
+  } else if (status === "churned") {
+    conditions.push(`"Lago Status" = 'terminated'`)
+  }
+
+  // Segment filtering based on Lago Plan Code
+  if (segment === "enterprise") {
+    conditions.push(`"Lago Plan Code" = 'vip-monthly'`)
+  } else if (segment === "mid-market") {
+    conditions.push(`"Lago Plan Code" IN ('pro-monthly', 'pro-annual', 'pro-legacy')`)
+  } else if (segment === "smb") {
+    conditions.push(`"Lago Plan Code" IN ('standard-monthly', 'standard-annual')`)
+  } else if (segment === "free") {
+    conditions.push(`("P Plan" = 'free' OR "Lago Plan Code" IS NULL)`)
+  }
+
+  const whereClause = conditions.length > 0
+    ? `WHERE ${conditions.join(" AND ")}`
+    : ""
+
+  const sql = `
+    SELECT
+      "Lago ID", "Lago External ID", "Lago Plan Code", "Lago Status",
+      "Calculated Mrr", "Lago Plan Name", "P Company Name", "P Plan",
+      "P Vehicles Total", "P Total Members", "P Drivers Count", "P Setup Score",
+      "Hs C ID", "Hs C Property Name", "Hs C Property Customer Segment",
+      "Hs D Owner Name", "Hs D Churn Status",
+      "R Total Reservations Count", "R Last 30 Days Reservations Count",
+      "R Last Trip Created At", "Da Days Since Last Assignment", "Da Engagement Status"
+    FROM "public"."customer_master_view"
+    ${whereClause}
+    ORDER BY "Calculated Mrr" DESC NULLS LAST
+    LIMIT ${limit}
+  `
+
+  const result = await runCustomQuery(METABASE_DATABASE_ID, sql)
+  return rowsToObjects<MoovsCustomerRow>(result)
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -398,8 +487,12 @@ export const metabase = {
   getDatabases,
   getTables,
   searchQuestions,
+  queryCustomers,
   // Helpers
   rowsToObjects,
   getColumnNames,
   getScalarValue,
+  // Constants
+  METABASE_DATABASE_ID,
+  METABASE_CUSTOMER_TABLE_ID,
 }

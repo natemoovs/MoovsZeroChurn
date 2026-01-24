@@ -60,6 +60,23 @@ interface SyncStatus {
   healthDistribution: Record<string, number>
 }
 
+interface IntegrationInfo {
+  name: string
+  description: string
+  configured: boolean
+  envVar: string
+  docsUrl: string | null
+}
+
+interface IntegrationsStatus {
+  integrations: Record<string, IntegrationInfo>
+  summary: {
+    configured: number
+    total: number
+    percentage: number
+  }
+}
+
 const ALERT_TYPES = [
   { id: "at_risk", label: "At-Risk Alerts", description: "When an account drops to red health", icon: AlertTriangle },
   { id: "health_change", label: "Health Changes", description: "Any health score change", icon: TrendingDown },
@@ -87,6 +104,7 @@ export default function SettingsPage() {
     },
   })
   const [integrations, setIntegrations] = useState<IntegrationStatus | null>(null)
+  const [integrationsStatus, setIntegrationsStatus] = useState<IntegrationsStatus | null>(null)
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -110,13 +128,17 @@ export default function SettingsPage() {
       fetch("/api/alerts/email").then((r) => r.json()).catch(() => ({ configured: false, provider: null })),
       fetch("/api/settings/notifications").then((r) => r.json()).catch(() => null),
       fetch("/api/sync/hubspot").then((r) => r.json()).catch(() => null),
-    ]).then(([slack, email, savedPrefs, sync]) => {
+      fetch("/api/integrations/status").then((r) => r.json()).catch(() => null),
+    ]).then(([slack, email, savedPrefs, sync, intStatus]) => {
       setIntegrations({ slack, email })
       if (savedPrefs?.preferences) {
         setPreferences(savedPrefs.preferences)
       }
       if (sync) {
         setSyncStatus(sync)
+      }
+      if (intStatus) {
+        setIntegrationsStatus(intStatus)
       }
       setLoading(false)
     })
@@ -460,6 +482,71 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Integrations */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Plug className="h-5 w-5 text-zinc-400" />
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Integrations
+              </h2>
+            </div>
+            {integrationsStatus && (
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                {integrationsStatus.summary.configured} of {integrationsStatus.summary.total} configured
+              </span>
+            )}
+          </div>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            Connect external services via API keys. Set the environment variables to enable each integration.
+          </p>
+
+          {integrationsStatus && (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {Object.entries(integrationsStatus.integrations).map(([key, integration]) => (
+                <div
+                  key={key}
+                  className={cn(
+                    "rounded-lg border p-4 transition-all",
+                    integration.configured
+                      ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/20"
+                      : "border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
+                      {integration.name}
+                    </h3>
+                    {integration.configured ? (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-zinc-400" />
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+                    {integration.description}
+                  </p>
+                  {!integration.configured && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Set {integration.envVar}
+                    </p>
+                  )}
+                  {integration.configured && integration.docsUrl && (
+                    <a
+                      href={integration.docsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline dark:text-emerald-400"
+                    >
+                      Docs <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
