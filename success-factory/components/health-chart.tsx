@@ -125,7 +125,7 @@ export function HealthBar({ green, yellow, red }: HealthChartProps) {
           style={{ width: `${redPercent}%` }}
         />
       </div>
-      <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-wrap justify-between gap-1 text-xs text-zinc-500 dark:text-zinc-400">
         <span>{green} healthy</span>
         <span>{yellow} monitor</span>
         <span>{red} at risk</span>
