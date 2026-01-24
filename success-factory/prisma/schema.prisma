@@ -186,22 +186,26 @@ model JourneyStageHistory {
 // ============================================================================
 
 model NPSSurvey {
-  id          String   @id @default(cuid())
-  companyId   String   // HubSpot company ID
-  companyName String
-  contactEmail String  // Email of person who received survey
+  id           String   @id @default(cuid())
+  companyId    String   // HubSpot company ID
+  companyName  String
+  contactEmail String   // Email of person who received survey
   contactName  String?
-  token       String   @unique // Unique token for response URL
-  sentAt      DateTime @default(now())
-  respondedAt DateTime?
-  score       Int?     // 0-10 NPS score
-  comment     String?  // Optional follow-up comment
-  category    String?  // promoter (9-10), passive (7-8), detractor (0-6)
+  token        String   @unique // Unique token for response URL
+  triggerType  String   @default("manual") // day_30, day_90, post_support, pre_renewal, quarterly, manual
+  sentAt       DateTime @default(now())
+  respondedAt  DateTime?
+  score        Int?     // 0-10 NPS score
+  comment      String?  // Optional follow-up comment
+  category     String?  // promoter (9-10), passive (7-8), detractor (0-6)
+  followedUpAt DateTime? // When CSM followed up on response
+  followUpNotes String?  // Notes from follow-up
 
   @@index([companyId])
   @@index([token])
   @@index([sentAt])
   @@index([category])
+  @@index([triggerType])
 }
 
 // ============================================================================
@@ -411,4 +415,80 @@ model ChurnPattern {
 
   @@index([patternType])
   @@index([affectedSegment])
+}
+
+// ============================================================================
+// Onboarding Milestones - Track time-to-value for new customers
+// ============================================================================
+
+model OnboardingMilestone {
+  id          String    @id @default(cuid())
+  companyId   String    // HubSpot company ID
+  companyName String
+  milestone   String    // first_login, profile_complete, first_vehicle, first_driver, first_trip, first_payment, portal_setup, first_recurring, api_integration
+  targetDays  Int       // Days from signup to complete this milestone
+  completedAt DateTime?
+  isOverdue   Boolean   @default(false)
+  isRequired  Boolean   @default(true) // Required for segment
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([companyId, milestone])
+  @@index([companyId])
+  @@index([isOverdue])
+  @@index([milestone])
+}
+
+// ============================================================================
+// Activity Events - Unified timeline of all customer interactions
+// ============================================================================
+
+model ActivityEvent {
+  id          String   @id @default(cuid())
+  companyId   String   // HubSpot company ID
+  source      String   // hubspot, stripe, support, platform, nps, journey, task
+  eventType   String   // email_sent, payment_failed, ticket_opened, health_changed, etc.
+  title       String   // Human-readable title
+  description String?  // Details
+  metadata    Json?    // Source-specific data
+  importance  String   @default("normal") // low, normal, high, critical
+  occurredAt  DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([companyId, occurredAt])
+  @@index([companyId])
+  @@index([source])
+  @@index([eventType])
+  @@index([importance])
+}
+
+// ============================================================================
+// Stakeholders - Key contacts and champions per account
+// ============================================================================
+
+model Stakeholder {
+  id            String    @id @default(cuid())
+  companyId     String    // HubSpot company ID
+  hubspotContactId String? // HubSpot contact ID if synced
+  name          String
+  email         String?
+  phone         String?
+  title         String?
+  role          String    // champion, decision_maker, user, influencer, detractor, executive_sponsor
+  sentiment     String    @default("neutral") // positive, neutral, negative, unknown
+  influence     String    @default("medium") // high, medium, low
+  engagement    String    @default("active") // active, passive, disengaged
+  lastContactAt DateTime?
+  notes         String?
+  isActive      Boolean   @default(true)
+  leftCompanyAt DateTime? // Track if they left
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([companyId, email])
+  @@index([companyId])
+  @@index([role])
+  @@index([sentiment])
+  @@index([isActive])
 }
