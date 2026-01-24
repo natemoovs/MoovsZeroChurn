@@ -23,13 +23,22 @@ interface Account {
 
 function AccountsContent() {
   const searchParams = useSearchParams()
-  const initialFilter = (searchParams.get("filter") as HealthFilter) || "all"
-  const initialQuery = searchParams.get("q") || ""
+  const urlFilter = (searchParams.get("filter") as HealthFilter) || "all"
+  const urlQuery = searchParams.get("q") || ""
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<HealthFilter>(initialFilter)
-  const [searchQuery, setSearchQuery] = useState(initialQuery)
+  const [filter, setFilter] = useState<HealthFilter>(urlFilter)
+  const [searchQuery, setSearchQuery] = useState(urlQuery)
+
+  // Sync filter and search with URL params when they change
+  useEffect(() => {
+    setFilter(urlFilter)
+  }, [urlFilter])
+
+  useEffect(() => {
+    setSearchQuery(urlQuery)
+  }, [urlQuery])
 
   useEffect(() => {
     fetch("/api/integrations/portfolio?segment=all")
