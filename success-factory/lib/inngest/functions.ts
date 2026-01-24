@@ -1,6 +1,8 @@
 import { inngest } from "./client"
 import { prisma } from "@/lib/db"
 import { notion } from "@/lib/integrations"
+import { sendEmail } from "@/lib/email/sendgrid"
+import { buildDigestEmail } from "@/lib/email/templates"
 
 // Hourly Notion sync - replaces the Vercel cron
 export const notionSync = inngest.createFunction(
@@ -420,10 +422,196 @@ function mapNotionPriority(
   return "medium"
 }
 
+// Weekly email digest - send summary to CSMs every Monday
+export const weeklyEmailDigest = inngest.createFunction(
+  { id: "weekly-email-digest", name: "Send weekly CSM digest" },
+  { cron: "0 8 * * 1" }, // Every Monday at 8am
+  async ({ step }) => {
+    const recipients = process.env.DIGEST_EMAIL_RECIPIENTS?.split(",").map((e) =>
+      e.trim()
+    )
+
+    if (!recipients || recipients.length === 0) {
+      return { skipped: true, reason: "No digest recipients configured" }
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
+    // Gather digest data
+    const digestData = await step.run("gather-digest-data", async () => {
+      const now = new Date()
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+      // Get at-risk accounts (red health score)
+      const atRiskAccounts = await prisma.hubSpotCompany.findMany({
+        where: {
+          healthScore: "red",
+        },
+        select: {
+          hubspotId: true,
+          name: true,
+          healthScore: true,
+          riskSignals: true,
+        },
+        take: 10,
+      })
+
+      // Get overdue tasks
+      const overdueTasks = await prisma.task.findMany({
+        where: {
+          dueDate: { lt: now },
+          status: { notIn: ["completed", "cancelled"] },
+        },
+        select: {
+          title: true,
+          companyName: true,
+          dueDate: true,
+        },
+        take: 10,
+        orderBy: { dueDate: "asc" },
+      })
+
+      // Get health score changes from last week
+      const recentSnapshots = await prisma.healthScoreSnapshot.findMany({
+        where: {
+          createdAt: { gte: weekAgo },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 500,
+      })
+
+      // Find accounts that dropped in health
+      const companyChanges = new Map<
+        string,
+        { name: string; first: string; last: string }
+      >()
+      for (const snapshot of recentSnapshots) {
+        const existing = companyChanges.get(snapshot.companyId)
+        if (!existing) {
+          companyChanges.set(snapshot.companyId, {
+            name: snapshot.companyName,
+            first: snapshot.healthScore,
+            last: snapshot.healthScore,
+          })
+        } else {
+          // Older snapshot becomes 'first'
+          companyChanges.set(snapshot.companyId, {
+            ...existing,
+            first: snapshot.healthScore,
+          })
+        }
+      }
+
+      const healthChanges = Array.from(companyChanges.entries())
+        .filter(([, data]) => data.first !== data.last)
+        .map(([, data]) => ({
+          companyName: data.name,
+          previousHealth: data.first,
+          currentHealth: data.last,
+        }))
+        .slice(0, 10)
+
+      // Get upcoming renewals (next 30 days)
+      const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      const upcomingRenewals = await prisma.hubSpotCompany.findMany({
+        where: {
+          contractEndDate: {
+            gte: now,
+            lte: thirtyDaysFromNow,
+          },
+        },
+        select: {
+          name: true,
+          contractEndDate: true,
+          mrr: true,
+        },
+        take: 10,
+        orderBy: { contractEndDate: "asc" },
+      })
+
+      return {
+        atRiskAccounts: atRiskAccounts.map((a) => ({
+          name: a.name,
+          id: a.hubspotId,
+          healthScore: a.healthScore || "unknown",
+          riskSignals: a.riskSignals || [],
+        })),
+        overdueTasks: overdueTasks.map((t) => ({
+          title: t.title,
+          companyName: t.companyName,
+          dueDate: t.dueDate?.toLocaleDateString() || "No date",
+        })),
+        healthChanges,
+        upcomingRenewals: upcomingRenewals.map((r) => ({
+          companyName: r.name,
+          renewalDate: r.contractEndDate?.toLocaleDateString() || "No date",
+          mrr: r.mrr || 0,
+        })),
+      }
+    })
+
+    // Send digest to each recipient
+    const results = await step.run("send-digest-emails", async () => {
+      const sent: string[] = []
+      const failed: string[] = []
+
+      const date = new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+
+      for (const email of recipients) {
+        const firstName = email.split("@")[0].split(".")[0]
+        const recipientName =
+          firstName.charAt(0).toUpperCase() + firstName.slice(1)
+
+        const html = buildDigestEmail({
+          recipientName,
+          date,
+          atRiskAccounts: digestData.atRiskAccounts,
+          overdueTasks: digestData.overdueTasks,
+          upcomingRenewals: digestData.upcomingRenewals,
+          healthChanges: digestData.healthChanges,
+          appUrl,
+        })
+
+        const success = await sendEmail({
+          to: email,
+          subject: `Weekly CSM Digest - ${date}`,
+          html,
+        })
+
+        if (success) {
+          sent.push(email)
+        } else {
+          failed.push(email)
+        }
+      }
+
+      return { sent, failed }
+    })
+
+    return {
+      recipientCount: recipients.length,
+      sent: results.sent.length,
+      failed: results.failed.length,
+      digestData: {
+        atRiskCount: digestData.atRiskAccounts.length,
+        overdueCount: digestData.overdueTasks.length,
+        healthChangesCount: digestData.healthChanges.length,
+        renewalsCount: digestData.upcomingRenewals.length,
+      },
+    }
+  }
+)
+
 // Export all functions
 export const functions = [
   notionSync,
   dailyHealthCheck,
   overdueTaskCheck,
   handleHealthDropped,
+  weeklyEmailDigest,
 ]

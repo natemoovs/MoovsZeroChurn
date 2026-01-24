@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
+import { useHotkeys } from "react-hotkeys-hook"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { HealthBadge } from "@/components/health-badge"
 import {
@@ -29,6 +30,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useSession } from "@/lib/auth/client"
 import { TaskComments } from "@/components/task-comments"
+import { TaskDrawer } from "@/components/task-drawer"
 import { toast } from "sonner"
 
 interface Task {
@@ -91,9 +93,60 @@ export default function TasksPage() {
   const [syncing, setSyncing] = useState(false)
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
   const [bulkAssigning, setBulkAssigning] = useState(false)
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [drawerTask, setDrawerTask] = useState<Task | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const taskRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   // Get current user's email for "My Tasks" filter
   const currentUserEmail = data?.user?.email
+
+  // Keyboard shortcuts
+  // j - move down
+  useHotkeys("j", () => {
+    if (filteredTasks.length === 0) return
+    setFocusedIndex((prev) => {
+      const next = Math.min(prev + 1, filteredTasks.length - 1)
+      taskRefs.current.get(next)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      return next
+    })
+  }, { preventDefault: true })
+
+  // k - move up
+  useHotkeys("k", () => {
+    if (filteredTasks.length === 0) return
+    setFocusedIndex((prev) => {
+      const next = Math.max(prev - 1, 0)
+      taskRefs.current.get(next)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      return next
+    })
+  }, { preventDefault: true })
+
+  // Enter - toggle completion of focused task
+  useHotkeys("enter", () => {
+    if (focusedIndex >= 0 && focusedIndex < filteredTasks.length) {
+      const task = filteredTasks[focusedIndex]
+      updateTaskStatus(task.id, task.status === "completed" ? "pending" : "completed")
+    }
+  }, { preventDefault: true })
+
+  // x - toggle selection of focused task
+  useHotkeys("x", () => {
+    if (focusedIndex >= 0 && focusedIndex < filteredTasks.length) {
+      toggleTaskSelection(filteredTasks[focusedIndex].id)
+    }
+  }, { preventDefault: true })
+
+  // c - create new task
+  useHotkeys("c", () => {
+    setShowNewTask(true)
+  }, { preventDefault: true })
+
+  // Escape - clear focus/selection
+  useHotkeys("escape", () => {
+    setFocusedIndex(-1)
+    setSelectedTasks(new Set())
+  })
 
   // Toggle task selection
   function toggleTaskSelection(taskId: string) {
@@ -285,6 +338,12 @@ export default function TasksPage() {
             </h1>
             <p className="mt-1 text-zinc-500 dark:text-zinc-400">
               Manage your CSM action items and playbook tasks
+            </p>
+            <p className="mt-1 hidden text-xs text-zinc-400 sm:block dark:text-zinc-500">
+              <kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">j</kbd>/<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">k</kbd> navigate
+              {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">x</kbd> select
+              {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">↵</kbd> complete
+              {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">c</kbd> create
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -483,7 +542,7 @@ export default function TasksPage() {
                 </span>
               </div>
             )}
-            {filteredTasks.map((task) => {
+            {filteredTasks.map((task, index) => {
               const StatusIcon = statusIcons[task.status]
               const isOverdue =
                 task.dueDate &&
@@ -491,12 +550,20 @@ export default function TasksPage() {
                 task.status !== "completed"
 
               const isSelected = selectedTasks.has(task.id)
+              const isFocused = focusedIndex === index
 
               return (
                 <div
                   key={task.id}
+                  ref={(el) => {
+                    if (el) taskRefs.current.set(index, el)
+                  }}
+                  onClick={() => setFocusedIndex(index)}
                   className={cn(
                     "overflow-hidden rounded-xl border bg-white transition-colors dark:bg-zinc-900",
+                    isFocused
+                      ? "ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-950"
+                      : "",
                     isSelected
                       ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-700 dark:bg-emerald-900/10"
                       : task.status === "completed"
@@ -545,16 +612,21 @@ export default function TasksPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDrawerTask(task)
+                              setDrawerOpen(true)
+                            }}
                             className={cn(
-                              "font-medium",
+                              "text-left font-medium hover:underline",
                               task.status === "completed"
                                 ? "text-zinc-500 line-through dark:text-zinc-400"
                                 : "text-zinc-900 dark:text-zinc-100"
                             )}
                           >
                             {task.title}
-                          </h3>
+                          </button>
                           {task.description && (
                             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
                               {task.description}
@@ -661,6 +733,20 @@ export default function TasksPage() {
           }}
         />
       )}
+
+      {/* Task Detail Drawer (mobile-friendly) */}
+      <TaskDrawer
+        task={drawerTask}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        onStatusChange={(taskId, status) => {
+          updateTaskStatus(taskId, status)
+          // Update drawer task if still open
+          if (drawerTask?.id === taskId) {
+            setDrawerTask({ ...drawerTask, status: status as Task["status"] })
+          }
+        }}
+      />
     </DashboardLayout>
   )
 }
