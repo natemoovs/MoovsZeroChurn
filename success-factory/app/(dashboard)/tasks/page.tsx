@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useSession } from "@/lib/auth/client"
 import { TaskComments } from "@/components/task-comments"
+import { toast } from "sonner"
 
 interface Task {
   id: string
@@ -120,6 +121,9 @@ export default function TasksPage() {
   async function bulkReassign(notionUserId: string) {
     if (selectedTasks.size === 0 || bulkAssigning) return
 
+    const user = notionUsers.find((u) => u.id === notionUserId)
+    const count = selectedTasks.size
+
     setBulkAssigning(true)
     try {
       const promises = Array.from(selectedTasks).map((taskId) =>
@@ -132,8 +136,10 @@ export default function TasksPage() {
       await Promise.all(promises)
       setSelectedTasks(new Set())
       fetchTasks()
+      toast.success(`${count} task${count !== 1 ? "s" : ""} reassigned to ${user?.name || "user"}`)
     } catch (error) {
       console.error("Failed to bulk reassign tasks:", error)
+      toast.error("Failed to reassign tasks")
     } finally {
       setBulkAssigning(false)
     }
@@ -205,12 +211,15 @@ export default function TasksPage() {
         body: JSON.stringify({ status }),
       })
       fetchTasks()
+      toast.success(status === "completed" ? "Task completed" : "Task reopened")
     } catch (error) {
       console.error("Failed to update task:", error)
+      toast.error("Failed to update task")
     }
   }
 
   async function updateTaskAssignee(taskId: string, notionUserId: string) {
+    const user = notionUsers.find((u) => u.id === notionUserId)
     try {
       await fetch(`/api/tasks/${taskId}`, {
         method: "PATCH",
@@ -218,8 +227,10 @@ export default function TasksPage() {
         body: JSON.stringify({ notionAssigneeId: notionUserId }),
       })
       fetchTasks()
+      toast.success(`Assigned to ${user?.name || "user"}`)
     } catch (error) {
       console.error("Failed to update task assignee:", error)
+      toast.error("Failed to reassign task")
     }
   }
 
@@ -232,9 +243,18 @@ export default function TasksPage() {
       const data = await res.json()
       if (data.success) {
         fetchTasks()
+        const { created, updated } = data.synced || {}
+        if (created || updated) {
+          toast.success(`Synced: ${created || 0} new, ${updated || 0} updated`)
+        } else {
+          toast.success("Sync complete - no changes")
+        }
+      } else {
+        toast.error("Sync failed")
       }
     } catch (error) {
       console.error("Failed to sync from Notion:", error)
+      toast.error("Failed to sync from Notion")
     } finally {
       setSyncing(false)
     }

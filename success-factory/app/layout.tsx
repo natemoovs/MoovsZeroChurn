@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,6 +28,12 @@ export default function RootLayout({
             <AuthProvider>
               {children}
             </AuthProvider>
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                className: "dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-800",
+              }}
+            />
           </ThemeProvider>
         </ErrorBoundary>
       </body>

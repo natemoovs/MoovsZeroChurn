@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { MessageSquare, Send, Loader2, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface Comment {
   id: string
@@ -75,12 +76,15 @@ export function TaskComments({
       const data = await res.json()
       if (data.error) {
         setError(data.error)
+        toast.error("Failed to add comment")
       } else if (data.comment) {
         setComments([...comments, data.comment])
         setNewComment("")
+        toast.success("Comment added")
       }
     } catch (err) {
       setError("Failed to add comment")
+      toast.error("Failed to add comment")
       console.error("Failed to add comment:", err)
     } finally {
       setSubmitting(false)
