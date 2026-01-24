@@ -32,12 +32,12 @@ const skillIcons: Record<string, React.ComponentType<{ className?: string }>> = 
 // Map skill slugs to colors
 const skillColors: Record<string, { bg: string; icon: string }> = {
   "customer-health": {
-    bg: "bg-blue-100 dark:bg-blue-950",
-    icon: "text-blue-600 dark:text-blue-400",
+    bg: "bg-primary-100 dark:bg-primary-950",
+    icon: "text-primary-600 dark:text-primary-400",
   },
   "customer-health-summary": {
-    bg: "bg-blue-100 dark:bg-blue-950",
-    icon: "text-blue-600 dark:text-blue-400",
+    bg: "bg-primary-100 dark:bg-primary-950",
+    icon: "text-primary-600 dark:text-primary-400",
   },
   "portfolio-health": {
     bg: "bg-purple-100 dark:bg-purple-950",
@@ -48,16 +48,16 @@ const skillColors: Record<string, { bg: string; icon: string }> = {
     icon: "text-indigo-600 dark:text-indigo-400",
   },
   "churn-risk": {
-    bg: "bg-red-100 dark:bg-red-950",
-    icon: "text-red-600 dark:text-red-400",
+    bg: "bg-error-100 dark:bg-error-950",
+    icon: "text-error-600 dark:text-error-400",
   },
   "renewal-prep": {
-    bg: "bg-amber-100 dark:bg-amber-950",
-    icon: "text-amber-600 dark:text-amber-400",
+    bg: "bg-warning-100 dark:bg-warning-950",
+    icon: "text-warning-600 dark:text-warning-400",
   },
   "success-story": {
-    bg: "bg-emerald-100 dark:bg-emerald-950",
-    icon: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-success-100 dark:bg-success-950",
+    icon: "text-success-600 dark:text-success-400",
   },
   "bug": {
     bg: "bg-orange-100 dark:bg-orange-950",
@@ -70,8 +70,8 @@ const skillColors: Record<string, { bg: string; icon: string }> = {
 }
 
 const defaultColors = {
-  bg: "bg-zinc-100 dark:bg-zinc-800",
-  icon: "text-zinc-600 dark:text-zinc-400",
+  bg: "bg-bg-secondary",
+  icon: "text-content-secondary",
 }
 
 export default function SkillsPage() {
@@ -96,10 +96,10 @@ export default function SkillsPage() {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-2xl font-bold text-content-primary">
             Skills
           </h1>
-          <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-content-secondary">
             AI-powered tools to help you manage customer success
           </p>
         </div>
@@ -108,8 +108,8 @@ export default function SkillsPage() {
         {accountSkills.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-zinc-400" />
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <Users className="h-5 w-5 text-content-tertiary" />
+              <h2 className="text-lg font-semibold text-content-primary">
                 Account Skills
               </h2>
             </div>
@@ -122,19 +122,19 @@ export default function SkillsPage() {
                   <Link
                     key={skill.slug}
                     href={`/skills/${skill.slug}`}
-                    className="group flex items-start gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+                    className="card-sf group flex items-start gap-4 p-5 shadow-sm transition-all hover:border-border-hover hover:shadow-md"
                   >
                     <div className={`rounded-lg p-3 ${colors.bg}`}>
                       <Icon className={`h-6 w-6 ${colors.icon}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                        <h3 className="font-semibold text-content-primary">
                           {skill.name}
                         </h3>
-                        <ChevronRight className="h-5 w-5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400" />
+                        <ChevronRight className="h-5 w-5 text-content-tertiary transition-transform group-hover:translate-x-0.5 group-hover:text-content-secondary" />
                       </div>
-                      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 text-sm text-content-secondary">
                         {skill.description}
                       </p>
                     </div>
@@ -149,8 +149,8 @@ export default function SkillsPage() {
         {portfolioSkills.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-zinc-400" />
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <BarChart3 className="h-5 w-5 text-content-tertiary" />
+              <h2 className="text-lg font-semibold text-content-primary">
                 Portfolio Skills
               </h2>
             </div>
@@ -163,19 +163,19 @@ export default function SkillsPage() {
                   <Link
                     key={skill.slug}
                     href={`/skills/${skill.slug}`}
-                    className="group flex items-start gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+                    className="card-sf group flex items-start gap-4 p-5 shadow-sm transition-all hover:border-border-hover hover:shadow-md"
                   >
                     <div className={`rounded-lg p-3 ${colors.bg}`}>
                       <Icon className={`h-6 w-6 ${colors.icon}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                        <h3 className="font-semibold text-content-primary">
                           {skill.name}
                         </h3>
-                        <ChevronRight className="h-5 w-5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400" />
+                        <ChevronRight className="h-5 w-5 text-content-tertiary transition-transform group-hover:translate-x-0.5 group-hover:text-content-secondary" />
                       </div>
-                      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 text-sm text-content-secondary">
                         {skill.description}
                       </p>
                     </div>
@@ -190,12 +190,12 @@ export default function SkillsPage() {
         {captureSkills.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-zinc-400" />
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <ClipboardList className="h-5 w-5 text-content-tertiary" />
+              <h2 className="text-lg font-semibold text-content-primary">
                 Capture Skills
               </h2>
             </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-content-secondary">
               Log bugs and feedback from customer interactions
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -207,19 +207,19 @@ export default function SkillsPage() {
                   <Link
                     key={skill.slug}
                     href={`/skills/${skill.slug}`}
-                    className="group flex items-start gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+                    className="card-sf group flex items-start gap-4 p-5 shadow-sm transition-all hover:border-border-hover hover:shadow-md"
                   >
                     <div className={`rounded-lg p-3 ${colors.bg}`}>
                       <Icon className={`h-6 w-6 ${colors.icon}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                        <h3 className="font-semibold text-content-primary">
                           {skill.name}
                         </h3>
-                        <ChevronRight className="h-5 w-5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400" />
+                        <ChevronRight className="h-5 w-5 text-content-tertiary transition-transform group-hover:translate-x-0.5 group-hover:text-content-secondary" />
                       </div>
-                      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 text-sm text-content-secondary">
                         {skill.description}
                       </p>
                     </div>
@@ -234,8 +234,8 @@ export default function SkillsPage() {
         {otherSkills.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-zinc-400" />
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <Sparkles className="h-5 w-5 text-content-tertiary" />
+              <h2 className="text-lg font-semibold text-content-primary">
                 Other Skills
               </h2>
             </div>
@@ -248,19 +248,19 @@ export default function SkillsPage() {
                   <Link
                     key={skill.slug}
                     href={`/skills/${skill.slug}`}
-                    className="group flex items-start gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+                    className="card-sf group flex items-start gap-4 p-5 shadow-sm transition-all hover:border-border-hover hover:shadow-md"
                   >
                     <div className={`rounded-lg p-3 ${colors.bg}`}>
                       <Icon className={`h-6 w-6 ${colors.icon}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                        <h3 className="font-semibold text-content-primary">
                           {skill.name}
                         </h3>
-                        <ChevronRight className="h-5 w-5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400" />
+                        <ChevronRight className="h-5 w-5 text-content-tertiary transition-transform group-hover:translate-x-0.5 group-hover:text-content-secondary" />
                       </div>
-                      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 text-sm text-content-secondary">
                         {skill.description}
                       </p>
                     </div>
@@ -272,14 +272,14 @@ export default function SkillsPage() {
         )}
 
         {skills.length === 0 && (
-          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-              <Sparkles className="h-6 w-6 text-zinc-400" />
+          <div className="card-sf p-12 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-bg-secondary">
+              <Sparkles className="h-6 w-6 text-content-tertiary" />
             </div>
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-lg font-medium text-content-primary">
               No skills found
             </h3>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               Add skills to /factory/skills/ to get started
             </p>
           </div>

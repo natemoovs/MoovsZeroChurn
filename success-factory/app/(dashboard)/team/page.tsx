@@ -57,10 +57,10 @@ function assignCSM(segment: string | null, mrr: number | null): CSM | null {
 
 function HealthBadge({ score }: { score: string }) {
   const colors = {
-    green: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    yellow: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    unknown: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    green: "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400",
+    yellow: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+    red: "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
+    unknown: "bg-bg-secondary text-content-secondary",
   }
   return (
     <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", colors[score as keyof typeof colors] || colors.unknown)}>
@@ -116,10 +116,10 @@ export default function TeamPage() {
     return (
       <DashboardLayout>
         <div className="space-y-6">
-          <div className="h-8 w-48 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+          <div className="shimmer h-8 w-48 rounded" />
           <div className="grid gap-6 lg:grid-cols-2">
             {[1, 2].map(i => (
-              <div key={i} className="h-96 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+              <div key={i} className="shimmer h-96 rounded-xl" />
             ))}
           </div>
         </div>
@@ -132,10 +132,10 @@ export default function TeamPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">
+          <h1 className="text-xl font-bold text-content-primary sm:text-2xl">
             CSM Workload
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 sm:text-base dark:text-zinc-400">
+          <p className="mt-1 text-sm text-content-secondary sm:text-base">
             Account assignments by Customer Success Manager
           </p>
         </div>
@@ -147,67 +147,67 @@ export default function TeamPage() {
             const metrics = getMetrics(csmAccounts)
 
             return (
-              <div key={csm.name} className="min-w-0 overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+              <div key={csm.name} className="card-sf min-w-0 overflow-hidden">
                 {/* CSM Header */}
-                <div className="border-b border-zinc-200 p-4 dark:border-zinc-800">
+                <div className="border-b border-border-default p-4">
                   <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400">
                         <span className="text-lg font-semibold">{csm.name[0]}</span>
                       </div>
                       <div className="min-w-0">
-                        <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{csm.name}</h2>
-                        <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">
+                        <h2 className="font-semibold text-content-primary">{csm.name}</h2>
+                        <p className="truncate text-sm text-content-secondary">
                           {csm.name === "Nate" ? "Enterprise ($499+ MRR)" : "Mid-Market & SMB"}
                         </p>
                       </div>
                     </div>
-                    <span className="self-start rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700 sm:self-auto dark:bg-zinc-800 dark:text-zinc-300">
+                    <span className="self-start rounded-full bg-bg-secondary px-3 py-1 text-sm font-medium text-content-primary sm:self-auto">
                       {metrics.total} accounts
                     </span>
                   </div>
                 </div>
 
                 {/* Metrics */}
-                <div className="grid grid-cols-2 gap-2 border-b border-zinc-200 p-3 min-[400px]:grid-cols-4 sm:gap-4 sm:p-4 dark:border-zinc-800">
+                <div className="grid grid-cols-2 gap-2 border-b border-border-default p-3 min-[400px]:grid-cols-4 sm:gap-4 sm:p-4">
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-0.5 text-emerald-600 sm:gap-1 dark:text-emerald-400">
+                    <div className="flex items-center justify-center gap-0.5 text-success-600 sm:gap-1 dark:text-success-400">
                       <DollarSign className="h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
                       <span className="text-sm font-bold sm:text-lg">${(metrics.totalMRR / 1000).toFixed(1)}k</span>
                     </div>
-                    <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">MRR</p>
+                    <p className="text-[10px] text-content-secondary sm:text-xs">MRR</p>
                   </div>
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-0.5 text-emerald-600 sm:gap-1 dark:text-emerald-400">
+                    <div className="flex items-center justify-center gap-0.5 text-success-600 sm:gap-1 dark:text-success-400">
                       <TrendingUp className="h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
                       <span className="text-sm font-bold sm:text-lg">{metrics.healthy}</span>
                     </div>
-                    <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">Healthy</p>
+                    <p className="text-[10px] text-content-secondary sm:text-xs">Healthy</p>
                   </div>
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-0.5 text-amber-600 sm:gap-1 dark:text-amber-400">
+                    <div className="flex items-center justify-center gap-0.5 text-warning-600 sm:gap-1 dark:text-warning-400">
                       <Users className="h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
                       <span className="text-sm font-bold sm:text-lg">{metrics.monitor}</span>
                     </div>
-                    <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">Monitor</p>
+                    <p className="text-[10px] text-content-secondary sm:text-xs">Monitor</p>
                   </div>
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-0.5 text-red-600 sm:gap-1 dark:text-red-400">
+                    <div className="flex items-center justify-center gap-0.5 text-error-600 sm:gap-1 dark:text-error-400">
                       <AlertTriangle className="h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
                       <span className="text-sm font-bold sm:text-lg">{metrics.atRisk}</span>
                     </div>
-                    <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">At Risk</p>
+                    <p className="text-[10px] text-content-secondary sm:text-xs">At Risk</p>
                   </div>
                 </div>
 
                 {/* Account List */}
                 <div className="max-h-80 overflow-x-hidden overflow-y-auto">
                   {csmAccounts.length === 0 ? (
-                    <div className="p-8 text-center text-zinc-500 dark:text-zinc-400">
+                    <div className="p-8 text-center text-content-secondary">
                       No accounts assigned
                     </div>
                   ) : (
-                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <div className="divide-y divide-border-default">
                       {csmAccounts
                         .sort((a, b) => {
                           const order = { red: 0, yellow: 1, unknown: 2, green: 3 }
@@ -217,19 +217,19 @@ export default function TeamPage() {
                           <Link
                             key={account.companyId}
                             href={`/accounts/${account.companyId}`}
-                            className="block min-w-0 p-4 hover:bg-zinc-50 active:bg-zinc-100 dark:hover:bg-zinc-800/50 dark:active:bg-zinc-800"
+                            className="block min-w-0 p-4 hover:bg-bg-secondary active:bg-bg-tertiary"
                           >
                             <div className="flex min-w-0 items-start justify-between gap-3">
                               <div className="min-w-0 flex-1">
-                                <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
+                                <p className="truncate font-medium text-content-primary">
                                   {account.companyName}
                                 </p>
-                                <p className="mt-0.5 truncate text-sm text-zinc-500 dark:text-zinc-400">
+                                <p className="mt-0.5 truncate text-sm text-content-secondary">
                                   {account.mrr ? `$${account.mrr.toLocaleString()}/mo` : "No MRR"}
                                   {account.totalTrips ? ` · ${account.totalTrips} trips` : ""}
                                 </p>
                                 {account.riskSignals.length > 0 && (
-                                  <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                                  <p className="mt-1 truncate text-xs text-content-secondary">
                                     {account.riskSignals[0]}
                                   </p>
                                 )}
@@ -248,11 +248,11 @@ export default function TeamPage() {
 
         {/* Free Accounts (no CSM assigned) */}
         {freeAccounts.length > 0 && (
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <h3 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="card-sf p-4">
+            <h3 className="mb-3 font-semibold text-content-primary">
               Free Accounts ({freeAccounts.length})
             </h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-content-secondary">
               Accounts with no MRR. No dedicated CSM assigned.
             </p>
           </div>
@@ -260,11 +260,11 @@ export default function TeamPage() {
 
         {/* Unassigned (if any paying accounts without proper assignment) */}
         {unassigned.length > 0 && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
-            <h3 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="rounded-xl border border-warning-200 bg-warning-50 p-4 dark:border-warning-800 dark:bg-warning-900/20">
+            <h3 className="mb-3 font-semibold text-content-primary">
               Needs Assignment ({unassigned.length})
             </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-content-secondary">
               These paying accounts need CSM assignment review.
             </p>
           </div>

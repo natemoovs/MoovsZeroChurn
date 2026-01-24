@@ -61,25 +61,25 @@ function formatCurrency(value: number): string {
 }
 
 function getRiskColor(probability: number): string {
-  if (probability >= 70) return "text-red-600 dark:text-red-400"
-  if (probability >= 40) return "text-amber-600 dark:text-amber-400"
-  return "text-emerald-600 dark:text-emerald-400"
+  if (probability >= 70) return "text-error-600 dark:text-error-400"
+  if (probability >= 40) return "text-warning-600 dark:text-warning-400"
+  return "text-success-600 dark:text-success-400"
 }
 
 function getRiskBgColor(probability: number): string {
-  if (probability >= 70) return "bg-red-500"
-  if (probability >= 40) return "bg-amber-500"
-  return "bg-emerald-500"
+  if (probability >= 70) return "bg-error-500"
+  if (probability >= 40) return "bg-warning-500"
+  return "bg-success-500"
 }
 
 function getConfidenceBadge(confidence: string): string {
   switch (confidence) {
     case "high":
-      return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+      return "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
     case "medium":
-      return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+      return "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
     default:
-      return "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+      return "bg-bg-secondary text-content-secondary"
   }
 }
 
@@ -130,11 +130,11 @@ export default function PredictionsPage() {
           <div>
             <div className="flex items-center gap-2">
               <Brain className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-2xl font-bold text-content-primary">
                 Churn Predictions
               </h1>
             </div>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               ML-powered churn probability analysis
             </p>
           </div>
@@ -151,64 +151,64 @@ export default function PredictionsPage() {
         {/* Summary Cards */}
         {summary && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-950/30">
+            <div className="rounded-xl border border-error-200 bg-error-50 p-4 dark:border-error-900/50 dark:bg-error-950/30">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/50">
-                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-error-100 dark:bg-error-900/50">
+                  <AlertTriangle className="h-5 w-5 text-error-600 dark:text-error-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-red-700 dark:text-red-400">
+                  <p className="text-sm text-error-700 dark:text-error-400">
                     High Risk
                   </p>
-                  <p className="text-2xl font-bold text-red-800 dark:text-red-300">
+                  <p className="text-2xl font-bold text-error-800 dark:text-error-300">
                     {summary.highRisk}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
+            <div className="rounded-xl border border-warning-200 bg-warning-50 p-4 dark:border-warning-900/50 dark:bg-warning-950/30">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/50">
-                  <Target className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-100 dark:bg-warning-900/50">
+                  <Target className="h-5 w-5 text-warning-600 dark:text-warning-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                  <p className="text-sm text-warning-700 dark:text-warning-400">
                     Medium Risk
                   </p>
-                  <p className="text-2xl font-bold text-amber-800 dark:text-amber-300">
+                  <p className="text-2xl font-bold text-warning-800 dark:text-warning-300">
                     {summary.mediumRisk}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+            <div className="rounded-xl border border-success-200 bg-success-50 p-4 dark:border-success-900/50 dark:bg-success-950/30">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/50">
-                  <Shield className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100 dark:bg-success-900/50">
+                  <Shield className="h-5 w-5 text-success-600 dark:text-success-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                  <p className="text-sm text-success-700 dark:text-success-400">
                     Low Risk
                   </p>
-                  <p className="text-2xl font-bold text-emerald-800 dark:text-emerald-300">
+                  <p className="text-2xl font-bold text-success-800 dark:text-success-300">
                     {summary.lowRisk}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="card-sf p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                  <DollarSign className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-bg-secondary">
+                  <DollarSign className="h-5 w-5 text-content-secondary" />
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm text-content-secondary">
                     At-Risk MRR
                   </p>
-                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  <p className="text-2xl font-bold text-content-primary">
                     {formatCurrency(summary.atRiskMrr)}
                   </p>
                 </div>
@@ -218,7 +218,7 @@ export default function PredictionsPage() {
         )}
 
         {/* Risk Filter */}
-        <div className="flex flex-wrap gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
           {filterButtons.map((btn) => (
             <button
               key={btn.value}
@@ -226,8 +226,8 @@ export default function PredictionsPage() {
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 riskFilter === btn.value
-                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "bg-bg-elevated text-content-primary shadow-sm"
+                  : "text-content-secondary hover:text-content-primary"
               )}
             >
               {btn.label}
@@ -235,8 +235,8 @@ export default function PredictionsPage() {
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-xs",
                   riskFilter === btn.value
-                    ? "bg-zinc-100 dark:bg-zinc-800"
-                    : "bg-zinc-200/50 dark:bg-zinc-700/50"
+                    ? "bg-bg-secondary"
+                    : "bg-bg-tertiary"
                 )}
               >
                 {btn.count}
@@ -249,9 +249,9 @@ export default function PredictionsPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Predictions List */}
           <div className="lg:col-span-1">
-            <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="border-b border-zinc-200 p-4 dark:border-zinc-800">
-                <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
+            <div className="card-sf">
+              <div className="border-b border-border-default p-4">
+                <h2 className="font-semibold text-content-primary">
                   Accounts by Risk
                 </h2>
               </div>
@@ -261,39 +261,39 @@ export default function PredictionsPage() {
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className="h-16 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                        className="shimmer h-16 rounded-lg"
                       />
                     ))}
                   </div>
                 ) : filteredPredictions.length === 0 ? (
-                  <div className="p-8 text-center text-zinc-500 dark:text-zinc-400">
+                  <div className="p-8 text-center text-content-secondary">
                     No accounts match this filter
                   </div>
                 ) : (
-                  <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <div className="divide-y divide-border-default">
                     {filteredPredictions.map((prediction) => (
                       <button
                         key={prediction.companyId}
                         onClick={() => setSelectedPrediction(prediction)}
                         className={cn(
-                          "flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+                          "flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-bg-secondary",
                           selectedPrediction?.companyId === prediction.companyId &&
                             "bg-purple-50 dark:bg-purple-950/30"
                         )}
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
+                            <p className="truncate font-medium text-content-primary">
                               {prediction.companyName}
                             </p>
                             {prediction.trend === "declining" && (
-                              <TrendingDown className="h-4 w-4 text-red-500" />
+                              <TrendingDown className="h-4 w-4 text-error-500" />
                             )}
                             {prediction.trend === "improving" && (
-                              <TrendingUp className="h-4 w-4 text-emerald-500" />
+                              <TrendingUp className="h-4 w-4 text-success-500" />
                             )}
                           </div>
-                          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                          <p className="text-sm text-content-secondary">
                             {formatCurrency(prediction.mrr || 0)} MRR
                           </p>
                         </div>
@@ -306,7 +306,7 @@ export default function PredictionsPage() {
                           >
                             {prediction.churnProbability}%
                           </div>
-                          <ChevronRight className="h-4 w-4 text-zinc-400" />
+                          <ChevronRight className="h-4 w-4 text-content-tertiary" />
                         </div>
                       </button>
                     ))}
@@ -321,16 +321,16 @@ export default function PredictionsPage() {
             {selectedPrediction ? (
               <div className="space-y-4">
                 {/* Header */}
-                <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="card-sf p-6">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <Link
                         href={`/accounts/${selectedPrediction.companyId}`}
-                        className="text-xl font-bold text-zinc-900 hover:text-purple-600 dark:text-zinc-100 dark:hover:text-purple-400"
+                        className="text-xl font-bold text-content-primary hover:text-purple-600 dark:hover:text-purple-400"
                       >
                         {selectedPrediction.companyName}
                       </Link>
-                      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 text-sm text-content-secondary">
                         {selectedPrediction.segment || "Unknown segment"} •{" "}
                         {formatCurrency(selectedPrediction.mrr || 0)} MRR
                       </p>
@@ -346,16 +346,16 @@ export default function PredictionsPage() {
                           {selectedPrediction.churnProbability}%
                         </span>
                         {selectedPrediction.trend === "declining" && (
-                          <TrendingDown className="h-6 w-6 text-red-500" />
+                          <TrendingDown className="h-6 w-6 text-error-500" />
                         )}
                         {selectedPrediction.trend === "improving" && (
-                          <TrendingUp className="h-6 w-6 text-emerald-500" />
+                          <TrendingUp className="h-6 w-6 text-success-500" />
                         )}
                         {selectedPrediction.trend === "stable" && (
-                          <Minus className="h-6 w-6 text-zinc-400" />
+                          <Minus className="h-6 w-6 text-content-tertiary" />
                         )}
                       </div>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="text-sm text-content-secondary">
                         Churn Probability
                       </p>
                       <span
@@ -371,7 +371,7 @@ export default function PredictionsPage() {
 
                   {/* Risk meter */}
                   <div className="mt-4">
-                    <div className="flex h-3 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                    <div className="flex h-3 overflow-hidden rounded-full bg-bg-secondary">
                       <div
                         className={cn(
                           "transition-all",
@@ -380,15 +380,15 @@ export default function PredictionsPage() {
                         style={{ width: `${selectedPrediction.churnProbability}%` }}
                       />
                     </div>
-                    <div className="mt-1 flex justify-between text-xs text-zinc-400">
+                    <div className="mt-1 flex justify-between text-xs text-content-tertiary">
                       <span>Low Risk</span>
                       <span>High Risk</span>
                     </div>
                   </div>
 
                   {selectedPrediction.predictedChurnDate && (
-                    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/30">
-                      <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                    <div className="mt-4 rounded-lg border border-error-200 bg-error-50 p-3 dark:border-error-900/50 dark:bg-error-950/30">
+                      <p className="text-sm font-medium text-error-700 dark:text-error-400">
                         Predicted churn window: by{" "}
                         {new Date(selectedPrediction.predictedChurnDate).toLocaleDateString(
                           "en-US",
@@ -402,36 +402,36 @@ export default function PredictionsPage() {
                 {/* Risk & Protective Factors */}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {/* Risk Factors */}
-                  <div className="rounded-xl border border-red-200 bg-white p-4 dark:border-red-900/50 dark:bg-zinc-900">
-                    <h3 className="mb-3 flex items-center gap-2 font-semibold text-red-700 dark:text-red-400">
+                  <div className="rounded-xl border border-error-200 bg-white p-4 dark:border-error-900/50 dark:bg-zinc-900">
+                    <h3 className="mb-3 flex items-center gap-2 font-semibold text-error-700 dark:text-error-400">
                       <AlertTriangle className="h-4 w-4" />
                       Risk Factors
                     </h3>
                     {selectedPrediction.riskFactors.length === 0 ? (
-                      <p className="text-sm text-zinc-500">No significant risk factors</p>
+                      <p className="text-sm text-content-secondary">No significant risk factors</p>
                     ) : (
                       <div className="space-y-2">
                         {selectedPrediction.riskFactors.map((factor, idx) => (
                           <div
                             key={idx}
-                            className="rounded-lg border border-red-100 bg-red-50/50 p-3 dark:border-red-900/30 dark:bg-red-950/20"
+                            className="rounded-lg border border-error-100 bg-error-50/50 p-3 dark:border-error-900/30 dark:bg-error-950/20"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="font-medium text-red-800 dark:text-red-300">
+                              <span className="font-medium text-error-800 dark:text-error-300">
                                 {factor.factor}
                               </span>
                               <span
                                 className={cn(
                                   "rounded-full px-2 py-0.5 text-xs font-medium",
                                   factor.impact === "high"
-                                    ? "bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300"
-                                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                    ? "bg-error-200 text-error-800 dark:bg-error-900/50 dark:text-error-300"
+                                    : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
                                 )}
                               >
                                 {factor.impact}
                               </span>
                             </div>
-                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                            <p className="mt-1 text-sm text-error-600 dark:text-error-400">
                               {factor.description}
                             </p>
                           </div>
@@ -441,36 +441,36 @@ export default function PredictionsPage() {
                   </div>
 
                   {/* Protective Factors */}
-                  <div className="rounded-xl border border-emerald-200 bg-white p-4 dark:border-emerald-900/50 dark:bg-zinc-900">
-                    <h3 className="mb-3 flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-400">
+                  <div className="rounded-xl border border-success-200 bg-white p-4 dark:border-success-900/50 dark:bg-zinc-900">
+                    <h3 className="mb-3 flex items-center gap-2 font-semibold text-success-700 dark:text-success-400">
                       <Shield className="h-4 w-4" />
                       Protective Factors
                     </h3>
                     {selectedPrediction.protectiveFactors.length === 0 ? (
-                      <p className="text-sm text-zinc-500">No protective factors identified</p>
+                      <p className="text-sm text-content-secondary">No protective factors identified</p>
                     ) : (
                       <div className="space-y-2">
                         {selectedPrediction.protectiveFactors.map((factor, idx) => (
                           <div
                             key={idx}
-                            className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3 dark:border-emerald-900/30 dark:bg-emerald-950/20"
+                            className="rounded-lg border border-success-100 bg-success-50/50 p-3 dark:border-success-900/30 dark:bg-success-950/20"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="font-medium text-emerald-800 dark:text-emerald-300">
+                              <span className="font-medium text-success-800 dark:text-success-300">
                                 {factor.factor}
                               </span>
                               <span
                                 className={cn(
                                   "rounded-full px-2 py-0.5 text-xs font-medium",
                                   factor.impact === "high"
-                                    ? "bg-emerald-200 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300"
-                                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                    ? "bg-success-200 text-success-800 dark:bg-success-900/50 dark:text-success-300"
+                                    : "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                                 )}
                               >
                                 {factor.impact}
                               </span>
                             </div>
-                            <p className="mt-1 text-sm text-emerald-600 dark:text-emerald-400">
+                            <p className="mt-1 text-sm text-success-600 dark:text-success-400">
                               {factor.description}
                             </p>
                           </div>
@@ -502,10 +502,10 @@ export default function PredictionsPage() {
                 )}
               </div>
             ) : (
-              <div className="flex h-96 items-center justify-center rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="card-sf flex h-96 items-center justify-center">
                 <div className="text-center">
-                  <Brain className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
-                  <p className="mt-4 text-zinc-500 dark:text-zinc-400">
+                  <Brain className="mx-auto h-12 w-12 text-content-tertiary" />
+                  <p className="mt-4 text-content-secondary">
                     Select an account to view prediction details
                   </p>
                 </div>
