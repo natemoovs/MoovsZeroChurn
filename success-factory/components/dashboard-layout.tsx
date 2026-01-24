@@ -14,7 +14,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen overflow-x-hidden bg-zinc-50 dark:bg-zinc-950">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

@@ -141,23 +141,23 @@ export default function TeamPage() {
         </div>
 
         {/* CSM Cards */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-2">
           {CSM_ASSIGNMENTS.map(csm => {
             const csmAccounts = accountsByCSM.get(csm.name) || []
             const metrics = getMetrics(csmAccounts)
 
             return (
-              <div key={csm.name} className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+              <div key={csm.name} className="min-w-0 overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
                 {/* CSM Header */}
                 <div className="border-b border-zinc-200 p-4 dark:border-zinc-800">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                         <span className="text-lg font-semibold">{csm.name[0]}</span>
                       </div>
                       <div className="min-w-0">
                         <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{csm.name}</h2>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">
                           {csm.name === "Nate" ? "Enterprise ($499+ MRR)" : "Mid-Market & SMB"}
                         </p>
                       </div>
@@ -201,7 +201,7 @@ export default function TeamPage() {
                 </div>
 
                 {/* Account List */}
-                <div className="max-h-80 overflow-y-auto">
+                <div className="max-h-80 overflow-x-hidden overflow-y-auto">
                   {csmAccounts.length === 0 ? (
                     <div className="p-8 text-center text-zinc-500 dark:text-zinc-400">
                       No accounts assigned
@@ -217,14 +217,14 @@ export default function TeamPage() {
                           <Link
                             key={account.companyId}
                             href={`/accounts/${account.companyId}`}
-                            className="block p-4 hover:bg-zinc-50 active:bg-zinc-100 dark:hover:bg-zinc-800/50 dark:active:bg-zinc-800"
+                            className="block min-w-0 p-4 hover:bg-zinc-50 active:bg-zinc-100 dark:hover:bg-zinc-800/50 dark:active:bg-zinc-800"
                           >
-                            <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-start justify-between gap-3">
                               <div className="min-w-0 flex-1">
                                 <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
                                   {account.companyName}
                                 </p>
-                                <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+                                <p className="mt-0.5 truncate text-sm text-zinc-500 dark:text-zinc-400">
                                   {account.mrr ? `$${account.mrr.toLocaleString()}/mo` : "No MRR"}
                                   {account.totalTrips ? ` · ${account.totalTrips} trips` : ""}
                                 </p>
