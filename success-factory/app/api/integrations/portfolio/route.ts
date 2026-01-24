@@ -139,31 +139,48 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
 
   switch (segment.toLowerCase()) {
     case "enterprise":
-      // Enterprise = MRR >= $499 (matches CSM Workload definition)
-      return {
-        AND: [
-          excludeChurned,
-          { mrr: { gte: 499 } },
-        ],
-      }
-    case "mid-market":
-      // Mid-Market = MRR $100-$498
-      return {
-        AND: [
-          excludeChurned,
-          { mrr: { gte: 100 } },
-          { mrr: { lt: 499 } },
-        ],
-      }
-    case "smb":
-      // SMB = MRR < $100
+      // Enterprise = VIP/Elite plan (vip-monthly)
       return {
         AND: [
           excludeChurned,
           {
             OR: [
-              { mrr: { lt: 100 } },
-              { mrr: null },
+              { plan: { contains: "vip", mode: "insensitive" } },
+              { plan: { contains: "elite", mode: "insensitive" } },
+              { plan: { contains: "enterprise", mode: "insensitive" } },
+            ],
+          },
+        ],
+      }
+    case "mid-market":
+      // Mid-Market = Pro plan (pro-monthly, pro-annual, pro-legacy)
+      return {
+        AND: [
+          excludeChurned,
+          { plan: { contains: "pro", mode: "insensitive" } },
+          // Exclude VIP plans that might contain "pro" substring
+          {
+            NOT: {
+              OR: [
+                { plan: { contains: "vip", mode: "insensitive" } },
+                { plan: { contains: "elite", mode: "insensitive" } },
+              ],
+            },
+          },
+        ],
+      }
+    case "smb":
+      // SMB = Standard/Starter plan (standard-monthly, standard-annual)
+      return {
+        AND: [
+          excludeChurned,
+          {
+            OR: [
+              { plan: { contains: "standard", mode: "insensitive" } },
+              { plan: { contains: "starter", mode: "insensitive" } },
+              // Include accounts with no plan or free plans
+              { plan: null },
+              { plan: { contains: "free", mode: "insensitive" } },
             ],
           },
         ],
