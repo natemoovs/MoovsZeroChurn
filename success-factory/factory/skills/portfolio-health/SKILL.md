@@ -92,11 +92,11 @@ Examples:
 
 ### Health Distribution
 
-```
+~~~
 Green:  ████████████████ X accounts
 Yellow: ██████████       X accounts
 Red:    ████             X accounts
-```
+~~~
 
 ---
 
