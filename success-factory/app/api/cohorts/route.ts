@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 
 interface CohortMetrics {
-  month: string
-  totalCustomers: number
-  activeCustomers: number
-  churnedCustomers: number
+  cohort: string
+  totalCompanies: number
+  activeCompanies: number
+  churnedCompanies: number
   retentionRate: number
   totalMrr: number
   avgMrr: number
@@ -59,10 +59,10 @@ export async function GET(request: NextRequest) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
       cohorts.set(monthKey, {
-        month: monthKey,
-        totalCustomers: 0,
-        activeCustomers: 0,
-        churnedCustomers: 0,
+        cohort: monthKey,
+        totalCompanies: 0,
+        activeCompanies: 0,
+        churnedCompanies: 0,
         retentionRate: 0,
         totalMrr: 0,
         avgMrr: 0,
@@ -88,11 +88,11 @@ export async function GET(request: NextRequest) {
       const churnRecord = churnByCompany.get(company.hubspotId)
       const isChurned = !!churnRecord
 
-      cohort.totalCustomers++
+      cohort.totalCompanies++
       if (isChurned) {
-        cohort.churnedCustomers++
+        cohort.churnedCompanies++
       } else {
-        cohort.activeCustomers++
+        cohort.activeCompanies++
         cohort.totalMrr += company.mrr || 0
       }
 
@@ -115,46 +115,55 @@ export async function GET(request: NextRequest) {
 
     // Calculate derived metrics
     for (const cohort of cohorts.values()) {
-      if (cohort.totalCustomers > 0) {
+      if (cohort.totalCompanies > 0) {
         cohort.retentionRate = Math.round(
-          (cohort.activeCustomers / cohort.totalCustomers) * 100
+          (cohort.activeCompanies / cohort.totalCompanies) * 100
         )
-        cohort.avgMrr = cohort.activeCustomers > 0
-          ? Math.round(cohort.totalMrr / cohort.activeCustomers)
+        cohort.avgMrr = cohort.activeCompanies > 0
+          ? Math.round(cohort.totalMrr / cohort.activeCompanies)
           : 0
       }
     }
 
     // Convert to sorted array
     const cohortArray = Array.from(cohorts.values()).sort((a, b) =>
-      a.month.localeCompare(b.month)
+      a.cohort.localeCompare(b.cohort)
     )
 
     // Calculate retention curve (cumulative retention over time)
     const retentionCurve: number[] = []
     if (cohortArray.length > 0) {
       const firstCohort = cohortArray[0]
-      let remaining = firstCohort.totalCustomers
+      let remaining = firstCohort.totalCompanies
 
       for (let i = 0; i < cohortArray.length; i++) {
         if (remaining > 0) {
-          const churned = cohortArray[i]?.churnedCustomers || 0
+          const churned = cohortArray[i]?.churnedCompanies || 0
           remaining = Math.max(0, remaining - churned)
           retentionCurve.push(
-            Math.round((remaining / firstCohort.totalCustomers) * 100)
+            Math.round((remaining / firstCohort.totalCompanies) * 100)
           )
         }
       }
     }
 
     // Summary stats
+    const totalCompanies = cohortArray.reduce(
+      (sum, c) => sum + c.totalCompanies,
+      0
+    )
+    const totalMrr = cohortArray.reduce((sum, c) => sum + c.totalMrr, 0)
     const summary = {
       totalCohorts: cohortArray.length,
-      avgRetentionRate: cohortArray.length > 0
+      totalCompanies,
+      overallRetention: cohortArray.length > 0
         ? Math.round(
             cohortArray.reduce((sum, c) => sum + c.retentionRate, 0) /
               cohortArray.length
           )
+        : 0,
+      avgMrrPerCohort: cohortArray.length > 0
+        ? Math.round(totalMrr / cohortArray.length)
         : 0,
       bestCohort: cohortArray.reduce(
         (best, c) => (c.retentionRate > (best?.retentionRate || 0) ? c : best),
@@ -162,18 +171,18 @@ export async function GET(request: NextRequest) {
       ),
       worstCohort: cohortArray.reduce(
         (worst, c) =>
-          c.totalCustomers > 0 &&
+          c.totalCompanies > 0 &&
           c.retentionRate < (worst?.retentionRate || 100)
             ? c
             : worst,
         cohortArray[0]
       ),
-      totalActiveCustomers: cohortArray.reduce(
-        (sum, c) => sum + c.activeCustomers,
+      totalActiveCompanies: cohortArray.reduce(
+        (sum, c) => sum + c.activeCompanies,
         0
       ),
-      totalChurnedCustomers: cohortArray.reduce(
-        (sum, c) => sum + c.churnedCustomers,
+      totalChurnedCompanies: cohortArray.reduce(
+        (sum, c) => sum + c.churnedCompanies,
         0
       ),
     }
