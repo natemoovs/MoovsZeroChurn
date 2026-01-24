@@ -51,11 +51,9 @@
     },
     "google-drive": {
       "command": "npx",
-      "args": ["-y", "@isaacphi/mcp-gdrive"],
+      "args": ["-y", "@piotr-agier/google-drive-mcp"],
       "env": {
-        "CLIENT_ID": "566496970349-fqjei015ql7kou8r31fkecu1qvafvjve.apps.googleusercontent.com",
-        "CLIENT_SECRET": "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",
-        "GDRIVE_CREDS_DIR": "/Users/amirghorbani/.config/mcp-gdrive"
+        "GOOGLE_DRIVE_OAUTH_CREDENTIALS": "${GDRIVE_CREDS_DIR}/gcp-oauth.keys.json"
       }
     }
   }
