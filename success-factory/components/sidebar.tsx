@@ -13,10 +13,10 @@ import {
   ChevronRight,
   UsersRound,
   Zap,
-  Settings
+  Settings,
+  X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -30,71 +30,101 @@ const navItems = [
   { href: "/settings", icon: Settings, label: "Settings" },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+  collapsed: boolean
+  onToggleCollapse: () => void
+}
+
+export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-zinc-200 bg-white transition-all duration-300 dark:border-zinc-800 dark:bg-zinc-950",
-        collapsed ? "w-16" : "w-64"
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={onClose}
+        />
       )}
-    >
-      {/* Logo */}
-      <div className="flex h-16 items-center border-b border-zinc-200 px-4 dark:border-zinc-800">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-sm">
-            SF
-          </div>
-          {!collapsed && (
-            <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-              Success Factory
-            </span>
-          )}
-        </Link>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-3">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href ||
-            (item.href !== "/" && pathname.startsWith(item.href))
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-zinc-200 bg-white transition-all duration-300 dark:border-zinc-800 dark:bg-zinc-950",
+          // Mobile: slide in/out
+          "max-lg:-translate-x-full max-lg:w-64",
+          isOpen && "max-lg:translate-x-0",
+          // Desktop: always visible, respect collapsed state
+          "lg:translate-x-0",
+          collapsed ? "lg:w-16" : "lg:w-64"
+        )}
+      >
+        {/* Logo */}
+        <div className="flex h-16 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
+          <Link href="/" className="flex items-center gap-3" onClick={onClose}>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-sm flex-shrink-0">
+              SF
+            </div>
+            {!collapsed && (
+              <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+                Success Factory
+              </span>
+            )}
+          </Link>
+          {/* Mobile close button */}
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 lg:hidden dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                isActive
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-              )}
-            >
-              <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-emerald-600 dark:text-emerald-400")} />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          )
-        })}
-      </nav>
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href ||
+              (item.href !== "/" && pathname.startsWith(item.href))
 
-      {/* Collapse Toggle */}
-      <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <>
-              <ChevronLeft className="h-4 w-4" />
-              <span>Collapse</span>
-            </>
-          )}
-        </button>
-      </div>
-    </aside>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                  isActive
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-emerald-600 dark:text-emerald-400")} />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Collapse Toggle - desktop only */}
+        <div className="hidden border-t border-zinc-200 p-3 lg:block dark:border-zinc-800">
+          <button
+            onClick={onToggleCollapse}
+            className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4" />
+                <span>Collapse</span>
+              </>
+            )}
+          </button>
+        </div>
+      </aside>
+    </>
   )
 }

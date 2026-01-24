@@ -2,9 +2,14 @@
  * Moovs ICP Segment Intelligence
  *
  * Customer segmentation based on the ICP knowledge base.
- * Revenue is the PRIMARY indicator for segment classification.
+ * Plan type is the PRIMARY indicator for segment classification.
  *
- * Segments:
+ * Segments by Plan:
+ * - SMB: Starter (Monthly/Annual) - standard-monthly, standard-annual
+ * - Mid-Market: Pro (Monthly/Annual/Legacy) - pro-monthly, pro-annual, pro-legacy
+ * - Enterprise: Elite (Monthly) - vip-monthly
+ *
+ * Revenue thresholds (fallback when plan unknown):
  * - SMB Black Car: $50K-$250K annual ($4K-$21K MRR)
  * - Mid-Market Black Car: $250K-$1M annual ($21K-$83K MRR)
  * - Enterprise Black Car: $1M+ annual ($83K+ MRR)
@@ -41,8 +46,8 @@ const MRR_THRESHOLDS = {
 } as const
 
 /**
- * Classify customer segment based on MRR
- * Revenue is the PRIMARY indicator per ICP guidelines
+ * Classify customer segment based on MRR (fallback method)
+ * Used when plan information is not available
  */
 export function classifySegment(mrr: number | null): CustomerSegment {
   if (mrr === null || mrr === 0) return "free"
@@ -50,6 +55,35 @@ export function classifySegment(mrr: number | null): CustomerSegment {
   if (mrr <= MRR_THRESHOLDS.SMB_MAX) return "smb"
   if (mrr <= MRR_THRESHOLDS.MID_MARKET_MAX) return "mid_market"
   return "enterprise"
+}
+
+/**
+ * Classify customer segment based on plan type (PRIMARY method)
+ * Falls back to MRR-based classification if plan is unknown
+ *
+ * Plan mapping:
+ * - SMB: Starter (standard-monthly, standard-annual)
+ * - Mid-Market: Pro (pro-monthly, pro-annual, pro-legacy)
+ * - Enterprise: Elite (vip-monthly)
+ */
+export function classifySegmentByPlanOrMrr(plan: string | null, mrr: number | null): CustomerSegment {
+  if (plan) {
+    const planLower = plan.toLowerCase()
+
+    // Exact Lago plan code matching
+    if (planLower === "standard-monthly" || planLower === "standard-annual") return "smb"
+    if (planLower === "pro-monthly" || planLower === "pro-annual" || planLower === "pro-legacy") return "mid_market"
+    if (planLower === "vip-monthly") return "enterprise"
+
+    // Fuzzy matching for variations
+    if (planLower.includes("vip") || planLower.includes("elite")) return "enterprise"
+    if (planLower.includes("pro")) return "mid_market"
+    if (planLower.includes("standard") || planLower.includes("starter")) return "smb"
+    if (planLower.includes("free") || planLower.includes("trial")) return "free"
+  }
+
+  // Fallback to MRR-based classification
+  return classifySegment(mrr)
 }
 
 /**

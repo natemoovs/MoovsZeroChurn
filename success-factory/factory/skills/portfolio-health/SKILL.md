@@ -210,20 +210,20 @@ Based on this portfolio review:
 
 ## Segment Definitions
 
-### Enterprise ($1M+ revenue)
+### Enterprise (VIP/Elite Plans)
 - Named CSM relationship
 - QBRs expected
 - High-touch support
 - AI features, custom integrations
 - Longer sales cycles, higher switching cost
 
-### Mid-Market ($250K-$1M revenue)
+### Mid-Market (Pro Plans)
 - Pooled CSM coverage
 - Growth-focused conversations
 - Efficiency features
 - Expanding operations
 
-### SMB ($50K-$250K revenue)
+### SMB (Starter/Basic Plans)
 - Scaled/tech-touch
 - Self-service where possible
 - Quick wins matter

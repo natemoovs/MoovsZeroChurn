@@ -167,7 +167,7 @@ export default function TeamPage() {
                 </div>
 
                 {/* Metrics */}
-                <div className="grid grid-cols-4 gap-4 border-b border-zinc-200 p-4 dark:border-zinc-800">
+                <div className="grid grid-cols-2 gap-4 border-b border-zinc-200 p-4 sm:grid-cols-4 dark:border-zinc-800">
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400">
                       <DollarSign className="h-4 w-4" />

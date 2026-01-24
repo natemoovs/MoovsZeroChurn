@@ -142,6 +142,67 @@ export const ADD_ONS: AddOn[] = [
 ]
 
 /**
+ * Lago plan codes mapping to segments
+ * Based on actual Lago billing plans:
+ * - SMB: Starter (Monthly/Annual) = standard-monthly, standard-annual
+ * - Mid-Market: Pro (Monthly/Annual/Legacy) = pro-monthly, pro-annual, pro-legacy
+ * - Enterprise: Elite (Monthly) = vip-monthly
+ */
+export const LAGO_PLAN_SEGMENTS = {
+  // SMB tier plans
+  "standard-monthly": "smb",
+  "standard-annual": "smb",
+  // Mid-Market tier plans
+  "pro-monthly": "mid_market",
+  "pro-annual": "mid_market",
+  "pro-legacy": "mid_market",
+  // Enterprise tier plans
+  "vip-monthly": "enterprise",
+} as const
+
+/**
+ * Add-on plans (not used for segmentation)
+ */
+export const LAGO_ADDON_PLANS = [
+  "passenger-app",
+  "passenger-app-annual",
+  "shuttle-app",
+  "crm-standard-monthly",
+  "marketing-lite-monthly",
+  "marketing-advanced-monthly",
+  "marketing-pro-monthly",
+  "marketing-enterprise-monthly",
+  "marketing-ppc-monthly",
+  "marketing-conversion-tracking",
+  "marketing-seo-1-monthly",
+  "marketing-seo-2-monthly",
+  "marketing-seo-3-monthly",
+] as const
+
+/**
+ * Classify customer segment based on their Lago plan
+ * This is the PRIMARY method for segment classification
+ */
+export function classifySegmentByPlan(planName: string | null): CustomerSegment {
+  if (!planName) return "unknown"
+
+  const plan = planName.toLowerCase()
+
+  // Check exact Lago plan codes first
+  if (plan in LAGO_PLAN_SEGMENTS) {
+    return LAGO_PLAN_SEGMENTS[plan as keyof typeof LAGO_PLAN_SEGMENTS] as CustomerSegment
+  }
+
+  // Fuzzy matching for variations
+  if (plan.includes("vip") || plan.includes("elite")) return "enterprise"
+  if (plan.includes("pro")) return "mid_market"
+  if (plan.includes("standard") || plan.includes("starter")) return "smb"
+  if (plan.includes("free") || plan.includes("trial")) return "free"
+
+  return "unknown"
+}
+
+/**
  * Identify pricing tier from plan name
  */
 export function identifyPricingTier(planName: string | null): PricingTier {
@@ -149,14 +210,16 @@ export function identifyPricingTier(planName: string | null): PricingTier {
 
   const plan = planName.toLowerCase()
 
-  if (plan.includes("free") || plan.includes("trial")) return "free"
-  if (plan.includes("enterprise") || plan.includes("custom")) return "enterprise"
-  if (plan.includes("pro") || plan.includes("professional")) return "pro"
-  if (plan.includes("standard") || plan.includes("basic")) return "standard"
+  // Check exact Lago plan codes first
+  if (plan === "standard-monthly" || plan === "standard-annual") return "standard"
+  if (plan === "pro-monthly" || plan === "pro-annual" || plan === "pro-legacy") return "pro"
+  if (plan === "vip-monthly") return "enterprise"
 
-  // Check for specific Lago plan codes
-  if (plan.includes("starter")) return "free"
-  if (plan.includes("growth")) return "pro"
+  // Fuzzy matching for variations
+  if (plan.includes("free") || plan.includes("trial")) return "free"
+  if (plan.includes("enterprise") || plan.includes("custom") || plan.includes("vip") || plan.includes("elite")) return "enterprise"
+  if (plan.includes("pro") || plan.includes("professional")) return "pro"
+  if (plan.includes("standard") || plan.includes("starter") || plan.includes("basic")) return "standard"
 
   return "unknown"
 }
