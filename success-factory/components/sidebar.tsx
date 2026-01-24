@@ -14,13 +14,19 @@ import {
   UsersRound,
   Zap,
   Settings,
-  X
+  X,
+  TrendingUp,
+  BarChart3,
+  PieChart,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/accounts", icon: Users, label: "Accounts" },
+  { href: "/expansion", icon: TrendingUp, label: "Expansion" },
+  { href: "/cohorts", icon: BarChart3, label: "Cohorts" },
+  { href: "/roi", icon: PieChart, label: "ROI Dashboard" },
   { href: "/team", icon: UsersRound, label: "CSM Workload" },
   { href: "/tasks", icon: CheckSquare, label: "Tasks" },
   { href: "/playbooks", icon: Zap, label: "Playbooks" },
