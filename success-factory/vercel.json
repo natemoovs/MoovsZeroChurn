@@ -5,6 +5,10 @@
       "schedule": "0 5 * * *"
     },
     {
+      "path": "/api/sync/notion-tasks",
+      "schedule": "0 * * * *"
+    },
+    {
       "path": "/api/health-history/snapshot",
       "schedule": "0 6 * * *"
     },

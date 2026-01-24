@@ -2,6 +2,7 @@
  * Task Sync - Creates tasks in both local DB and Notion
  */
 
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { notion } from "@/lib/integrations"
 
@@ -27,7 +28,7 @@ export interface CreateTaskInput {
   segment?: string           // enterprise, mid-market, smb, free
   tags?: string[]            // Optional tags for the task
   notionAssigneeId?: string  // Direct Notion user ID for assignment (overrides auto-assignment)
-  metadata?: Record<string, unknown>
+  metadata?: Prisma.InputJsonValue
 }
 
 interface CreateTaskResult {
@@ -135,11 +136,14 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
       result.notionUrl = page.url
 
       // Store Notion page ID in task metadata for future sync
+      const existingMetadata = (input.metadata && typeof input.metadata === "object" && !Array.isArray(input.metadata))
+        ? input.metadata as Record<string, unknown>
+        : {}
       await prisma.task.update({
         where: { id: task.id },
         data: {
           metadata: {
-            ...(input.metadata || {}),
+            ...existingMetadata,
             notionPageId: page.id,
             notionUrl: page.url,
           },

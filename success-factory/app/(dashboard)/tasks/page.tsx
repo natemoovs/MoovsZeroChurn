@@ -72,7 +72,7 @@ interface TaskStats {
 }
 
 export default function TasksPage() {
-  const { session } = useSession()
+  const { data } = useSession()
   const [tasks, setTasks] = useState<Task[]>([])
   const [stats, setStats] = useState<TaskStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -84,7 +84,7 @@ export default function TasksPage() {
   const [syncing, setSyncing] = useState(false)
 
   // Get current user's email for "My Tasks" filter
-  const currentUserEmail = session?.user?.email
+  const currentUserEmail = data?.user?.email
 
   useEffect(() => {
     fetchTasks()

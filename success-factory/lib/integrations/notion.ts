@@ -205,14 +205,15 @@ export interface NotionError {
 export type NotionPropertyInput =
   | { title: Array<{ text: { content: string } }> }
   | { rich_text: Array<{ text: { content: string } }> }
-  | { number: number }
-  | { select: { name: string } }
+  | { number: number | null }
+  | { select: { name: string } | null }
   | { multi_select: Array<{ name: string }> }
-  | { date: { start: string; end?: string } }
+  | { date: { start: string; end?: string } | null }
+  | { people: Array<{ id: string }> }
   | { checkbox: boolean }
-  | { url: string }
-  | { email: string }
-  | { phone_number: string }
+  | { url: string | null }
+  | { email: string | null }
+  | { phone_number: string | null }
   | { relation: Array<{ id: string }> }
   | { status: { name: string } }
 

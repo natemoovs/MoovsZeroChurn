@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { notion } from "@/lib/integrations"
+import { notion, NotionPropertyInput } from "@/lib/integrations"
 
 // Map internal priority to Notion priority names
 function mapPriorityToNotion(priority: string): string {
@@ -127,7 +127,7 @@ export async function PATCH(
     const taskMetadata = task.metadata as { notionPageId?: string; notionAssigneeId?: string } | null
     if (taskMetadata?.notionPageId && process.env.NOTION_API_KEY) {
       try {
-        const notionUpdate: Record<string, unknown> = {}
+        const notionUpdate: Record<string, NotionPropertyInput> = {}
 
         // Sync status change
         if (status !== undefined) {
