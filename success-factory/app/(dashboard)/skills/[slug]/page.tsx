@@ -75,19 +75,21 @@ function SkillPageContent() {
     )
   }
 
-  const totalSteps = skill.questions.length
-  const isLastStep = currentStep === totalSteps - 1
+  const totalSteps = skill.questions.length + 1 // +1 for review step
+  const isReviewStep = currentStep === skill.questions.length
+  const isLastQuestionStep = currentStep === skill.questions.length - 1
   const currentQuestion = skill.questions[currentStep]
   const progress = result ? 100 : ((currentStep + 1) / totalSteps) * 100
-  const currentAnswer = answers[currentQuestion?.id] || ""
+  const currentAnswer = currentQuestion ? (answers[currentQuestion.id] || "") : ""
   const hasLongExamples = currentQuestion?.examples && currentQuestion.examples.some((e) => e.length > 50)
+  const allQuestionsAnswered = skill.questions.every(q => answers[q.id]?.trim())
 
   const handleAnswer = (value: string) => {
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }))
   }
 
   const handleNext = () => {
-    if (isLastStep) {
+    if (isReviewStep) {
       handleGenerate()
     } else {
       setCurrentStep((prev) => prev + 1)
@@ -267,7 +269,7 @@ function SkillPageContent() {
           <Progress value={progress} className="h-2" />
         </div>
 
-        {/* Question Card */}
+        {/* Question Card or Review Card */}
         <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           {/* Steps indicator */}
           <div className="mb-6 flex items-center justify-center gap-2">
@@ -284,48 +286,104 @@ function SkillPageContent() {
                 )}
               />
             ))}
+            {/* Review step indicator */}
+            <div
+              className={cn(
+                "h-2 w-2 rounded-full transition-all",
+                isReviewStep
+                  ? "w-6 bg-emerald-500"
+                  : allQuestionsAnswered
+                  ? "bg-emerald-500"
+                  : "bg-zinc-200 dark:bg-zinc-700"
+              )}
+            />
           </div>
 
-          {/* Question */}
-          <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-            {currentQuestion.question}
-          </h2>
+          {isReviewStep ? (
+            /* Review Step */
+            <>
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
+                  <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                    Review & Generate
+                  </h2>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    Confirm your answers before generating
+                  </p>
+                </div>
+              </div>
 
-          {/* Examples */}
-          {currentQuestion.examples && currentQuestion.examples.length > 0 && (
-            <div className="mb-4 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
-              <p className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                Examples:
-              </p>
-              <ul className="space-y-1 text-sm text-zinc-500 dark:text-zinc-400">
-                {currentQuestion.examples.map((example, i) => (
-                  <li key={i}>• {example}</li>
+              <div className="space-y-3">
+                {skill.questions.map((q, index) => (
+                  <div
+                    key={q.id}
+                    className="flex items-start justify-between rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-800/50"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                        {q.question}
+                      </p>
+                      <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                        {answers[q.id] || <span className="text-zinc-400 italic">Not answered</span>}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setCurrentStep(index)}
+                      className="ml-2 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Input */}
-          {hasLongExamples ? (
-            <Textarea
-              value={currentAnswer}
-              onChange={(e) => handleAnswer(e.target.value)}
-              placeholder="Your answer..."
-              className="min-h-[120px]"
-            />
-          ) : isCompanyQuestion(currentQuestion.id, currentQuestion.question) ? (
-            <CompanySelect
-              value={currentAnswer}
-              onChange={handleAnswer}
-              placeholder="Search or type company name..."
-            />
+              </div>
+            </>
           ) : (
-            <Input
-              value={currentAnswer}
-              onChange={(e) => handleAnswer(e.target.value)}
-              placeholder="Your answer..."
-              className="h-12"
-            />
+            /* Question Step */
+            <>
+              <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                {currentQuestion.question}
+              </h2>
+
+              {/* Examples */}
+              {currentQuestion.examples && currentQuestion.examples.length > 0 && (
+                <div className="mb-4 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                  <p className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                    Examples:
+                  </p>
+                  <ul className="space-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                    {currentQuestion.examples.map((example, i) => (
+                      <li key={i}>• {example}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Input */}
+              {hasLongExamples ? (
+                <Textarea
+                  value={currentAnswer}
+                  onChange={(e) => handleAnswer(e.target.value)}
+                  placeholder="Your answer..."
+                  className="min-h-[120px]"
+                />
+              ) : isCompanyQuestion(currentQuestion.id, currentQuestion.question) ? (
+                <CompanySelect
+                  value={currentAnswer}
+                  onChange={handleAnswer}
+                  placeholder="Search or type company name..."
+                />
+              ) : (
+                <Input
+                  value={currentAnswer}
+                  onChange={(e) => handleAnswer(e.target.value)}
+                  placeholder="Your answer..."
+                  className="h-12"
+                />
+              )}
+            </>
           )}
 
           {/* Error */}
@@ -349,7 +407,7 @@ function SkillPageContent() {
 
           <Button
             onClick={handleNext}
-            disabled={!currentAnswer.trim() || isGenerating}
+            disabled={(!isReviewStep && !currentAnswer.trim()) || isGenerating}
             className="min-w-[140px]"
           >
             {isGenerating ? (
@@ -357,10 +415,15 @@ function SkillPageContent() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating...
               </>
-            ) : isLastStep ? (
+            ) : isReviewStep ? (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
                 Generate
+              </>
+            ) : isLastQuestionStep ? (
+              <>
+                Review
+                <ArrowRight className="ml-2 h-4 w-4" />
               </>
             ) : (
               <>
