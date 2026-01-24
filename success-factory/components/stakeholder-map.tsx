@@ -109,22 +109,21 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
   const [showAddModal, setShowAddModal] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`/api/stakeholders/${companyId}`)
-        const json = await res.json()
-        if (!cancelled && !json.error) {
-          setData(json)
-        }
-      } catch (e) {
-        console.error("Failed to fetch stakeholders:", e)
+  const fetchStakeholders = async () => {
+    try {
+      const res = await fetch(`/api/stakeholders/${companyId}`)
+      const json = await res.json()
+      if (!json.error) {
+        setData(json)
       }
-      if (!cancelled) setLoading(false)
+    } catch (e) {
+      console.error("Failed to fetch stakeholders:", e)
     }
-    fetchData()
-    return () => { cancelled = true }
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchStakeholders()
   }, [companyId])
 
   if (loading) {
@@ -353,7 +352,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
           onClose={() => setShowAddModal(false)}
           onAdded={() => {
             setShowAddModal(false)
-            fetchData()
+            fetchStakeholders()
           }}
         />
       )}
