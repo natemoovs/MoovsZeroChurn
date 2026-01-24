@@ -136,18 +136,15 @@ export default function BenchmarksPage() {
     }
 
     try {
-      const res = await fetch(`/api/integrations/portfolio?segment=all`)
+      const res = await fetch(`/api/integrations/hubspot/companies?q=${encodeURIComponent(query)}`)
       const data = await res.json()
-      const filtered = (data.summaries || [])
-        .filter((c: { companyName: string }) =>
-          c.companyName.toLowerCase().includes(query.toLowerCase())
-        )
+      const results = (data.companies || [])
         .slice(0, 5)
-        .map((c: { companyId: string; companyName: string }) => ({
-          companyId: c.companyId,
-          companyName: c.companyName,
+        .map((c: { id: string; name: string }) => ({
+          companyId: c.id,
+          companyName: c.name,
         }))
-      setSearchResults(filtered)
+      setSearchResults(results)
     } catch (error) {
       console.error("Failed to search companies:", error)
     }
