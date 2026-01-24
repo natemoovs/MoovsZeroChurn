@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk"
 
-// Use Claude 4 Haiku for faster, cheaper responses
-export const AI_MODEL = "claude-haiku-4-20250514"
+// Use Claude Haiku 4.5 for faster, cheaper responses
+export const AI_MODEL = "claude-haiku-4-5-20251001"
 
 // Rate limit configuration
 const MAX_RETRIES = 3
