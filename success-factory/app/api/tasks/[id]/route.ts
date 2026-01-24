@@ -62,7 +62,12 @@ export async function PATCH(
       ownerId,
       ownerEmail,
       metadata,
+      notionAssigneeId,
     } = body
+
+    // Get existing task to access current metadata
+    const existingTask = await prisma.task.findUnique({ where: { id } })
+    const existingMetadata = (existingTask?.metadata as Record<string, unknown>) || {}
 
     // Build update object with only provided fields
     const updateData: Record<string, unknown> = {}
@@ -86,6 +91,14 @@ export async function PATCH(
     if (ownerEmail !== undefined) updateData.ownerEmail = ownerEmail
     if (metadata !== undefined) updateData.metadata = metadata
 
+    // Handle notionAssigneeId - merge into metadata
+    if (notionAssigneeId !== undefined) {
+      updateData.metadata = {
+        ...existingMetadata,
+        notionAssigneeId,
+      }
+    }
+
     const task = await prisma.task.update({
       where: { id },
       data: updateData,
@@ -99,20 +112,33 @@ export async function PATCH(
       },
     })
 
-    // Sync status change to Notion if task has a notionPageId
-    const taskMetadata = task.metadata as { notionPageId?: string } | null
-    if (status !== undefined && taskMetadata?.notionPageId && process.env.NOTION_API_KEY) {
+    // Sync changes to Notion if task has a notionPageId
+    const taskMetadata = task.metadata as { notionPageId?: string; notionAssigneeId?: string } | null
+    if (taskMetadata?.notionPageId && process.env.NOTION_API_KEY) {
       try {
-        const notionStatus = status === "completed" ? "Done"
-          : status === "in_progress" ? "In Progress"
-          : status === "cancelled" ? "Cancelled"
-          : "To Do"
+        const notionUpdate: Record<string, unknown> = {}
 
-        await notion.updatePage(taskMetadata.notionPageId, {
-          Status: { status: { name: notionStatus } },
-        })
+        // Sync status change
+        if (status !== undefined) {
+          const notionStatus = status === "completed" ? "Done"
+            : status === "in_progress" ? "In Progress"
+            : status === "cancelled" ? "Cancelled"
+            : "To Do"
+          notionUpdate["Status"] = { status: { name: notionStatus } }
+        }
+
+        // Sync assignee change
+        if (notionAssigneeId !== undefined) {
+          notionUpdate["Assignee"] = {
+            people: [{ id: notionAssigneeId }],
+          }
+        }
+
+        if (Object.keys(notionUpdate).length > 0) {
+          await notion.updatePage(taskMetadata.notionPageId, notionUpdate)
+        }
       } catch (err) {
-        console.error("Failed to sync task status to Notion:", err)
+        console.error("Failed to sync task to Notion:", err)
       }
     }
 

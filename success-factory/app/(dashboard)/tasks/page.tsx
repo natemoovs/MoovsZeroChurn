@@ -38,6 +38,17 @@ interface Task {
     name: string
   } | null
   createdAt: string
+  metadata?: {
+    notionPageId?: string
+    notionAssigneeId?: string
+  } | null
+}
+
+interface NotionUser {
+  id: string
+  name: string
+  email: string | null
+  avatarUrl: string | null
 }
 
 interface TaskStats {
@@ -58,11 +69,13 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [stats, setStats] = useState<TaskStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [notionUsers, setNotionUsers] = useState<NotionUser[]>([])
   const [filter, setFilter] = useState<"all" | "pending" | "in_progress" | "completed">("all")
   const [showNewTask, setShowNewTask] = useState(false)
 
   useEffect(() => {
     fetchTasks()
+    fetchNotionUsers()
   }, [filter])
 
   async function fetchTasks() {
@@ -79,6 +92,18 @@ export default function TasksPage() {
     }
   }
 
+  async function fetchNotionUsers() {
+    try {
+      const res = await fetch("/api/integrations/notion/users")
+      const data = await res.json()
+      if (data.users) {
+        setNotionUsers(data.users)
+      }
+    } catch (error) {
+      console.error("Failed to fetch Notion users:", error)
+    }
+  }
+
   async function updateTaskStatus(taskId: string, status: string) {
     try {
       await fetch(`/api/tasks/${taskId}`, {
@@ -89,6 +114,19 @@ export default function TasksPage() {
       fetchTasks()
     } catch (error) {
       console.error("Failed to update task:", error)
+    }
+  }
+
+  async function updateTaskAssignee(taskId: string, notionUserId: string) {
+    try {
+      await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notionAssigneeId: notionUserId }),
+      })
+      fetchTasks()
+    } catch (error) {
+      console.error("Failed to update task assignee:", error)
     }
   }
 
@@ -299,12 +337,26 @@ export default function TasksPage() {
                         </span>
                       )}
 
-                      {task.ownerEmail && (
-                        <span className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          {task.ownerEmail}
-                        </span>
-                      )}
+                      {/* Assignee Dropdown */}
+                      <div className="flex items-center gap-1">
+                        <User className="h-4 w-4" />
+                        <select
+                          value={task.metadata?.notionAssigneeId || ""}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              updateTaskAssignee(task.id, e.target.value)
+                            }
+                          }}
+                          className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-zinc-500 focus:ring-1 focus:ring-emerald-500 dark:text-zinc-400"
+                        >
+                          <option value="">{task.ownerEmail || "Unassigned"}</option>
+                          {notionUsers.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
                       {task.playbook && (
                         <span className="rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
