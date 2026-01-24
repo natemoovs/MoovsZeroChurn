@@ -216,12 +216,12 @@ export default function SettingsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">
               Settings
             </h1>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-zinc-500 sm:text-base dark:text-zinc-400">
               Configure notifications and preferences
             </p>
           </div>
@@ -229,7 +229,7 @@ export default function SettingsPage() {
             onClick={handleSave}
             disabled={saving}
             className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              "inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all sm:w-auto",
               saved
                 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                 : "bg-emerald-600 text-white hover:bg-emerald-700",
