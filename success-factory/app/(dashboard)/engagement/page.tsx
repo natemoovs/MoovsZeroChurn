@@ -71,25 +71,25 @@ interface EngagementSummary {
 type SortOption = "score" | "risk" | "adoption"
 
 function getScoreColor(score: number): string {
-  if (score >= 70) return "text-emerald-600 dark:text-emerald-400"
-  if (score >= 40) return "text-amber-600 dark:text-amber-400"
-  return "text-red-600 dark:text-red-400"
+  if (score >= 70) return "text-success-600 dark:text-success-500"
+  if (score >= 40) return "text-warning-600 dark:text-warning-500"
+  return "text-error-600 dark:text-error-500"
 }
 
 function getScoreBgColor(score: number): string {
-  if (score >= 70) return "bg-emerald-500"
-  if (score >= 40) return "bg-amber-500"
-  return "bg-red-500"
+  if (score >= 70) return "bg-success-500"
+  if (score >= 40) return "bg-warning-500"
+  return "bg-error-500"
 }
 
 function getTrendIcon(trend: string) {
   if (trend === "increasing" || trend === "improving") {
-    return <TrendingUp className="h-4 w-4 text-emerald-500" />
+    return <TrendingUp className="h-4 w-4 text-success-500" />
   }
   if (trend === "decreasing" || trend === "declining") {
-    return <TrendingDown className="h-4 w-4 text-red-500" />
+    return <TrendingDown className="h-4 w-4 text-error-500" />
   }
-  return <Minus className="h-4 w-4 text-zinc-400" />
+  return <Minus className="h-4 w-4 text-content-tertiary" />
 }
 
 export default function EngagementPage() {
@@ -131,11 +131,11 @@ export default function EngagementPage() {
           <div>
             <div className="flex items-center gap-2">
               <Activity className="h-6 w-6 text-teal-600 dark:text-teal-400" />
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-2xl font-bold text-content-primary">
                 Engagement Analytics
               </h1>
             </div>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               Track feature adoption and usage patterns
             </p>
           </div>
@@ -157,13 +157,13 @@ export default function EngagementPage() {
         {/* Summary Cards */}
         {summary && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="card-sf p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-100 dark:bg-teal-900/30">
                   <Zap className="h-5 w-5 text-teal-600 dark:text-teal-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm text-content-secondary">
                     Avg Engagement
                   </p>
                   <p className={cn(
@@ -176,29 +176,29 @@ export default function EngagementPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="card-sf p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
                   <CheckCircle2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm text-content-secondary">
                     Avg Feature Adoption
                   </p>
-                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  <p className="text-2xl font-bold text-content-primary">
                     {summary.avgFeatureAdoption}%
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="card-sf p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
                   <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm text-content-secondary">
                     At Risk
                   </p>
                   <p className="text-2xl font-bold text-red-600 dark:text-red-400">
@@ -208,13 +208,13 @@ export default function EngagementPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="card-sf p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
                   <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm text-content-secondary">
                     Improving
                   </p>
                   <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -232,7 +232,7 @@ export default function EngagementPage() {
           <div className="lg:col-span-1">
             <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
               <div className="border-b border-zinc-200 p-4 dark:border-zinc-800">
-                <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                <h2 className="font-semibold text-content-primary">
                   Accounts
                 </h2>
               </div>
@@ -260,13 +260,13 @@ export default function EngagementPage() {
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
+                            <p className="truncate font-medium text-content-primary">
                               {m.companyName}
                             </p>
                             {getTrendIcon(m.engagementTrend)}
                           </div>
                           <div className="mt-1 flex items-center gap-2">
-                            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                            <span className="text-xs text-content-secondary">
                               {m.featureAdoption.adoptionRate}% adoption
                             </span>
                             {m.riskIndicators.length > 0 && (
@@ -300,7 +300,7 @@ export default function EngagementPage() {
             {selectedAccount ? (
               <div className="space-y-4">
                 {/* Header */}
-                <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="card-sf p-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <Link
@@ -309,7 +309,7 @@ export default function EngagementPage() {
                       >
                         {selectedAccount.companyName}
                       </Link>
-                      <p className="mt-1 text-sm capitalize text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 text-sm capitalize text-content-secondary">
                         {selectedAccount.segment?.replace("_", " ")} segment
                       </p>
                     </div>
@@ -325,7 +325,7 @@ export default function EngagementPage() {
                         </span>
                         {getTrendIcon(selectedAccount.engagementTrend)}
                       </div>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="text-sm text-content-secondary">
                         Engagement Score
                       </p>
                     </div>
@@ -347,14 +347,14 @@ export default function EngagementPage() {
 
                 {/* Metrics Grid */}
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                  <div className="card-sf p-4">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-zinc-400" />
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <span className="text-sm text-content-secondary">
                         Login Frequency
                       </span>
                     </div>
-                    <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                    <p className="mt-2 text-2xl font-bold text-content-primary">
                       {selectedAccount.loginFrequency.avgDaysPerWeek} days/wk
                     </p>
                     <div className="mt-1 flex items-center gap-1 text-sm text-zinc-500">
@@ -363,14 +363,14 @@ export default function EngagementPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                  <div className="card-sf p-4">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-zinc-400" />
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <span className="text-sm text-content-secondary">
                         Avg Session
                       </span>
                     </div>
-                    <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                    <p className="mt-2 text-2xl font-bold text-content-primary">
                       {selectedAccount.sessionMetrics.avgSessionDuration} min
                     </p>
                     <p className="mt-1 text-sm text-zinc-500">
@@ -378,23 +378,23 @@ export default function EngagementPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                  <div className="card-sf p-4">
                     <div className="flex items-center gap-2">
                       <MousePointer className="h-4 w-4 text-zinc-400" />
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <span className="text-sm text-content-secondary">
                         Actions/Session
                       </span>
                     </div>
-                    <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                    <p className="mt-2 text-2xl font-bold text-content-primary">
                       {selectedAccount.sessionMetrics.avgActionsPerSession}
                     </p>
                   </div>
                 </div>
 
                 {/* Feature Adoption */}
-                <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="card-sf p-6">
                   <div className="mb-4 flex items-center justify-between">
-                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                    <h3 className="font-semibold text-content-primary">
                       Feature Adoption
                     </h3>
                     <span className={cn(
@@ -412,7 +412,7 @@ export default function EngagementPage() {
                     />
                   </div>
 
-                  <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="mb-4 text-sm text-content-secondary">
                     Using {selectedAccount.featureAdoption.totalFeaturesUsed} of{" "}
                     {selectedAccount.featureAdoption.totalFeaturesAvailable} available features
                   </p>
@@ -511,7 +511,7 @@ export default function EngagementPage() {
               <div className="flex h-96 items-center justify-center rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="text-center">
                   <Activity className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
-                  <p className="mt-4 text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-4 text-content-secondary">
                     Select an account to view engagement details
                   </p>
                 </div>
