@@ -583,33 +583,33 @@ export default function TasksPage() {
                   }}
                   onClick={() => setFocusedIndex(index)}
                   className={cn(
-                    "overflow-hidden rounded-xl border bg-white transition-colors dark:bg-zinc-900",
+                    "overflow-hidden rounded-xl border bg-bg-elevated transition-all-smooth",
                     isFocused
-                      ? "ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-950"
+                      ? "ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-bg-primary glow-sm"
                       : "",
                     isSelected
-                      ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-700 dark:bg-emerald-900/10"
+                      ? "border-success-400 bg-success-50 dark:bg-success-50/10"
                       : task.status === "completed"
-                      ? "border-zinc-100 opacity-60 dark:border-zinc-800"
+                      ? "border-border-default opacity-60"
                       : isOverdue
-                      ? "border-red-200 dark:border-red-900"
-                      : "border-zinc-200 dark:border-zinc-800"
+                      ? "border-error-300 dark:border-error-500"
+                      : "border-border-default"
                   )}
                 >
                   <div className="flex items-start gap-4 p-4">
-                    {/* Selection Checkbox */}
+                    {/* Selection Checkbox - touch-friendly */}
                     <button
                       onClick={() => toggleTaskSelection(task.id)}
-                      className="mt-0.5 flex-shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                      className="flex-shrink-0 text-content-tertiary hover:text-content-primary min-h-[44px] min-w-[44px] flex items-center justify-center -ml-2 transition-colors-smooth"
                     >
                       {selectedTasks.has(task.id) ? (
-                        <CheckSquare className="h-5 w-5 text-emerald-500" />
+                        <CheckSquare className="h-5 w-5 text-success-500" />
                       ) : (
                         <Square className="h-5 w-5" />
                       )}
                     </button>
 
-                    {/* Status Toggle */}
+                    {/* Status Toggle - touch-friendly */}
                     <button
                       onClick={() =>
                         updateTaskStatus(
@@ -617,16 +617,16 @@ export default function TasksPage() {
                           task.status === "completed" ? "pending" : "completed"
                         )
                       }
-                      className="mt-0.5 flex-shrink-0"
+                      className="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center -ml-2 transition-colors-smooth"
                     >
                       <StatusIcon
                         className={cn(
                           "h-5 w-5 transition-colors",
                           task.status === "completed"
-                            ? "text-emerald-500"
+                            ? "text-success-500"
                             : task.status === "in_progress"
-                            ? "text-blue-500"
-                            : "text-zinc-300 hover:text-zinc-400 dark:text-zinc-600"
+                            ? "text-primary-500"
+                            : "text-content-tertiary hover:text-content-secondary"
                         )}
                       />
                     </button>
@@ -728,10 +728,10 @@ export default function TasksPage() {
                       </div>
                     </div>
 
-                    {/* Actions */}
+                    {/* Actions - touch-friendly */}
                     <div className="flex-shrink-0">
-                      <button className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <button className="rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center text-content-tertiary hover:bg-surface-hover hover:text-content-primary transition-colors-smooth">
+                        <MoreHorizontal className="h-5 w-5" />
                       </button>
                     </div>
                   </div>
