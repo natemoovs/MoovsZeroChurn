@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hubspot, HubSpotCompany, getOwners } from "@/lib/integrations/hubspot"
 import { metabase } from "@/lib/integrations"
+import { isAuthenticated } from "@/lib/auth/server"
 
 // Metabase query ID for CSM_MOOVS master customer view (Card 1469)
 const METABASE_QUERY_ID = 1469
@@ -511,12 +512,16 @@ export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
 
-  // Allow if: no secret configured, or secret matches, or is Vercel cron, or dev mode
+  // Check if user is logged in (for manual sync from settings page)
+  const userLoggedIn = await isAuthenticated()
+
+  // Allow if: no secret configured, or secret matches, or is Vercel cron, or dev mode, or logged in user
   const isAuthorized =
     !cronSecret ||  // No secret = allow (for testing)
     authHeader === `Bearer ${cronSecret}` ||
     request.headers.get("x-vercel-cron") === "1" ||
-    process.env.NODE_ENV === "development"
+    process.env.NODE_ENV === "development" ||
+    userLoggedIn  // Allow logged-in users to trigger sync
 
   if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
