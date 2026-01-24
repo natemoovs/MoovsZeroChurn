@@ -132,10 +132,10 @@ export default function TeamPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">
             CSM Workload
           </h1>
-          <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-zinc-500 sm:text-base dark:text-zinc-400">
             Account assignments by Customer Success Manager
           </p>
         </div>
@@ -149,52 +149,54 @@ export default function TeamPage() {
             return (
               <div key={csm.name} className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
                 {/* CSM Header */}
-                <div className="flex items-center justify-between border-b border-zinc-200 p-4 dark:border-zinc-800">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                      <span className="text-lg font-semibold">{csm.name[0]}</span>
+                <div className="border-b border-zinc-200 p-4 dark:border-zinc-800">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        <span className="text-lg font-semibold">{csm.name[0]}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{csm.name}</h2>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                          {csm.name === "Nate" ? "Enterprise ($499+ MRR)" : "Mid-Market & SMB"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{csm.name}</h2>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {csm.name === "Nate" ? "Enterprise ($499+ MRR)" : "Mid-Market & SMB"}
-                      </p>
-                    </div>
+                    <span className="self-start rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700 sm:self-auto dark:bg-zinc-800 dark:text-zinc-300">
+                      {metrics.total} accounts
+                    </span>
                   </div>
-                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                    {metrics.total} accounts
-                  </span>
                 </div>
 
                 {/* Metrics */}
-                <div className="grid grid-cols-2 gap-4 border-b border-zinc-200 p-4 sm:grid-cols-4 dark:border-zinc-800">
+                <div className="grid grid-cols-4 gap-2 border-b border-zinc-200 p-3 sm:gap-4 sm:p-4 dark:border-zinc-800">
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400">
-                      <DollarSign className="h-4 w-4" />
-                      <span className="text-lg font-bold">${(metrics.totalMRR / 1000).toFixed(1)}k</span>
+                    <div className="flex items-center justify-center gap-0.5 text-emerald-600 sm:gap-1 dark:text-emerald-400">
+                      <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-sm font-bold sm:text-lg">${(metrics.totalMRR / 1000).toFixed(1)}k</span>
                     </div>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">MRR</p>
+                    <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">MRR</p>
                   </div>
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400">
-                      <TrendingUp className="h-4 w-4" />
-                      <span className="text-lg font-bold">{metrics.healthy}</span>
+                    <div className="flex items-center justify-center gap-0.5 text-emerald-600 sm:gap-1 dark:text-emerald-400">
+                      <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-sm font-bold sm:text-lg">{metrics.healthy}</span>
                     </div>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Healthy</p>
+                    <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">Healthy</p>
                   </div>
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-amber-600 dark:text-amber-400">
-                      <Users className="h-4 w-4" />
-                      <span className="text-lg font-bold">{metrics.monitor}</span>
+                    <div className="flex items-center justify-center gap-0.5 text-amber-600 sm:gap-1 dark:text-amber-400">
+                      <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-sm font-bold sm:text-lg">{metrics.monitor}</span>
                     </div>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Monitor</p>
+                    <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">Monitor</p>
                   </div>
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-red-600 dark:text-red-400">
-                      <AlertTriangle className="h-4 w-4" />
-                      <span className="text-lg font-bold">{metrics.atRisk}</span>
+                    <div className="flex items-center justify-center gap-0.5 text-red-600 sm:gap-1 dark:text-red-400">
+                      <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-sm font-bold sm:text-lg">{metrics.atRisk}</span>
                     </div>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">At Risk</p>
+                    <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">At Risk</p>
                   </div>
                 </div>
 
@@ -215,23 +217,23 @@ export default function TeamPage() {
                           <Link
                             key={account.companyId}
                             href={`/accounts/${account.companyId}`}
-                            className="flex items-center justify-between p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                            className="block p-4 hover:bg-zinc-50 active:bg-zinc-100 dark:hover:bg-zinc-800/50 dark:active:bg-zinc-800"
                           >
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
-                                {account.companyName}
-                              </p>
-                              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                {account.mrr ? `$${account.mrr.toLocaleString()}/mo` : "No MRR"}
-                                {account.totalTrips ? ` · ${account.totalTrips} trips` : ""}
-                              </p>
-                            </div>
-                            <div className="ml-3 flex items-center gap-2">
-                              {account.riskSignals.length > 0 && (
-                                <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                                  {account.riskSignals[0]}
-                                </span>
-                              )}
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
+                                  {account.companyName}
+                                </p>
+                                <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+                                  {account.mrr ? `$${account.mrr.toLocaleString()}/mo` : "No MRR"}
+                                  {account.totalTrips ? ` · ${account.totalTrips} trips` : ""}
+                                </p>
+                                {account.riskSignals.length > 0 && (
+                                  <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                                    {account.riskSignals[0]}
+                                  </p>
+                                )}
+                              </div>
                               <HealthBadge score={account.healthScore} />
                             </div>
                           </Link>
