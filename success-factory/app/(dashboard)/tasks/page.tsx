@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils"
 import { useSession } from "@/lib/auth/client"
 import { TaskComments } from "@/components/task-comments"
 import { TaskDrawer } from "@/components/task-drawer"
+import { TaskDetailModal } from "@/components/task-detail-modal"
 import { toast } from "sonner"
 
 interface Task {
@@ -96,6 +97,7 @@ export default function TasksPage() {
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [drawerTask, setDrawerTask] = useState<Task | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [detailModalTask, setDetailModalTask] = useState<Task | null>(null)
   const taskRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   // Get current user's email for "My Tasks" filter
@@ -636,8 +638,13 @@ export default function TasksPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              setDrawerTask(task)
-                              setDrawerOpen(true)
+                              // Open full detail modal for Notion tasks, drawer for others
+                              if (task.metadata?.notionPageId) {
+                                setDetailModalTask(task)
+                              } else {
+                                setDrawerTask(task)
+                                setDrawerOpen(true)
+                              }
                             }}
                             className={cn(
                               "text-left font-medium hover:underline",
@@ -768,6 +775,17 @@ export default function TasksPage() {
           }
         }}
       />
+
+      {/* Full Notion Task Detail Modal */}
+      {detailModalTask?.metadata?.notionPageId && (
+        <TaskDetailModal
+          isOpen={!!detailModalTask}
+          onClose={() => setDetailModalTask(null)}
+          notionPageId={detailModalTask.metadata.notionPageId}
+          taskTitle={detailModalTask.title}
+          onUpdate={() => fetchTasks()}
+        />
+      )}
     </DashboardLayout>
   )
 }
