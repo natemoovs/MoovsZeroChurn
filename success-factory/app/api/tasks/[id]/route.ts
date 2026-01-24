@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { notion } from "@/lib/integrations"
 
+// Map internal priority to Notion priority names
+function mapPriorityToNotion(priority: string): string {
+  const map: Record<string, string> = {
+    urgent: "Urgent",
+    high: "High",
+    medium: "Medium",
+    low: "Low",
+  }
+  return map[priority] || "Medium"
+}
+
 /**
  * Get a specific task
  * GET /api/tasks/[id]
@@ -132,6 +143,23 @@ export async function PATCH(
           notionUpdate["Assignee"] = {
             people: [{ id: notionAssigneeId }],
           }
+        }
+
+        // Sync priority change
+        if (priority !== undefined) {
+          notionUpdate["Priority"] = { select: { name: mapPriorityToNotion(priority) } }
+        }
+
+        // Sync due date change
+        if (dueDate !== undefined) {
+          notionUpdate["Due"] = dueDate
+            ? { date: { start: new Date(dueDate).toISOString().split("T")[0] } }
+            : { date: null }
+        }
+
+        // Sync title change
+        if (title !== undefined) {
+          notionUpdate["Task Name"] = { title: [{ text: { content: title } }] }
         }
 
         if (Object.keys(notionUpdate).length > 0) {
