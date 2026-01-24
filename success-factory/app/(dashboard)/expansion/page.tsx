@@ -304,7 +304,7 @@ export default function ExpansionPage() {
               No opportunities found
             </h3>
             <p className="mt-1 text-zinc-500 dark:text-zinc-400">
-              Click "Detect Signals" to automatically find expansion opportunities
+              Click &quot;Detect Signals&quot; to automatically find expansion opportunities
             </p>
           </div>
         ) : (

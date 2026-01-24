@@ -2,11 +2,9 @@ import { defineConfig } from "prisma/config";
 
 // Load dotenv only in development
 if (process.env.NODE_ENV !== "production") {
-  try {
-    require("dotenv/config");
-  } catch {
+  import("dotenv/config").catch(() => {
     // dotenv not available, that's fine in production
-  }
+  });
 }
 
 export default defineConfig({

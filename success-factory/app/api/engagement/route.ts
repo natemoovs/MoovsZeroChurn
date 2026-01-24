@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
       orderBy: { mrr: "desc" },
     })
 
-    let metrics = companies.map(calculateEngagement)
+    const metrics = companies.map(calculateEngagement)
 
     // Sort
     if (sortBy === "risk") {

@@ -683,12 +683,12 @@ export default function DashboardPage() {
                 Accounts Needing Attention
               </h2>
               {atRiskAccounts.length > 3 && (
-                <a
+                <Link
                   href="/accounts?filter=at-risk"
                   className="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
                 >
                   View all {atRiskAccounts.length} →
-                </a>
+                </Link>
               )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -724,12 +724,12 @@ export default function DashboardPage() {
                 Monitor List
               </h2>
               {monitorAccounts.length > 5 && (
-                <a
+                <Link
                   href="/accounts?filter=monitor"
                   className="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
                 >
                   View all {monitorAccounts.length} →
-                </a>
+                </Link>
               )}
             </div>
             <div className="space-y-2">
