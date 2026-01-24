@@ -21,6 +21,8 @@ import {
   CheckCircle2,
   XCircle,
   ExternalLink,
+  Trash2,
+  ListTodo,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -110,6 +112,12 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [cleaningUp, setCleaningUp] = useState(false)
+  const [cleanupResult, setCleanupResult] = useState<{
+    deleted: number
+    checked: number
+    deletedTasks?: string[]
+  } | null>(null)
 
   const fetchSyncStatus = async () => {
     try {
@@ -159,6 +167,30 @@ export default function SettingsPage() {
       console.error("Sync error:", e)
     }
     setSyncing(false)
+  }
+
+  const handleNotionCleanup = async () => {
+    if (!confirm("This will delete tasks that no longer exist in the configured Notion database. Continue?")) {
+      return
+    }
+    setCleaningUp(true)
+    setCleanupResult(null)
+    try {
+      const res = await fetch("/api/integrations/notion/tasks/cleanup", { method: "POST" })
+      const data = await res.json()
+      if (data.success) {
+        setCleanupResult({
+          deleted: data.deleted,
+          checked: data.checked,
+          deletedTasks: data.deletedTasks,
+        })
+      } else {
+        console.error("Cleanup failed:", data.error)
+      }
+    } catch (e) {
+      console.error("Cleanup error:", e)
+    }
+    setCleaningUp(false)
   }
 
   const handleSave = async () => {
@@ -631,6 +663,63 @@ export default function SettingsPage() {
               Last sync failed. Check logs for details.
             </p>
           )}
+        </div>
+
+        {/* Notion Tasks */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-4 flex items-center gap-3">
+            <ListTodo className="h-5 w-5 text-zinc-400" />
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              Notion Tasks
+            </h2>
+          </div>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            Manage tasks synced from Notion. Use cleanup to remove orphaned tasks when switching databases.
+          </p>
+
+          {/* Cleanup Result */}
+          {cleanupResult && (
+            <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+              <p className="font-medium text-emerald-800 dark:text-emerald-200">
+                Cleanup complete: {cleanupResult.deleted} tasks deleted ({cleanupResult.checked} checked)
+              </p>
+              {cleanupResult.deletedTasks && cleanupResult.deletedTasks.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-emerald-700 dark:text-emerald-300">Deleted tasks:</p>
+                  <ul className="mt-1 list-inside list-disc text-sm text-emerald-600 dark:text-emerald-400">
+                    {cleanupResult.deletedTasks.slice(0, 5).map((title, i) => (
+                      <li key={i} className="truncate">{title}</li>
+                    ))}
+                    {cleanupResult.deletedTasks.length > 5 && (
+                      <li>...and {cleanupResult.deletedTasks.length - 5} more</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Cleanup Button */}
+          <button
+            onClick={handleNotionCleanup}
+            disabled={cleaningUp}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              "border border-red-200 bg-red-50 text-red-700 hover:bg-red-100",
+              "dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/50",
+              cleaningUp && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {cleaningUp ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+            {cleaningUp ? "Cleaning up..." : "Cleanup Orphaned Tasks"}
+          </button>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            Removes tasks that exist locally but not in the configured Notion database
+          </p>
         </div>
       </div>
     </DashboardLayout>
