@@ -59,6 +59,46 @@ interface DashboardData {
       date: string
     }>
   }
+  // Phase 1 additions
+  stalledOnboardings: {
+    count: number
+    critical: number
+    mrrAtRisk: number
+    accounts: Array<{
+      companyId: string
+      companyName: string
+      overdueMilestones: string[]
+      severity: string
+      mrr: number
+    }>
+  }
+  npsTrends: {
+    currentNPS: number | null
+    previousNPS: number | null
+    trend: "improving" | "declining" | "stable" | "unknown"
+    recentDetractors: number
+    totalResponses: number
+  }
+  championAlerts: {
+    noChampion: number
+    singleThreaded: number
+    recentChampionLeft: Array<{
+      companyId: string
+      companyName: string
+      championName: string
+      leftAt: string
+    }>
+  }
+  recentActivity: Array<{
+    id: string
+    companyId: string
+    companyName: string
+    source: string
+    eventType: string
+    title: string
+    occurredAt: string
+    importance: string
+  }>
 }
 
 // In-memory cache
@@ -77,7 +117,15 @@ export async function GET() {
 
   try {
     // Run all queries in parallel
-    const [companies, tasks, snapshots] = await Promise.all([
+    const [
+      companies,
+      tasks,
+      snapshots,
+      overdueMilestones,
+      npsResponses,
+      stakeholders,
+      activityEvents,
+    ] = await Promise.all([
       // Portfolio data
       prisma.hubSpotCompany.findMany({
         orderBy: [{ healthScore: "asc" }, { mrr: "desc" }],
@@ -98,6 +146,46 @@ export async function GET() {
           },
         },
         orderBy: { createdAt: "desc" },
+      }),
+
+      // Stalled onboardings
+      prisma.onboardingMilestone.findMany({
+        where: {
+          isOverdue: true,
+          completedAt: null,
+        },
+      }),
+
+      // NPS responses (last 90 days)
+      prisma.nPSSurvey.findMany({
+        where: {
+          respondedAt: {
+            gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+          },
+          score: { not: null },
+        },
+        orderBy: { respondedAt: "desc" },
+      }),
+
+      // Stakeholders for champion alerts
+      prisma.stakeholder.findMany({
+        where: {
+          OR: [
+            { role: "champion" },
+            { leftCompanyAt: { not: null } },
+          ],
+        },
+      }),
+
+      // Recent activity events
+      prisma.activityEvent.findMany({
+        where: {
+          occurredAt: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          },
+        },
+        orderBy: { occurredAt: "desc" },
+        take: 10,
       }),
     ])
 
@@ -217,6 +305,132 @@ export async function GET() {
     else if (downgrades > upgrades * 1.5) trend = "declining"
     else if (recentChanges.length === 0) trend = "unknown"
 
+    // Process stalled onboardings
+    const stalledByCompany = new Map<string, { companyId: string; companyName: string; milestones: string[] }>()
+    for (const m of overdueMilestones) {
+      if (!stalledByCompany.has(m.companyId)) {
+        stalledByCompany.set(m.companyId, {
+          companyId: m.companyId,
+          companyName: m.companyName,
+          milestones: [],
+        })
+      }
+      stalledByCompany.get(m.companyId)!.milestones.push(m.milestone)
+    }
+
+    const stalledAccounts = Array.from(stalledByCompany.values()).map((s) => {
+      const company = companies.find((c) => c.hubspotId === s.companyId)
+      return {
+        companyId: s.companyId,
+        companyName: s.companyName,
+        overdueMilestones: s.milestones,
+        severity: s.milestones.length >= 3 ? "critical" : s.milestones.length >= 2 ? "high" : "medium",
+        mrr: company?.mrr || 0,
+      }
+    }).sort((a, b) => {
+      const severityOrder = { critical: 0, high: 1, medium: 2 }
+      return (severityOrder[a.severity as keyof typeof severityOrder] || 2) -
+             (severityOrder[b.severity as keyof typeof severityOrder] || 2)
+    })
+
+    const stalledOnboardings = {
+      count: stalledAccounts.length,
+      critical: stalledAccounts.filter((a) => a.severity === "critical").length,
+      mrrAtRisk: stalledAccounts.reduce((sum, a) => sum + a.mrr, 0),
+      accounts: stalledAccounts.slice(0, 5),
+    }
+
+    // Process NPS trends
+    const npsWithScores = npsResponses.filter((r) => r.score !== null)
+    const recentNPS = npsWithScores.filter(
+      (r) => r.respondedAt && new Date(r.respondedAt) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    )
+    const previousNPS = npsWithScores.filter(
+      (r) =>
+        r.respondedAt &&
+        new Date(r.respondedAt) >= new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) &&
+        new Date(r.respondedAt) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    )
+
+    const calculateNPS = (responses: typeof npsWithScores) => {
+      if (responses.length === 0) return null
+      const promoters = responses.filter((r) => r.score !== null && r.score >= 9).length
+      const detractors = responses.filter((r) => r.score !== null && r.score <= 6).length
+      return Math.round(((promoters - detractors) / responses.length) * 100)
+    }
+
+    const currentNPS = calculateNPS(recentNPS)
+    const prevNPS = calculateNPS(previousNPS)
+    const npsTrend: "improving" | "declining" | "stable" | "unknown" =
+      currentNPS === null || prevNPS === null
+        ? "unknown"
+        : currentNPS > prevNPS + 5
+        ? "improving"
+        : currentNPS < prevNPS - 5
+        ? "declining"
+        : "stable"
+
+    const npsTrends = {
+      currentNPS,
+      previousNPS: prevNPS,
+      trend: npsTrend,
+      recentDetractors: recentNPS.filter((r) => r.score !== null && r.score <= 6).length,
+      totalResponses: npsWithScores.length,
+    }
+
+    // Process champion alerts
+    const companyChampions = new Map<string, boolean>()
+    const companyContacts = new Map<string, number>()
+    const recentChampionLeft: Array<{
+      companyId: string
+      companyName: string
+      championName: string
+      leftAt: string
+    }> = []
+
+    for (const s of stakeholders) {
+      if (s.role === "champion" && s.isActive) {
+        companyChampions.set(s.companyId, true)
+      }
+      if (s.isActive) {
+        companyContacts.set(s.companyId, (companyContacts.get(s.companyId) || 0) + 1)
+      }
+      if (s.role === "champion" && s.leftCompanyAt) {
+        const company = companies.find((c) => c.hubspotId === s.companyId)
+        recentChampionLeft.push({
+          companyId: s.companyId,
+          companyName: company?.name || "Unknown",
+          championName: s.name,
+          leftAt: s.leftCompanyAt.toISOString(),
+        })
+      }
+    }
+
+    // Count accounts with no champion (only paid accounts)
+    const paidCompanyIds = new Set(companies.filter((c) => c.mrr && c.mrr > 0).map((c) => c.hubspotId))
+    const noChampion = Array.from(paidCompanyIds).filter((id) => !companyChampions.has(id)).length
+    const singleThreaded = Array.from(companyContacts.entries()).filter(
+      ([id, count]) => paidCompanyIds.has(id) && count === 1
+    ).length
+
+    const championAlerts = {
+      noChampion,
+      singleThreaded,
+      recentChampionLeft: recentChampionLeft.slice(0, 3),
+    }
+
+    // Process recent activity
+    const recentActivity = activityEvents.map((e) => ({
+      id: e.id,
+      companyId: e.companyId,
+      companyName: companies.find((c) => c.hubspotId === e.companyId)?.name || "Unknown",
+      source: e.source,
+      eventType: e.eventType,
+      title: e.title,
+      occurredAt: e.occurredAt.toISOString(),
+      importance: e.importance,
+    }))
+
     // Build response
     const data: DashboardData = {
       portfolio: {
@@ -234,6 +448,10 @@ export async function GET() {
         trend,
         recentChanges: recentChanges.slice(0, 5),
       },
+      stalledOnboardings,
+      npsTrends,
+      championAlerts,
+      recentActivity,
     }
 
     // Update cache

@@ -492,3 +492,65 @@ model Stakeholder {
   @@index([sentiment])
   @@index([isActive])
 }
+
+// ============================================================================
+// Expansion Opportunities - Track upsell/cross-sell potential
+// ============================================================================
+
+model ExpansionOpportunity {
+  id              String    @id @default(cuid())
+  companyId       String    // HubSpot company ID
+  companyName     String
+  type            String    // upsell, cross_sell, add_on, upgrade
+  status          String    @default("identified") // identified, qualified, in_progress, won, lost, deferred
+  source          String    // usage_growth, feature_request, plan_limit, csm_identified, ai_detected
+  title           String    // Brief description
+  description     String?   // Full details
+  currentValue    Float?    // Current MRR
+  potentialValue  Float?    // Potential additional MRR
+  confidence      String    @default("medium") // high, medium, low
+  signals         Json?     // Evidence that triggered this opportunity
+  nextSteps       String?   // Recommended actions
+  ownerId         String?   // CSM who owns this opportunity
+  targetCloseDate DateTime?
+  closedAt        DateTime?
+  closedValue     Float?    // Actual value if won
+  lostReason      String?   // If lost, why
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+  @@index([type])
+  @@index([confidence])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// Cohort - Track customer cohorts for analysis
+// ============================================================================
+
+model CustomerCohort {
+  id              String   @id @default(cuid())
+  companyId       String   @unique // HubSpot company ID
+  signupMonth     String   // YYYY-MM format
+  signupQuarter   String   // YYYY-Q# format
+  acquisitionSource String? // Source of acquisition
+  initialPlan     String?  // Plan at signup
+  initialMrr      Float?   // MRR at signup
+  initialSegment  String?  // Segment at signup
+  firstValueDate  DateTime? // When they first saw value (first trip completed)
+  timeToValue     Int?     // Days from signup to first value
+  isActive        Boolean  @default(true)
+  churnedAt       DateTime?
+  churnMonth      String?  // YYYY-MM if churned
+  lifetimeMonths  Int?     // Months as customer
+  totalRevenue    Float?   // Total revenue generated
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([signupMonth])
+  @@index([signupQuarter])
+  @@index([initialSegment])
+  @@index([isActive])
+}

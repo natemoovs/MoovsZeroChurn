@@ -20,6 +20,12 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
+  Target,
+  ThumbsUp,
+  ThumbsDown,
+  UserX,
+  Activity,
+  Clock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -67,11 +73,58 @@ interface HealthTrend {
   }>
 }
 
+interface StalledOnboarding {
+  count: number
+  critical: number
+  mrrAtRisk: number
+  accounts: Array<{
+    companyId: string
+    companyName: string
+    overdueMilestones: string[]
+    severity: string
+    mrr: number
+  }>
+}
+
+interface NPSTrends {
+  currentNPS: number | null
+  previousNPS: number | null
+  trend: "improving" | "declining" | "stable" | "unknown"
+  recentDetractors: number
+  totalResponses: number
+}
+
+interface ChampionAlerts {
+  noChampion: number
+  singleThreaded: number
+  recentChampionLeft: Array<{
+    companyId: string
+    companyName: string
+    championName: string
+    leftAt: string
+  }>
+}
+
+interface RecentActivity {
+  id: string
+  companyId: string
+  companyName: string
+  source: string
+  eventType: string
+  title: string
+  occurredAt: string
+  importance: string
+}
+
 export default function DashboardPage() {
   const [data, setData] = useState<PortfolioData | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [renewals, setRenewals] = useState<Renewal[]>([])
   const [healthTrend, setHealthTrend] = useState<HealthTrend | null>(null)
+  const [stalledOnboardings, setStalledOnboardings] = useState<StalledOnboarding | null>(null)
+  const [npsTrends, setNpsTrends] = useState<NPSTrends | null>(null)
+  const [championAlerts, setChampionAlerts] = useState<ChampionAlerts | null>(null)
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -83,6 +136,10 @@ export default function DashboardPage() {
         if (dashboardData.tasks?.tasks) setTasks(dashboardData.tasks.tasks)
         if (dashboardData.renewals?.renewals) setRenewals(dashboardData.renewals.renewals)
         if (dashboardData.healthTrend) setHealthTrend(dashboardData.healthTrend)
+        if (dashboardData.stalledOnboardings) setStalledOnboardings(dashboardData.stalledOnboardings)
+        if (dashboardData.npsTrends) setNpsTrends(dashboardData.npsTrends)
+        if (dashboardData.championAlerts) setChampionAlerts(dashboardData.championAlerts)
+        if (dashboardData.recentActivity) setRecentActivity(dashboardData.recentActivity)
         setLoading(false)
       })
       .catch(() => {
@@ -376,6 +433,247 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+
+        {/* Phase 1: New Insights Row */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Stalled Onboardings */}
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Stalled Onboardings
+              </h2>
+              {stalledOnboardings && stalledOnboardings.count > 0 && (
+                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                  {stalledOnboardings.count} stalled
+                </span>
+              )}
+            </div>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                ))}
+              </div>
+            ) : !stalledOnboardings?.accounts?.length ? (
+              <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
+                <Target className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+                <p>All onboardings on track</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {stalledOnboardings.accounts.slice(0, 4).map((account) => (
+                  <Link
+                    key={account.companyId}
+                    href={`/accounts/${account.companyId}`}
+                    className="flex items-center justify-between rounded-lg border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {account.companyName}
+                      </p>
+                      <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                        {account.overdueMilestones.length} overdue milestone{account.overdueMilestones.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "ml-2 rounded-full px-2 py-0.5 text-xs font-medium",
+                        account.severity === "critical" && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                        account.severity === "high" && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                        account.severity === "medium" && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                      )}
+                    >
+                      {account.severity}
+                    </span>
+                  </Link>
+                ))}
+                {stalledOnboardings.mrrAtRisk > 0 && (
+                  <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                    ${stalledOnboardings.mrrAtRisk.toLocaleString()} MRR at risk
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* NPS Score */}
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                NPS Score
+              </h2>
+              {npsTrends?.trend && npsTrends.trend !== "unknown" && (
+                <span
+                  className={cn(
+                    "flex items-center gap-1 text-xs font-medium",
+                    npsTrends.trend === "improving" && "text-emerald-600 dark:text-emerald-400",
+                    npsTrends.trend === "declining" && "text-red-600 dark:text-red-400",
+                    npsTrends.trend === "stable" && "text-zinc-500 dark:text-zinc-400"
+                  )}
+                >
+                  {npsTrends.trend === "improving" ? (
+                    <ArrowUpRight className="h-3 w-3" />
+                  ) : npsTrends.trend === "declining" ? (
+                    <ArrowDownRight className="h-3 w-3" />
+                  ) : (
+                    <Minus className="h-3 w-3" />
+                  )}
+                  {npsTrends.trend}
+                </span>
+              )}
+            </div>
+            {loading ? (
+              <div className="flex h-32 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+              </div>
+            ) : !npsTrends || npsTrends.totalResponses === 0 ? (
+              <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
+                <ThumbsUp className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+                <p>No NPS data yet</p>
+              </div>
+            ) : (
+              <div className="text-center">
+                <div
+                  className={cn(
+                    "text-5xl font-bold",
+                    npsTrends.currentNPS !== null && npsTrends.currentNPS >= 50 && "text-emerald-600 dark:text-emerald-400",
+                    npsTrends.currentNPS !== null && npsTrends.currentNPS >= 0 && npsTrends.currentNPS < 50 && "text-amber-600 dark:text-amber-400",
+                    npsTrends.currentNPS !== null && npsTrends.currentNPS < 0 && "text-red-600 dark:text-red-400"
+                  )}
+                >
+                  {npsTrends.currentNPS ?? "—"}
+                </div>
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  {npsTrends.totalResponses} responses (30 days)
+                </p>
+                {npsTrends.recentDetractors > 0 && (
+                  <div className="mt-4 flex items-center justify-center gap-2 text-sm text-red-600 dark:text-red-400">
+                    <ThumbsDown className="h-4 w-4" />
+                    <span>{npsTrends.recentDetractors} detractor{npsTrends.recentDetractors !== 1 ? "s" : ""} need attention</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Champion Alerts */}
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Relationship Alerts
+              </h2>
+            </div>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                ))}
+              </div>
+            ) : !championAlerts || (championAlerts.noChampion === 0 && championAlerts.singleThreaded === 0 && championAlerts.recentChampionLeft.length === 0) ? (
+              <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
+                <Users className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+                <p>All relationships healthy</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {championAlerts.recentChampionLeft.length > 0 && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
+                    <div className="flex items-center gap-2 text-sm font-medium text-red-700 dark:text-red-400">
+                      <UserX className="h-4 w-4" />
+                      Champion Left
+                    </div>
+                    {championAlerts.recentChampionLeft.slice(0, 2).map((alert) => (
+                      <Link
+                        key={`${alert.companyId}-${alert.championName}`}
+                        href={`/accounts/${alert.companyId}`}
+                        className="mt-2 block text-sm text-red-600 hover:underline dark:text-red-300"
+                      >
+                        {alert.championName} left {alert.companyName}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                {championAlerts.noChampion > 0 && (
+                  <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/30">
+                    <span className="text-sm text-amber-700 dark:text-amber-400">No champion identified</span>
+                    <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-800 dark:text-amber-200">
+                      {championAlerts.noChampion}
+                    </span>
+                  </div>
+                )}
+                {championAlerts.singleThreaded > 0 && (
+                  <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+                    <span className="text-sm text-blue-700 dark:text-blue-400">Single-threaded accounts</span>
+                    <span className="rounded-full bg-blue-200 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-800 dark:text-blue-200">
+                      {championAlerts.singleThreaded}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Activity Feed */}
+        {(recentActivity.length > 0 || loading) && (
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Recent Activity
+              </h2>
+              <Activity className="h-5 w-5 text-zinc-400" />
+            </div>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentActivity.slice(0, 6).map((event) => (
+                  <Link
+                    key={event.id}
+                    href={`/accounts/${event.companyId}`}
+                    className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                  >
+                    <div
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                        event.source === "platform" && "bg-purple-100 text-purple-600 dark:bg-purple-900/30",
+                        event.source === "nps" && "bg-blue-100 text-blue-600 dark:bg-blue-900/30",
+                        event.source === "hubspot" && "bg-orange-100 text-orange-600 dark:bg-orange-900/30",
+                        event.source === "stripe" && "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30",
+                        !["platform", "nps", "hubspot", "stripe"].includes(event.source) && "bg-zinc-100 text-zinc-600 dark:bg-zinc-800"
+                      )}
+                    >
+                      {event.source === "nps" ? (
+                        <ThumbsUp className="h-4 w-4" />
+                      ) : event.source === "platform" ? (
+                        <Activity className="h-4 w-4" />
+                      ) : (
+                        <Clock className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {event.title}
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {event.companyName} · {new Date(event.occurredAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    {event.importance === "critical" && (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                        Critical
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Accounts Needing Attention */}
         {(atRiskAccounts.length > 0 || loading) && (
