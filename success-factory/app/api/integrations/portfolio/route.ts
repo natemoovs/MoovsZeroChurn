@@ -145,60 +145,35 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
 
   switch (segment.toLowerCase()) {
     case "enterprise":
-      // Enterprise = VIP/Elite plan (vip-monthly)
+      // Enterprise = vip-monthly plan
       return {
         AND: [
           excludeChurned,
-          {
-            OR: [
-              { plan: { contains: "vip", mode: "insensitive" } },
-              { plan: { contains: "elite", mode: "insensitive" } },
-              { plan: { contains: "enterprise", mode: "insensitive" } },
-            ],
-          },
+          { customerSegment: "enterprise" },
         ],
       }
     case "mid-market":
-      // Mid-Market = Pro plan (pro-monthly, pro-annual, pro-legacy)
+      // Mid-Market = pro-monthly, pro-annual, pro-legacy
       return {
         AND: [
           excludeChurned,
-          { plan: { contains: "pro", mode: "insensitive" } },
-          // Exclude VIP plans that might contain "pro" substring
-          {
-            NOT: {
-              OR: [
-                { plan: { contains: "vip", mode: "insensitive" } },
-                { plan: { contains: "elite", mode: "insensitive" } },
-              ],
-            },
-          },
+          { customerSegment: "mid_market" },
         ],
       }
     case "smb":
-      // SMB = Standard/Starter plan (standard-monthly, standard-annual)
+      // SMB = standard-monthly, standard-annual
       return {
         AND: [
           excludeChurned,
-          {
-            OR: [
-              { plan: { contains: "standard", mode: "insensitive" } },
-              { plan: { contains: "starter", mode: "insensitive" } },
-            ],
-          },
+          { customerSegment: "smb" },
         ],
       }
     case "free":
-      // Free = free plan or no plan (own portfolio, not actively monitored)
+      // Free = no plan (own portfolio, not actively monitored)
       return {
         AND: [
           excludeChurned,
-          {
-            OR: [
-              { plan: null },
-              { plan: { contains: "free", mode: "insensitive" } },
-            ],
-          },
+          { customerSegment: "free" },
         ],
       }
     case "at-risk":
