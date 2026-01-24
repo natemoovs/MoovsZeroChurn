@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { createTask, taskExists } from "@/lib/tasks/sync"
 
 // Playbook action type
 interface PlaybookAction {
@@ -12,12 +13,17 @@ interface PlaybookAction {
 
 /**
  * Execute playbooks for onboarding stalled accounts
+ * Creates tasks in both local DB and Notion
  */
 async function executeOnboardingPlaybooks(account: {
   companyId: string
   companyName: string
   overdueMilestones: string[]
   severity: string
+  segment?: string
+  ownerId?: string
+  ownerEmail?: string
+  ownerName?: string
 }) {
   try {
     const trigger = account.severity === "critical" ? "onboarding_stalled" : "milestone_overdue"
@@ -35,40 +41,37 @@ async function executeOnboardingPlaybooks(account: {
       for (const action of actions) {
         if (action.type === "create_task") {
           // Check if task already exists to avoid duplicates
-          const existingTask = await prisma.task.findFirst({
-            where: {
-              companyId: account.companyId,
-              playbookId: playbook.id,
-              status: { not: "completed" },
-            },
-          })
-
-          if (existingTask) continue
+          if (await taskExists(account.companyId, playbook.id)) {
+            continue
+          }
 
           const dueDate = action.dueInDays
             ? new Date(Date.now() + action.dueInDays * 24 * 60 * 60 * 1000)
             : new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) // Default: 2 days
 
-          await prisma.task.create({
-            data: {
-              companyId: account.companyId,
-              companyName: account.companyName,
-              title: action.title
-                .replace("{companyName}", account.companyName)
-                .replace("{milestones}", account.overdueMilestones.join(", ")),
-              description: action.description
-                ?.replace("{companyName}", account.companyName)
-                .replace("{milestones}", account.overdueMilestones.join(", ")),
-              priority: action.priority || "high",
-              status: "pending",
-              dueDate,
-              playbookId: playbook.id,
-              metadata: {
-                trigger,
-                overdueMilestones: account.overdueMilestones,
-                severity: account.severity,
-                createdBy: "playbook",
-              },
+          // Create task in both DB and Notion
+          await createTask({
+            companyId: account.companyId,
+            companyName: account.companyName,
+            title: action.title
+              .replace("{companyName}", account.companyName)
+              .replace("{milestones}", account.overdueMilestones.join(", ")),
+            description: action.description
+              ?.replace("{companyName}", account.companyName)
+              .replace("{milestones}", account.overdueMilestones.join(", ")),
+            priority: action.priority || "high",
+            dueDate,
+            ownerId: account.ownerId,
+            ownerEmail: account.ownerEmail,
+            ownerName: account.ownerName,
+            segment: account.segment,
+            tags: ["Onboarding"],
+            playbookId: playbook.id,
+            metadata: {
+              trigger,
+              overdueMilestones: account.overdueMilestones,
+              severity: account.severity,
+              createdBy: "playbook",
             },
           })
         }
@@ -126,6 +129,9 @@ export async function GET(request: NextRequest) {
         healthScore: true,
         hubspotCreatedAt: true,
         createdAt: true,
+        ownerId: true,
+        ownerEmail: true,
+        ownerName: true,
       },
     })
 
@@ -150,6 +156,9 @@ export async function GET(request: NextRequest) {
             : account.overdueMilestones.length >= 2
             ? "high"
             : "medium",
+        ownerId: company?.ownerId || undefined,
+        ownerEmail: company?.ownerEmail || undefined,
+        ownerName: company?.ownerName || undefined,
       }
     })
 

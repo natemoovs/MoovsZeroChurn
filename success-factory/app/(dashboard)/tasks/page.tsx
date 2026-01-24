@@ -18,8 +18,12 @@ import {
   PlayCircle,
   XCircle,
   ArrowUpRight,
+  Search,
+  RefreshCw,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useSession } from "@/lib/auth/client"
 
 interface Task {
   id: string
@@ -38,6 +42,19 @@ interface Task {
     name: string
   } | null
   createdAt: string
+  metadata?: {
+    notionPageId?: string
+    notionAssigneeId?: string
+    notionAssigneeName?: string
+    syncedFromNotion?: boolean
+  } | null
+}
+
+interface NotionUser {
+  id: string
+  name: string
+  email: string | null
+  avatarUrl: string | null
 }
 
 interface TaskStats {
@@ -55,15 +72,51 @@ interface TaskStats {
 }
 
 export default function TasksPage() {
+  const { session } = useSession()
   const [tasks, setTasks] = useState<Task[]>([])
   const [stats, setStats] = useState<TaskStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [notionUsers, setNotionUsers] = useState<NotionUser[]>([])
   const [filter, setFilter] = useState<"all" | "pending" | "in_progress" | "completed">("all")
+  const [assigneeFilter, setAssigneeFilter] = useState<"mine" | "all" | string>("mine")
+  const [searchQuery, setSearchQuery] = useState("")
   const [showNewTask, setShowNewTask] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+
+  // Get current user's email for "My Tasks" filter
+  const currentUserEmail = session?.user?.email
 
   useEffect(() => {
     fetchTasks()
+    fetchNotionUsers()
   }, [filter])
+
+  // Filter tasks client-side for assignee and search
+  const filteredTasks = tasks.filter((task) => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      const matchesSearch =
+        task.title.toLowerCase().includes(query) ||
+        task.companyName.toLowerCase().includes(query) ||
+        task.description?.toLowerCase().includes(query)
+      if (!matchesSearch) return false
+    }
+
+    // Assignee filter
+    if (assigneeFilter === "mine" && currentUserEmail) {
+      // Match by email or Notion assignee name containing current user's name
+      const userFirstName = currentUserEmail.split("@")[0].toLowerCase()
+      const assigneeName = task.metadata?.notionAssigneeName?.toLowerCase() || ""
+      const ownerEmail = task.ownerEmail?.toLowerCase() || ""
+      return assigneeName.includes(userFirstName) || ownerEmail.includes(userFirstName)
+    } else if (assigneeFilter !== "all" && assigneeFilter !== "mine") {
+      // Filter by specific Notion user ID
+      return task.metadata?.notionAssigneeId === assigneeFilter
+    }
+
+    return true
+  })
 
   async function fetchTasks() {
     try {
@@ -79,6 +132,18 @@ export default function TasksPage() {
     }
   }
 
+  async function fetchNotionUsers() {
+    try {
+      const res = await fetch("/api/integrations/notion/users")
+      const data = await res.json()
+      if (data.users) {
+        setNotionUsers(data.users)
+      }
+    } catch (error) {
+      console.error("Failed to fetch Notion users:", error)
+    }
+  }
+
   async function updateTaskStatus(taskId: string, status: string) {
     try {
       await fetch(`/api/tasks/${taskId}`, {
@@ -89,6 +154,36 @@ export default function TasksPage() {
       fetchTasks()
     } catch (error) {
       console.error("Failed to update task:", error)
+    }
+  }
+
+  async function updateTaskAssignee(taskId: string, notionUserId: string) {
+    try {
+      await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notionAssigneeId: notionUserId }),
+      })
+      fetchTasks()
+    } catch (error) {
+      console.error("Failed to update task assignee:", error)
+    }
+  }
+
+  async function syncFromNotion() {
+    setSyncing(true)
+    try {
+      const res = await fetch("/api/integrations/notion/tasks/sync", {
+        method: "POST",
+      })
+      const data = await res.json()
+      if (data.success) {
+        fetchTasks()
+      }
+    } catch (error) {
+      console.error("Failed to sync from Notion:", error)
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -119,13 +214,24 @@ export default function TasksPage() {
               Manage your CSM action items and playbook tasks
             </p>
           </div>
-          <button
-            onClick={() => setShowNewTask(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-          >
-            <Plus className="h-4 w-4" />
-            New Task
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={syncFromNotion}
+              disabled={syncing}
+              className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              title="Sync tasks from Notion"
+            >
+              <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />
+              {syncing ? "Syncing..." : "Sync"}
+            </button>
+            <button
+              onClick={() => setShowNewTask(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+            >
+              <Plus className="h-4 w-4" />
+              New Task
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -164,45 +270,84 @@ export default function TasksPage() {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-zinc-400" />
-          <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
-            {(["all", "pending", "in_progress", "completed"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  filter === f
-                    ? "bg-white text-zinc-900 shadow dark:bg-zinc-700 dark:text-zinc-100"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-                )}
+        {/* Search and Filters */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search */}
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Assignee Filter */}
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-zinc-400" />
+              <select
+                value={assigneeFilter}
+                onChange={(e) => setAssigneeFilter(e.target.value)}
+                className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               >
-                {f === "in_progress" ? "In Progress" : f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
+                <option value="mine">My Tasks</option>
+                <option value="all">All Tasks</option>
+                {notionUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-zinc-400" />
+              <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
+                {(["all", "pending", "in_progress", "completed"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                      filter === f
+                        ? "bg-white text-zinc-900 shadow dark:bg-zinc-700 dark:text-zinc-100"
+                        : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    )}
+                  >
+                    {f === "in_progress" ? "In Progress" : f.charAt(0).toUpperCase() + f.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Task List */}
         {loading ? (
           <TaskListSkeleton />
-        ) : tasks.length === 0 ? (
+        ) : filteredTasks.length === 0 ? (
           <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
             <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               No tasks found
             </h3>
             <p className="mt-2 text-zinc-500 dark:text-zinc-400">
-              {filter === "all"
-                ? "Create your first task to get started"
+              {searchQuery
+                ? "No tasks match your search"
+                : assigneeFilter === "mine"
+                ? "No tasks assigned to you"
+                : filter === "all"
+                ? "Create your first task or sync from Notion"
                 : `No ${filter.replace("_", " ")} tasks`}
             </p>
           </div>
         ) : (
           <div className="space-y-2">
-            {tasks.map((task) => {
+            {filteredTasks.map((task) => {
               const StatusIcon = statusIcons[task.status]
               const isOverdue =
                 task.dueDate &&
@@ -299,12 +444,28 @@ export default function TasksPage() {
                         </span>
                       )}
 
-                      {task.ownerEmail && (
-                        <span className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          {task.ownerEmail}
-                        </span>
-                      )}
+                      {/* Assignee Dropdown */}
+                      <div className="flex items-center gap-1">
+                        <User className="h-4 w-4" />
+                        <select
+                          value={task.metadata?.notionAssigneeId || ""}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              updateTaskAssignee(task.id, e.target.value)
+                            }
+                          }}
+                          className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-zinc-500 focus:ring-1 focus:ring-emerald-500 dark:text-zinc-400"
+                        >
+                          <option value="">
+                            {task.metadata?.notionAssigneeName || task.ownerEmail || "Unassigned"}
+                          </option>
+                          {notionUsers.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
                       {task.playbook && (
                         <span className="rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">

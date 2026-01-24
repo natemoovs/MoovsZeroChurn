@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { notion } from "@/lib/integrations"
+
+// Map internal priority to Notion priority names
+function mapPriorityToNotion(priority: string): string {
+  const map: Record<string, string> = {
+    urgent: "Urgent",
+    high: "High",
+    medium: "Medium",
+    low: "Low",
+  }
+  return map[priority] || "Medium"
+}
 
 /**
  * Get a specific task
@@ -61,7 +73,12 @@ export async function PATCH(
       ownerId,
       ownerEmail,
       metadata,
+      notionAssigneeId,
     } = body
+
+    // Get existing task to access current metadata
+    const existingTask = await prisma.task.findUnique({ where: { id } })
+    const existingMetadata = (existingTask?.metadata as Record<string, unknown>) || {}
 
     // Build update object with only provided fields
     const updateData: Record<string, unknown> = {}
@@ -85,6 +102,14 @@ export async function PATCH(
     if (ownerEmail !== undefined) updateData.ownerEmail = ownerEmail
     if (metadata !== undefined) updateData.metadata = metadata
 
+    // Handle notionAssigneeId - merge into metadata
+    if (notionAssigneeId !== undefined) {
+      updateData.metadata = {
+        ...existingMetadata,
+        notionAssigneeId,
+      }
+    }
+
     const task = await prisma.task.update({
       where: { id },
       data: updateData,
@@ -97,6 +122,53 @@ export async function PATCH(
         },
       },
     })
+
+    // Sync changes to Notion if task has a notionPageId
+    const taskMetadata = task.metadata as { notionPageId?: string; notionAssigneeId?: string } | null
+    if (taskMetadata?.notionPageId && process.env.NOTION_API_KEY) {
+      try {
+        const notionUpdate: Record<string, unknown> = {}
+
+        // Sync status change
+        if (status !== undefined) {
+          const notionStatus = status === "completed" ? "Done"
+            : status === "in_progress" ? "In Progress"
+            : status === "cancelled" ? "Cancelled"
+            : "To Do"
+          notionUpdate["Status"] = { status: { name: notionStatus } }
+        }
+
+        // Sync assignee change
+        if (notionAssigneeId !== undefined) {
+          notionUpdate["Assignee"] = {
+            people: [{ id: notionAssigneeId }],
+          }
+        }
+
+        // Sync priority change
+        if (priority !== undefined) {
+          notionUpdate["Priority"] = { select: { name: mapPriorityToNotion(priority) } }
+        }
+
+        // Sync due date change
+        if (dueDate !== undefined) {
+          notionUpdate["Due"] = dueDate
+            ? { date: { start: new Date(dueDate).toISOString().split("T")[0] } }
+            : { date: null }
+        }
+
+        // Sync title change
+        if (title !== undefined) {
+          notionUpdate["Task Name"] = { title: [{ text: { content: title } }] }
+        }
+
+        if (Object.keys(notionUpdate).length > 0) {
+          await notion.updatePage(taskMetadata.notionPageId, notionUpdate)
+        }
+      } catch (err) {
+        console.error("Failed to sync task to Notion:", err)
+      }
+    }
 
     return NextResponse.json(task)
   } catch (error) {

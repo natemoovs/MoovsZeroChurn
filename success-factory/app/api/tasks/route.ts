@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { createTask } from "@/lib/tasks/sync"
 
 /**
  * Get all tasks with filtering
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * Create a new task
+ * Create a new task (syncs to both DB and Notion)
  * POST /api/tasks
  */
 export async function POST(request: NextRequest) {
@@ -103,19 +104,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const task = await prisma.task.create({
-      data: {
-        companyId,
-        companyName,
-        title,
-        description,
-        priority,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        ownerId,
-        ownerEmail,
-        playbookId,
-        metadata,
-      },
+    // Create task in both DB and Notion
+    const result = await createTask({
+      companyId,
+      companyName,
+      title,
+      description,
+      priority,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      ownerId,
+      ownerEmail,
+      playbookId,
+      metadata,
+    })
+
+    // Fetch the full task with playbook relation
+    const task = await prisma.task.findUnique({
+      where: { id: result.task.id },
       include: {
         playbook: {
           select: {
@@ -126,7 +131,11 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(task, { status: 201 })
+    return NextResponse.json({
+      ...task,
+      notionUrl: result.notionUrl,
+      notionSynced: !!result.notionPageId,
+    }, { status: 201 })
   } catch (error) {
     console.error("Task create error:", error)
     return NextResponse.json(
