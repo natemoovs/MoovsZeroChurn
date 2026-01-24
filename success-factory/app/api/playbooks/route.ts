@@ -110,6 +110,38 @@ export const TRIGGER_TYPES = {
     description: "When AI predicts critical churn probability (>90%)",
     category: "ai",
   },
+  // Onboarding triggers
+  onboarding_stalled: {
+    label: "Onboarding Stalled",
+    description: "When onboarding has multiple overdue milestones",
+    category: "onboarding",
+  },
+  milestone_overdue: {
+    label: "Milestone Overdue",
+    description: "When a required onboarding milestone is overdue",
+    category: "onboarding",
+  },
+  onboarding_complete: {
+    label: "Onboarding Complete",
+    description: "When all required onboarding milestones are completed",
+    category: "onboarding",
+  },
+  // Stakeholder triggers
+  champion_left: {
+    label: "Champion Left Company",
+    description: "When the account champion leaves the company",
+    category: "stakeholder",
+  },
+  no_champion: {
+    label: "No Champion Identified",
+    description: "Account has no identified champion",
+    category: "stakeholder",
+  },
+  single_threaded: {
+    label: "Single-Threaded Relationship",
+    description: "Account has only one active contact",
+    category: "stakeholder",
+  },
 }
 
 /**

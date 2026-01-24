@@ -23,14 +23,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       />
       <div
         className={cn(
-          "transition-all duration-300",
+          "min-w-0 overflow-x-hidden transition-all duration-300",
           // No padding on mobile, sidebar overlays
           // Desktop: add padding for sidebar
           collapsed ? "lg:pl-16" : "lg:pl-64"
         )}
       >
         <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-        <main className="p-4 sm:p-6">
+        <main className="min-w-0 overflow-x-hidden p-4 sm:p-6">
           {children}
         </main>
       </div>

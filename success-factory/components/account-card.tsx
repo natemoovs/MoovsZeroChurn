@@ -57,38 +57,38 @@ export function AccountCard({
   return (
     <Link
       href={`/accounts/${id}`}
-      className="group block rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+      className="group block overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md sm:p-5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
     >
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-            <Building2 className="h-6 w-6 text-zinc-600 dark:text-zinc-400" />
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 sm:h-12 sm:w-12 dark:bg-zinc-800">
+            <Building2 className="h-5 w-5 text-zinc-600 sm:h-6 sm:w-6 dark:text-zinc-400" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="truncate font-semibold text-zinc-900 dark:text-zinc-100">
                 {name}
               </h3>
               <HealthBadge score={healthScore} size="sm" />
             </div>
             {domain && (
-              <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-0.5 truncate text-sm text-zinc-500 dark:text-zinc-400">
                 {domain}
               </p>
             )}
-            <div className="mt-2 flex items-center gap-4 text-sm">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm sm:gap-4">
               <span className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
-                <DollarSign className="h-4 w-4" />
+                <DollarSign className="h-4 w-4 shrink-0" />
                 {mrr ? `$${mrr.toLocaleString()}/mo` : "—"}
               </span>
-              <span className="text-zinc-400 dark:text-zinc-600">·</span>
-              <span className="text-zinc-600 dark:text-zinc-400">
+              <span className="hidden text-zinc-400 sm:inline dark:text-zinc-600">·</span>
+              <span className="truncate text-zinc-600 dark:text-zinc-400">
                 {plan || "Unknown plan"}
               </span>
             </div>
           </div>
         </div>
-        <ChevronRight className="h-5 w-5 text-zinc-300 transition-colors group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400" />
+        <ChevronRight className="h-5 w-5 shrink-0 text-zinc-300 transition-colors group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400" />
       </div>
 
       {riskSignals.length > 0 && (

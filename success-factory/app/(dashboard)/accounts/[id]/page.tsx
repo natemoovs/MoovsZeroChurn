@@ -5,6 +5,10 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { HealthBadge } from "@/components/health-badge"
+import { OnboardingProgress } from "@/components/onboarding-progress"
+import { ActivityTimeline } from "@/components/activity-timeline"
+import { StakeholderMap } from "@/components/stakeholder-map"
+import { NPSSummary } from "@/components/nps-summary"
 import {
   ArrowLeft,
   Building2,
@@ -525,6 +529,12 @@ export default function AccountDetailPage() {
               )}
             </div>
 
+            {/* Onboarding Progress */}
+            <OnboardingProgress companyId={account.id} />
+
+            {/* Stakeholder Map */}
+            <StakeholderMap companyId={account.id} />
+
             {/* Contacts */}
             <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
               <h2 className="mb-4 font-semibold text-zinc-900 dark:text-zinc-100">
@@ -642,31 +652,18 @@ export default function AccountDetailPage() {
                 </Link>
               </div>
             </div>
+
+            {/* NPS Summary */}
+            <NPSSummary companyId={account.id} />
           </div>
 
-          {/* Right Column - Timeline */}
+          {/* Right Column - Activity Timeline */}
           <div className="lg:col-span-2">
             <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
               <h2 className="mb-4 font-semibold text-zinc-900 dark:text-zinc-100">
                 Activity Timeline
               </h2>
-              {account.timeline.length === 0 ? (
-                <div className="py-8 text-center">
-                  <Clock className="mx-auto mb-3 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
-                  <p className="text-zinc-500 dark:text-zinc-400">
-                    No activity recorded yet
-                  </p>
-                </div>
-              ) : (
-                <div className="relative space-y-0">
-                  {/* Timeline line */}
-                  <div className="absolute left-5 top-2 bottom-2 w-px bg-zinc-200 dark:bg-zinc-700" />
-
-                  {account.timeline.map((event) => (
-                    <TimelineItem key={event.id} event={event} />
-                  ))}
-                </div>
-              )}
+              <ActivityTimeline companyId={account.id} limit={30} showFilters={true} />
             </div>
           </div>
         </div>

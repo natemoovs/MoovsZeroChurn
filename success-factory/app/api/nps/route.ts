@@ -85,10 +85,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { companyId, companyName, contacts } = body as {
+    const { companyId, companyName, contacts, triggerType = "manual" } = body as {
       companyId: string
       companyName: string
       contacts: Array<{ email: string; name?: string }>
+      triggerType?: "day_30" | "day_90" | "post_support" | "pre_renewal" | "quarterly" | "manual"
     }
 
     if (!companyId || !companyName || !contacts?.length) {
@@ -119,6 +120,7 @@ export async function POST(request: NextRequest) {
           contactEmail: contact.email,
           contactName: contact.name,
           token,
+          triggerType,
         },
       })
 
