@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { notion } from "@/lib/integrations"
 
 /**
  * Get a specific task
@@ -97,6 +98,23 @@ export async function PATCH(
         },
       },
     })
+
+    // Sync status change to Notion if task has a notionPageId
+    const taskMetadata = task.metadata as { notionPageId?: string } | null
+    if (status !== undefined && taskMetadata?.notionPageId && process.env.NOTION_API_KEY) {
+      try {
+        const notionStatus = status === "completed" ? "Done"
+          : status === "in_progress" ? "In Progress"
+          : status === "cancelled" ? "Cancelled"
+          : "To Do"
+
+        await notion.updatePage(taskMetadata.notionPageId, {
+          Status: { status: { name: notionStatus } },
+        })
+      } catch (err) {
+        console.error("Failed to sync task status to Notion:", err)
+      }
+    }
 
     return NextResponse.json(task)
   } catch (error) {
