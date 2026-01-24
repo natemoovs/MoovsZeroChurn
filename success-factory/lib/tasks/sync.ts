@@ -136,11 +136,14 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
       result.notionUrl = page.url
 
       // Store Notion page ID in task metadata for future sync
+      const existingMetadata = (input.metadata && typeof input.metadata === "object" && !Array.isArray(input.metadata))
+        ? input.metadata as Record<string, unknown>
+        : {}
       await prisma.task.update({
         where: { id: task.id },
         data: {
           metadata: {
-            ...(input.metadata || {}),
+            ...existingMetadata,
             notionPageId: page.id,
             notionUrl: page.url,
           },
