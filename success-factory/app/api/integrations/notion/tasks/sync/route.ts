@@ -43,7 +43,7 @@ export async function POST() {
       console.warn("Failed to fetch Notion users:", e)
     }
 
-    // Query all non-done and non-archived tasks from Notion
+    // Query active tasks from Notion (exclude completed/cancelled statuses)
     const result = await notion.queryDatabase(CSM_DATABASE_ID, {
       filter: {
         and: [
@@ -54,6 +54,10 @@ export async function POST() {
           {
             property: "Status",
             status: { does_not_equal: "Archived" },
+          },
+          {
+            property: "Status",
+            status: { does_not_equal: "Not doing anymore" },
           },
         ],
       },
@@ -237,14 +241,15 @@ function extractPerson(prop: unknown): { id: string; name?: string; email?: stri
 function mapNotionStatus(status: string | null): "pending" | "in_progress" | "completed" | "cancelled" {
   if (!status) return "pending"
   const s = status.toLowerCase()
-  // Completed states
+  // Completed states (Notion "Complete" group: Archived, Done)
   if (s === "done" || s === "complete" || s === "completed" || s === "archived") return "completed"
-  // In progress states
+  // In progress states (Notion "In progress" group)
   if (s === "in progress" || s === "doing" || s === "in-progress" || s === "active") return "in_progress"
-  // Cancelled states
-  if (s === "cancelled" || s === "canceled" || s === "closed") return "cancelled"
-  // Open/pending states
+  // Cancelled/skipped states
+  if (s === "cancelled" || s === "canceled" || s === "closed" || s === "not doing anymore") return "cancelled"
+  // Open/pending states (Notion "To-do" group: Accepted, Ingestion, etc.)
   if (s === "open" || s === "to do" || s === "todo" || s === "not started" || s === "backlog") return "pending"
+  if (s === "accepted" || s === "ingestion") return "pending"
   return "pending"
 }
 
