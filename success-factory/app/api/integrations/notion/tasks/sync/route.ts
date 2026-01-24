@@ -18,6 +18,31 @@ export async function POST() {
   }
 
   try {
+    // First, fetch all Notion users to get their names
+    // The people property in tasks often doesn't include names
+    const userMap = new Map<string, { name: string; email?: string }>()
+    try {
+      const usersRes = await fetch("https://api.notion.com/v1/users", {
+        headers: {
+          Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
+          "Notion-Version": "2022-06-28",
+        },
+      })
+      const usersData = await usersRes.json()
+      if (usersData.results) {
+        for (const user of usersData.results) {
+          if (user.id && user.name) {
+            userMap.set(user.id, {
+              name: user.name,
+              email: user.person?.email,
+            })
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch Notion users:", e)
+    }
+
     // Query all non-done tasks from Notion
     const result = await notion.queryDatabase(CSM_DATABASE_ID, {
       filter: {
@@ -40,8 +65,17 @@ export async function POST() {
       const status = extractStatus(props["Status"])
       const priority = extractSelect(props["Priority"])
       const dueDate = extractDate(props["Due"] || props["Due Date"])
-      const assignee = extractPerson(props["Assignee"])
+      const assigneeRaw = extractPerson(props["Assignee"])
       const notes = extractRichText(props["Notes"])
+
+      // Enrich assignee with name/email from user map if not present
+      const assignee = assigneeRaw
+        ? {
+            ...assigneeRaw,
+            name: assigneeRaw.name || userMap.get(assigneeRaw.id)?.name,
+            email: assigneeRaw.email || userMap.get(assigneeRaw.id)?.email,
+          }
+        : null
 
       if (!title) {
         skipped++

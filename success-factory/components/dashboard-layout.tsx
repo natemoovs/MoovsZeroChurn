@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Sidebar } from "./sidebar"
 import { DashboardHeader } from "./dashboard-header"
 import { CommandPalette } from "./command-palette"
+import { AIChat } from "./ai-chat"
 import { cn } from "@/lib/utils"
 
 interface DashboardLayoutProps {
@@ -17,6 +18,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen overflow-x-hidden bg-zinc-50 dark:bg-zinc-950">
       <CommandPalette />
+      <AIChat />
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
