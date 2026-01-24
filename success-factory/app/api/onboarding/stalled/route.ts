@@ -20,6 +20,7 @@ async function executeOnboardingPlaybooks(account: {
   companyName: string
   overdueMilestones: string[]
   severity: string
+  segment?: string
   ownerId?: string
   ownerEmail?: string
   ownerName?: string
@@ -63,6 +64,8 @@ async function executeOnboardingPlaybooks(account: {
             ownerId: account.ownerId,
             ownerEmail: account.ownerEmail,
             ownerName: account.ownerName,
+            segment: account.segment,
+            tags: ["Onboarding"],
             playbookId: playbook.id,
             metadata: {
               trigger,
