@@ -164,10 +164,10 @@ export default function DashboardPage() {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-2xl font-bold text-content-primary">
             Dashboard
           </h1>
-          <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-content-secondary">
             Your portfolio health at a glance
           </p>
         </div>
@@ -206,13 +206,13 @@ export default function DashboardPage() {
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Portfolio Health Chart */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="card-sf p-6">
+            <h2 className="mb-4 text-lg font-semibold text-content-primary">
               Portfolio Health
             </h2>
             {loading ? (
               <div className="flex h-48 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
               </div>
             ) : (
               <HealthChart green={green} yellow={yellow} red={red} />
@@ -220,8 +220,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 lg:col-span-2">
-            <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="card-sf p-6 lg:col-span-2">
+            <h2 className="mb-4 text-lg font-semibold text-content-primary">
               Quick Actions
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -258,14 +258,14 @@ export default function DashboardPage() {
         {/* Second Row: Tasks, Renewals, Trends */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Pending Tasks */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 Pending Tasks
               </h2>
               <Link
                 href="/tasks"
-                className="text-sm text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-500"
               >
                 View all →
               </Link>
@@ -273,12 +273,12 @@ export default function DashboardPage() {
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                  <div key={i} className="h-12 shimmer rounded-lg" />
                 ))}
               </div>
             ) : tasks.length === 0 ? (
-              <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
-                <CheckSquare className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+              <div className="py-8 text-center text-content-secondary">
+                <CheckSquare className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
                 <p>No pending tasks</p>
               </div>
             ) : (
@@ -313,14 +313,14 @@ export default function DashboardPage() {
           </div>
 
           {/* Upcoming Renewals */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 Renewals (30 days)
               </h2>
               <Link
                 href="/renewals"
-                className="text-sm text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-500"
               >
                 View all →
               </Link>
@@ -328,12 +328,12 @@ export default function DashboardPage() {
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                  <div key={i} className="h-12 shimmer rounded-lg" />
                 ))}
               </div>
             ) : renewals.length === 0 ? (
-              <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
-                <CalendarClock className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+              <div className="py-8 text-center text-content-secondary">
+                <CalendarClock className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
                 <p>No renewals in 30 days</p>
               </div>
             ) : (
@@ -368,14 +368,14 @@ export default function DashboardPage() {
           </div>
 
           {/* Health Trends */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 Health Trends
               </h2>
               <Link
                 href="/history"
-                className="text-sm text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-500"
               >
                 View history →
               </Link>
@@ -383,12 +383,12 @@ export default function DashboardPage() {
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                  <div key={i} className="h-12 shimmer rounded-lg" />
                 ))}
               </div>
             ) : !healthTrend?.recentChanges?.length ? (
-              <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
-                <TrendingUp className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+              <div className="py-8 text-center text-content-secondary">
+                <TrendingUp className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
                 <p>No recent changes</p>
               </div>
             ) : (
@@ -437,9 +437,9 @@ export default function DashboardPage() {
         {/* Phase 1: New Insights Row */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Stalled Onboardings */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 Stalled Onboardings
               </h2>
               {stalledOnboardings && stalledOnboardings.count > 0 && (
@@ -451,12 +451,12 @@ export default function DashboardPage() {
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                  <div key={i} className="h-12 shimmer rounded-lg" />
                 ))}
               </div>
             ) : !stalledOnboardings?.accounts?.length ? (
-              <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
-                <Target className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+              <div className="py-8 text-center text-content-secondary">
+                <Target className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
                 <p>All onboardings on track</p>
               </div>
             ) : (
@@ -497,9 +497,9 @@ export default function DashboardPage() {
           </div>
 
           {/* NPS Score */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 NPS Score
               </h2>
               {npsTrends?.trend && npsTrends.trend !== "unknown" && (
@@ -527,8 +527,8 @@ export default function DashboardPage() {
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
               </div>
             ) : !npsTrends || npsTrends.totalResponses === 0 ? (
-              <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
-                <ThumbsUp className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+              <div className="py-8 text-center text-content-secondary">
+                <ThumbsUp className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
                 <p>No NPS data yet</p>
               </div>
             ) : (
@@ -557,21 +557,21 @@ export default function DashboardPage() {
           </div>
 
           {/* Champion Alerts */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 Relationship Alerts
               </h2>
             </div>
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                  <div key={i} className="h-12 shimmer rounded-lg" />
                 ))}
               </div>
             ) : !championAlerts || (championAlerts.noChampion === 0 && championAlerts.singleThreaded === 0 && championAlerts.recentChampionLeft.length === 0) ? (
-              <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
-                <Users className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+              <div className="py-8 text-center text-content-secondary">
+                <Users className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
                 <p>All relationships healthy</p>
               </div>
             ) : (
@@ -616,9 +616,9 @@ export default function DashboardPage() {
 
         {/* Recent Activity Feed */}
         {(recentActivity.length > 0 || loading) && (
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 Recent Activity
               </h2>
               <Activity className="h-5 w-5 text-zinc-400" />
@@ -626,7 +626,7 @@ export default function DashboardPage() {
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                  <div key={i} className="h-12 shimmer rounded-lg" />
                 ))}
               </div>
             ) : (
@@ -679,7 +679,7 @@ export default function DashboardPage() {
         {(atRiskAccounts.length > 0 || loading) && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 Accounts Needing Attention
               </h2>
               {atRiskAccounts.length > 3 && (
@@ -720,7 +720,7 @@ export default function DashboardPage() {
         {(monitorAccounts.length > 0 || loading) && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 Monitor List
               </h2>
               {monitorAccounts.length > 5 && (
