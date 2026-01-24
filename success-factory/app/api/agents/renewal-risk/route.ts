@@ -58,11 +58,11 @@ export async function POST(request: NextRequest) {
   // Verify cron auth
   const authHeader = request.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
+  // Auth: require valid CRON_SECRET or Vercel cron header (dev mode allows all)
   const isAuthorized =
-    !cronSecret ||
-    authHeader === `Bearer ${cronSecret}` ||
+    process.env.NODE_ENV === "development" ||
     request.headers.get("x-vercel-cron") === "1" ||
-    process.env.NODE_ENV === "development"
+    (cronSecret && authHeader === `Bearer ${cronSecret}`)
 
   if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

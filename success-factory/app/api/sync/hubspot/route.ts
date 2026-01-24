@@ -515,12 +515,11 @@ export async function POST(request: NextRequest) {
   // Check if user is logged in (for manual sync from settings page)
   const userLoggedIn = await isAuthenticated()
 
-  // Allow if: no secret configured, or secret matches, or is Vercel cron, or dev mode, or logged in user
+  // Auth: require valid CRON_SECRET, Vercel cron header, dev mode, or logged-in user
   const isAuthorized =
-    !cronSecret ||  // No secret = allow (for testing)
-    authHeader === `Bearer ${cronSecret}` ||
-    request.headers.get("x-vercel-cron") === "1" ||
     process.env.NODE_ENV === "development" ||
+    request.headers.get("x-vercel-cron") === "1" ||
+    (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
     userLoggedIn  // Allow logged-in users to trigger sync
 
   if (!isAuthorized) {
