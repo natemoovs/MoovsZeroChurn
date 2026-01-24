@@ -169,31 +169,31 @@ export default function TeamPage() {
                 </div>
 
                 {/* Metrics */}
-                <div className="grid grid-cols-4 gap-2 border-b border-zinc-200 p-3 sm:gap-4 sm:p-4 dark:border-zinc-800">
+                <div className="grid grid-cols-2 gap-2 border-b border-zinc-200 p-3 min-[400px]:grid-cols-4 sm:gap-4 sm:p-4 dark:border-zinc-800">
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-0.5 text-emerald-600 sm:gap-1 dark:text-emerald-400">
-                      <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <DollarSign className="h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
                       <span className="text-sm font-bold sm:text-lg">${(metrics.totalMRR / 1000).toFixed(1)}k</span>
                     </div>
                     <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">MRR</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-0.5 text-emerald-600 sm:gap-1 dark:text-emerald-400">
-                      <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <TrendingUp className="h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
                       <span className="text-sm font-bold sm:text-lg">{metrics.healthy}</span>
                     </div>
                     <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">Healthy</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-0.5 text-amber-600 sm:gap-1 dark:text-amber-400">
-                      <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <Users className="h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
                       <span className="text-sm font-bold sm:text-lg">{metrics.monitor}</span>
                     </div>
                     <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">Monitor</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-0.5 text-red-600 sm:gap-1 dark:text-red-400">
-                      <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <AlertTriangle className="h-3 w-3 shrink-0 sm:h-4 sm:w-4" />
                       <span className="text-sm font-bold sm:text-lg">{metrics.atRisk}</span>
                     </div>
                     <p className="text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">At Risk</p>
