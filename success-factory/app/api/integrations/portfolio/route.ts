@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       positiveSignals: company.positiveSignals,
       customerSince: company.hubspotCreatedAt?.toISOString() || null,
       totalTrips: company.totalTrips || undefined,
-      customerSegment: getSegmentFromMrr(company.mrr),
+      customerSegment: getSegmentFromPlan(company.plan),
       ownerId: company.ownerId,
       ownerName: company.ownerName,
     }))
@@ -208,9 +208,18 @@ function getPaymentStatus(subscriptionStatus: string | null): "current" | "overd
   return "unknown"
 }
 
-function getSegmentFromMrr(mrr: number | null): string {
-  if (mrr === null) return "SMB"
-  if (mrr >= 499) return "Enterprise"
-  if (mrr >= 100) return "Mid-Market"
+function getSegmentFromPlan(plan: string | null): string {
+  if (!plan) return "SMB"
+  const planLower = plan.toLowerCase()
+
+  // Enterprise = VIP/Elite plans
+  if (planLower.includes("vip") || planLower.includes("elite") || planLower.includes("enterprise")) {
+    return "Enterprise"
+  }
+  // Mid-Market = Pro plans
+  if (planLower.includes("pro")) {
+    return "Mid-Market"
+  }
+  // SMB = Standard/Starter/Free plans
   return "SMB"
 }
