@@ -1,9 +1,10 @@
 "use client"
 
-import { Search, Bell, Menu } from "lucide-react"
+import { Search, Bell, Menu, Wifi } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useLiveUpdates } from "@/hooks/use-live-updates"
 
 interface DashboardHeaderProps {
   onMenuClick: () => void
@@ -11,6 +12,16 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const [atRiskCount, setAtRiskCount] = useState(0)
+  const { isConnected, stats } = useLiveUpdates({
+    showNotifications: false, // Don't show toasts from header
+  })
+
+  // Update at-risk count from live stats if available
+  useEffect(() => {
+    if (stats?.atRiskAccounts !== undefined) {
+      setAtRiskCount(stats.atRiskAccounts)
+    }
+  }, [stats])
 
   useEffect(() => {
     // Fetch at-risk account count for notification badge
@@ -54,6 +65,25 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
       {/* Right side */}
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        {/* Live indicator */}
+        <div
+          className={`hidden items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium sm:flex ${
+            isConnected
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+              : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+          }`}
+          title={isConnected ? "Real-time updates active" : "Connecting..."}
+        >
+          {isConnected && (
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+          )}
+          <Wifi className="h-3 w-3" />
+          <span className="hidden lg:inline">{isConnected ? "Live" : "..."}</span>
+        </div>
+
         <Link
           href="/accounts?filter=at-risk"
           className="relative rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
