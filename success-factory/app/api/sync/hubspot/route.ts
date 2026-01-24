@@ -154,7 +154,7 @@ async function fetchStripePaymentData(): Promise<Map<string, StripePaymentData>>
       GROUP BY c.CONNECTED_ACCOUNT_ID
     `
 
-    let disputeMap = new Map<string, number>()
+    const disputeMap = new Map<string, number>()
     try {
       const disputeResult = await metabase.runCustomQuery(SNOWFLAKE_DB_ID, disputeSql)
       const disputeRows = metabase.rowsToObjects<Record<string, unknown>>(disputeResult)
@@ -404,7 +404,7 @@ function calculateWeightedHealthScore(
   // =========================================================================
   // Support Score (20% weight) - Placeholder until Notion integration
   // =========================================================================
-  let supportScore = 100 // Default to healthy since we don't have ticket data yet
+  const supportScore = 100 // Default to healthy since we don't have ticket data yet
 
   // TODO: Integrate Notion tickets
   // For now, assume no open tickets = good support health
@@ -560,7 +560,7 @@ export async function POST(request: NextRequest) {
     const hubspotById = new Map<string, HubSpotCompany>()
     const hubspotByName = new Map<string, HubSpotCompany>()
     const hubspotByDomain = new Map<string, HubSpotCompany>()
-    let ownerMap: OwnerMap = {}
+    const ownerMap: OwnerMap = {}
 
     try {
       // Fetch owners

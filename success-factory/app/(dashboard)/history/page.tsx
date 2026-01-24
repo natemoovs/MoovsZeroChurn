@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -19,13 +19,9 @@ import { getHistory, deleteHistoryItem, clearHistory, type HistoryItem } from "@
 import { cn } from "@/lib/utils"
 
 export default function HistoryPage() {
-  const [history, setHistory] = useState<HistoryItem[]>([])
+  const [history, setHistory] = useState<HistoryItem[]>(() => getHistory())
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-
-  useEffect(() => {
-    setHistory(getHistory())
-  }, [])
 
   const handleDelete = (id: string) => {
     deleteHistoryItem(id)

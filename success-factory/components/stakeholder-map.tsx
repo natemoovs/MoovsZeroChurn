@@ -109,7 +109,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
   const [showAddModal, setShowAddModal] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  const fetchData = async () => {
+  const fetchStakeholders = async () => {
     try {
       const res = await fetch(`/api/stakeholders/${companyId}`)
       const json = await res.json()
@@ -123,7 +123,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
   }
 
   useEffect(() => {
-    fetchData()
+    fetchStakeholders()
   }, [companyId])
 
   if (loading) {
@@ -352,7 +352,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
           onClose={() => setShowAddModal(false)}
           onAdded={() => {
             setShowAddModal(false)
-            fetchData()
+            fetchStakeholders()
           }}
         />
       )}

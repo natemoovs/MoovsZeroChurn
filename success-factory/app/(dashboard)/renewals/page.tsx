@@ -125,14 +125,22 @@ export default function RenewalsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("list")
 
   useEffect(() => {
-    setLoading(true)
-    fetch(`/api/integrations/renewals?days=${timeRange}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setData(data)
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
+    let cancelled = false
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/integrations/renewals?days=${timeRange}`)
+        const result = await res.json()
+        if (!cancelled) {
+          setData(result)
+          setLoading(false)
+        }
+      } catch {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    fetchData()
+    return () => { cancelled = true }
   }, [timeRange])
 
   return (

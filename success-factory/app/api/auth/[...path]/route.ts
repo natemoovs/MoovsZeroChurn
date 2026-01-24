@@ -7,7 +7,14 @@ import {
 
 type Params = { path: string[] }
 
-const handler = authApiHandler()
+// Lazy-initialize handler to avoid build-time env var requirement
+let handler: ReturnType<typeof authApiHandler> | null = null
+function getHandler() {
+  if (!handler) {
+    handler = authApiHandler()
+  }
+  return handler
+}
 
 // Endpoints that include email in the request body
 const EMAIL_ENDPOINTS = [
@@ -54,7 +61,7 @@ export async function GET(
   request: Request,
   context: { params: Promise<Params> }
 ) {
-  return handler.GET(request, context)
+  return getHandler().GET(request, context)
 }
 
 export async function POST(
@@ -70,26 +77,26 @@ export async function POST(
     return validationError
   }
 
-  return handler.POST(request, context)
+  return getHandler().POST(request, context)
 }
 
 export async function PUT(
   request: Request,
   context: { params: Promise<Params> }
 ) {
-  return handler.PUT(request, context)
+  return getHandler().PUT(request, context)
 }
 
 export async function DELETE(
   request: Request,
   context: { params: Promise<Params> }
 ) {
-  return handler.DELETE(request, context)
+  return getHandler().DELETE(request, context)
 }
 
 export async function PATCH(
   request: Request,
   context: { params: Promise<Params> }
 ) {
-  return handler.PATCH(request, context)
+  return getHandler().PATCH(request, context)
 }

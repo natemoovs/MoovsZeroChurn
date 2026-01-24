@@ -11,12 +11,22 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-function createPrismaClient() {
+function createPrismaClient(): PrismaClient {
   const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL
 
   if (!connectionString) {
-    console.warn("No database connection string found, using default PrismaClient")
-    return new PrismaClient()
+    // Return a proxy that throws on actual use (for build-time safety)
+    console.warn("No database connection string found, creating build-time stub")
+    return new Proxy({} as PrismaClient, {
+      get(target, prop) {
+        if (prop === "then" || prop === "catch" || prop === "finally") {
+          return undefined
+        }
+        return () => {
+          throw new Error("Database not configured - set POSTGRES_PRISMA_URL or DATABASE_URL")
+        }
+      },
+    })
   }
 
   // PrismaNeon takes connectionString directly (not a Pool)

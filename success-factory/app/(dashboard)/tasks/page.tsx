@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
+import { useHotkeys } from "react-hotkeys-hook"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { HealthBadge } from "@/components/health-badge"
 import {
@@ -21,9 +22,16 @@ import {
   Search,
   RefreshCw,
   Users,
+  CheckSquare,
+  Square,
+  Loader2,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSession } from "@/lib/auth/client"
+import { TaskComments } from "@/components/task-comments"
+import { TaskDrawer } from "@/components/task-drawer"
+import { toast } from "sonner"
 
 interface Task {
   id: string
@@ -44,6 +52,7 @@ interface Task {
   createdAt: string
   metadata?: {
     notionPageId?: string
+    notionUrl?: string
     notionAssigneeId?: string
     notionAssigneeName?: string
     syncedFromNotion?: boolean
@@ -82,9 +91,112 @@ export default function TasksPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showNewTask, setShowNewTask] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
+  const [bulkAssigning, setBulkAssigning] = useState(false)
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [drawerTask, setDrawerTask] = useState<Task | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const taskRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   // Get current user's email for "My Tasks" filter
   const currentUserEmail = data?.user?.email
+
+  // Keyboard shortcuts
+  // j - move down
+  useHotkeys("j", () => {
+    if (filteredTasks.length === 0) return
+    setFocusedIndex((prev) => {
+      const next = Math.min(prev + 1, filteredTasks.length - 1)
+      taskRefs.current.get(next)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      return next
+    })
+  }, { preventDefault: true })
+
+  // k - move up
+  useHotkeys("k", () => {
+    if (filteredTasks.length === 0) return
+    setFocusedIndex((prev) => {
+      const next = Math.max(prev - 1, 0)
+      taskRefs.current.get(next)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      return next
+    })
+  }, { preventDefault: true })
+
+  // Enter - toggle completion of focused task
+  useHotkeys("enter", () => {
+    if (focusedIndex >= 0 && focusedIndex < filteredTasks.length) {
+      const task = filteredTasks[focusedIndex]
+      updateTaskStatus(task.id, task.status === "completed" ? "pending" : "completed")
+    }
+  }, { preventDefault: true })
+
+  // x - toggle selection of focused task
+  useHotkeys("x", () => {
+    if (focusedIndex >= 0 && focusedIndex < filteredTasks.length) {
+      toggleTaskSelection(filteredTasks[focusedIndex].id)
+    }
+  }, { preventDefault: true })
+
+  // c - create new task
+  useHotkeys("c", () => {
+    setShowNewTask(true)
+  }, { preventDefault: true })
+
+  // Escape - clear focus/selection
+  useHotkeys("escape", () => {
+    setFocusedIndex(-1)
+    setSelectedTasks(new Set())
+  })
+
+  // Toggle task selection
+  function toggleTaskSelection(taskId: string) {
+    setSelectedTasks((prev) => {
+      const next = new Set(prev)
+      if (next.has(taskId)) {
+        next.delete(taskId)
+      } else {
+        next.add(taskId)
+      }
+      return next
+    })
+  }
+
+  // Select all visible tasks
+  function selectAllTasks() {
+    if (selectedTasks.size === filteredTasks.length) {
+      setSelectedTasks(new Set())
+    } else {
+      setSelectedTasks(new Set(filteredTasks.map((t) => t.id)))
+    }
+  }
+
+  // Bulk reassign selected tasks
+  async function bulkReassign(notionUserId: string) {
+    if (selectedTasks.size === 0 || bulkAssigning) return
+
+    const user = notionUsers.find((u) => u.id === notionUserId)
+    const count = selectedTasks.size
+
+    setBulkAssigning(true)
+    try {
+      const promises = Array.from(selectedTasks).map((taskId) =>
+        fetch(`/api/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notionAssigneeId: notionUserId }),
+        })
+      )
+      await Promise.all(promises)
+      setSelectedTasks(new Set())
+      fetchTasks()
+      toast.success(`${count} task${count !== 1 ? "s" : ""} reassigned to ${user?.name || "user"}`)
+    } catch (error) {
+      console.error("Failed to bulk reassign tasks:", error)
+      toast.error("Failed to reassign tasks")
+    } finally {
+      setBulkAssigning(false)
+    }
+  }
 
   useEffect(() => {
     fetchTasks()
@@ -152,12 +264,15 @@ export default function TasksPage() {
         body: JSON.stringify({ status }),
       })
       fetchTasks()
+      toast.success(status === "completed" ? "Task completed" : "Task reopened")
     } catch (error) {
       console.error("Failed to update task:", error)
+      toast.error("Failed to update task")
     }
   }
 
   async function updateTaskAssignee(taskId: string, notionUserId: string) {
+    const user = notionUsers.find((u) => u.id === notionUserId)
     try {
       await fetch(`/api/tasks/${taskId}`, {
         method: "PATCH",
@@ -165,8 +280,10 @@ export default function TasksPage() {
         body: JSON.stringify({ notionAssigneeId: notionUserId }),
       })
       fetchTasks()
+      toast.success(`Assigned to ${user?.name || "user"}`)
     } catch (error) {
       console.error("Failed to update task assignee:", error)
+      toast.error("Failed to reassign task")
     }
   }
 
@@ -179,9 +296,18 @@ export default function TasksPage() {
       const data = await res.json()
       if (data.success) {
         fetchTasks()
+        const { created, updated } = data.synced || {}
+        if (created || updated) {
+          toast.success(`Synced: ${created || 0} new, ${updated || 0} updated`)
+        } else {
+          toast.success("Sync complete - no changes")
+        }
+      } else {
+        toast.error("Sync failed")
       }
     } catch (error) {
       console.error("Failed to sync from Notion:", error)
+      toast.error("Failed to sync from Notion")
     } finally {
       setSyncing(false)
     }
@@ -212,6 +338,12 @@ export default function TasksPage() {
             </h1>
             <p className="mt-1 text-zinc-500 dark:text-zinc-400">
               Manage your CSM action items and playbook tasks
+            </p>
+            <p className="mt-1 hidden text-xs text-zinc-400 sm:block dark:text-zinc-500">
+              <kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">j</kbd>/<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">k</kbd> navigate
+              {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">x</kbd> select
+              {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">↵</kbd> complete
+              {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">c</kbd> create
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -326,6 +458,49 @@ export default function TasksPage() {
           </div>
         </div>
 
+        {/* Bulk Actions Bar */}
+        {selectedTasks.size > 0 && (
+          <div className="flex items-center justify-between rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedTasks(new Set())}
+                className="rounded p-1 text-zinc-500 hover:bg-white hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                {selectedTasks.size} task{selectedTasks.size !== 1 ? "s" : ""} selected
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">Reassign to:</span>
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    bulkReassign(e.target.value)
+                    e.target.value = ""
+                  }
+                }}
+                disabled={bulkAssigning}
+                className="rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50 dark:border-emerald-800 dark:bg-zinc-900 dark:text-zinc-100"
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  {bulkAssigning ? "Reassigning..." : "Select person..."}
+                </option>
+                {notionUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+              {bulkAssigning && (
+                <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Task List */}
         {loading ? (
           <TaskListSkeleton />
@@ -347,140 +522,200 @@ export default function TasksPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {filteredTasks.map((task) => {
+            {/* Select All Header */}
+            {filteredTasks.length > 0 && (
+              <div className="flex items-center gap-3 px-4 py-2">
+                <button
+                  onClick={selectAllTasks}
+                  className="flex-shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                >
+                  {selectedTasks.size === filteredTasks.length && filteredTasks.length > 0 ? (
+                    <CheckSquare className="h-5 w-5 text-emerald-500" />
+                  ) : (
+                    <Square className="h-5 w-5" />
+                  )}
+                </button>
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {selectedTasks.size === filteredTasks.length && filteredTasks.length > 0
+                    ? "Deselect all"
+                    : "Select all"}
+                </span>
+              </div>
+            )}
+            {filteredTasks.map((task, index) => {
               const StatusIcon = statusIcons[task.status]
               const isOverdue =
                 task.dueDate &&
                 new Date(task.dueDate) < new Date() &&
                 task.status !== "completed"
 
+              const isSelected = selectedTasks.has(task.id)
+              const isFocused = focusedIndex === index
+
               return (
                 <div
                   key={task.id}
+                  ref={(el) => {
+                    if (el) taskRefs.current.set(index, el)
+                  }}
+                  onClick={() => setFocusedIndex(index)}
                   className={cn(
-                    "flex items-start gap-4 rounded-xl border bg-white p-4 transition-colors dark:bg-zinc-900",
-                    task.status === "completed"
+                    "overflow-hidden rounded-xl border bg-white transition-colors dark:bg-zinc-900",
+                    isFocused
+                      ? "ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-950"
+                      : "",
+                    isSelected
+                      ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-700 dark:bg-emerald-900/10"
+                      : task.status === "completed"
                       ? "border-zinc-100 opacity-60 dark:border-zinc-800"
                       : isOverdue
                       ? "border-red-200 dark:border-red-900"
                       : "border-zinc-200 dark:border-zinc-800"
                   )}
                 >
-                  {/* Status Toggle */}
-                  <button
-                    onClick={() =>
-                      updateTaskStatus(
-                        task.id,
-                        task.status === "completed" ? "pending" : "completed"
-                      )
-                    }
-                    className="mt-0.5 flex-shrink-0"
-                  >
-                    <StatusIcon
-                      className={cn(
-                        "h-5 w-5 transition-colors",
-                        task.status === "completed"
-                          ? "text-emerald-500"
-                          : task.status === "in_progress"
-                          ? "text-blue-500"
-                          : "text-zinc-300 hover:text-zinc-400 dark:text-zinc-600"
+                  <div className="flex items-start gap-4 p-4">
+                    {/* Selection Checkbox */}
+                    <button
+                      onClick={() => toggleTaskSelection(task.id)}
+                      className="mt-0.5 flex-shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                    >
+                      {selectedTasks.has(task.id) ? (
+                        <CheckSquare className="h-5 w-5 text-emerald-500" />
+                      ) : (
+                        <Square className="h-5 w-5" />
                       )}
-                    />
-                  </button>
+                    </button>
 
-                  {/* Content */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3
-                          className={cn(
-                            "font-medium",
-                            task.status === "completed"
-                              ? "text-zinc-500 line-through dark:text-zinc-400"
-                              : "text-zinc-900 dark:text-zinc-100"
-                          )}
-                        >
-                          {task.title}
-                        </h3>
-                        {task.description && (
-                          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
-                            {task.description}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Priority Badge */}
-                      <span
+                    {/* Status Toggle */}
+                    <button
+                      onClick={() =>
+                        updateTaskStatus(
+                          task.id,
+                          task.status === "completed" ? "pending" : "completed"
+                        )
+                      }
+                      className="mt-0.5 flex-shrink-0"
+                    >
+                      <StatusIcon
                         className={cn(
-                          "flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
-                          priorityColors[task.priority]
+                          "h-5 w-5 transition-colors",
+                          task.status === "completed"
+                            ? "text-emerald-500"
+                            : task.status === "in_progress"
+                            ? "text-blue-500"
+                            : "text-zinc-300 hover:text-zinc-400 dark:text-zinc-600"
                         )}
-                      >
-                        {task.priority}
-                      </span>
-                    </div>
+                      />
+                    </button>
 
-                    {/* Meta */}
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500 dark:text-zinc-400">
-                      <Link
-                        href={`/accounts/${task.companyId}`}
-                        className="flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400"
-                      >
-                        <Building2 className="h-4 w-4" />
-                        {task.companyName}
-                        <ArrowUpRight className="h-3 w-3" />
-                      </Link>
+                    {/* Content */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDrawerTask(task)
+                              setDrawerOpen(true)
+                            }}
+                            className={cn(
+                              "text-left font-medium hover:underline",
+                              task.status === "completed"
+                                ? "text-zinc-500 line-through dark:text-zinc-400"
+                                : "text-zinc-900 dark:text-zinc-100"
+                            )}
+                          >
+                            {task.title}
+                          </button>
+                          {task.description && (
+                            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                              {task.description}
+                            </p>
+                          )}
+                        </div>
 
-                      {task.dueDate && (
+                        {/* Priority Badge */}
                         <span
                           className={cn(
-                            "flex items-center gap-1",
-                            isOverdue && "text-red-600 dark:text-red-400"
+                            "flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
+                            priorityColors[task.priority]
                           )}
                         >
-                          <Calendar className="h-4 w-4" />
-                          {isOverdue ? "Overdue: " : "Due: "}
-                          {new Date(task.dueDate).toLocaleDateString()}
+                          {task.priority}
                         </span>
-                      )}
-
-                      {/* Assignee Dropdown */}
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <select
-                          value={task.metadata?.notionAssigneeId || ""}
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              updateTaskAssignee(task.id, e.target.value)
-                            }
-                          }}
-                          className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-zinc-500 focus:ring-1 focus:ring-emerald-500 dark:text-zinc-400"
-                        >
-                          <option value="">
-                            {task.metadata?.notionAssigneeName || task.ownerEmail || "Unassigned"}
-                          </option>
-                          {notionUsers.map((user) => (
-                            <option key={user.id} value={user.id}>
-                              {user.name}
-                            </option>
-                          ))}
-                        </select>
                       </div>
 
-                      {task.playbook && (
-                        <span className="rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                          {task.playbook.name}
-                        </span>
-                      )}
+                      {/* Meta */}
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        <Link
+                          href={`/accounts/${task.companyId}`}
+                          className="flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400"
+                        >
+                          <Building2 className="h-4 w-4" />
+                          {task.companyName}
+                          <ArrowUpRight className="h-3 w-3" />
+                        </Link>
+
+                        {task.dueDate && (
+                          <span
+                            className={cn(
+                              "flex items-center gap-1",
+                              isOverdue && "text-red-600 dark:text-red-400"
+                            )}
+                          >
+                            <Calendar className="h-4 w-4" />
+                            {isOverdue ? "Overdue: " : "Due: "}
+                            {new Date(task.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+
+                        {/* Assignee Dropdown */}
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <select
+                            value={task.metadata?.notionAssigneeId || ""}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                updateTaskAssignee(task.id, e.target.value)
+                              }
+                            }}
+                            className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-zinc-500 focus:ring-1 focus:ring-emerald-500 dark:text-zinc-400"
+                          >
+                            <option value="">
+                              {task.metadata?.notionAssigneeName || task.ownerEmail || "Unassigned"}
+                            </option>
+                            {notionUsers.map((user) => (
+                              <option key={user.id} value={user.id}>
+                                {user.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {task.playbook && (
+                          <span className="rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                            {task.playbook.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex-shrink-0">
+                      <button className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex-shrink-0">
-                    <button className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                  </div>
+                  {/* Comments Section */}
+                  {task.metadata?.notionPageId && (
+                    <TaskComments
+                      taskId={task.id}
+                      notionPageId={task.metadata.notionPageId}
+                      notionUrl={task.metadata.notionUrl}
+                    />
+                  )}
                 </div>
               )
             })}
@@ -498,6 +733,20 @@ export default function TasksPage() {
           }}
         />
       )}
+
+      {/* Task Detail Drawer (mobile-friendly) */}
+      <TaskDrawer
+        task={drawerTask}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        onStatusChange={(taskId, status) => {
+          updateTaskStatus(taskId, status)
+          // Update drawer task if still open
+          if (drawerTask?.id === taskId) {
+            setDrawerTask({ ...drawerTask, status: status as Task["status"] })
+          }
+        }}
+      />
     </DashboardLayout>
   )
 }

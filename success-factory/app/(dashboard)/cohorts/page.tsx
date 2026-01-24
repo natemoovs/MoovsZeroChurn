@@ -325,7 +325,7 @@ export default function CohortsPage() {
               No cohort data
             </h3>
             <p className="mt-1 text-zinc-500 dark:text-zinc-400">
-              Click "Sync Data" to generate cohort analysis
+              Click &quot;Sync Data&quot; to generate cohort analysis
             </p>
           </div>
         ) : (

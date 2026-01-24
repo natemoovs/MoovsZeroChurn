@@ -352,6 +352,55 @@ export async function getDatabase(databaseId: string): Promise<NotionDatabase> {
 }
 
 // ============================================================================
+// Comments API
+// ============================================================================
+
+export interface NotionComment {
+  object: "comment"
+  id: string
+  parent: { type: "page_id"; page_id: string } | { type: "block_id"; block_id: string }
+  discussion_id: string
+  created_time: string
+  last_edited_time: string
+  created_by: NotionUser
+  rich_text: NotionRichText[]
+}
+
+export interface NotionCommentList {
+  object: "list"
+  results: NotionComment[]
+  next_cursor: string | null
+  has_more: boolean
+}
+
+/**
+ * Get comments on a page
+ */
+export async function getComments(pageId: string): Promise<NotionComment[]> {
+  const result = await notionFetch<NotionCommentList>(
+    `/comments?block_id=${pageId}`,
+    { method: "GET" }
+  )
+  return result.results
+}
+
+/**
+ * Add a comment to a page
+ */
+export async function addComment(
+  pageId: string,
+  text: string
+): Promise<NotionComment> {
+  return notionFetch<NotionComment>("/comments", {
+    method: "POST",
+    body: JSON.stringify({
+      parent: { page_id: pageId },
+      rich_text: [{ text: { content: text } }],
+    }),
+  })
+}
+
+// ============================================================================
 // Helper: Extract plain text from properties
 // ============================================================================
 
@@ -580,6 +629,9 @@ export const notion = {
   createPage,
   updatePage,
   getDatabase,
+  // Comments
+  getComments,
+  addComment,
   // Helpers
   extractTitle,
   extractRichText,

@@ -1,11 +1,19 @@
 import { createAuthServer } from "@neondatabase/auth/next/server"
 
-export const authServer = createAuthServer()
+// Lazy-initialize auth server to avoid build-time env var requirement
+let authServer: ReturnType<typeof createAuthServer> | null = null
+function getAuthServer() {
+  if (!authServer) {
+    authServer = createAuthServer()
+  }
+  return authServer
+}
+
 
 // Helper to get current user in server components/API routes
 export async function getCurrentUser() {
   try {
-    const { data: session } = await authServer.getSession()
+    const { data: session } = await getAuthServer().getSession()
     if (!session?.user) return null
     return {
       id: session.user.id,
