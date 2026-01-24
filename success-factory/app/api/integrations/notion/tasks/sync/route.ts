@@ -44,43 +44,55 @@ export async function POST() {
     }
 
     // Query active tasks from Notion (exclude completed/cancelled statuses)
-    const result = await notion.queryDatabase(CSM_DATABASE_ID, {
-      filter: {
-        and: [
-          {
-            property: "Status",
-            status: { does_not_equal: "Done" },
-          },
-          {
-            property: "Status",
-            status: { does_not_equal: "Archived" },
-          },
-          {
-            property: "Status",
-            status: { does_not_equal: "Not doing anymore" },
-          },
-        ],
-      },
-      pageSize: 100,
-    })
+    // Handle pagination to get all tasks
+    const allPages: Array<{ id: string; url: string; properties: Record<string, unknown> }> = []
+    let hasMore = true
+    let startCursor: string | undefined
+
+    while (hasMore) {
+      const result = await notion.queryDatabase(CSM_DATABASE_ID, {
+        filter: {
+          and: [
+            {
+              property: "Status",
+              status: { does_not_equal: "Done" },
+            },
+            {
+              property: "Status",
+              status: { does_not_equal: "Archived" },
+            },
+            {
+              property: "Status",
+              status: { does_not_equal: "Not doing anymore" },
+            },
+          ],
+        },
+        pageSize: 100,
+        startCursor,
+      })
+
+      allPages.push(...(result.results as typeof allPages))
+      hasMore = result.has_more
+      startCursor = result.next_cursor || undefined
+    }
 
     let created = 0
     let updated = 0
     let skipped = 0
 
-    for (const page of result.results) {
+    for (const page of allPages) {
       const props = page.properties
 
       // Extract task data from Notion
-      // Support various property name conventions
-      const title = extractTitle(props["Task Name"] || props["Name"] || props["Title"])
+      // Support various property name conventions (including the title property which Notion uses)
+      const title = extractTitle(props["Task Name"] || props["Name"] || props["Title"] || props["task"] || props["name"] || props["title"])
       const company = extractRichText(props["Company"])
       const status = extractStatus(props["Status"])
       const priority = extractSelect(props["Priority"])
       const dueDate = extractDate(props["Due"] || props["Due Date"])
       // Check both "Assigned To" (user's convention) and "Assignee" (common convention)
       const assigneeRaw = extractPerson(props["Assigned To"] || props["Assignee"])
-      const notes = extractRichText(props["Notes"] || props["Description"])
+      const notes = extractRichText(props["Notes"] || props["Description"] || props["Summary"])
 
       // Enrich assignee with name/email from user map if not present
       const assignee = assigneeRaw
@@ -162,7 +174,7 @@ export async function POST() {
         created,
         updated,
         skipped,
-        total: result.results.length,
+        total: allPages.length,
       },
     })
   } catch (error) {
