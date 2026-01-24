@@ -18,12 +18,17 @@ import {
   TrendingUp,
   BarChart3,
   PieChart,
+  Brain,
+  Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/accounts", icon: Users, label: "Accounts" },
+  { href: "/predictions", icon: Brain, label: "Predictions" },
+  { href: "/benchmarks", icon: Activity, label: "Benchmarks" },
+  { href: "/engagement", icon: Zap, label: "Engagement" },
   { href: "/expansion", icon: TrendingUp, label: "Expansion" },
   { href: "/cohorts", icon: BarChart3, label: "Cohorts" },
   { href: "/roi", icon: PieChart, label: "ROI Dashboard" },
