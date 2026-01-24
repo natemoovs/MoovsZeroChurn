@@ -292,8 +292,13 @@ export function TaskDetailModal({
               {statusProp && (
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-zinc-500 mr-2">Status:</span>
-                  {["Not Started", "In progress", "Done"].map((status) => {
-                    const isActive = statusProp.value === status
+                  {["Not Started", "In Progress", "Done"].map((status) => {
+                    const currentStatus = String(statusProp.value || "").toLowerCase()
+                    // Handle both "Done" and "Completed" as completed states
+                    const isCompleteStatus = ["done", "completed"].includes(currentStatus)
+                    const isActive = status === "Done"
+                      ? isCompleteStatus
+                      : currentStatus === status.toLowerCase()
                     return (
                       <button
                         key={status}
@@ -303,7 +308,7 @@ export function TaskDetailModal({
                           isActive
                             ? status === "Done"
                               ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                              : status === "In progress"
+                              : status === "In Progress"
                               ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                               : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
                             : "border border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
@@ -311,7 +316,7 @@ export function TaskDetailModal({
                       >
                         {status === "Done" ? (
                           <CheckCircle2 className="h-4 w-4" />
-                        ) : status === "In progress" ? (
+                        ) : status === "In Progress" ? (
                           <Clock className="h-4 w-4" />
                         ) : (
                           <Circle className="h-4 w-4" />
