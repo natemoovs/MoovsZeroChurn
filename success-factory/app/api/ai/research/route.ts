@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS, getErrorResponse } from "@/lib/ai"
 
 /**
  * Deep Customer Research Agent
@@ -118,11 +118,11 @@ export async function POST(request: NextRequest) {
     const context = buildCustomerContext(customerData)
 
     // Generate report with Claude
-    const anthropic = new Anthropic({ apiKey })
+    const anthropic = getAnthropicClient(apiKey)
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2000,
+    const message = await createMessage(anthropic, {
+      model: AI_MODEL,
+      max_tokens: TOKEN_LIMITS.standard,
       messages: [
         {
           role: "user",

@@ -5,17 +5,10 @@ import { gatherContext } from "@/lib/skills/context"
 import { skillTools, executeTool } from "@/lib/skills/tools"
 import fs from "fs"
 import path from "path"
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS, getErrorResponse } from "@/lib/ai"
 
 // Maximum tool use iterations to prevent infinite loops
 const MAX_TOOL_ITERATIONS = 15
-
-function getAnthropicClient() {
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY is not configured")
-  }
-  return new Anthropic({ apiKey })
-}
 
 /**
  * Normalize segment input to match API expectations
@@ -255,9 +248,9 @@ async function generateWithTools(
     iterations++
     console.log(`[Tools] Iteration ${iterations}`)
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 8192,
+    const response = await createMessage(anthropic, {
+      model: AI_MODEL,
+      max_tokens: TOKEN_LIMITS.toolUse,
       system: systemPrompt,
       tools: skillTools,
       messages,
@@ -505,9 +498,9 @@ Output only the generated markdown content, nothing else.`
       )
     }
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
+    const message = await createMessage(anthropic, {
+      model: AI_MODEL,
+      max_tokens: TOKEN_LIMITS.large,
       messages: [
         {
           role: "user",
@@ -528,31 +521,11 @@ Output only the generated markdown content, nothing else.`
   } catch (error) {
     console.error("Generation error:", error)
 
-    // Handle specific Anthropic errors
-    if (error instanceof Anthropic.APIError) {
-      if (error.status === 401) {
-        return NextResponse.json(
-          { error: "Invalid API key. Please check your ANTHROPIC_API_KEY." },
-          { status: 500 }
-        )
-      }
-      if (error.status === 429) {
-        return NextResponse.json(
-          { error: "Rate limit exceeded. Please wait a moment and try again." },
-          { status: 429 }
-        )
-      }
-      if (error.status === 500 || error.status === 503) {
-        return NextResponse.json(
-          { error: "Claude is temporarily unavailable. Please try again in a few moments." },
-          { status: 503 }
-        )
-      }
-    }
-
+    // Handle specific Anthropic errors with centralized error handling
+    const { message: errorMessage, status } = getErrorResponse(error)
     return NextResponse.json(
-      { error: "Something went wrong while generating content. Please try again." },
-      { status: 500 }
+      { error: errorMessage },
+      { status }
     )
   }
 }

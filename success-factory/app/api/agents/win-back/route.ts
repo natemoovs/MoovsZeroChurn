@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import Anthropic from "@anthropic-ai/sdk"
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS } from "@/lib/ai"
 
 /**
  * Win-Back Agent
@@ -73,9 +74,12 @@ export async function POST(request: NextRequest) {
     console.log(`[Win-Back Agent] Found ${candidates.length} win-back candidates`)
 
     // Initialize Anthropic if available
-    const anthropic = process.env.ANTHROPIC_API_KEY
-      ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-      : null
+    let anthropic: Anthropic | null = null
+    try {
+      anthropic = getAnthropicClient()
+    } catch {
+      // API key not configured, continue without AI
+    }
 
     const tasksCreated: string[] = []
     const churnRecordsUpdated: string[] = []
@@ -394,9 +398,9 @@ async function generateWinBackOutreach(
   candidate: WinBackCandidate
 ): Promise<string> {
   try {
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 800,
+    const message = await createMessage(anthropic, {
+      model: AI_MODEL,
+      max_tokens: TOKEN_LIMITS.small,
       messages: [
         {
           role: "user",
