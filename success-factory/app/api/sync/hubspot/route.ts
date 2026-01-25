@@ -188,9 +188,9 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
     dealCloseDate: (row.HS_D_CLOSE_DATE as string) || null,
     dealAmount: (row.HS_D_CLOSED_AMOUNT as number) || null,
     dealOwnerName: (row.HS_D_OWNER_NAME as string) || null,
-    // Location
-    latitude: (row.LATITUDE as string) || null,
-    longitude: (row.LONGITUDE as string) || null,
+    // Location - convert Float from Metabase to String for Prisma schema
+    latitude: row.LATITUDE != null ? String(row.LATITUDE) : null,
+    longitude: row.LONGITUDE != null ? String(row.LONGITUDE) : null,
   }))
 }
 
