@@ -1019,7 +1019,7 @@ function JourneyStageCard({
   }
 
   return (
-    <div className="card-sf overflow-visible p-5">
+    <div className="card-sf relative p-5" style={{ overflow: 'visible' }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Route className="text-content-tertiary h-5 w-5" />
@@ -1048,7 +1048,7 @@ function JourneyStageCard({
           </button>
 
           {isOpen && (
-            <div className="border-border-default bg-bg-elevated absolute bottom-full right-0 z-50 mb-1 w-48 rounded-lg border py-1 shadow-lg">
+            <div className="border-border-default bg-bg-elevated absolute right-0 top-full z-[100] mt-1 w-48 rounded-lg border py-1 shadow-lg">
               {JOURNEY_STAGES.map((stage) => (
                 <button
                   key={stage.id}
