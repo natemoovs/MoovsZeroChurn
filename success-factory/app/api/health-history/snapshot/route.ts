@@ -225,8 +225,8 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // Low setup completion - onboarding risk
-      if (summary.setupScore != null && summary.setupScore < 30 && summary.mrr && summary.mrr > 0) {
+      // Low setup completion - onboarding risk (setupScore is 0-30 scale)
+      if (summary.setupScore != null && summary.setupScore < 15 && summary.mrr && summary.mrr > 0) {
         await executePlaybooks("low_setup_score", {
           companyId: summary.companyId,
           companyName: summary.companyName,

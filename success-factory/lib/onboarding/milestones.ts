@@ -245,13 +245,15 @@ export function detectCompletedMilestones(data: MilestoneDetectionData): {
     })
   }
 
-  // profile_complete - setupScore indicates profile/settings progress
+  // profile_complete - setupScore indicates profile/settings progress (0-30 scale)
   if (data.setupScore !== null && data.setupScore !== undefined) {
-    if (data.setupScore >= 50) {
+    const setupPct = Math.round((data.setupScore / 30) * 100)
+    if (data.setupScore >= 15) {
+      // 50%+ setup completion
       detected.push({
         milestoneId: "profile_complete",
-        confidence: data.setupScore >= 70 ? "high" : "medium",
-        reason: `Setup score is ${data.setupScore}%`,
+        confidence: data.setupScore >= 21 ? "high" : "medium",
+        reason: `Setup score is ${setupPct}%`,
       })
     }
   } else if ((data.membersCount ?? 0) > 1 || data.customDomain) {
@@ -306,11 +308,13 @@ export function detectCompletedMilestones(data: MilestoneDetectionData): {
       confidence: "high",
       reason: `Custom domain configured: ${data.customDomain}`,
     })
-  } else if (data.setupScore && data.setupScore >= 80) {
+  } else if (data.setupScore && data.setupScore >= 25) {
+    // 83%+ setup score (25/30) suggests portal configured
+    const setupPct = Math.round((data.setupScore / 30) * 100)
     detected.push({
       milestoneId: "portal_setup",
       confidence: "medium",
-      reason: `High setup score (${data.setupScore}%) suggests portal configured`,
+      reason: `High setup score (${setupPct}%) suggests portal configured`,
     })
   }
 

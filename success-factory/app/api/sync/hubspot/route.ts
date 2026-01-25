@@ -481,12 +481,15 @@ function calculateWeightedHealthScore(
       riskSignals.push("Limited platform adoption")
     }
 
-    // Setup score - onboarding completion
+    // Setup score - onboarding completion (0-30 scale, increments of 5)
     if (mbData.setupScore !== null && mbData.setupScore !== undefined) {
-      if (mbData.setupScore < 30) {
+      const setupPct = Math.round((mbData.setupScore / 30) * 100)
+      if (mbData.setupScore < 15) {
+        // Less than 50% setup completion
         engagementScore -= 10
-        riskSignals.push(`Low setup completion (${mbData.setupScore}%)`)
-      } else if (mbData.setupScore >= 80 && !isChurned) {
+        riskSignals.push(`Low setup completion (${setupPct}%)`)
+      } else if (mbData.setupScore >= 25 && !isChurned) {
+        // 83%+ setup completion
         engagementScore += 5
         positiveSignals.push("Fully onboarded")
       }
