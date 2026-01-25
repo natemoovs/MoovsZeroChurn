@@ -66,7 +66,7 @@ export default function LeaderboardPage() {
   const metrics = [
     { key: "savedAccounts", label: "Saves", icon: Heart, color: "text-red-500" },
     { key: "expansionRevenue", label: "Expansion $", icon: TrendingUp, color: "text-green-500" },
-    { key: "healthyAccounts", label: "Healthy", icon: Star, color: "text-emerald-500" },
+    { key: "healthyAccounts", label: "Healthy", icon: Star, color: "text-success-500" },
     { key: "tasksCompleted", label: "Tasks Done", icon: Target, color: "text-blue-500" },
   ]
 
@@ -76,17 +76,17 @@ export default function LeaderboardPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="flex items-center gap-2 text-2xl font-bold text-content-primary">
               <Trophy className="h-7 w-7 text-amber-500" />
               CSM Leaderboard
             </h1>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               Track team performance and celebrate wins
             </p>
           </div>
 
           {/* Period Toggle */}
-          <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
+          <div className="flex gap-1 rounded-lg bg-bg-secondary p-1">
             {(["week", "month", "quarter"] as const).map((p) => (
               <button
                 key={p}
@@ -94,8 +94,8 @@ export default function LeaderboardPage() {
                 className={cn(
                   "rounded-md px-4 py-2 text-sm font-medium transition-colors",
                   period === p
-                    ? "bg-white text-zinc-900 shadow dark:bg-zinc-700 dark:text-zinc-100"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400"
+                    ? "bg-bg-elevated text-content-primary shadow"
+                    : "text-content-secondary hover:text-content-primary"
                 )}
               >
                 {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -145,28 +145,28 @@ export default function LeaderboardPage() {
             ))}
           </div>
         ) : data?.csms && data.csms.length > 0 ? (
-          <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="overflow-hidden card-sf">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50">
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                <tr className="border-b border-border-default bg-bg-secondary">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-content-secondary">
                     Rank
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-content-secondary">
                     CSM
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-content-secondary">
                     Accounts
                   </th>
                   {metrics.map((m) => (
                     <th
                       key={m.key}
-                      className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-zinc-500"
+                      className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-content-secondary"
                     >
                       {m.label}
                     </th>
                   ))}
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-content-secondary">
                     MRR
                   </th>
                 </tr>
@@ -211,7 +211,7 @@ export default function LeaderboardPage() {
                             .slice(0, 2)}
                         </div>
                         <div>
-                          <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                          <p className="font-medium text-content-primary">
                             {csm.name}
                           </p>
                           <p className="text-xs text-zinc-500">{csm.email}</p>
@@ -221,7 +221,7 @@ export default function LeaderboardPage() {
                     <td className="px-4 py-4 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <Users className="h-4 w-4 text-zinc-400" />
-                        <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                        <span className="font-medium text-content-primary">
                           {csm.accountCount}
                         </span>
                       </div>
@@ -230,7 +230,7 @@ export default function LeaderboardPage() {
                       <td key={m.key} className="px-4 py-4 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <m.icon className={cn("h-4 w-4", m.color)} />
-                          <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                          <span className="font-medium text-content-primary">
                             {m.key === "expansionRevenue"
                               ? `$${((csm[m.key as keyof CSMStats] as number) / 1000).toFixed(0)}k`
                               : csm[m.key as keyof CSMStats]}
@@ -240,8 +240,8 @@ export default function LeaderboardPage() {
                     ))}
                     <td className="px-4 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <DollarSign className="h-4 w-4 text-emerald-500" />
-                        <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                        <DollarSign className="h-4 w-4 text-success-500" />
+                        <span className="font-bold text-content-primary">
                           {(csm.totalMrr / 1000).toFixed(0)}k
                         </span>
                       </div>
@@ -254,7 +254,7 @@ export default function LeaderboardPage() {
         ) : (
           <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
             <Trophy className="mx-auto mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-lg font-semibold text-content-primary">
               No data yet
             </h3>
             <p className="mt-2 text-zinc-500">
@@ -297,8 +297,8 @@ function HighlightCard({
           <Icon className="h-5 w-5 text-white" />
         </div>
         <div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{label}</p>
-          <p className="font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+          <p className="text-xs text-content-secondary">{label}</p>
+          <p className="font-semibold text-content-primary">{value}</p>
         </div>
       </div>
     </div>

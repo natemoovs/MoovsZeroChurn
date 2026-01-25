@@ -149,10 +149,10 @@ export default function RenewalsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-2xl font-bold text-content-primary">
               Renewals
             </h1>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               Track upcoming contract renewals
             </p>
           </div>
@@ -160,14 +160,14 @@ export default function RenewalsPage() {
           {/* Controls */}
           <div className="flex flex-wrap gap-2">
             {/* View Mode Toggle */}
-            <div className="flex gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+            <div className="flex gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
                   "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                   viewMode === "list"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    ? "bg-bg-elevated text-content-primary shadow-sm"
+                    : "text-content-secondary hover:text-content-primary"
                 )}
               >
                 List
@@ -177,8 +177,8 @@ export default function RenewalsPage() {
                 className={cn(
                   "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                   viewMode === "calendar"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    ? "bg-bg-elevated text-content-primary shadow-sm"
+                    : "text-content-secondary hover:text-content-primary"
                 )}
               >
                 Calendar
@@ -186,7 +186,7 @@ export default function RenewalsPage() {
             </div>
 
             {/* Time Range Filter */}
-            <div className="flex gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+            <div className="flex gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
               {[30, 60, 90].map((days) => (
                 <button
                   key={days}
@@ -194,8 +194,8 @@ export default function RenewalsPage() {
                   className={cn(
                     "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                     timeRange === days
-                      ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                      : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                      ? "bg-bg-elevated text-content-primary shadow-sm"
+                      : "text-content-secondary hover:text-content-primary"
                   )}
                 >
                   {days} days
@@ -208,12 +208,12 @@ export default function RenewalsPage() {
         {loading ? (
           <RenewalsSkeleton />
         ) : !data?.configured ? (
-          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <Calendar className="mx-auto mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+          <div className="card-sf p-12 text-center">
+            <Calendar className="mx-auto mb-4 h-12 w-12 text-content-tertiary" />
+            <h3 className="text-lg font-medium text-content-primary">
               HubSpot not configured
             </h3>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               Connect HubSpot to track renewals
             </p>
           </div>
@@ -256,12 +256,12 @@ export default function RenewalsPage() {
 
             {/* Renewals View */}
             {data.renewals.length === 0 ? (
-              <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-                <Calendar className="mx-auto mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+              <div className="card-sf p-12 text-center">
+                <Calendar className="mx-auto mb-4 h-12 w-12 text-content-tertiary" />
+                <h3 className="text-lg font-medium text-content-primary">
                   No renewals in the next {timeRange} days
                 </h3>
-                <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-content-secondary">
                   Check back later or extend the time range
                 </p>
               </div>
@@ -321,30 +321,30 @@ function StatCard({
   variant?: "default" | "success" | "danger"
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="card-sf p-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">{label}</span>
+        <span className="text-sm text-content-secondary">{label}</span>
         <Icon
           className={cn(
             "h-5 w-5",
-            variant === "success" && "text-emerald-500",
+            variant === "success" && "text-success-500",
             variant === "danger" && "text-red-500",
-            variant === "default" && "text-zinc-400"
+            variant === "default" && "text-content-tertiary"
           )}
         />
       </div>
       <p
         className={cn(
           "mt-2 text-2xl font-bold",
-          variant === "success" && "text-emerald-600 dark:text-emerald-400",
+          variant === "success" && "text-success-600 dark:text-success-500",
           variant === "danger" && "text-red-600 dark:text-red-400",
-          variant === "default" && "text-zinc-900 dark:text-zinc-100"
+          variant === "default" && "text-content-primary"
         )}
       >
         {value}
       </p>
       {subtext && (
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{subtext}</p>
+        <p className="mt-1 text-sm text-content-secondary">{subtext}</p>
       )}
     </div>
   )
@@ -378,7 +378,7 @@ function RenewalSection({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className={cn("font-semibold", headerColors[variant])}>{title}</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+          <p className="text-sm text-content-secondary">{subtitle}</p>
         </div>
         <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100">
           {renewals.length} {renewals.length === 1 ? "renewal" : "renewals"}
@@ -410,20 +410,20 @@ function RenewalCard({ renewal }: { renewal: Renewal }) {
     >
       <div className="flex items-center gap-4">
         <div className="text-center">
-          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <p className="text-2xl font-bold text-content-primary">
             {renewal.daysUntilRenewal}
           </p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">days</p>
+          <p className="text-xs text-content-secondary">days</p>
         </div>
         <div className="h-10 w-px bg-zinc-200 dark:bg-zinc-700" />
         <div>
           <div className="flex items-center gap-2">
-            <p className="font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="font-medium text-content-primary">
               {renewal.companyName}
             </p>
             <HealthBadge score={renewal.healthScore} size="sm" />
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-content-secondary">
             {formatDate(renewal.renewalDate)}
             {renewal.amount && ` · $${renewal.amount.toLocaleString()}`}
           </p>
@@ -437,7 +437,7 @@ function RenewalCard({ renewal }: { renewal: Renewal }) {
           )}
         </div>
       </div>
-      <ChevronRight className="h-5 w-5 text-zinc-300 dark:text-zinc-600" />
+      <ChevronRight className="h-5 w-5 text-content-tertiary" />
     </Link>
   )
 }
@@ -446,12 +446,12 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
   const forecast = calculateForecast(renewals)
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="card-sf p-5">
       <div className="mb-4">
-        <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="font-semibold text-content-primary">
           Revenue Forecast ({timeRange} days)
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-content-secondary">
           Projected renewal outcomes based on health scores
         </p>
       </div>
@@ -459,20 +459,20 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Expected Revenue */}
         <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Expected Revenue</p>
-          <p className="mt-1 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <p className="text-sm text-content-secondary">Expected Revenue</p>
+          <p className="mt-1 text-2xl font-bold text-content-primary">
             ${forecast.expectedRevenue.toLocaleString()}
           </p>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">If all renewals close</p>
+          <p className="text-xs text-content-tertiary dark:text-zinc-500">If all renewals close</p>
         </div>
 
         {/* Likely Revenue */}
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
           <p className="text-sm text-emerald-700 dark:text-emerald-400">Likely Revenue</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+          <p className="mt-1 text-2xl font-bold text-success-600 dark:text-success-500">
             ${forecast.likelyRevenue.toLocaleString()}
           </p>
-          <p className="text-xs text-emerald-600/70 dark:text-emerald-500/70">Based on health scores</p>
+          <p className="text-xs text-emerald-600/70 dark:text-success-500/70">Based on health scores</p>
         </div>
 
         {/* At Risk Revenue */}
@@ -486,16 +486,16 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
 
         {/* Retention Rate */}
         <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Est. Retention</p>
+          <p className="text-sm text-content-secondary">Est. Retention</p>
           <p className={cn(
             "mt-1 text-2xl font-bold",
-            forecast.retentionRate >= 90 ? "text-emerald-600 dark:text-emerald-400" :
+            forecast.retentionRate >= 90 ? "text-success-600 dark:text-success-500" :
             forecast.retentionRate >= 70 ? "text-amber-600 dark:text-amber-400" :
             "text-red-600 dark:text-red-400"
           )}>
             {forecast.retentionRate.toFixed(1)}%
           </p>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">Weighted by health</p>
+          <p className="text-xs text-content-tertiary dark:text-zinc-500">Weighted by health</p>
         </div>
       </div>
 
@@ -511,7 +511,7 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
             style={{ width: `${(forecast.atRiskRevenue / forecast.expectedRevenue) * 100}%` }}
           />
         </div>
-        <div className="mt-2 flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="mt-2 flex justify-between text-xs text-content-secondary">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             Likely to renew
@@ -590,8 +590,8 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <h3 className="mb-4 font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="card-sf p-4">
+        <h3 className="mb-4 font-semibold text-content-primary">
           Renewal Calendar
         </h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -610,21 +610,21 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                   weekHealthColors[health]
                 )}
               >
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs font-medium text-content-secondary">
                   {formatWeek(week.start, week.end)}
                 </p>
                 <div className="mt-2">
                   {week.renewals.length === 0 ? (
-                    <p className="text-sm text-zinc-400 dark:text-zinc-600">
+                    <p className="text-sm text-content-tertiary dark:text-zinc-600">
                       No renewals
                     </p>
                   ) : (
                     <>
-                      <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                      <p className="text-lg font-bold text-content-primary">
                         {week.renewals.length}{" "}
                         {week.renewals.length === 1 ? "renewal" : "renewals"}
                       </p>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="text-sm text-content-secondary">
                         ${totalValue.toLocaleString()}
                       </p>
                       <div className="mt-2 flex gap-1">
@@ -642,7 +642,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                           />
                         ))}
                         {week.renewals.length > 3 && (
-                          <span className="text-xs text-zinc-400">
+                          <span className="text-xs text-content-tertiary">
                             +{week.renewals.length - 3}
                           </span>
                         )}
@@ -659,7 +659,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
       {/* Detailed List with Actions */}
       <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="border-b border-zinc-200 p-4 dark:border-zinc-800">
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <h3 className="font-semibold text-content-primary">
             Renewals with Recommended Actions
           </h3>
         </div>
@@ -689,7 +689,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                       >
                         {renewal.companyName}
                       </Link>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="text-sm text-content-secondary">
                         {new Date(renewal.renewalDate).toLocaleDateString(
                           "en-US",
                           { month: "short", day: "numeric", year: "numeric" }
@@ -722,7 +722,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                             action.priority === "medium" &&
                               "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
                             action.priority === "low" &&
-                              "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+                              "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-content-tertiary"
                           )}
                         >
                           <action.icon className="h-3 w-3" />

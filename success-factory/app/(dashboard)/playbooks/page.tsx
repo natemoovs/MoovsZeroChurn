@@ -102,10 +102,10 @@ export default function PlaybooksPage() {
     return (
       <DashboardLayout>
         <div className="space-y-6">
-          <div className="h-8 w-48 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+          <div className="shimmer h-8 w-48 rounded" />
           <div className="grid gap-4 lg:grid-cols-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-48 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+              <div key={i} className="shimmer h-48 rounded-xl" />
             ))}
           </div>
         </div>
@@ -119,16 +119,16 @@ export default function PlaybooksPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">
+            <h1 className="text-xl font-bold text-content-primary sm:text-2xl">
               Playbooks
             </h1>
-            <p className="mt-1 text-sm text-zinc-500 sm:text-base dark:text-zinc-400">
+            <p className="mt-1 text-sm text-content-secondary sm:text-base">
               Automated workflows triggered by customer events
             </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             New Playbook
@@ -137,19 +137,19 @@ export default function PlaybooksPage() {
 
         {/* Playbooks Grid */}
         {playbooks.length === 0 ? (
-          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-              <Zap className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+          <div className="card-sf p-12 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/30">
+              <Zap className="h-6 w-6 text-success-600 dark:text-success-400" />
             </div>
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-lg font-medium text-content-primary">
               No playbooks yet
             </h3>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               Create your first playbook to automate CSM workflows
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700"
             >
               <Plus className="h-4 w-4" />
               Create Playbook
@@ -165,10 +165,10 @@ export default function PlaybooksPage() {
                 <div
                   key={playbook.id}
                   className={cn(
-                    "rounded-xl border bg-white p-5 transition-all dark:bg-zinc-900",
+                    "rounded-xl border bg-bg-elevated p-5 transition-all",
                     playbook.isActive
-                      ? "border-emerald-200 dark:border-emerald-900"
-                      : "border-zinc-200 opacity-60 dark:border-zinc-800"
+                      ? "border-success-200 dark:border-success-900"
+                      : "border-border-default opacity-60"
                   )}
                 >
                   {/* Header */}
@@ -178,17 +178,17 @@ export default function PlaybooksPage() {
                         className={cn(
                           "flex h-10 w-10 items-center justify-center rounded-lg",
                           playbook.isActive
-                            ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"
+                            ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+                            : "bg-bg-secondary text-content-tertiary"
                         )}
                       >
                         <TriggerIcon className="h-5 w-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                        <h3 className="font-semibold text-content-primary">
                           {playbook.name}
                         </h3>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        <p className="text-sm text-content-secondary">
                           {triggerInfo?.label || playbook.trigger}
                         </p>
                       </div>
@@ -199,8 +199,8 @@ export default function PlaybooksPage() {
                         className={cn(
                           "rounded-lg p-2 transition-colors",
                           playbook.isActive
-                            ? "text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
-                            : "text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            ? "text-success-600 hover:bg-success-50 dark:text-success-400 dark:hover:bg-success-900/20"
+                            : "text-content-tertiary hover:bg-bg-secondary"
                         )}
                         title={playbook.isActive ? "Pause playbook" : "Activate playbook"}
                       >
@@ -212,7 +212,7 @@ export default function PlaybooksPage() {
                       </button>
                       <button
                         onClick={() => deletePlaybook(playbook.id)}
-                        className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                        className="rounded-lg p-2 text-content-tertiary transition-colors hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-900/20"
                         title="Delete playbook"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -222,33 +222,33 @@ export default function PlaybooksPage() {
 
                   {/* Description */}
                   {playbook.description && (
-                    <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="mb-4 text-sm text-content-secondary">
                       {playbook.description}
                     </p>
                   )}
 
                   {/* Actions */}
                   <div className="mb-4 space-y-2">
-                    <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs font-medium uppercase tracking-wider text-content-secondary">
                       Actions
                     </p>
                     {playbook.actions.map((action, i) => (
                       <div
                         key={i}
-                        className="flex items-center gap-2 rounded-lg bg-zinc-50 p-2 text-sm dark:bg-zinc-800"
+                        className="flex items-center gap-2 rounded-lg bg-bg-secondary p-2 text-sm"
                       >
-                        <CheckSquare className="h-4 w-4 text-zinc-400" />
-                        <span className="text-zinc-700 dark:text-zinc-300">
+                        <CheckSquare className="h-4 w-4 text-content-tertiary" />
+                        <span className="text-content-primary">
                           Create task: {action.title}
                         </span>
                         {action.priority && (
                           <span
                             className={cn(
                               "rounded px-1.5 py-0.5 text-xs font-medium",
-                              action.priority === "urgent" && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                              action.priority === "urgent" && "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
                               action.priority === "high" && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-                              action.priority === "medium" && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-                              action.priority === "low" && "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400"
+                              action.priority === "medium" && "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+                              action.priority === "low" && "bg-bg-secondary text-content-secondary"
                             )}
                           >
                             {action.priority}
@@ -259,16 +259,16 @@ export default function PlaybooksPage() {
                   </div>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
-                    <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <div className="flex items-center justify-between border-t border-border-default pt-4">
+                    <span className="text-sm text-content-secondary">
                       {playbook.taskCount} tasks created
                     </span>
                     <span
                       className={cn(
                         "rounded-full px-2 py-0.5 text-xs font-medium",
                         playbook.isActive
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                          : "bg-bg-secondary text-content-secondary"
                       )}
                     >
                       {playbook.isActive ? "Active" : "Paused"}
@@ -348,15 +348,15 @@ function CreatePlaybookModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-xl bg-white p-4 sm:max-w-lg sm:rounded-xl sm:p-6 dark:bg-zinc-900">
-        <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-xl bg-bg-elevated p-4 sm:max-w-lg sm:rounded-xl sm:p-6">
+        <h2 className="mb-4 text-xl font-semibold text-content-primary">
           Create Playbook
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Playbook Name
             </label>
             <input
@@ -364,14 +364,14 @@ function CreatePlaybookModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., At-Risk Customer Outreach"
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
               required
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Description (optional)
             </label>
             <textarea
@@ -379,19 +379,19 @@ function CreatePlaybookModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What does this playbook do?"
               rows={2}
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
             />
           </div>
 
           {/* Trigger */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Trigger
             </label>
             <select
               value={trigger}
               onChange={(e) => setTrigger(e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
               required
             >
               <option value="">Select a trigger...</option>
@@ -404,17 +404,17 @@ function CreatePlaybookModal({
           </div>
 
           {/* Action: Create Task */}
-          <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
+          <div className="rounded-lg border border-border-default p-4">
             <div className="mb-3 flex items-center gap-2">
-              <CheckSquare className="h-4 w-4 text-emerald-600" />
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <CheckSquare className="h-4 w-4 text-success-600" />
+              <span className="text-sm font-medium text-content-primary">
                 Action: Create Task
               </span>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
+                <label className="mb-1 block text-xs text-content-secondary">
                   Task Title
                 </label>
                 <input
@@ -422,19 +422,19 @@ function CreatePlaybookModal({
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
                   placeholder="e.g., Schedule check-in call"
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
                   required
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
+                <label className="mb-1 block text-xs text-content-secondary">
                   Priority
                 </label>
                 <select
                   value={taskPriority}
                   onChange={(e) => setTaskPriority(e.target.value as typeof taskPriority)}
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -450,14 +450,14 @@ function CreatePlaybookModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-content-secondary hover:bg-bg-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || !name || !trigger || !taskTitle}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
             >
               {saving ? "Creating..." : "Create Playbook"}
             </button>

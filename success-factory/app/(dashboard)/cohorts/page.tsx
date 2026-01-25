@@ -53,19 +53,19 @@ function formatPercent(value: number): string {
 }
 
 function getRetentionColor(rate: number): string {
-  if (rate >= 90) return "bg-emerald-500"
-  if (rate >= 80) return "bg-emerald-400"
-  if (rate >= 70) return "bg-amber-400"
-  if (rate >= 60) return "bg-amber-500"
-  return "bg-red-500"
+  if (rate >= 90) return "bg-success-500"
+  if (rate >= 80) return "bg-success-600"
+  if (rate >= 70) return "bg-warning-500"
+  if (rate >= 60) return "bg-warning-600"
+  return "bg-error-500"
 }
 
 function getRetentionTextColor(rate: number): string {
-  if (rate >= 90) return "text-emerald-600 dark:text-emerald-400"
-  if (rate >= 80) return "text-emerald-500"
-  if (rate >= 70) return "text-amber-600 dark:text-amber-400"
-  if (rate >= 60) return "text-amber-500"
-  return "text-red-600 dark:text-red-400"
+  if (rate >= 90) return "text-success-600 dark:text-success-500"
+  if (rate >= 80) return "text-success-600 dark:text-success-500"
+  if (rate >= 70) return "text-warning-600 dark:text-warning-500"
+  if (rate >= 60) return "text-warning-600 dark:text-warning-500"
+  return "text-error-600 dark:text-error-500"
 }
 
 export default function CohortsPage() {
@@ -159,17 +159,17 @@ export default function CohortsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-2xl font-bold text-content-primary">
               Cohort Analysis
             </h1>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               Analyze retention patterns by signup period
             </p>
           </div>
           <button
             onClick={syncCohorts}
             disabled={syncing}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+            className="btn-primary flex items-center gap-2"
           >
             {syncing ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -182,64 +182,64 @@ export default function CohortsPage() {
 
         {/* Summary Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
                 <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-content-secondary">
                   Total Cohorts
                 </p>
-                <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-xl font-bold text-content-primary">
                   {summary?.totalCohorts || 0}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-50">
+                <Users className="h-5 w-5 text-primary-600 dark:text-primary-500" />
               </div>
               <div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-content-secondary">
                   Total Companies
                 </p>
-                <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-xl font-bold text-content-primary">
                   {summary?.totalCompanies || 0}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100 dark:bg-success-50">
+                <TrendingUp className="h-5 w-5 text-success-600 dark:text-success-500" />
               </div>
               <div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-content-secondary">
                   Overall Retention
                 </p>
-                <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-xl font-bold text-content-primary">
                   {formatPercent(summary?.overallRetention || 0)}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                <DollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-100 dark:bg-warning-50">
+                <DollarSign className="h-5 w-5 text-warning-600 dark:text-warning-500" />
               </div>
               <div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-content-secondary">
                   Avg MRR/Cohort
                 </p>
-                <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-xl font-bold text-content-primary">
                   {formatCurrency(summary?.avgMrrPerCohort || 0)}
                 </p>
               </div>
@@ -250,33 +250,33 @@ export default function CohortsPage() {
         {/* Best/Worst Cohorts */}
         {cohorts.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+            <div className="rounded-xl border border-success-300 bg-success-50 p-4 dark:border-success-700 dark:bg-success-50/10 glow-success">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <span className="font-medium text-emerald-700 dark:text-emerald-300">
+                <TrendingUp className="h-5 w-5 text-success-600 dark:text-success-500" />
+                <span className="font-medium text-success-700 dark:text-success-500">
                   Best Performing Cohort
                 </span>
               </div>
-              <p className="mt-2 text-2xl font-bold text-emerald-800 dark:text-emerald-200">
+              <p className="mt-2 text-2xl font-bold text-success-700 dark:text-success-500">
                 {bestCohort?.cohort}
               </p>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400">
+              <p className="text-sm text-success-600 dark:text-success-500">
                 {formatPercent(bestCohort?.retentionRate || 0)} retention •{" "}
                 {bestCohort?.activeCompanies} active companies
               </p>
             </div>
 
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-950/30">
+            <div className="rounded-xl border border-error-300 bg-error-50 p-4 dark:border-error-700 dark:bg-error-50/10 glow-error">
               <div className="flex items-center gap-2">
-                <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />
-                <span className="font-medium text-red-700 dark:text-red-300">
+                <TrendingDown className="h-5 w-5 text-error-600 dark:text-error-500" />
+                <span className="font-medium text-error-700 dark:text-error-500">
                   Needs Attention
                 </span>
               </div>
-              <p className="mt-2 text-2xl font-bold text-red-800 dark:text-red-200">
+              <p className="mt-2 text-2xl font-bold text-error-700 dark:text-error-500">
                 {worstCohort?.cohort}
               </p>
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-sm text-error-600 dark:text-error-500">
                 {formatPercent(worstCohort?.retentionRate || 0)} retention •{" "}
                 {worstCohort?.churnedCompanies} churned
               </p>
@@ -286,14 +286,14 @@ export default function CohortsPage() {
 
         {/* View Mode Toggle */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="flex gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
             <button
               onClick={() => setViewMode("monthly")}
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 viewMode === "monthly"
-                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "bg-bg-elevated text-content-primary shadow-sm"
+                  : "text-content-secondary hover:text-content-primary"
               )}
             >
               Monthly
@@ -303,22 +303,22 @@ export default function CohortsPage() {
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 viewMode === "quarterly"
-                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "bg-bg-elevated text-content-primary shadow-sm"
+                  : "text-content-secondary hover:text-content-primary"
               )}
             >
               Quarterly
             </button>
           </div>
 
-          <div className="flex gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="flex gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
             <button
               onClick={() => setMetricView("retention")}
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 metricView === "retention"
-                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "bg-bg-elevated text-content-primary shadow-sm"
+                  : "text-content-secondary hover:text-content-primary"
               )}
             >
               Retention
@@ -328,8 +328,8 @@ export default function CohortsPage() {
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 metricView === "mrr"
-                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "bg-bg-elevated text-content-primary shadow-sm"
+                  : "text-content-secondary hover:text-content-primary"
               )}
             >
               MRR
@@ -339,8 +339,8 @@ export default function CohortsPage() {
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 metricView === "companies"
-                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "bg-bg-elevated text-content-primary shadow-sm"
+                  : "text-content-secondary hover:text-content-primary"
               )}
             >
               Companies
@@ -432,7 +432,7 @@ export default function CohortsPage() {
                       <td className="whitespace-nowrap px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
                         {cohort.totalCompanies}
                       </td>
-                      <td className="hidden whitespace-nowrap px-4 py-3 text-right text-emerald-600 dark:text-emerald-400 sm:table-cell">
+                      <td className="hidden whitespace-nowrap px-4 py-3 text-right text-success-600 dark:text-success-500 sm:table-cell">
                         {cohort.activeCompanies}
                       </td>
                       <td className="hidden whitespace-nowrap px-4 py-3 text-right text-red-600 dark:text-red-400 sm:table-cell">
@@ -483,7 +483,7 @@ export default function CohortsPage() {
                 <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   Segment Distribution by Cohort
                 </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-content-secondary">
                   Customer segments within each cohort
                 </p>
               </div>
