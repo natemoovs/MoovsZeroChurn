@@ -21,8 +21,8 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
           <div
             className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs ${
               isConnected
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                : "bg-bg-tertiary text-content-secondary"
             }`}
           >
             {isConnected ? (
@@ -39,17 +39,17 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
           </div>
         )}
         {stats && (
-          <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center gap-3 text-xs text-content-secondary">
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="h-2 w-2 rounded-full bg-success-500" />
               {stats.healthyAccounts}
             </span>
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-amber-500" />
+              <span className="h-2 w-2 rounded-full bg-warning-500" />
               {stats.warningAccounts}
             </span>
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-red-500" />
+              <span className="h-2 w-2 rounded-full bg-error-500" />
               {stats.atRiskAccounts}
             </span>
           </div>
@@ -59,23 +59,23 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="card-sf p-4">
       {/* Header with connection status */}
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Live Dashboard</h3>
+        <h3 className="font-semibold text-content-primary">Live Dashboard</h3>
         {showConnection && (
           <div
             className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
               isConnected
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
             }`}
           >
             {isConnected ? (
               <>
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-success-500" />
                 </span>
                 <span>Connected</span>
               </>
@@ -92,40 +92,40 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
       {/* Stats Grid */}
       {stats ? (
         <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
+          <div className="rounded-lg bg-bg-tertiary p-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">Healthy</span>
+              <CheckCircle2 className="h-4 w-4 text-success-500" />
+              <span className="text-xs text-content-secondary">Healthy</span>
             </div>
-            <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            <p className="mt-1 text-2xl font-bold text-success-600 dark:text-success-400">
               {stats.healthyAccounts}
             </p>
           </div>
 
-          <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
+          <div className="rounded-lg bg-bg-tertiary p-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">Warning</span>
+              <AlertTriangle className="h-4 w-4 text-warning-500" />
+              <span className="text-xs text-content-secondary">Warning</span>
             </div>
-            <p className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
+            <p className="mt-1 text-2xl font-bold text-warning-600 dark:text-warning-400">
               {stats.warningAccounts}
             </p>
           </div>
 
-          <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
+          <div className="rounded-lg bg-bg-tertiary p-3">
             <div className="flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-red-500" />
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">At Risk</span>
+              <TrendingDown className="h-4 w-4 text-error-500" />
+              <span className="text-xs text-content-secondary">At Risk</span>
             </div>
-            <p className="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
+            <p className="mt-1 text-2xl font-bold text-error-600 dark:text-error-400">
               {stats.atRiskAccounts}
             </p>
           </div>
 
-          <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
+          <div className="rounded-lg bg-bg-tertiary p-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-500" />
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">MRR</span>
+              <span className="text-xs text-content-secondary">MRR</span>
             </div>
             <p className="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">
               ${(stats.totalMrr / 1000).toFixed(0)}k
@@ -137,7 +137,7 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="h-20 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800"
+              className="h-20 shimmer rounded-lg"
             />
           ))}
         </div>
@@ -145,7 +145,7 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
 
       {/* Recent Events */}
       <div>
-        <h4 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <h4 className="mb-2 text-sm font-medium text-content-secondary">
           Recent Activity
         </h4>
         {recentEvents.length > 0 ? (
@@ -153,40 +153,40 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
             {recentEvents.slice(0, 5).map((event, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 rounded-lg bg-zinc-50 p-2 text-sm dark:bg-zinc-800/50"
+                className="flex items-center gap-3 rounded-lg bg-bg-tertiary p-2 text-sm"
               >
                 {"newScore" in event ? (
                   <>
                     <span
                       className={`h-2 w-2 rounded-full ${
                         event.newScore === "red"
-                          ? "bg-red-500"
+                          ? "bg-error-500"
                           : event.newScore === "yellow"
-                            ? "bg-amber-500"
-                            : "bg-emerald-500"
+                            ? "bg-warning-500"
+                            : "bg-success-500"
                       }`}
                     />
-                    <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300">
+                    <span className="flex-1 truncate text-content-secondary">
                       {event.companyName}
                     </span>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-content-secondary">
                       {event.previousScore} → {event.newScore}
                     </span>
                   </>
                 ) : (
                   <>
                     <span className="h-2 w-2 rounded-full bg-blue-500" />
-                    <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300">
+                    <span className="flex-1 truncate text-content-secondary">
                       {event.title}
                     </span>
-                    <span className="text-xs text-zinc-500">{event.companyName}</span>
+                    <span className="text-xs text-content-secondary">{event.companyName}</span>
                   </>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-content-secondary">
             No recent activity. Updates will appear here in real-time.
           </p>
         )}

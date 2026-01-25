@@ -17,7 +17,7 @@ export function Header({
       {showBack && (
         <Link
           href={backHref}
-          className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          className="text-sm text-content-secondary hover:text-content-primary"
         >
           &larr; {backLabel}
         </Link>

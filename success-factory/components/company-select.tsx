@@ -110,22 +110,22 @@ export function CompanySelect({ value, onChange, placeholder = "Search companies
       />
 
       {showDropdown && (query.length >= 2) && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-border-default bg-bg-elevated shadow-lg">
           {isLoading ? (
-            <div className="px-4 py-3 text-sm text-zinc-500">Searching...</div>
+            <div className="px-4 py-3 text-sm text-content-secondary">Searching...</div>
           ) : companies.length > 0 ? (
             <ul className="max-h-60 overflow-auto py-1">
               {companies.map((company) => (
                 <li
                   key={company.id}
-                  className="cursor-pointer px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="cursor-pointer px-4 py-2 hover:bg-surface-hover"
                   onClick={() => handleSelect(company)}
                 >
-                  <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                  <div className="font-medium text-content-primary">
                     {company.name}
                   </div>
                   {(company.domain || company.industry) && (
-                    <div className="text-sm text-zinc-500">
+                    <div className="text-sm text-content-secondary">
                       {[company.domain, company.industry].filter(Boolean).join(" · ")}
                     </div>
                   )}
@@ -133,7 +133,7 @@ export function CompanySelect({ value, onChange, placeholder = "Search companies
               ))}
             </ul>
           ) : (
-            <div className="px-4 py-3 text-sm text-zinc-500">
+            <div className="px-4 py-3 text-sm text-content-secondary">
               No companies found. Type more to search or enter manually.
             </div>
           )}

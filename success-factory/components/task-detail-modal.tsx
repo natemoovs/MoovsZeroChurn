@@ -235,15 +235,15 @@ export function TaskDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 pt-[5vh]">
-      <div className="relative w-full max-w-3xl rounded-2xl bg-white shadow-2xl dark:bg-zinc-900">
+      <div className="relative w-full max-w-3xl rounded-2xl bg-bg-elevated shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border-default bg-bg-elevated p-4">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 pr-8">
+            <h2 className="text-lg font-semibold text-content-primary pr-8">
               {titleProp ? String(titleProp[1].value) : taskTitle}
             </h2>
             {pageData && (
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-xs text-content-secondary">
                 Last edited {formatDistanceToNow(new Date(pageData.lastEditedTime), { addSuffix: true })}
               </p>
             )}
@@ -254,7 +254,7 @@ export function TaskDetailModal({
                 href={pageData.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="flex items-center gap-1 rounded-lg border border-border-default px-3 py-1.5 text-sm text-content-secondary hover:bg-surface-hover"
               >
                 <ExternalLink className="h-4 w-4" />
                 Open in Notion
@@ -262,7 +262,7 @@ export function TaskDetailModal({
             )}
             <button
               onClick={onClose}
-              className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+              className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary"
             >
               <X className="h-5 w-5" />
             </button>
@@ -273,15 +273,15 @@ export function TaskDetailModal({
         <div className="p-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-content-tertiary" />
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <AlertCircle className="mb-2 h-8 w-8 text-red-500" />
-              <p className="text-red-600 dark:text-red-400">{error}</p>
+              <AlertCircle className="mb-2 h-8 w-8 text-error-500" />
+              <p className="text-error-600 dark:text-error-400">{error}</p>
               <button
                 onClick={fetchPageData}
-                className="mt-4 rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
+                className="mt-4 rounded-lg bg-bg-tertiary px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
               >
                 Retry
               </button>
@@ -291,7 +291,7 @@ export function TaskDetailModal({
               {/* Status Actions */}
               {statusProp && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-zinc-500 mr-2">Status:</span>
+                  <span className="text-sm text-content-secondary mr-2">Status:</span>
                   {["Not Started", "In Progress", "Done"].map((status) => {
                     const currentStatus = String(statusProp.value || "").toLowerCase()
                     // Handle both "Done" and "Completed" as completed states
@@ -307,11 +307,11 @@ export function TaskDetailModal({
                           "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all",
                           isActive
                             ? status === "Done"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                               : status === "In Progress"
                               ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                              : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                            : "border border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                              : "bg-bg-tertiary text-content-secondary"
+                            : "border border-border-default text-content-secondary hover:bg-surface-hover"
                         )}
                       >
                         {status === "Done" ? (
@@ -329,20 +329,20 @@ export function TaskDetailModal({
               )}
 
               {/* Company Association */}
-              <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+              <div className="rounded-lg border border-border-default p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Building2 className="h-4 w-4 text-zinc-400" />
+                    <Building2 className="h-4 w-4 text-content-tertiary" />
                     <div>
-                      <p className="text-xs text-zinc-500">Company</p>
-                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="text-xs text-content-secondary">Company</p>
+                      <p className="text-sm font-medium text-content-primary">
                         {currentCompanyName || initialCompanyName || "No company linked"}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowCompanySearch(!showCompanySearch)}
-                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    className="rounded-lg border border-border-default px-3 py-1.5 text-sm text-content-secondary hover:bg-surface-hover"
                   >
                     {showCompanySearch ? "Cancel" : "Change"}
                   </button>
@@ -352,42 +352,42 @@ export function TaskDetailModal({
                 {showCompanySearch && (
                   <div className="mt-3 space-y-2">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-tertiary" />
                       <input
                         type="text"
                         value={companySearchQuery}
                         onChange={(e) => setCompanySearchQuery(e.target.value)}
                         placeholder="Search companies..."
-                        className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                        className="w-full rounded-lg border border-border-default bg-bg-elevated py-2 pl-9 pr-3 text-sm text-content-primary outline-none focus:border-success-500 focus:ring-1 focus:ring-success-500"
                         autoFocus
                       />
                       {searchingCompanies && (
-                        <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-zinc-400" />
+                        <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-content-tertiary" />
                       )}
                     </div>
 
                     {/* Search Results */}
                     {companySearchResults.length > 0 && (
-                      <div className="max-h-48 overflow-y-auto rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800">
+                      <div className="max-h-48 overflow-y-auto rounded-lg border border-border-default bg-bg-elevated">
                         {companySearchResults.map((company) => (
                           <button
                             key={company.id}
                             onClick={() => updateCompany(company)}
                             disabled={updatingCompany}
-                            className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-zinc-50 disabled:opacity-50 dark:hover:bg-zinc-700"
+                            className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-surface-hover disabled:opacity-50"
                           >
                             <div>
-                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                              <p className="text-sm font-medium text-content-primary">
                                 {company.name}
                               </p>
                               {company.domain && (
-                                <p className="text-xs text-zinc-500">{company.domain}</p>
+                                <p className="text-xs text-content-secondary">{company.domain}</p>
                               )}
                             </div>
                             {updatingCompany ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                              <Loader2 className="h-4 w-4 animate-spin text-content-tertiary" />
                             ) : (
-                              <Check className="h-4 w-4 text-emerald-500 opacity-0 group-hover:opacity-100" />
+                              <Check className="h-4 w-4 text-success-500 opacity-0 group-hover:opacity-100" />
                             )}
                           </button>
                         ))}
@@ -395,7 +395,7 @@ export function TaskDetailModal({
                     )}
 
                     {companySearchQuery && !searchingCompanies && companySearchResults.length === 0 && (
-                      <p className="text-center text-sm text-zinc-500 py-2">
+                      <p className="text-center text-sm text-content-secondary py-2">
                         No companies found
                       </p>
                     )}
@@ -438,10 +438,10 @@ export function TaskDetailModal({
 
               {/* Other Properties (collapsible) */}
               {otherProps.length > 0 && (
-                <div className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+                <div className="rounded-lg border border-border-default">
                   <button
                     onClick={() => setShowAllProperties(!showAllProperties)}
-                    className="flex w-full items-center justify-between p-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50"
+                    className="flex w-full items-center justify-between p-3 text-sm font-medium text-content-secondary hover:bg-surface-hover"
                   >
                     <span>{showAllProperties ? "Hide" : "Show"} all properties ({otherProps.length})</span>
                     {showAllProperties ? (
@@ -451,12 +451,12 @@ export function TaskDetailModal({
                     )}
                   </button>
                   {showAllProperties && (
-                    <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+                    <div className="border-t border-border-default p-3">
                       <div className="grid gap-2 sm:grid-cols-2">
                         {otherProps.map(([key, prop]) => (
                           <div key={key} className="text-sm">
-                            <span className="text-zinc-500">{key}: </span>
-                            <span className="text-zinc-900 dark:text-zinc-100">
+                            <span className="text-content-secondary">{key}: </span>
+                            <span className="text-content-primary">
                               {formatPropertyValue(prop) || "—"}
                             </span>
                           </div>
@@ -469,8 +469,8 @@ export function TaskDetailModal({
 
               {/* Page Content */}
               {pageData.content.length > 0 && (
-                <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <div className="rounded-lg border border-border-default p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-content-secondary">
                     <FileText className="h-4 w-4" />
                     Content
                   </div>
@@ -483,8 +483,8 @@ export function TaskDetailModal({
               )}
 
               {/* Comments */}
-              <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <div className="rounded-lg border border-border-default p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-content-secondary">
                   <MessageSquare className="h-4 w-4" />
                   Comments ({pageData.comments.length})
                 </div>
@@ -495,7 +495,7 @@ export function TaskDetailModal({
                     {pageData.comments.map((comment) => (
                       <div
                         key={comment.id}
-                        className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50"
+                        className="rounded-lg bg-bg-tertiary p-3"
                       >
                         <div className="mb-1 flex items-center gap-2">
                           {comment.createdBy.avatar ? (
@@ -505,25 +505,25 @@ export function TaskDetailModal({
                               className="h-6 w-6 rounded-full"
                             />
                           ) : (
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-tertiary text-xs font-medium text-content-secondary">
                               {comment.createdBy.name?.[0] || "?"}
                             </div>
                           )}
-                          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          <span className="text-sm font-medium text-content-primary">
                             {comment.createdBy.name || "Unknown"}
                           </span>
-                          <span className="text-xs text-zinc-500">
+                          <span className="text-xs text-content-secondary">
                             {formatDistanceToNow(new Date(comment.createdTime), { addSuffix: true })}
                           </span>
                         </div>
-                        <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+                        <p className="text-sm text-content-secondary whitespace-pre-wrap">
                           {comment.content}
                         </p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="mb-4 text-sm text-zinc-500">No comments yet</p>
+                  <p className="mb-4 text-sm text-content-secondary">No comments yet</p>
                 )}
 
                 {/* New Comment */}
@@ -534,12 +534,12 @@ export function TaskDetailModal({
                     onChange={(e) => setNewComment(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handlePostComment()}
                     placeholder="Add a comment..."
-                    className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800"
+                    className="flex-1 rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm placeholder:text-content-tertiary focus:border-success-500 focus:outline-none focus:ring-1 focus:ring-success-500"
                   />
                   <button
                     onClick={handlePostComment}
                     disabled={!newComment.trim() || postingComment}
-                    className="flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                    className="flex items-center gap-1 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
                   >
                     {postingComment ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -569,12 +569,12 @@ function PropertyCard({
   color?: string
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-      <Icon className="h-4 w-4 text-zinc-400" />
+    <div className="flex items-center gap-3 rounded-lg border border-border-default p-3">
+      <Icon className="h-4 w-4 text-content-tertiary" />
       <div>
-        <p className="text-xs text-zinc-500">{label}</p>
+        <p className="text-xs text-content-secondary">{label}</p>
         <p className={cn(
-          "text-sm font-medium text-zinc-900 dark:text-zinc-100",
+          "text-sm font-medium text-content-primary",
           color && `text-${color}-600`
         )}>
           {value || "—"}
@@ -603,13 +603,13 @@ function ContentBlock({ block }: { block: NotionBlock }) {
     case "toggle":
       return <details><summary>{block.content}</summary></details>
     case "code":
-      return <pre className="rounded bg-zinc-100 p-2 text-xs dark:bg-zinc-800"><code>{block.content}</code></pre>
+      return <pre className="rounded bg-bg-tertiary p-2 text-xs"><code>{block.content}</code></pre>
     case "quote":
-      return <blockquote className="border-l-2 border-zinc-300 pl-4 italic">{block.content}</blockquote>
+      return <blockquote className="border-l-2 border-border-default pl-4 italic">{block.content}</blockquote>
     case "divider":
       return <hr />
     case "callout":
-      return <div className="rounded-lg bg-zinc-100 p-3 dark:bg-zinc-800">{block.content}</div>
+      return <div className="rounded-lg bg-bg-tertiary p-3">{block.content}</div>
     default:
       return block.content ? <p>{block.content}</p> : null
   }

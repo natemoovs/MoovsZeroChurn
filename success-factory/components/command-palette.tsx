@@ -155,53 +155,53 @@ export function CommandPalette() {
       />
 
       {/* Dialog */}
-      <div className="fixed left-1/2 top-[20%] w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="fixed left-1/2 top-[20%] w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border-default bg-bg-elevated shadow-2xl">
         {/* Search Input */}
-        <div className="flex items-center gap-3 border-b border-zinc-200 px-4 dark:border-zinc-800">
-          <Search className="h-5 w-5 text-zinc-400" />
+        <div className="flex items-center gap-3 border-b border-border-default px-4">
+          <Search className="h-5 w-5 text-content-tertiary" />
           <Command.Input
             value={search}
             onValueChange={setSearch}
             placeholder="Search accounts, tasks, pages..."
-            className="flex-1 bg-transparent py-4 text-base outline-none placeholder:text-zinc-400 dark:text-zinc-100"
+            className="flex-1 bg-transparent py-4 text-base outline-none placeholder:text-content-tertiary text-content-primary"
           />
-          <kbd className="hidden rounded bg-zinc-100 px-2 py-1 text-xs text-zinc-500 sm:inline-block dark:bg-zinc-800 dark:text-zinc-400">
+          <kbd className="hidden rounded bg-bg-tertiary px-2 py-1 text-xs text-content-secondary sm:inline-block">
             ESC
           </kbd>
         </div>
 
         {/* Results */}
         <Command.List className="max-h-[400px] overflow-y-auto p-2">
-          <Command.Empty className="py-6 text-center text-sm text-zinc-500">
+          <Command.Empty className="py-6 text-center text-sm text-content-secondary">
             {loading ? "Searching..." : "No results found."}
           </Command.Empty>
 
           {/* Accounts */}
           {accounts.length > 0 && (
-            <Command.Group heading="Accounts" className="px-2 py-1.5 text-xs font-medium text-zinc-500">
+            <Command.Group heading="Accounts" className="px-2 py-1.5 text-xs font-medium text-content-secondary">
               {accounts.map((account) => (
                 <Command.Item
                   key={account.id}
                   value={`account-${account.name}`}
                   onSelect={() => runCommand(() => router.push(`/accounts/${account.id}`))}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-700 aria-selected:bg-emerald-50 aria-selected:text-emerald-900 dark:text-zinc-300 dark:aria-selected:bg-emerald-950 dark:aria-selected:text-emerald-100"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100"
                 >
-                  <Building2 className="h-4 w-4 text-zinc-400" />
+                  <Building2 className="h-4 w-4 text-content-tertiary" />
                   <span className="flex-1">{account.name}</span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       account.healthScore === "green"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                         : account.healthScore === "yellow"
-                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
                         : account.healthScore === "red"
-                        ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                        ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                        : "bg-bg-tertiary text-content-secondary"
                     }`}
                   >
                     {account.healthScore}
                   </span>
-                  <ArrowRight className="h-4 w-4 text-zinc-300" />
+                  <ArrowRight className="h-4 w-4 text-content-tertiary" />
                 </Command.Item>
               ))}
             </Command.Group>
@@ -209,20 +209,20 @@ export function CommandPalette() {
 
           {/* Tasks */}
           {tasks.length > 0 && (
-            <Command.Group heading="Tasks" className="px-2 py-1.5 text-xs font-medium text-zinc-500">
+            <Command.Group heading="Tasks" className="px-2 py-1.5 text-xs font-medium text-content-secondary">
               {tasks.map((task) => (
                 <Command.Item
                   key={task.id}
                   value={`task-${task.title}`}
                   onSelect={() => runCommand(() => router.push("/tasks"))}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-700 aria-selected:bg-emerald-50 aria-selected:text-emerald-900 dark:text-zinc-300 dark:aria-selected:bg-emerald-950 dark:aria-selected:text-emerald-100"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100"
                 >
-                  <CheckSquare className="h-4 w-4 text-zinc-400" />
+                  <CheckSquare className="h-4 w-4 text-content-tertiary" />
                   <div className="flex-1 truncate">
                     <span>{task.title}</span>
-                    <span className="ml-2 text-xs text-zinc-400">{task.companyName}</span>
+                    <span className="ml-2 text-xs text-content-tertiary">{task.companyName}</span>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-zinc-300" />
+                  <ArrowRight className="h-4 w-4 text-content-tertiary" />
                 </Command.Item>
               ))}
             </Command.Group>
@@ -230,56 +230,56 @@ export function CommandPalette() {
 
           {/* Skills */}
           {filteredSkills.length > 0 && search.length >= 2 && (
-            <Command.Group heading="Skills" className="px-2 py-1.5 text-xs font-medium text-zinc-500">
+            <Command.Group heading="Skills" className="px-2 py-1.5 text-xs font-medium text-content-secondary">
               {filteredSkills.map((skill) => (
                 <Command.Item
                   key={skill.slug}
                   value={`skill-${skill.name}`}
                   onSelect={() => runCommand(() => router.push(`/skills/${skill.slug}`))}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-700 aria-selected:bg-emerald-50 aria-selected:text-emerald-900 dark:text-zinc-300 dark:aria-selected:bg-emerald-950 dark:aria-selected:text-emerald-100"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100"
                 >
-                  <Sparkles className="h-4 w-4 text-zinc-400" />
+                  <Sparkles className="h-4 w-4 text-content-tertiary" />
                   <div className="flex-1">
                     <span>{skill.name}</span>
-                    <span className="ml-2 text-xs text-zinc-400 truncate">{skill.description}</span>
+                    <span className="ml-2 text-xs text-content-tertiary truncate">{skill.description}</span>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-zinc-300" />
+                  <ArrowRight className="h-4 w-4 text-content-tertiary" />
                 </Command.Item>
               ))}
             </Command.Group>
           )}
 
           {/* Pages */}
-          <Command.Group heading="Pages" className="px-2 py-1.5 text-xs font-medium text-zinc-500">
+          <Command.Group heading="Pages" className="px-2 py-1.5 text-xs font-medium text-content-secondary">
             {pages.map((page) => (
               <Command.Item
                 key={page.href}
                 value={`page-${page.label} ${page.keywords.join(" ")}`}
                 onSelect={() => runCommand(() => router.push(page.href))}
-                className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-700 aria-selected:bg-emerald-50 aria-selected:text-emerald-900 dark:text-zinc-300 dark:aria-selected:bg-emerald-950 dark:aria-selected:text-emerald-100"
+                className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100"
               >
-                <page.icon className="h-4 w-4 text-zinc-400" />
+                <page.icon className="h-4 w-4 text-content-tertiary" />
                 <span className="flex-1">{page.label}</span>
-                <ArrowRight className="h-4 w-4 text-zinc-300" />
+                <ArrowRight className="h-4 w-4 text-content-tertiary" />
               </Command.Item>
             ))}
           </Command.Group>
         </Command.List>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-t border-border-default px-4 py-2 text-xs text-content-secondary">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1">
-              <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">↑↓</kbd>
+              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5">↑↓</kbd>
               navigate
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">↵</kbd>
+              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5">↵</kbd>
               select
             </span>
           </div>
           <span className="flex items-center gap-1">
-            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">⌘K</kbd>
+            <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5">⌘K</kbd>
             to open
           </span>
         </div>

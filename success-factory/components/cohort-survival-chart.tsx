@@ -68,13 +68,13 @@ export function CohortSurvivalChart({
   const bottomPadding = 32
 
   return (
-    <div className={cn("rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900", className)}>
+    <div className={cn("card-sf p-6", className)}>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <h3 className="text-lg font-semibold text-content-primary">
             Cohort Survival Curves
           </h3>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-content-secondary">
             Retention trajectory by signup cohort
           </p>
         </div>
@@ -87,7 +87,7 @@ export function CohortSurvivalChart({
           {[100, 75, 50, 25, 0].map((val) => (
             <span
               key={val}
-              className="text-xs text-zinc-400 dark:text-zinc-500"
+              className="text-xs text-content-tertiary"
             >
               {val}%
             </span>
@@ -107,7 +107,7 @@ export function CohortSurvivalChart({
           {[0, 25, 50, 75, 100].map((val) => (
             <div
               key={val}
-              className="absolute h-px w-full bg-zinc-100 dark:bg-zinc-800"
+              className="absolute h-px w-full bg-bg-tertiary"
               style={{ top: `${100 - val}%` }}
             />
           ))}
@@ -161,7 +161,7 @@ export function CohortSurvivalChart({
           {[0, 3, 6, 9, 12].map((month) => (
             <span
               key={month}
-              className="text-xs text-zinc-400 dark:text-zinc-500"
+              className="text-xs text-content-tertiary"
             >
               {month === 0 ? "Start" : `M${month}`}
             </span>
@@ -174,16 +174,16 @@ export function CohortSurvivalChart({
         {survivalData.map((cohort) => (
           <div
             key={cohort.cohort}
-            className="flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-800/50"
+            className="flex items-center gap-2 rounded-lg border border-border-default bg-bg-tertiary px-3 py-1.5"
           >
             <span
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: cohort.color }}
             />
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-content-secondary">
               {cohort.cohort}
             </span>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs text-content-secondary">
               ({cohort.retention}%)
             </span>
           </div>
@@ -191,7 +191,7 @@ export function CohortSurvivalChart({
       </div>
 
       {/* Info */}
-      <p className="mt-4 text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="mt-4 text-xs text-content-tertiary">
         Curves show projected retention over 12 months based on current cohort performance
       </p>
     </div>

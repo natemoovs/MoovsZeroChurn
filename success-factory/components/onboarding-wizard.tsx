@@ -64,14 +64,14 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
       icon: Sparkles,
       component: (
         <div className="space-y-6 text-center">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-success-400 to-success-600">
             <Zap className="h-10 w-10 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-2xl font-bold text-content-primary">
               Welcome to Success Factory
             </h2>
-            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-content-secondary">
               Your AI-powered customer success command center. Let&apos;s configure your
               workspace in just a few minutes.
             </p>
@@ -83,11 +83,11 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
               "Configure alerts",
               "Customize your dashboard",
             ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-800/50">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-border-default bg-bg-tertiary p-3">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success-100 text-sm font-medium text-success-600 dark:bg-success-900/30 dark:text-success-400">
                   {i + 1}
                 </div>
-                <span className="text-sm text-zinc-700 dark:text-zinc-300">{item}</span>
+                <span className="text-sm text-content-secondary">{item}</span>
               </div>
             ))}
           </div>
@@ -101,7 +101,7 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
       icon: Database,
       component: (
         <div className="space-y-4">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-content-secondary">
             Connect your existing tools to automatically sync customer data.
           </p>
           <div className="space-y-3">
@@ -127,7 +127,7 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
               color="zinc"
             />
           </div>
-          <p className="mt-4 text-xs text-zinc-500">
+          <p className="mt-4 text-xs text-content-secondary">
             You can skip this step and connect data sources later from Settings.
           </p>
         </div>
@@ -140,16 +140,16 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
       icon: Bell,
       component: (
         <div className="space-y-4">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-content-secondary">
             Configure how you receive alerts and updates.
           </p>
 
           <div className="space-y-3">
-            <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="rounded-lg border border-border-default p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-100">Slack Notifications</p>
-                  <p className="text-sm text-zinc-500">Get alerts in your Slack workspace</p>
+                  <p className="font-medium text-content-primary">Slack Notifications</p>
+                  <p className="text-sm text-content-secondary">Get alerts in your Slack workspace</p>
                 </div>
                 <ToggleSwitch
                   enabled={formData.slackEnabled}
@@ -163,17 +163,17 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                     placeholder="Slack Webhook URL"
                     value={formData.slackWebhook}
                     onChange={(e) => updateFormData("slackWebhook", e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                    className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm"
                   />
                 </div>
               )}
             </div>
 
-            <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="rounded-lg border border-border-default p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-100">Email Digests</p>
-                  <p className="text-sm text-zinc-500">Receive summary emails</p>
+                  <p className="font-medium text-content-primary">Email Digests</p>
+                  <p className="text-sm text-content-secondary">Receive summary emails</p>
                 </div>
                 <ToggleSwitch
                   enabled={formData.emailEnabled}
@@ -185,7 +185,7 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                   <select
                     value={formData.emailDigestFrequency}
                     onChange={(e) => updateFormData("emailDigestFrequency", e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                    className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm"
                   >
                     <option value="daily">Daily Digest</option>
                     <option value="weekly">Weekly Digest</option>
@@ -205,16 +205,16 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
       icon: Shield,
       component: (
         <div className="space-y-4">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-content-secondary">
             Configure when you want to be alerted about account changes.
           </p>
 
           <div className="space-y-3">
-            <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="rounded-lg border border-border-default p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-100">Health Score Alerts</p>
-                  <p className="text-sm text-zinc-500">Notify when accounts drop to red</p>
+                  <p className="font-medium text-content-primary">Health Score Alerts</p>
+                  <p className="text-sm text-content-secondary">Notify when accounts drop to red</p>
                 </div>
                 <ToggleSwitch
                   enabled={formData.healthAlertEnabled}
@@ -223,16 +223,16 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
               </div>
             </div>
 
-            <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="rounded-lg border border-border-default p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-100">Renewal Alerts</p>
-                  <p className="text-sm text-zinc-500">Days before renewal to alert</p>
+                  <p className="font-medium text-content-primary">Renewal Alerts</p>
+                  <p className="text-sm text-content-secondary">Days before renewal to alert</p>
                 </div>
                 <select
                   value={formData.renewalAlertDays}
                   onChange={(e) => updateFormData("renewalAlertDays", parseInt(e.target.value))}
-                  className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                  className="rounded-lg border border-border-default bg-bg-elevated px-3 py-1.5 text-sm"
                 >
                   <option value={14}>14 days</option>
                   <option value={30}>30 days</option>
@@ -242,11 +242,11 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
               </div>
             </div>
 
-            <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="rounded-lg border border-border-default p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-100">Payment Alerts</p>
-                  <p className="text-sm text-zinc-500">Alert on failed payments</p>
+                  <p className="font-medium text-content-primary">Payment Alerts</p>
+                  <p className="text-sm text-content-secondary">Alert on failed payments</p>
                 </div>
                 <ToggleSwitch
                   enabled={formData.paymentAlertEnabled}
@@ -265,13 +265,13 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
       icon: Users,
       component: (
         <div className="space-y-4">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-content-secondary">
             Help us personalize your experience.
           </p>
 
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1.5 block text-sm font-medium text-content-secondary">
                 Team/Company Name
               </label>
               <input
@@ -279,12 +279,12 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                 placeholder="e.g., Acme CS Team"
                 value={formData.teamName}
                 onChange={(e) => updateFormData("teamName", e.target.value)}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1.5 block text-sm font-medium text-content-secondary">
                 Your Role
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -300,8 +300,8 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                     className={cn(
                       "rounded-lg border px-3 py-2 text-sm font-medium transition-all",
                       formData.role === role.value
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-700"
+                        ? "border-success-500 bg-success-50 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                        : "border-border-default hover:border-border-default"
                     )}
                   >
                     {role.label}
@@ -354,20 +354,20 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-900"
+        className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-bg-elevated shadow-2xl"
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+          className="absolute right-4 top-4 rounded-lg p-1 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary"
         >
           <X className="h-5 w-5" />
         </button>
 
         {/* Progress bar */}
-        <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-800">
+        <div className="h-1 w-full bg-bg-tertiary">
           <div
-            className="h-full bg-emerald-500 transition-all duration-300"
+            className="h-full bg-success-500 transition-all duration-300"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>
@@ -380,10 +380,10 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all",
                 idx < currentStep
-                  ? "bg-emerald-500 text-white"
+                  ? "bg-success-500 text-white"
                   : idx === currentStep
-                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                  : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"
+                  ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+                  : "bg-bg-tertiary text-content-tertiary"
               )}
             >
               {idx < currentStep ? <Check className="h-4 w-4" /> : idx + 1}
@@ -407,15 +407,15 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-t border-border-default p-4">
           <button
             onClick={handleBack}
             disabled={isFirstStep}
             className={cn(
               "flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
               isFirstStep
-                ? "text-zinc-300 dark:text-zinc-600"
-                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                ? "text-content-tertiary"
+                : "text-content-secondary hover:bg-surface-hover"
             )}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -424,7 +424,7 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
 
           <button
             onClick={handleNext}
-            className="flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+            className="flex items-center gap-1 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success-700"
           >
             {isLastStep ? "Get Started" : "Continue"}
             <ChevronRight className="h-4 w-4" />
@@ -451,29 +451,29 @@ function DataSourceCard({
   const colorClasses: Record<string, string> = {
     orange: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
     purple: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-    zinc: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    zinc: "bg-bg-tertiary text-content-secondary",
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+    <div className="flex items-center justify-between rounded-lg border border-border-default p-3">
       <div className="flex items-center gap-3">
         <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", colorClasses[color])}>
           <Database className="h-5 w-5" />
         </div>
         <div>
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">{name}</p>
-          <p className="text-xs text-zinc-500">{description}</p>
+          <p className="font-medium text-content-primary">{name}</p>
+          <p className="text-xs text-content-secondary">{description}</p>
         </div>
       </div>
       {connected ? (
-        <div className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+        <div className="flex items-center gap-1 rounded-full bg-success-100 px-2 py-1 text-xs font-medium text-success-600 dark:bg-success-900/30 dark:text-success-400">
           <Check className="h-3 w-3" />
           Connected
         </div>
       ) : (
         <button
           onClick={onConnect}
-          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-border-default px-3 py-1.5 text-xs font-medium text-content-secondary transition-colors hover:bg-surface-hover"
         >
           Connect
         </button>
@@ -494,7 +494,7 @@ function ToggleSwitch({
       onClick={() => onChange(!enabled)}
       className={cn(
         "relative h-6 w-11 rounded-full transition-colors",
-        enabled ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-700"
+        enabled ? "bg-success-500" : "bg-content-tertiary"
       )}
     >
       <span
