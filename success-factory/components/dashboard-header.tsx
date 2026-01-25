@@ -1,9 +1,10 @@
 "use client"
 
-import { Search, Bell, Menu, Wifi } from "lucide-react"
+import { Search, Bell, Menu, Wifi, User } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useLiveUpdates } from "@/hooks/use-live-updates"
 
 interface DashboardHeaderProps {
@@ -12,6 +13,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const [initialAtRiskCount, setInitialAtRiskCount] = useState(0)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const { isConnected, stats } = useLiveUpdates({
     showNotifications: false, // Don't show toasts from header
   })
@@ -33,6 +35,16 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         setInitialAtRiskCount(redCount)
       })
       .catch(() => {})
+
+    // Fetch user avatar
+    fetch("/api/settings/avatar")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!mounted) return
+        setAvatarUrl(data.avatarUrl)
+      })
+      .catch(() => {})
+
     return () => {
       mounted = false
     }
@@ -98,6 +110,27 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           )}
         </Link>
         <ThemeToggle />
+
+        {/* Profile avatar */}
+        <Link
+          href="/settings"
+          className="hover:ring-primary-500/50 relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-transparent transition-all hover:ring-2"
+          title="Settings"
+        >
+          {avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt="Profile"
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          ) : (
+            <div className="bg-bg-tertiary text-content-tertiary flex h-full w-full items-center justify-center">
+              <User className="h-4 w-4" />
+            </div>
+          )}
+        </Link>
       </div>
     </header>
   )

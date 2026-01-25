@@ -25,6 +25,7 @@ import {
   ListTodo,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ProfilePicture } from "@/components/profile-picture"
 
 interface NotificationPreferences {
   channels: {
@@ -319,6 +320,11 @@ export default function SettingsPage() {
             )}
             {saved ? "Saved!" : "Save Changes"}
           </button>
+        </div>
+
+        {/* Profile Picture */}
+        <div className="card-sf p-6">
+          <ProfilePicture />
         </div>
 
         {/* Notification Channels */}

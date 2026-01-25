@@ -42,6 +42,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@sendgrid/mail": "^8.1.6",
     "@slack/web-api": "^7.13.0",
+    "@vercel/blob": "^2.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
