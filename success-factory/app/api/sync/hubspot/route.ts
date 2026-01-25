@@ -1036,6 +1036,35 @@ export async function POST(request: NextRequest) {
     console.log(`  - ${hubspotMatches} with HubSpot data, ${noHubspotRecord} without HubSpot`)
     console.log(`  - ${stripeMatches} with Stripe payment data`)
 
+    // Auto-detect onboarding milestones from synced data
+    let milestonesDetected = 0
+    let companiesWithMilestones = 0
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      const cronSecret = process.env.CRON_SECRET
+
+      if (cronSecret) {
+        const milestoneRes = await fetch(`${baseUrl}/api/onboarding/detect`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${cronSecret}`,
+          },
+        })
+
+        if (milestoneRes.ok) {
+          const milestoneData = await milestoneRes.json()
+          milestonesDetected = milestoneData.milestonesCompleted || 0
+          companiesWithMilestones = milestoneData.companiesUpdated || 0
+          console.log(
+            `  - ${milestonesDetected} onboarding milestones auto-completed for ${companiesWithMilestones} companies`
+          )
+        }
+      }
+    } catch (err) {
+      console.error("Milestone detection failed (non-critical):", err)
+    }
+
     return NextResponse.json({
       success: true,
       totalOperators: metabaseOperators.length,
@@ -1045,6 +1074,8 @@ export async function POST(request: NextRequest) {
       hubspotMatches,
       noHubspotRecord,
       stripeMatches,
+      milestonesDetected,
+      companiesWithMilestones,
     })
   } catch (error) {
     console.error("Sync failed:", error)
