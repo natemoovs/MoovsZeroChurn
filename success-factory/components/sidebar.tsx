@@ -22,6 +22,7 @@ import {
   Brain,
   Activity,
   LayoutGrid,
+  HelpCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -42,6 +43,7 @@ const navItems = [
   { href: "/skills", icon: Sparkles, label: "Skills" },
   { href: "/history", icon: History, label: "History" },
   { href: "/settings", icon: Settings, label: "Settings" },
+  { href: "/help", icon: HelpCircle, label: "Help" },
 ]
 
 interface SidebarProps {
