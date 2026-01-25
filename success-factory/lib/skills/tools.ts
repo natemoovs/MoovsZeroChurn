@@ -6,6 +6,7 @@
  */
 
 import { hubspot, metabase, notion } from "@/lib/integrations"
+import { prisma } from "@/lib/db"
 import type Anthropic from "@anthropic-ai/sdk"
 
 // ============================================================================
@@ -388,21 +389,179 @@ export async function executeTool(
 
 async function executeGetPortfolioSummary(
   input: Record<string, unknown>,
-  baseUrl: string
+  _baseUrl: string
 ): Promise<ToolResult> {
   const segment = (input.segment as string) || "all"
 
-  const response = await fetch(
-    `${baseUrl}/api/integrations/portfolio?segment=${encodeURIComponent(segment)}`,
-    { headers: { "Content-Type": "application/json" }, cache: "no-store" }
-  )
+  console.log(`[Portfolio Tool] Querying database for segment: ${segment}`)
 
-  if (!response.ok) {
-    return { success: false, error: `Portfolio API returned ${response.status}` }
+  try {
+    // Build filter based on segment
+    const where = buildPortfolioSegmentFilter(segment)
+
+    // Query synced companies from database directly
+    const companies = await prisma.hubSpotCompany.findMany({
+      where,
+      orderBy: [{ healthScore: "asc" }, { mrr: "desc" }],
+    })
+
+    // Transform to summary format
+    const summaries = companies.map((company) => ({
+      companyId: company.hubspotId,
+      companyName: company.name,
+      domain: company.domain,
+      healthScore: company.healthScore || "unknown",
+      mrr: company.mrr,
+      plan: company.plan,
+      paymentStatus: getPaymentStatusFromSubscription(company.subscriptionStatus),
+      lastActivity: company.lastLoginAt?.toISOString() || company.hubspotUpdatedAt?.toISOString() || null,
+      contactCount: company.primaryContactEmail ? 1 : 0,
+      riskSignals: company.riskSignals,
+      positiveSignals: company.positiveSignals,
+      customerSince: company.hubspotCreatedAt?.toISOString() || null,
+      totalTrips: company.totalTrips || undefined,
+      customerSegment: getSegmentLabel(company.plan),
+      ownerId: company.ownerId,
+      ownerName: company.ownerName,
+      tripsLast30Days: company.tripsLast30Days,
+      daysSinceLastLogin: company.daysSinceLastLogin,
+      engagementStatus: company.engagementStatus,
+      vehiclesTotal: company.vehiclesTotal,
+      membersCount: company.membersCount,
+      driversCount: company.driversCount,
+      setupScore: company.setupScore,
+      subscriptionLifetimeDays: company.subscriptionLifetimeDays,
+      dealStage: company.dealStage,
+      dealAmount: company.dealAmount,
+    }))
+
+    // Sort by health score (red first, then yellow, then green)
+    summaries.sort((a, b) => {
+      const order: Record<string, number> = { red: 0, yellow: 1, unknown: 2, green: 3 }
+      return (order[a.healthScore] ?? 2) - (order[b.healthScore] ?? 2)
+    })
+
+    console.log(`[Portfolio Tool] Got ${summaries.length} accounts`)
+    return {
+      success: true,
+      data: { summaries, total: summaries.length, segment },
+    }
+  } catch (error) {
+    console.error(`[Portfolio Tool] Database error:`, error)
+    return {
+      success: false,
+      error: `Failed to fetch portfolio: ${error instanceof Error ? error.message : "Unknown error"}`,
+    }
+  }
+}
+
+// Helper functions for portfolio query
+function buildPortfolioSegmentFilter(segment: string): Record<string, unknown> {
+  // Base filter: exclude churned/terminated accounts with no MRR
+  const excludeChurned = {
+    NOT: {
+      AND: [
+        {
+          OR: [
+            { subscriptionStatus: { contains: "churn", mode: "insensitive" } },
+            { subscriptionStatus: { contains: "terminated", mode: "insensitive" } },
+            { subscriptionStatus: { contains: "cancelled", mode: "insensitive" } },
+            { subscriptionStatus: { contains: "canceled", mode: "insensitive" } },
+          ],
+        },
+        { OR: [{ mrr: null }, { mrr: { lte: 0 } }] },
+      ],
+    },
   }
 
-  const data = await response.json()
-  return { success: true, data }
+  // Special case: show churned accounts
+  if (segment.toLowerCase() === "churned") {
+    return {
+      OR: [
+        { subscriptionStatus: { contains: "churn", mode: "insensitive" } },
+        { subscriptionStatus: { contains: "terminated", mode: "insensitive" } },
+        { subscriptionStatus: { contains: "cancelled", mode: "insensitive" } },
+        { subscriptionStatus: { contains: "canceled", mode: "insensitive" } },
+      ],
+    }
+  }
+
+  if (segment === "all") return excludeChurned
+
+  switch (segment.toLowerCase()) {
+    case "enterprise":
+      return {
+        AND: [
+          excludeChurned,
+          {
+            OR: [
+              { customerSegment: "enterprise" },
+              { plan: { contains: "vip", mode: "insensitive" } },
+              { plan: { contains: "elite", mode: "insensitive" } },
+            ],
+          },
+        ],
+      }
+    case "mid-market":
+      return {
+        AND: [
+          excludeChurned,
+          {
+            OR: [
+              { customerSegment: "mid_market" },
+              {
+                AND: [
+                  { plan: { contains: "pro", mode: "insensitive" } },
+                  { NOT: { plan: { contains: "vip", mode: "insensitive" } } },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+    case "smb":
+      return {
+        AND: [
+          excludeChurned,
+          {
+            OR: [
+              { customerSegment: "smb" },
+              { plan: { contains: "standard", mode: "insensitive" } },
+              { plan: { contains: "starter", mode: "insensitive" } },
+            ],
+          },
+        ],
+      }
+    case "at-risk":
+    case "at_risk":
+      return { AND: [excludeChurned, { healthScore: "red" }] }
+    case "healthy":
+      return { AND: [excludeChurned, { healthScore: "green" }] }
+    case "warning":
+      return { AND: [excludeChurned, { healthScore: "yellow" }] }
+    default:
+      return excludeChurned
+  }
+}
+
+function getPaymentStatusFromSubscription(
+  status: string | null
+): "current" | "overdue" | "at_risk" | "unknown" {
+  if (!status) return "unknown"
+  const s = status.toLowerCase()
+  if (s === "active" || s === "paid") return "current"
+  if (s === "past_due" || s === "overdue") return "overdue"
+  if (s === "canceled" || s === "churned") return "at_risk"
+  return "unknown"
+}
+
+function getSegmentLabel(plan: string | null): string {
+  if (!plan) return "Free"
+  const p = plan.toLowerCase()
+  if (p.includes("vip") || p.includes("elite") || p.includes("enterprise")) return "Enterprise"
+  if (p.includes("pro")) return "Mid-Market"
+  if (p.includes("free")) return "Free"
+  return "SMB"
 }
 
 async function executeSearchHubSpotCompanies(input: Record<string, unknown>): Promise<ToolResult> {

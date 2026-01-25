@@ -53,7 +53,12 @@ export async function POST(request: NextRequest) {
     }
 
     const anthropic = getAnthropicClient()
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    // Use request origin for internal API calls (works in both local and production)
+    const origin = request.headers.get("origin") || request.headers.get("host")
+    const protocol = request.headers.get("x-forwarded-proto") || "https"
+    const baseUrl = origin?.startsWith("http")
+      ? origin
+      : `${protocol}://${origin || "localhost:3000"}`
 
     // Convert to Anthropic message format
     const anthropicMessages: Anthropic.MessageParam[] = messages.map((m) => ({
