@@ -568,11 +568,12 @@ export default function AccountDetailPage() {
                       </div>
                       <p className={cn(
                         "mt-1 text-lg font-semibold",
-                        account.setupScore >= 70 ? "text-success-600 dark:text-success-500" :
-                        account.setupScore >= 40 ? "text-warning-600 dark:text-warning-500" :
+                        // Setup score is 0-30 scale: >= 25 (83%) = good, >= 15 (50%) = medium
+                        account.setupScore >= 25 ? "text-success-600 dark:text-success-500" :
+                        account.setupScore >= 15 ? "text-warning-600 dark:text-warning-500" :
                         "text-error-600 dark:text-error-500"
                       )}>
-                        {account.setupScore}%
+                        {Math.round((account.setupScore / 30) * 100)}%
                       </p>
                     </div>
                   )}
@@ -1019,7 +1020,7 @@ function JourneyStageCard({
   }
 
   return (
-    <div className="card-sf overflow-visible p-5">
+    <div className="card-sf relative p-5" style={{ overflow: 'visible' }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Route className="text-content-tertiary h-5 w-5" />
@@ -1048,7 +1049,7 @@ function JourneyStageCard({
           </button>
 
           {isOpen && (
-            <div className="border-border-default bg-bg-elevated absolute bottom-full right-0 z-50 mb-1 w-48 rounded-lg border py-1 shadow-lg">
+            <div className="border-border-default bg-bg-elevated absolute right-0 top-full z-[100] mt-1 w-48 rounded-lg border py-1 shadow-lg">
               {JOURNEY_STAGES.map((stage) => (
                 <button
                   key={stage.id}
