@@ -297,7 +297,7 @@ export function getSegmentRecommendations(
   riskSignals: string[],
   healthScore: number
 ): string[] {
-  const profile = getSegmentProfile(segment)
+  const _profile = getSegmentProfile(segment) // Available for future threshold-based recommendations
   const recommendations: string[] = []
 
   // Check for segment-specific churn indicators

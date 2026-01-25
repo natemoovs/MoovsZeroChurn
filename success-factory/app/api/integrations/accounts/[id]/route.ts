@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { hubspot, metabase, stripe } from "@/lib/integrations"
 import { prisma } from "@/lib/db"
-import type { StripeSubscription, StripeInvoice, StripeCharge } from "@/lib/integrations"
 
 // Metabase query IDs
 const ACCOUNT_DATA_QUERY_ID = 948

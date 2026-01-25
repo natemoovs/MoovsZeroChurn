@@ -58,7 +58,6 @@ export function CohortSurvivalChart({ cohorts, className }: CohortSurvivalChartP
 
   const maxPeriods = 12
   const chartHeight = 280
-  const chartWidth = "100%"
   const leftPadding = 48
   const rightPadding = 16
   const topPadding = 20

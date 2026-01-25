@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import {
-  getAnthropicClient,
-  createMessage,
-  AI_MODEL,
-  TOKEN_LIMITS,
-  getErrorResponse,
-} from "@/lib/ai"
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS } from "@/lib/ai"
 
 // Playbook action type
 interface PlaybookAction {

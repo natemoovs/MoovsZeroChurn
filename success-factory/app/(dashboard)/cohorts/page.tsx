@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { CohortSurvivalChart } from "@/components/cohort-survival-chart"
 import {
@@ -78,11 +78,7 @@ export default function CohortsPage() {
   const [sortField, setSortField] = useState<SortField>("cohort")
   const [sortDir, setSortDir] = useState<SortDir>("desc")
 
-  useEffect(() => {
-    fetchCohorts()
-  }, [viewMode])
-
-  async function fetchCohorts() {
+  const fetchCohorts = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch(`/api/cohorts?groupBy=${viewMode}`)
@@ -94,7 +90,11 @@ export default function CohortsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [viewMode])
+
+  useEffect(() => {
+    fetchCohorts()
+  }, [fetchCohorts])
 
   async function syncCohorts() {
     setSyncing(true)

@@ -100,22 +100,21 @@ export default function EngagementPage() {
   const [selectedAccount, setSelectedAccount] = useState<EngagementMetrics | null>(null)
 
   useEffect(() => {
+    async function fetchEngagement() {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/engagement?sortBy=${sortBy}`)
+        const data = await res.json()
+        setMetrics(data.metrics || [])
+        setSummary(data.summary || null)
+      } catch (error) {
+        console.error("Failed to fetch engagement:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
     fetchEngagement()
   }, [sortBy])
-
-  async function fetchEngagement() {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/engagement?sortBy=${sortBy}`)
-      const data = await res.json()
-      setMetrics(data.metrics || [])
-      setSummary(data.summary || null)
-    } catch (error) {
-      console.error("Failed to fetch engagement:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const sortOptions: { value: SortOption; label: string }[] = [
     { value: "score", label: "Engagement Score" },

@@ -273,7 +273,7 @@ export async function GET() {
       })),
       snapshotsToday: recentSnapshots.length,
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to get status" }, { status: 500 })
   }
 }

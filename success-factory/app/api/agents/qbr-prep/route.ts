@@ -301,7 +301,7 @@ export async function GET() {
         status: t.status,
       })),
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to get status" }, { status: 500 })
   }
 }

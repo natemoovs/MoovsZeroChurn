@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { ExpansionOpportunity } from "@prisma/client"
 import { requireAuth } from "@/lib/auth/api-middleware"
 
 /**

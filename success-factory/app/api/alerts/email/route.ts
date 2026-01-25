@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db"
 // Supports Resend API or generic SMTP via SMTP_* env vars
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const SMTP_HOST = process.env.SMTP_HOST
-const SMTP_PORT = process.env.SMTP_PORT
 const SMTP_USER = process.env.SMTP_USER
 const SMTP_PASS = process.env.SMTP_PASS
 const EMAIL_FROM = process.env.EMAIL_FROM || "alerts@successfactory.app"

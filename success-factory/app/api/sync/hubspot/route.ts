@@ -222,7 +222,7 @@ function calculateWeightedHealthScore(
   // This affects what positive signals we can add
   // =========================================================================
   const isChurned = mbData?.churnStatus?.toLowerCase().includes("churn") || false
-  const isInactive = mbData?.engagementStatus?.toLowerCase().includes("inactive") || false
+  const _isInactive = mbData?.engagementStatus?.toLowerCase().includes("inactive") || false // Used for future engagement analysis
   const isSeverelyInactive = (mbData?.daysSinceLastActivity ?? 0) > 90
 
   // =========================================================================

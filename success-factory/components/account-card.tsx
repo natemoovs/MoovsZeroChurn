@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { HealthBadge, HealthDot } from "./health-badge"
 import { Building2, DollarSign, AlertTriangle, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 type HealthScore = "green" | "yellow" | "red" | "unknown"
 

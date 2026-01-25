@@ -9,7 +9,6 @@ import {
   ThumbsUp,
   ThumbsDown,
   Mail,
-  Phone,
   Calendar,
   CreditCard,
   HelpCircle,

@@ -33,28 +33,27 @@ export function TaskComments({ taskId, notionPageId, notionUrl, className }: Tas
 
   useEffect(() => {
     if (expanded && notionPageId) {
+      async function fetchComments() {
+        setLoading(true)
+        setError(null)
+        try {
+          const res = await fetch(`/api/tasks/${taskId}/comments`)
+          const data = await res.json()
+          if (data.error) {
+            setError(data.error)
+          } else {
+            setComments(data.comments || [])
+          }
+        } catch (err) {
+          setError("Failed to load comments")
+          console.error("Failed to fetch comments:", err)
+        } finally {
+          setLoading(false)
+        }
+      }
       fetchComments()
     }
   }, [expanded, notionPageId, taskId])
-
-  async function fetchComments() {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch(`/api/tasks/${taskId}/comments`)
-      const data = await res.json()
-      if (data.error) {
-        setError(data.error)
-      } else {
-        setComments(data.comments || [])
-      }
-    } catch (err) {
-      setError("Failed to load comments")
-      console.error("Failed to fetch comments:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

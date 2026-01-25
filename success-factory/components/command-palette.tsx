@@ -20,7 +20,6 @@ import {
   Settings,
   Search,
   Building2,
-  FileText,
   ArrowRight,
 } from "lucide-react"
 

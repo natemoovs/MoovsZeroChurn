@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
-  ChevronRight,
   Sparkles,
   RefreshCw,
 } from "lucide-react"
@@ -148,13 +147,6 @@ export default function ExpansionPage() {
     { value: "in_progress", label: "In Progress", count: stats?.inProgress || 0 },
     { value: "won", label: "Won", count: stats?.won || 0 },
   ]
-
-  // Calculate NRR
-  const nrr = stats
-    ? (((stats.totalWonValue || 0) + (stats.totalPotentialValue || 0)) /
-        Math.max(stats.totalPotentialValue || 1, 1)) *
-      100
-    : 0
 
   return (
     <DashboardLayout>

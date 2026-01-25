@@ -128,20 +128,23 @@ export function DashboardBuilder({
   currentWidgets,
 }: DashboardBuilderProps) {
   const [widgets, setWidgets] = useState<Widget[]>([])
-  const [draggedWidget, setDraggedWidget] = useState<string | null>(null)
+  const [draggedWidget, _setDraggedWidget] = useState<string | null>(null)
 
   useEffect(() => {
-    if (currentWidgets?.length) {
-      setWidgets(currentWidgets)
-    } else {
-      // Default widgets
-      setWidgets(
-        AVAILABLE_WIDGETS.slice(0, 6).map((w, i) => ({
+    let mounted = true
+    // Initialize widgets from props or defaults
+    const initialWidgets = currentWidgets?.length
+      ? currentWidgets
+      : AVAILABLE_WIDGETS.slice(0, 6).map((w, i) => ({
           ...w,
           enabled: true,
           order: i,
         }))
-      )
+    if (mounted) {
+      setWidgets(initialWidgets)
+    }
+    return () => {
+      mounted = false
     }
   }, [currentWidgets, isOpen])
 
@@ -188,7 +191,8 @@ export function DashboardBuilder({
 
   const enabledWidgets = widgets.filter((w) => w.enabled).sort((a, b) => a.order - b.order)
   const disabledWidgetIds = new Set(widgets.filter((w) => !w.enabled).map((w) => w.id))
-  const availableToAdd = AVAILABLE_WIDGETS.filter(
+  // Available widgets for future add-widget functionality
+  const _availableToAdd = AVAILABLE_WIDGETS.filter(
     (w) => !widgets.some((ew) => ew.id === w.id) || disabledWidgetIds.has(w.id)
   )
 

@@ -6,7 +6,6 @@ import {
   classifyServiceType,
   evaluatePlaybookTriggers,
   getPlaybookActions,
-  PlaybookTrigger,
 } from "@/lib/segments"
 
 /**

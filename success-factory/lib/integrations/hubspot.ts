@@ -420,7 +420,6 @@ export async function listCustomers(): Promise<HubSpotCompany[]> {
 
   const allCustomers: HubSpotCompany[] = []
   let after: string | undefined
-  let pageCount = 0
 
   // Use search API with filter for lifecycle stage = customer
   while (true) {
@@ -453,7 +452,6 @@ export async function listCustomers(): Promise<HubSpotCompany[]> {
     })
 
     allCustomers.push(...result.results)
-    pageCount++
 
     if (!result.paging?.next?.after) {
       break // No more pages

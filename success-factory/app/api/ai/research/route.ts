@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import {
-  getAnthropicClient,
-  createMessage,
-  AI_MODEL,
-  TOKEN_LIMITS,
-  getErrorResponse,
-} from "@/lib/ai"
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS } from "@/lib/ai"
 
 /**
  * Deep Customer Research Agent

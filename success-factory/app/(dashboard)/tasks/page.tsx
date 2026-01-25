@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import Link from "next/link"
 import { useHotkeys } from "react-hotkeys-hook"
 import { DashboardLayout } from "@/components/dashboard-layout"
-import { HealthBadge } from "@/components/health-badge"
 import {
   CheckCircle2,
   Circle,
@@ -222,10 +221,24 @@ export default function TasksPage() {
     }
   }
 
+  const fetchTasks = useCallback(async () => {
+    try {
+      const statusParam = filter !== "all" ? `?status=${filter}` : ""
+      const res = await fetch(`/api/tasks${statusParam}`)
+      const data = await res.json()
+      setTasks(data.tasks || [])
+      setStats(data.stats || null)
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error)
+    } finally {
+      setLoading(false)
+    }
+  }, [filter])
+
   useEffect(() => {
     fetchTasks()
     fetchNotionUsers()
-  }, [filter])
+  }, [fetchTasks])
 
   // Helper function to get assignee display name
   // Priority: notionAssigneeName > lookup by notionAssigneeId > ownerEmail > "Unassigned"
@@ -274,20 +287,6 @@ export default function TasksPage() {
 
     return true
   })
-
-  async function fetchTasks() {
-    try {
-      const statusParam = filter !== "all" ? `?status=${filter}` : ""
-      const res = await fetch(`/api/tasks${statusParam}`)
-      const data = await res.json()
-      setTasks(data.tasks || [])
-      setStats(data.stats || null)
-    } catch (error) {
-      console.error("Failed to fetch tasks:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function fetchNotionUsers() {
     try {

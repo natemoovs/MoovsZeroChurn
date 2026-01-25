@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useState, useEffect } from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -37,7 +37,6 @@ function isCompanyQuestion(id: string, question: string): boolean {
 
 function SkillPageContent() {
   const params = useParams()
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [skill, setSkill] = useState<Skill | null>(null)
   const [currentStep, setCurrentStep] = useState(0)

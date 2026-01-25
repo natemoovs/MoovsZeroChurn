@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import {
   classifySegment,
-  getSegmentProfile,
   getSegmentRecommendations,
   getSegmentDisplayName,
   CustomerSegment,
@@ -427,7 +426,7 @@ function calculatePriority(
 function generatePortfolioInsights(
   accounts: ChurnRiskAccount[],
   byCategory: Record<string, number>,
-  bySegment: Record<string, number> = {}
+  _bySegment: Record<string, number> = {} // Reserved for future segment-based insights
 ): string[] {
   const insights: string[] = []
 

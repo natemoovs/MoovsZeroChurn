@@ -8,7 +8,6 @@ import {
   ChevronUp,
   AlertTriangle,
   TrendingUp,
-  TrendingDown,
   Lightbulb,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"

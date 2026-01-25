@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
     )[0]
 
     return NextResponse.json({
-      csms: csmStats.map(({ score, ...rest }) => rest), // Remove internal score
+      csms: csmStats.map(({ score: _score, ...rest }) => rest), // Remove internal score
       period,
       highlights: {
         topSaver: topSaver?.name || "N/A",

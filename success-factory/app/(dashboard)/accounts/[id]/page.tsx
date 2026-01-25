@@ -14,7 +14,6 @@ import {
   Building2,
   Globe,
   Phone,
-  Mail,
   MapPin,
   Calendar,
   DollarSign,
@@ -26,9 +25,6 @@ import {
   CheckCircle,
   Clock,
   FileText,
-  PhoneCall,
-  Video,
-  Briefcase,
   ExternalLink,
   Sparkles,
   RefreshCw,
@@ -37,7 +33,6 @@ import {
   Route,
   ChevronDown,
   Database,
-  Info,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -247,7 +242,7 @@ export default function AccountDetailPage() {
         }),
       })
       if (res.ok) {
-        const updated = await res.json()
+        await res.json()
         // Refetch journey with history
         const journeyRes = await fetch(`/api/journey/${account.id}`)
         if (journeyRes.ok) {
@@ -674,74 +669,6 @@ function MetricCard({
     </div>
   )
 }
-
-function TimelineItem({
-  event,
-}: {
-  event: {
-    id: string
-    type: "note" | "email" | "call" | "meeting" | "deal" | "health_change"
-    title: string
-    description?: string
-    timestamp: string
-  }
-}) {
-  const icons = {
-    note: FileText,
-    email: Mail,
-    call: PhoneCall,
-    meeting: Video,
-    deal: Briefcase,
-    health_change: TrendingUp,
-  }
-
-  const colors = {
-    note: "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400",
-    email: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
-    call: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
-    meeting: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
-    deal: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
-    health_change: "bg-bg-tertiary text-content-secondary",
-  }
-
-  const Icon = icons[event.type]
-
-  const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 0) return "Today"
-    if (diffDays === 1) return "Yesterday"
-    if (diffDays < 7) return `${diffDays} days ago`
-    return date.toLocaleDateString()
-  }
-
-  return (
-    <div className="relative flex gap-4 pb-6">
-      <div
-        className={cn(
-          "relative z-10 flex h-10 w-10 items-center justify-center rounded-full",
-          colors[event.type]
-        )}
-      >
-        <Icon className="h-5 w-5" />
-      </div>
-      <div className="flex-1 pt-1">
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-content-primary font-medium">{event.title}</p>
-          <span className="text-content-secondary text-sm whitespace-nowrap">
-            {formatDate(event.timestamp)}
-          </span>
-        </div>
-        {event.description && (
-          <p className="text-content-secondary mt-1 text-sm">{event.description}</p>
-        )}
-      </div>
-    </div>
-  )
-}
-
 function HealthTrendCard({ history }: { history: HealthHistory }) {
   const { snapshots, trend, distribution, changes } = history
   const totalSnapshots =
@@ -910,8 +837,6 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
 
 function JourneyStageCard({
   journey,
-  companyId,
-  companyName,
   onUpdate,
 }: {
   journey: CustomerJourney | null

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   X,
   ExternalLink,
@@ -81,7 +81,7 @@ export function TaskDetailModal({
   notionPageId,
   taskTitle,
   taskId,
-  companyId: initialCompanyId,
+  companyId: _initialCompanyId,
   companyName: initialCompanyName,
   onUpdate,
 }: TaskDetailModalProps) {
@@ -100,13 +100,7 @@ export function TaskDetailModal({
   const [currentCompanyName, setCurrentCompanyName] = useState(initialCompanyName || "")
   const [updatingCompany, setUpdatingCompany] = useState(false)
 
-  useEffect(() => {
-    if (isOpen && notionPageId) {
-      fetchPageData()
-    }
-  }, [isOpen, notionPageId])
-
-  async function fetchPageData() {
+  const fetchPageData = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -123,7 +117,13 @@ export function TaskDetailModal({
     } finally {
       setLoading(false)
     }
-  }
+  }, [notionPageId])
+
+  useEffect(() => {
+    if (isOpen && notionPageId) {
+      fetchPageData()
+    }
+  }, [isOpen, notionPageId, fetchPageData])
 
   async function handlePostComment() {
     if (!newComment.trim() || postingComment) return

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   X,
@@ -32,7 +32,7 @@ interface Step {
 
 export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
-  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
+  const [_completedSteps, setCompletedSteps] = useState<Set<string>>(new Set()) // Tracks step completion for future progress display
   const [formData, setFormData] = useState({
     // Data source connections
     hubspotConnected: false,

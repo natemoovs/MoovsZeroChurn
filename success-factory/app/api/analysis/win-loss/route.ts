@@ -58,16 +58,8 @@ export async function GET(request: NextRequest) {
       {} as Record<string, number>
     )
 
-    // Analyze churn by segment
-    const churnBySegment = churns.reduce(
-      (acc, c) => {
-        // Would need to cross-reference with company data
-        const segment = "unknown" // Placeholder
-        acc[segment] = (acc[segment] || 0) + 1
-        return acc
-      },
-      {} as Record<string, number>
-    )
+    // Note: Churn by segment analysis is a placeholder for future implementation
+    // Would need to cross-reference with company data to determine segments
 
     // Calculate save rate
     const atRiskTotal = saves.length + churns.length

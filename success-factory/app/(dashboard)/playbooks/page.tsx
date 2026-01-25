@@ -7,7 +7,6 @@ import {
   Pause,
   Plus,
   Trash2,
-  ChevronRight,
   Zap,
   CheckSquare,
   AlertTriangle,

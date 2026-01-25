@@ -5,7 +5,6 @@ import {
   getSegmentDisplayName,
   identifyPricingTier,
   checkPlanMisalignment,
-  identifyUpsellOpportunities,
   calculateExpansionPotential,
   PRICING_TIERS,
 } from "@/lib/segments"

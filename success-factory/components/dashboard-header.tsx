@@ -11,30 +11,31 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
-  const [atRiskCount, setAtRiskCount] = useState(0)
+  const [initialAtRiskCount, setInitialAtRiskCount] = useState(0)
   const { isConnected, stats } = useLiveUpdates({
     showNotifications: false, // Don't show toasts from header
   })
 
-  // Update at-risk count from live stats if available
-  useEffect(() => {
-    if (stats?.atRiskAccounts !== undefined) {
-      setAtRiskCount(stats.atRiskAccounts)
-    }
-  }, [stats])
+  // Use live stats if available, otherwise use initial fetch
+  const atRiskCount = stats?.atRiskAccounts ?? initialAtRiskCount
 
   useEffect(() => {
-    // Fetch at-risk account count for notification badge
+    // Fetch at-risk account count for notification badge (initial load)
+    let mounted = true
     fetch("/api/integrations/portfolio?segment=all")
       .then((res) => res.json())
       .then((data) => {
+        if (!mounted) return
         const summaries = data.summaries || []
         const redCount = summaries.filter(
           (s: { healthScore: string }) => s.healthScore === "red"
         ).length
-        setAtRiskCount(redCount)
+        setInitialAtRiskCount(redCount)
       })
       .catch(() => {})
+    return () => {
+      mounted = false
+    }
   }, [])
 
   return (

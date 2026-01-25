@@ -254,7 +254,7 @@ export async function GET() {
         {} as Record<string, number>
       ),
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to get status" }, { status: 500 })
   }
 }

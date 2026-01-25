@@ -252,7 +252,7 @@ export async function GET() {
         milestone: (t.metadata as Record<string, unknown>)?.milestone,
       })),
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to get status" }, { status: 500 })
   }
 }

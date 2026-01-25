@@ -262,7 +262,7 @@ async function handleTask(title: string, userId: string, userName: string): Prom
   }
 
   // Create task
-  const task = await prisma.task.create({
+  await prisma.task.create({
     data: {
       companyId: "slack",
       companyName: "Quick Task",

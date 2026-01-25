@@ -12,7 +12,6 @@ import {
   Star,
   Flame,
   Target,
-  Award,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -47,21 +46,20 @@ export default function LeaderboardPage() {
   const [period, setPeriod] = useState<"week" | "month" | "quarter">("month")
 
   useEffect(() => {
+    async function fetchLeaderboard() {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/leaderboard?period=${period}`)
+        const data = await res.json()
+        setData(data)
+      } catch (error) {
+        console.error("Failed to fetch leaderboard:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
     fetchLeaderboard()
   }, [period])
-
-  async function fetchLeaderboard() {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/leaderboard?period=${period}`)
-      const data = await res.json()
-      setData(data)
-    } catch (error) {
-      console.error("Failed to fetch leaderboard:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const metrics = [
     { key: "savedAccounts", label: "Saves", icon: Heart, color: "text-error-500" },

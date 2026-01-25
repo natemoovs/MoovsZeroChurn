@@ -290,7 +290,7 @@ export async function GET() {
         recoveryRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
       },
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to get status" }, { status: 500 })
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import {
   User,
   Crown,
@@ -106,7 +106,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
   const [showAddModal, setShowAddModal] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  const fetchStakeholders = async () => {
+  const fetchStakeholders = useCallback(async () => {
     try {
       const res = await fetch(`/api/stakeholders/${companyId}`)
       const json = await res.json()
@@ -117,11 +117,11 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
       console.error("Failed to fetch stakeholders:", e)
     }
     setLoading(false)
-  }
+  }, [companyId])
 
   useEffect(() => {
-    fetchStakeholders()
-  }, [companyId])
+    void fetchStakeholders()
+  }, [fetchStakeholders])
 
   if (loading) {
     return (

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hubspot, metabase, stripe, getConfiguredIntegrations } from "@/lib/integrations"
+import { hubspot, metabase, getConfiguredIntegrations } from "@/lib/integrations"
 
 /**
  * Smart Alert Prioritization

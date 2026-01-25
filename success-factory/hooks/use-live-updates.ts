@@ -55,6 +55,7 @@ export function useLiveUpdates(options: UseLiveUpdatesOptions = {}) {
   const [recentEvents, setRecentEvents] = useState<Array<HealthChangeEvent | NewTaskEvent>>([])
   const eventSourceRef = useRef<EventSource | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const connectRef = useRef<(() => (() => void) | void) | null>(null)
 
   const connect = useCallback(() => {
     if (!enabled || typeof window === "undefined") return
@@ -78,7 +79,7 @@ export function useLiveUpdates(options: UseLiveUpdatesOptions = {}) {
 
       // Attempt reconnect after 5 seconds
       reconnectTimeoutRef.current = setTimeout(() => {
-        connect()
+        connectRef.current?.()
       }, 5000)
     }
 
@@ -142,6 +143,11 @@ export function useLiveUpdates(options: UseLiveUpdatesOptions = {}) {
       eventSource.close()
     }
   }, [enabled, showNotifications, onHealthChange, onNewTask, onStatsUpdate])
+
+  // Keep ref updated so reconnect uses latest connect function
+  useEffect(() => {
+    connectRef.current = connect
+  }, [connect])
 
   useEffect(() => {
     const cleanup = connect()

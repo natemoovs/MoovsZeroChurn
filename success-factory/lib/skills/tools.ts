@@ -439,7 +439,7 @@ async function executeSearchNotionTickets(input: Record<string, unknown>): Promi
 async function executeGetCustomerUsage(input: Record<string, unknown>): Promise<ToolResult> {
   const operatorId = input.operatorId as string | undefined
   const stripeAccountId = input.stripeAccountId as string | undefined
-  const days = (input.days as number) || 90
+  const _days = (input.days as number) || 90 // Available for future date-range filtering
 
   if (!operatorId && !stripeAccountId) {
     return { success: false, error: "Either operatorId or stripeAccountId is required" }

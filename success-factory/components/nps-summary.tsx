@@ -6,7 +6,6 @@ import {
   ThumbsDown,
   Minus,
   Loader2,
-  Send,
   MessageSquare,
   CheckCircle,
   Clock,
@@ -53,7 +52,7 @@ interface NPSSummaryProps {
 export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps) {
   const [data, setData] = useState<NPSSummaryData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
+  const [_sending, _setSending] = useState(false) // Reserved for future send NPS survey feature
   const [followingUp, setFollowingUp] = useState<string | null>(null)
 
   useEffect(() => {

@@ -10,8 +10,6 @@ import {
   TrendingDown,
   MessageSquare,
   Calendar,
-  DollarSign,
-  UserPlus,
   RefreshCw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -41,25 +39,24 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchActivities()
-  }, [companyId])
+    async function fetchActivities() {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams()
+        if (companyId) params.set("companyId", companyId)
+        params.set("limit", limit.toString())
 
-  async function fetchActivities() {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams()
-      if (companyId) params.set("companyId", companyId)
-      params.set("limit", limit.toString())
-
-      const res = await fetch(`/api/activity?${params}`)
-      const data = await res.json()
-      setActivities(data.activities || [])
-    } catch (error) {
-      console.error("Failed to fetch activities:", error)
-    } finally {
-      setLoading(false)
+        const res = await fetch(`/api/activity?${params}`)
+        const data = await res.json()
+        setActivities(data.activities || [])
+      } catch (error) {
+        console.error("Failed to fetch activities:", error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+    fetchActivities()
+  }, [companyId, limit])
 
   const getIcon = (type: ActivityItem["type"]) => {
     switch (type) {
