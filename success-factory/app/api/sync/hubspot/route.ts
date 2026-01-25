@@ -415,6 +415,36 @@ function calculateWeightedHealthScore(
       }
     }
 
+    // Fleet/Product adoption signals - indicates platform stickiness
+    const hasFleet = (mbData.vehiclesTotal ?? 0) > 0
+    const hasTeam = (mbData.membersCount ?? 0) > 1 || (mbData.driversCount ?? 0) > 0
+
+    if (hasFleet && hasTeam && !isChurned) {
+      // Well-adopted platform
+      engagementScore += 5
+      if ((mbData.vehiclesTotal ?? 0) >= 10) {
+        positiveSignals.push(`${mbData.vehiclesTotal} vehicles`)
+      }
+      if ((mbData.driversCount ?? 0) >= 5) {
+        positiveSignals.push(`${mbData.driversCount} drivers`)
+      }
+    } else if (!hasFleet && !hasTeam && mbData.totalTrips > 0) {
+      // Using product but no fleet setup - adoption risk
+      engagementScore -= 5
+      riskSignals.push("Limited platform adoption")
+    }
+
+    // Setup score - onboarding completion
+    if (mbData.setupScore !== null && mbData.setupScore !== undefined) {
+      if (mbData.setupScore < 30) {
+        engagementScore -= 10
+        riskSignals.push(`Low setup completion (${mbData.setupScore}%)`)
+      } else if (mbData.setupScore >= 80 && !isChurned) {
+        engagementScore += 5
+        positiveSignals.push("Fully onboarded")
+      }
+    }
+
     // Churn status - this is definitive
     if (isChurned) {
       engagementScore -= 30
@@ -484,6 +514,51 @@ function calculateWeightedHealthScore(
           riskSignals.push("Free + no usage")
         }
       }
+    }
+
+    // Subscription tenure - longer relationships are stickier
+    if (mbData.subscriptionLifetimeDays !== null && mbData.subscriptionLifetimeDays !== undefined) {
+      if (mbData.subscriptionLifetimeDays >= 365 && !isChurned) {
+        growthScore += 10
+        positiveSignals.push("1+ year customer")
+      } else if (mbData.subscriptionLifetimeDays >= 180 && !isChurned) {
+        growthScore += 5
+      } else if (mbData.subscriptionLifetimeDays < 90 && mbData.engagementStatus?.toLowerCase().includes("inactive")) {
+        // New customer going inactive early - high risk
+        growthScore -= 15
+        riskSignals.push("Early churn risk (new + inactive)")
+      }
+    }
+
+    // Deal intelligence - expansion potential vs churn risk
+    if (mbData.dealStage) {
+      const stageLower = mbData.dealStage.toLowerCase()
+      if (stageLower.includes("expansion") || stageLower.includes("upsell")) {
+        growthScore += 15
+        if (!isChurned) {
+          positiveSignals.push("Expansion opportunity")
+        }
+      } else if (stageLower.includes("churn") || stageLower.includes("cancel")) {
+        growthScore -= 20
+        riskSignals.push(`Deal stage: ${mbData.dealStage}`)
+      } else if (stageLower.includes("renewal")) {
+        // Renewal stage - depends on other signals
+        if (mbData.engagementStatus?.toLowerCase().includes("active")) {
+          growthScore += 5
+        }
+      }
+    }
+
+    // Large deal amount indicates strategic account
+    if (mbData.dealAmount && mbData.dealAmount >= 5000 && !isChurned) {
+      growthScore += 10
+      positiveSignals.push(`$${Math.round(mbData.dealAmount / 1000)}k deal`)
+    }
+
+    // Fleet size as growth indicator
+    if ((mbData.vehiclesTotal ?? 0) >= 20 && !isChurned) {
+      growthScore += 5
+      positiveSignals.push("Large fleet")
     }
   }
 
