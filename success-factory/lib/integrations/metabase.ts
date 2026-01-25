@@ -203,6 +203,54 @@ export interface MetabaseCard {
   collection_id: number | null
 }
 
+export interface MetabaseDashboard {
+  id: number
+  name: string
+  description: string | null
+  collection_id: number | null
+  creator_id: number
+  created_at: string
+  updated_at: string
+  archived: boolean
+  parameters: MetabaseDashboardParameter[]
+  dashcards: MetabaseDashCard[]
+}
+
+export interface MetabaseDashboardParameter {
+  id: string
+  name: string
+  slug: string
+  type: string
+  default?: unknown
+}
+
+export interface MetabaseDashCard {
+  id: number
+  card_id: number | null // null for text/heading cards
+  card?: MetabaseCard
+  dashboard_id: number
+  size_x: number
+  size_y: number
+  row: number
+  col: number
+  parameter_mappings: MetabaseParameterMapping[]
+  visualization_settings: Record<string, unknown>
+}
+
+export interface MetabaseParameterMapping {
+  parameter_id: string
+  card_id: number
+  target: unknown[]
+}
+
+export interface DashboardCardResult {
+  cardId: number
+  cardName: string
+  display: MetabaseVisualizationType
+  result: MetabaseQueryResult
+  error?: string
+}
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -350,6 +398,128 @@ export async function searchQuestions(query: string): Promise<MetabaseCard[]> {
   return result.data
 }
 
+/**
+ * Get a dashboard by ID with all its cards
+ */
+export async function getDashboard(dashboardId: number): Promise<MetabaseDashboard> {
+  return metabaseFetch<MetabaseDashboard>(`/dashboard/${dashboardId}`)
+}
+
+/**
+ * Run all cards in a dashboard and return their results
+ * This is useful for syncing an entire dashboard's data at once
+ */
+export async function runDashboard(
+  dashboardId: number,
+  parameters?: Record<string, unknown>
+): Promise<{
+  dashboard: MetabaseDashboard
+  results: DashboardCardResult[]
+}> {
+  // Get dashboard metadata
+  const dashboard = await getDashboard(dashboardId)
+
+  // Build results array
+  const results: DashboardCardResult[] = []
+
+  // Run each card that has data (skip text/heading cards)
+  for (const dashcard of dashboard.dashcards) {
+    if (!dashcard.card_id || !dashcard.card) continue
+
+    try {
+      const result = await runQuery(dashcard.card_id, parameters)
+      results.push({
+        cardId: dashcard.card_id,
+        cardName: dashcard.card.name,
+        display: dashcard.card.display,
+        result,
+      })
+    } catch (error) {
+      results.push({
+        cardId: dashcard.card_id,
+        cardName: dashcard.card?.name || `Card ${dashcard.card_id}`,
+        display: dashcard.card?.display || "table",
+        result: null as unknown as MetabaseQueryResult,
+        error: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
+  }
+
+  return { dashboard, results }
+}
+
+/**
+ * Get all data from a dashboard as a map of card name -> rows
+ * Convenient format for syncing dashboard data
+ */
+export async function getDashboardData(
+  dashboardId: number,
+  parameters?: Record<string, unknown>
+): Promise<{
+  dashboardName: string
+  dashboardId: number
+  syncedAt: string
+  cards: Record<string, {
+    cardId: number
+    display: MetabaseVisualizationType
+    rowCount: number
+    columns: string[]
+    rows: Record<string, unknown>[]
+    error?: string
+  }>
+}> {
+  const { dashboard, results } = await runDashboard(dashboardId, parameters)
+
+  const cards: Record<string, {
+    cardId: number
+    display: MetabaseVisualizationType
+    rowCount: number
+    columns: string[]
+    rows: Record<string, unknown>[]
+    error?: string
+  }> = {}
+
+  for (const result of results) {
+    if (result.error || !result.result) {
+      cards[result.cardName] = {
+        cardId: result.cardId,
+        display: result.display,
+        rowCount: 0,
+        columns: [],
+        rows: [],
+        error: result.error,
+      }
+    } else {
+      cards[result.cardName] = {
+        cardId: result.cardId,
+        display: result.display,
+        rowCount: result.result.row_count,
+        columns: getColumnNames(result.result),
+        rows: rowsToObjects(result.result),
+      }
+    }
+  }
+
+  return {
+    dashboardName: dashboard.name,
+    dashboardId: dashboard.id,
+    syncedAt: new Date().toISOString(),
+    cards,
+  }
+}
+
+/**
+ * Search for dashboards
+ */
+export async function searchDashboards(query: string): Promise<MetabaseDashboard[]> {
+  const params = new URLSearchParams({
+    q: query,
+    models: "dashboard",
+  })
+  const result = await metabaseFetch<{ data: MetabaseDashboard[] }>(`/search?${params}`)
+  return result.data
+}
+
 // ============================================================================
 // Helper: Convert results to objects
 // ============================================================================
@@ -474,6 +644,128 @@ export async function queryCustomers(options?: {
 // Export Client Object
 // ============================================================================
 
+/**
+ * Fetch data from a PUBLIC dashboard (no auth required)
+ * Public dashboards use a UUID token instead of numeric ID
+ */
+export async function getPublicDashboard(publicToken: string): Promise<MetabaseDashboard> {
+  if (!METABASE_URL) {
+    throw new Error("METABASE_URL environment variable is not set")
+  }
+
+  const response = await fetch(`${METABASE_URL}/api/public/dashboard/${publicToken}`)
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch public dashboard: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Run a card from a PUBLIC dashboard
+ */
+export async function runPublicDashboardCard(
+  publicToken: string,
+  cardId: number,
+  parameters?: Record<string, unknown>
+): Promise<MetabaseQueryResult> {
+  if (!METABASE_URL) {
+    throw new Error("METABASE_URL environment variable is not set")
+  }
+
+  const body: Record<string, unknown> = {}
+  if (parameters && Object.keys(parameters).length > 0) {
+    body.parameters = Object.entries(parameters).map(([key, value]) => ({
+      type: "category",
+      target: ["variable", ["template-tag", key]],
+      value,
+    }))
+  }
+
+  const response = await fetch(
+    `${METABASE_URL}/api/public/dashboard/${publicToken}/dashcard/${cardId}/card/${cardId}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to run public dashboard card: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Get all data from a PUBLIC dashboard
+ * This is the main function for syncing public dashboards
+ */
+export async function getPublicDashboardData(
+  publicToken: string,
+  parameters?: Record<string, unknown>
+): Promise<{
+  dashboardName: string
+  dashboardId: number
+  publicToken: string
+  syncedAt: string
+  cards: Record<string, {
+    cardId: number
+    display: MetabaseVisualizationType
+    rowCount: number
+    columns: string[]
+    rows: Record<string, unknown>[]
+    error?: string
+  }>
+}> {
+  const dashboard = await getPublicDashboard(publicToken)
+
+  const cards: Record<string, {
+    cardId: number
+    display: MetabaseVisualizationType
+    rowCount: number
+    columns: string[]
+    rows: Record<string, unknown>[]
+    error?: string
+  }> = {}
+
+  // Run each card
+  for (const dashcard of dashboard.dashcards) {
+    if (!dashcard.card_id || !dashcard.card) continue
+
+    try {
+      const result = await runPublicDashboardCard(publicToken, dashcard.id, parameters)
+
+      cards[dashcard.card.name] = {
+        cardId: dashcard.card_id,
+        display: dashcard.card.display,
+        rowCount: result.row_count,
+        columns: getColumnNames(result),
+        rows: rowsToObjects(result),
+      }
+    } catch (error) {
+      cards[dashcard.card?.name || `Card ${dashcard.card_id}`] = {
+        cardId: dashcard.card_id,
+        display: dashcard.card?.display || "table",
+        rowCount: 0,
+        columns: [],
+        rows: [],
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
+    }
+  }
+
+  return {
+    dashboardName: dashboard.name,
+    dashboardId: dashboard.id,
+    publicToken,
+    syncedAt: new Date().toISOString(),
+    cards,
+  }
+}
+
 export const metabase = {
   runQuery,
   runCustomQuery,
@@ -482,6 +774,15 @@ export const metabase = {
   getTables,
   searchQuestions,
   queryCustomers,
+  // Dashboard functions
+  getDashboard,
+  runDashboard,
+  getDashboardData,
+  searchDashboards,
+  // Public dashboard functions (no auth required)
+  getPublicDashboard,
+  runPublicDashboardCard,
+  getPublicDashboardData,
   // Helpers
   rowsToObjects,
   getColumnNames,
