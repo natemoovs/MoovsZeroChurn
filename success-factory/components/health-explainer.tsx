@@ -70,7 +70,7 @@ export function HealthExplainer({ companyId, healthScore, compact = false }: Hea
         className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-surface-hover"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>

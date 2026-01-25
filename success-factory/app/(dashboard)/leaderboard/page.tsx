@@ -183,15 +183,15 @@ export default function LeaderboardPage() {
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-center">
                         {index === 0 ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-warning-400 to-warning-600">
                             <Trophy className="h-4 w-4 text-white" />
                           </div>
                         ) : index === 1 ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-zinc-300 to-zinc-500">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-content-tertiary to-content-secondary">
                             <Medal className="h-4 w-4 text-white" />
                           </div>
                         ) : index === 2 ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-800">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-warning-600 to-warning-800">
                             <Medal className="h-4 w-4 text-white" />
                           </div>
                         ) : (
@@ -203,7 +203,7 @@ export default function LeaderboardPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-bold text-white">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-success-400 to-accent-600 text-sm font-bold text-white">
                           {csm.name
                             .split(" ")
                             .map((n) => n[0])
@@ -279,10 +279,10 @@ function HighlightCard({
   color: "red" | "green" | "orange" | "emerald"
 }) {
   const colors = {
-    red: "from-red-500 to-rose-600",
-    green: "from-green-500 to-emerald-600",
-    orange: "from-orange-500 to-amber-600",
-    emerald: "from-emerald-500 to-teal-600",
+    red: "from-error-500 to-error-600",
+    green: "from-success-500 to-success-600",
+    orange: "from-warning-500 to-warning-600",
+    emerald: "from-success-500 to-accent-600",
   }
 
   return (

@@ -707,7 +707,7 @@ export default function TasksPage() {
                                 updateTaskAssignee(task.id, e.target.value)
                               }
                             }}
-                            className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-content-secondary focus:ring-1 focus:ring-emerald-500 dark:text-content-tertiary"
+                            className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-content-secondary focus:ring-1 focus:ring-success-500 dark:text-content-tertiary"
                           >
                             <option value="">
                               {getAssigneeDisplayName(task)}

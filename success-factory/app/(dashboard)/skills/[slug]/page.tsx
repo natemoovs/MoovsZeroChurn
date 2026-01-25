@@ -223,7 +223,7 @@ function SkillPageContent() {
 
             {/* Result Content */}
             <div className="p-6">
-              <div className="prose prose-zinc dark:prose-invert max-w-none">
+              <div className="prose dark:prose-invert max-w-none">
                 <pre className="whitespace-pre-wrap rounded-lg bg-bg-secondary p-4 text-sm">
                   {result}
                 </pre>
