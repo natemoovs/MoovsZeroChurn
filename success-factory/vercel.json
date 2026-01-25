@@ -5,6 +5,10 @@
       "schedule": "0 5 * * *"
     },
     {
+      "path": "/api/sync/metabase-dashboard",
+      "schedule": "0 5 * * *"
+    },
+    {
       "path": "/api/sync/notion-tasks",
       "schedule": "0 * * * *"
     },
