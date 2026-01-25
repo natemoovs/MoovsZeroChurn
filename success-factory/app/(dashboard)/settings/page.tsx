@@ -149,6 +149,11 @@ export default function SettingsPage() {
     checked: number
     deletedTasks?: string[]
   } | null>(null)
+  const [syncDebug, setSyncDebug] = useState<{
+    metabaseColumns?: { original: string[]; normalized: string[]; missing: string[] }
+    sampleFromMetabase?: Record<string, unknown> | null
+    sampleFromDatabase?: Record<string, unknown> | null
+  } | null>(null)
 
   const fetchSyncStatus = async () => {
     try {
@@ -195,12 +200,17 @@ export default function SettingsPage() {
 
   const handleSync = async () => {
     setSyncing(true)
+    setSyncDebug(null)
     try {
       const res = await fetch("/api/sync/hubspot", { method: "POST" })
       const data = await res.json()
       if (data.success) {
         // Refresh sync status
         await fetchSyncStatus()
+        // Store debug info for display
+        if (data.debug) {
+          setSyncDebug(data.debug)
+        }
       } else {
         console.error("Sync failed:", data.error)
       }
@@ -712,6 +722,45 @@ export default function SettingsPage() {
 
           {syncStatus?.lastSync?.status === "failed" && (
             <p className="text-error-500 mt-3 text-sm">Last sync failed. Check logs for details.</p>
+          )}
+
+          {/* Sync Debug Info */}
+          {syncDebug && (
+            <div className="mt-4 space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100">Sync Debug Info</h4>
+
+              {syncDebug.metabaseColumns?.missing && syncDebug.metabaseColumns.missing.length > 0 && (
+                <div className="text-sm">
+                  <span className="font-medium text-red-600 dark:text-red-400">Missing columns: </span>
+                  <span className="text-red-700 dark:text-red-300">{syncDebug.metabaseColumns.missing.join(", ")}</span>
+                </div>
+              )}
+
+              {syncDebug.metabaseColumns?.original && (
+                <div className="text-sm">
+                  <span className="font-medium text-blue-800 dark:text-blue-200">Original columns: </span>
+                  <span className="text-blue-700 dark:text-blue-300">{syncDebug.metabaseColumns.original.join(", ")}...</span>
+                </div>
+              )}
+
+              {syncDebug.sampleFromMetabase && (
+                <div className="text-sm">
+                  <p className="font-medium text-blue-800 dark:text-blue-200">Sample from Metabase:</p>
+                  <pre className="mt-1 overflow-x-auto rounded bg-blue-100 p-2 text-xs text-blue-900 dark:bg-blue-900/50 dark:text-blue-100">
+                    {JSON.stringify(syncDebug.sampleFromMetabase, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {syncDebug.sampleFromDatabase && (
+                <div className="text-sm">
+                  <p className="font-medium text-blue-800 dark:text-blue-200">Sample from Database:</p>
+                  <pre className="mt-1 overflow-x-auto rounded bg-blue-100 p-2 text-xs text-blue-900 dark:bg-blue-900/50 dark:text-blue-100">
+                    {JSON.stringify(syncDebug.sampleFromDatabase, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
