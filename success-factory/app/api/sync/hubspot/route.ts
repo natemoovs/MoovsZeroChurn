@@ -100,18 +100,32 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
   }
 
   const result = await metabase.runQuery(METABASE_QUERY_ID)
-  const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
+  const rawRows = metabase.rowsToObjects<Record<string, unknown>>(result)
 
-  // Log column names for debugging
-  const columns = Object.keys(rows[0] || {})
-  console.log("Metabase CSM_MOOVS columns:", columns.join(", "))
+  // Normalize column names: convert "P Vehicles Total" to "P_VEHICLES_TOTAL"
+  // This handles both Metabase model columns (spaces) and raw table columns (underscores)
+  const rows = rawRows.map(row => {
+    const normalized: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(row)) {
+      // Convert to uppercase and replace spaces with underscores
+      const normalizedKey = key.toUpperCase().replace(/\s+/g, "_")
+      normalized[normalizedKey] = value
+    }
+    return normalized
+  })
+
+  // Log column names for debugging (show both original and normalized)
+  const originalColumns = Object.keys(rawRows[0] || {})
+  const normalizedColumns = Object.keys(rows[0] || {})
+  console.log("Metabase CSM_MOOVS columns (original):", originalColumns.join(", "))
+  console.log("Metabase CSM_MOOVS columns (normalized):", normalizedColumns.join(", "))
 
   // Log specific columns we're looking for
   const expectedColumns = [
     "P_VEHICLES_TOTAL", "P_DRIVERS_COUNT", "P_TOTAL_MEMBERS", "P_SETUP_SCORE",
     "R_LAST_30_DAYS_RESERVATIONS_COUNT", "DA_ENGAGEMENT_STATUS", "CALCULATED_MRR"
   ]
-  const missingColumns = expectedColumns.filter(col => !columns.includes(col))
+  const missingColumns = expectedColumns.filter(col => !normalizedColumns.includes(col))
   if (missingColumns.length > 0) {
     console.warn("⚠️ Missing expected columns:", missingColumns.join(", "))
   }
