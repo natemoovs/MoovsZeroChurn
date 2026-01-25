@@ -415,6 +415,48 @@ function mapNotionPriority(priority: string | null): "low" | "medium" | "high" |
   return "medium"
 }
 
+// Daily health snapshot - record health scores for trend analysis
+export const dailyHealthSnapshot = inngest.createFunction(
+  { id: "daily-health-snapshot", name: "Daily health score snapshot" },
+  { cron: "0 6 * * *" }, // Every day at 6am (matches Vercel cron)
+  async ({ step }) => {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000"
+    const cronSecret = process.env.CRON_SECRET
+
+    if (!cronSecret) {
+      return { skipped: true, reason: "CRON_SECRET not configured" }
+    }
+
+    // Call the snapshot API endpoint
+    const result = await step.run("trigger-health-snapshot", async () => {
+      const response = await fetch(`${appUrl}/api/health-history/snapshot`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${cronSecret}`,
+        },
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Snapshot failed: ${response.status} - ${error}`)
+      }
+
+      return response.json()
+    })
+
+    return {
+      success: true,
+      snapshotsCreated: result.snapshotsCreated,
+      changesDetected: result.changesDetected,
+      downgradesCount: result.downgradesCount,
+      playbookTasksCreated: result.playbookTasksCreated,
+    }
+  }
+)
+
 // Weekly email digest - send summary to CSMs every Monday
 export const weeklyEmailDigest = inngest.createFunction(
   { id: "weekly-email-digest", name: "Send weekly CSM digest" },
@@ -598,6 +640,7 @@ export const weeklyEmailDigest = inngest.createFunction(
 export const functions = [
   notionSync,
   dailyHealthCheck,
+  dailyHealthSnapshot,
   overdueTaskCheck,
   handleHealthDropped,
   weeklyEmailDigest,
