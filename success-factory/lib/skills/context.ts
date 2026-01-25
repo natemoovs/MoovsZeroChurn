@@ -18,6 +18,7 @@ import {
   type StripeInvoice,
   type NotionPage,
 } from "@/lib/integrations"
+import { prisma } from "@/lib/db"
 
 // ============================================================================
 // Types
@@ -61,6 +62,189 @@ export interface GatheredContext {
 }
 
 // ============================================================================
+// Synced Database Lookup (primary source for paying customers)
+// ============================================================================
+
+/**
+ * Get customer data from our synced database (Metabase data)
+ * This is more reliable than HubSpot API for actual paying customers
+ */
+async function getSyncedCustomerData(companyIdentifier: string) {
+  try {
+    // Search by name (case-insensitive)
+    const company = await prisma.hubSpotCompany.findFirst({
+      where: {
+        OR: [
+          { name: { contains: companyIdentifier, mode: "insensitive" } },
+          { domain: { contains: companyIdentifier, mode: "insensitive" } },
+        ],
+      },
+    })
+
+    return company
+  } catch (error) {
+    console.error("[Context] Error fetching synced customer:", error)
+    return null
+  }
+}
+
+/**
+ * Format synced customer data as markdown for skill prompts
+ */
+function formatSyncedCustomerData(company: {
+  hubspotId: string
+  name: string
+  domain: string | null
+  healthScore: string | null
+  mrr: number | null
+  plan: string | null
+  subscriptionStatus: string | null
+  riskSignals: string[]
+  positiveSignals: string[]
+  primaryContactEmail: string | null
+  primaryContactName: string | null
+  primaryContactPhone: string | null
+  hubspotCreatedAt: Date | null
+  lastLoginAt: Date | null
+  totalTrips: number | null
+  tripsLast30Days: number | null
+  engagementStatus: string | null
+  vehiclesTotal: number | null
+  driversCount: number | null
+  membersCount: number | null
+  setupScore: number | null
+  subscriptionLifetimeDays: number | null
+  daysSinceLastLogin: number | null
+  city: string | null
+  state: string | null
+  ownerName: string | null
+}): string {
+  const lines: string[] = []
+
+  // Health score header
+  const healthIcon =
+    company.healthScore === "green"
+      ? "🟢"
+      : company.healthScore === "yellow"
+        ? "🟡"
+        : company.healthScore === "red"
+          ? "🔴"
+          : "⚪"
+
+  lines.push(`## Customer Data: ${company.name}`)
+  lines.push("")
+  lines.push("### Quick Stats")
+  lines.push("")
+  lines.push(`| Metric | Value |`)
+  lines.push(`|--------|-------|`)
+  lines.push(`| **Health Score** | ${healthIcon} ${company.healthScore || "Unknown"} |`)
+  lines.push(`| **MRR** | ${company.mrr ? `$${company.mrr.toLocaleString()}` : "Unknown"} |`)
+  lines.push(`| **Plan** | ${company.plan || "Unknown"} |`)
+  lines.push(`| **Subscription Status** | ${company.subscriptionStatus || "Unknown"} |`)
+  lines.push(
+    `| **Customer Since** | ${company.hubspotCreatedAt ? company.hubspotCreatedAt.toLocaleDateString() : "Unknown"} |`
+  )
+  lines.push(
+    `| **Tenure** | ${company.subscriptionLifetimeDays ? `${company.subscriptionLifetimeDays} days` : "Unknown"} |`
+  )
+  lines.push("")
+
+  // Engagement metrics
+  lines.push("### Engagement & Usage")
+  lines.push("")
+  lines.push(`| Metric | Value |`)
+  lines.push(`|--------|-------|`)
+  lines.push(`| **Total Trips** | ${company.totalTrips?.toLocaleString() || "Unknown"} |`)
+  lines.push(`| **Trips (Last 30 Days)** | ${company.tripsLast30Days?.toLocaleString() || "Unknown"} |`)
+  lines.push(`| **Engagement Status** | ${company.engagementStatus || "Unknown"} |`)
+  lines.push(
+    `| **Days Since Last Login** | ${company.daysSinceLastLogin !== null ? company.daysSinceLastLogin : "Unknown"} |`
+  )
+  lines.push(
+    `| **Last Login** | ${company.lastLoginAt ? company.lastLoginAt.toLocaleDateString() : "Unknown"} |`
+  )
+  lines.push("")
+
+  // Fleet metrics
+  lines.push("### Fleet & Team")
+  lines.push("")
+  lines.push(`| Metric | Value |`)
+  lines.push(`|--------|-------|`)
+  lines.push(`| **Vehicles** | ${company.vehiclesTotal ?? "Unknown"} |`)
+  lines.push(`| **Drivers** | ${company.driversCount ?? "Unknown"} |`)
+  lines.push(`| **Members** | ${company.membersCount ?? "Unknown"} |`)
+  lines.push(
+    `| **Setup Score** | ${company.setupScore !== null ? `${Math.round((company.setupScore / 30) * 100)}% (${company.setupScore}/30)` : "Unknown"} |`
+  )
+  lines.push("")
+
+  // Contact info
+  if (company.primaryContactEmail || company.primaryContactName || company.primaryContactPhone) {
+    lines.push("### Primary Contact")
+    lines.push("")
+    if (company.primaryContactName) lines.push(`- **Name:** ${company.primaryContactName}`)
+    if (company.primaryContactEmail) lines.push(`- **Email:** ${company.primaryContactEmail}`)
+    if (company.primaryContactPhone) lines.push(`- **Phone:** ${company.primaryContactPhone}`)
+    lines.push("")
+  }
+
+  // Location
+  if (company.city || company.state) {
+    lines.push("### Location")
+    lines.push("")
+    lines.push(`- ${[company.city, company.state].filter(Boolean).join(", ")}`)
+    lines.push("")
+  }
+
+  // CSM Owner
+  if (company.ownerName) {
+    lines.push("### Account Owner")
+    lines.push("")
+    lines.push(`- **CSM:** ${company.ownerName}`)
+    lines.push("")
+  }
+
+  // Health signals
+  if (company.positiveSignals.length > 0) {
+    lines.push("### Positive Signals")
+    lines.push("")
+    for (const signal of company.positiveSignals) {
+      lines.push(`- ✅ ${signal}`)
+    }
+    lines.push("")
+  }
+
+  if (company.riskSignals.length > 0) {
+    lines.push("### Risk Signals")
+    lines.push("")
+    for (const signal of company.riskSignals) {
+      lines.push(`- ⚠️ ${signal}`)
+    }
+    lines.push("")
+  }
+
+  // Segment determination
+  const segment = getSegmentFromPlan(company.plan)
+  lines.push("### Segment")
+  lines.push("")
+  lines.push(`- **Category:** ${segment}`)
+  lines.push("")
+
+  return lines.join("\n")
+}
+
+function getSegmentFromPlan(plan: string | null): string {
+  if (!plan) return "Unknown"
+  const planLower = plan.toLowerCase()
+  if (planLower.includes("vip") || planLower.includes("elite") || planLower.includes("enterprise")) {
+    return "Enterprise"
+  }
+  if (planLower.includes("pro")) return "Mid-Market"
+  if (planLower.includes("free")) return "Free"
+  return "SMB"
+}
+
+// ============================================================================
 // Context Gathering
 // ============================================================================
 
@@ -73,7 +257,18 @@ export async function gatherContext(
 ): Promise<string> {
   const context: GatheredContext = { errors: [] }
 
-  // Gather HubSpot data first (we may need contact emails for Stripe)
+  // First, try to get customer from our synced database (Metabase data)
+  // This is the source of truth for paying customers
+  const companyIdentifier = extractCompanyIdentifier(formData)
+  if (companyIdentifier) {
+    const syncedData = await getSyncedCustomerData(companyIdentifier)
+    if (syncedData) {
+      // Return synced data directly - it's more accurate than HubSpot for paying customers
+      return formatSyncedCustomerData(syncedData)
+    }
+  }
+
+  // Fall back to HubSpot API if not found in synced database
   if (requirements.hubspot) {
     context.hubspot = await gatherHubSpotContext(requirements.hubspot, formData, context.errors)
   }
