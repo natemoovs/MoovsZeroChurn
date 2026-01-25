@@ -1,9 +1,5 @@
 {
-  "disabledMcpjsonServers": [
-    "slack",
-    "google-calendar",
-    "stripe"
-  ],
+  "disabledMcpjsonServers": ["slack", "google-calendar", "stripe"],
   "permissions": {
     "allow": [
       "Bash(ls:*)",
@@ -62,11 +58,7 @@
       "WebFetch",
       "WebSearch"
     ],
-    "deny": [
-      "Read(.env)",
-      "Read(.env.*)",
-      "Read(**/secrets/**)"
-    ]
+    "deny": ["Read(.env)", "Read(.env.*)", "Read(**/secrets/**)"]
   },
   "hooks": {
     "SessionStart": [

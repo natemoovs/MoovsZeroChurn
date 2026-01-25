@@ -10,15 +10,12 @@ interface HeaderProps {
 export function Header({
   showBack = false,
   backHref = "/",
-  backLabel = "Back to skills"
+  backLabel = "Back to skills",
 }: HeaderProps) {
   return (
-    <header className="fixed right-0 top-0 z-50 flex items-center gap-4 p-4">
+    <header className="fixed top-0 right-0 z-50 flex items-center gap-4 p-4">
       {showBack && (
-        <Link
-          href={backHref}
-          className="text-sm text-content-secondary hover:text-content-primary"
-        >
+        <Link href={backHref} className="text-content-secondary hover:text-content-primary text-sm">
           &larr; {backLabel}
         </Link>
       )}

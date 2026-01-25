@@ -16,7 +16,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-bg-primary">
+    <div className="bg-bg-primary min-h-screen overflow-x-hidden">
       <CommandPalette />
       <AIChat />
       <Sidebar
@@ -34,10 +34,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       >
         <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-        <main className="min-w-0 max-w-full overflow-x-hidden p-4 sm:p-6">
-          <div className="min-w-0 max-w-full">
-            {children}
-          </div>
+        <main className="max-w-full min-w-0 overflow-x-hidden p-4 sm:p-6">
+          <div className="max-w-full min-w-0">{children}</div>
         </main>
       </div>
     </div>

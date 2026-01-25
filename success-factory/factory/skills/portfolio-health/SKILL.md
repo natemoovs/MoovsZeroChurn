@@ -24,10 +24,10 @@ Get a health overview of your entire book of business with one click. Perfect fo
 
 At Moovs, CSMs are assigned by segment:
 
-| Role | Segment | Revenue Range | Typical Fleet |
-|------|---------|---------------|---------------|
-| **SMB/Mid-Market CSM** | SMB + Mid-Market | $50K - $1M | 1-19 vehicles |
-| **Enterprise CSM** | Enterprise | $1M+ | 20+ vehicles |
+| Role                   | Segment          | Revenue Range | Typical Fleet |
+| ---------------------- | ---------------- | ------------- | ------------- |
+| **SMB/Mid-Market CSM** | SMB + Mid-Market | $50K - $1M    | 1-19 vehicles |
+| **Enterprise CSM**     | Enterprise       | $1M+          | 20+ vehicles  |
 
 ## What This Skill Does
 
@@ -53,7 +53,9 @@ At Moovs, CSMs are assigned by segment:
 ## Questions
 
 ### segment: Which segment do you want to review?
+
 Examples:
+
 - All
 - Enterprise
 - Mid-Market
@@ -61,7 +63,9 @@ Examples:
 - At-Risk
 
 ### focus: Any specific focus? (optional)
+
 Examples:
+
 - Renewals this quarter
 - Payment issues
 - Recently onboarded
@@ -81,60 +85,64 @@ Examples:
 
 ## Portfolio Summary
 
-| Metric | Value |
-|--------|-------|
-| **Total Accounts** | [Count from data] |
-| **Healthy (Green)** | [Count] |
-| **Monitor (Yellow)** | [Count] |
-| **At Risk (Red)** | [Count] |
-| **Total MRR** | [$X] |
-| **At-Risk MRR** | [$X at risk] |
+| Metric               | Value             |
+| -------------------- | ----------------- |
+| **Total Accounts**   | [Count from data] |
+| **Healthy (Green)**  | [Count]           |
+| **Monitor (Yellow)** | [Count]           |
+| **At Risk (Red)**    | [Count]           |
+| **Total MRR**        | [$X]              |
+| **At-Risk MRR**      | [$X at risk]      |
 
 ### Health Distribution
 
-~~~
+```
 Green:  ████████████████ X accounts
 Yellow: ██████████       X accounts
 Red:    ████             X accounts
-~~~
+```
 
 ---
 
 ## Account Overview
 
-| Company | Health | MRR | Plan | Payment | Key Signal |
-|---------|--------|-----|------|---------|------------|
-| [Company 1] | 🟢/🟡/🔴 | $X | [Plan] | [Status] | [Top signal] |
-| [Company 2] | 🟢/🟡/🔴 | $X | [Plan] | [Status] | [Top signal] |
-| ... | | | | | |
+| Company     | Health   | MRR | Plan   | Payment  | Key Signal   |
+| ----------- | -------- | --- | ------ | -------- | ------------ |
+| [Company 1] | 🟢/🟡/🔴 | $X  | [Plan] | [Status] | [Top signal] |
+| [Company 2] | 🟢/🟡/🔴 | $X  | [Plan] | [Status] | [Top signal] |
+| ...         |          |     |        |          |              |
 
 ---
 
 ## At-Risk Accounts (Immediate Attention)
 
 ### [Company Name] — 🔴 Red
+
 **MRR:** $X | **Plan:** [Plan] | **Customer Since:** [Date]
 
 **Risk Signals:**
+
 - [Signal 1 with evidence]
 - [Signal 2 with evidence]
 
 **Recommended Action:**
+
 > [Specific next step for this account]
 
 ---
 
 ### [Company Name 2] — 🔴 Red
+
 ...
 
 ---
 
 ## Monitor Accounts (Watch List)
 
-| Company | MRR | Signal | Recommended Check-in |
-|---------|-----|--------|---------------------|
-| [Company] | $X | [Signal] | [When/What] |
-| ... | | | |
+| Company   | MRR | Signal   | Recommended Check-in |
+| --------- | --- | -------- | -------------------- |
+| [Company] | $X  | [Signal] | [When/What]          |
+| ...       |     |          |                      |
 
 ---
 
@@ -142,10 +150,10 @@ Red:    ████             X accounts
 
 These accounts are healthy and may be ready for expansion:
 
-| Company | MRR | Plan | Expansion Signal |
-|---------|-----|------|------------------|
-| [Company] | $X | [Plan] | [Growing usage / adding vehicles / etc.] |
-| ... | | | |
+| Company   | MRR | Plan   | Expansion Signal                         |
+| --------- | --- | ------ | ---------------------------------------- |
+| [Company] | $X  | [Plan] | [Growing usage / adding vehicles / etc.] |
+| ...       |     |        |                                          |
 
 ---
 
@@ -163,6 +171,7 @@ Based on this portfolio review:
 ## Portfolio Trends
 
 ### vs. Last Review
+
 - Accounts moved to Green: [X]
 - Accounts moved to Yellow: [X]
 - Accounts moved to Red: [X]
@@ -170,6 +179,7 @@ Based on this portfolio review:
 - Accounts churned: [X]
 
 ### MRR Movement
+
 - Expansion: +$X
 - Contraction: -$X
 - Churn: -$X
@@ -177,7 +187,7 @@ Based on this portfolio review:
 
 ---
 
-*Data pulled from HubSpot and Stripe at {{date}}. Review individual accounts for time-sensitive decisions.*
+_Data pulled from HubSpot and Stripe at {{date}}. Review individual accounts for time-sensitive decisions._
 ```
 
 ---
@@ -185,6 +195,7 @@ Based on this portfolio review:
 ## Health Score Criteria
 
 ### 🟢 Green (Healthy)
+
 - Active paid subscription
 - Payments current (no failed charges)
 - Recent engagement (login, support, CSM contact)
@@ -192,6 +203,7 @@ Based on this portfolio review:
 - No cancellation signals
 
 ### 🟡 Yellow (Monitor)
+
 - Minor payment delays (1 retry)
 - No engagement in 30+ days
 - Single point of contact
@@ -199,6 +211,7 @@ Based on this portfolio review:
 - Support escalation open
 
 ### 🔴 Red (At Risk)
+
 - Payment failures (2+ attempts)
 - Past due or cancel pending
 - No engagement 60+ days
@@ -211,6 +224,7 @@ Based on this portfolio review:
 ## Segment Definitions
 
 ### Enterprise (VIP/Elite Plans)
+
 - Named CSM relationship
 - QBRs expected
 - High-touch support
@@ -218,12 +232,14 @@ Based on this portfolio review:
 - Longer sales cycles, higher switching cost
 
 ### Mid-Market (Pro Plans)
+
 - Pooled CSM coverage
 - Growth-focused conversations
 - Efficiency features
 - Expanding operations
 
 ### SMB (Starter/Basic Plans)
+
 - Scaled/tech-touch
 - Self-service where possible
 - Quick wins matter

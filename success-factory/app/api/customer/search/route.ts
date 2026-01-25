@@ -56,10 +56,7 @@ export async function GET(request: NextRequest) {
         ownerName: true,
         lastSyncedAt: true,
       },
-      orderBy: [
-        { mrr: { sort: "desc", nulls: "last" } },
-        { name: "asc" },
-      ],
+      orderBy: [{ mrr: { sort: "desc", nulls: "last" } }, { name: "asc" }],
       take: Math.min(limit, 100),
     })
 

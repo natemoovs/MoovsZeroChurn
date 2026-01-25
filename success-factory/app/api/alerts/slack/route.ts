@@ -52,10 +52,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Slack alert error:", error)
-    return NextResponse.json(
-      { error: "Failed to send Slack alert" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to send Slack alert" }, { status: 500 })
   }
 }
 

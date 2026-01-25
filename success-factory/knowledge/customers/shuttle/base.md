@@ -8,27 +8,29 @@ Core definition and shared elements across all Shuttle Platform segments. For se
 
 ### Key Distinction from Black Car
 
-| Attribute | Black Car | Shuttle Platform |
-|-----------|-----------|------------------|
-| Booking Unit | Entire vehicle | Individual seat |
-| Route Type | Point-to-point, custom | Fixed routes with timetables |
+| Attribute     | Black Car                     | Shuttle Platform               |
+| ------------- | ----------------------------- | ------------------------------ |
+| Booking Unit  | Entire vehicle                | Individual seat                |
+| Route Type    | Point-to-point, custom        | Fixed routes with timetables   |
 | Customer Type | Executives, VIPs, individuals | Commuters, students, employees |
-| Pricing Model | Hourly, one-way, round-trip | Per-seat or program-based |
-| Key Pain | Manual dispatch | Lack of rider visibility |
+| Pricing Model | Hourly, one-way, round-trip   | Per-seat or program-based      |
+| Key Pain      | Manual dispatch               | Lack of rider visibility       |
 
 **Quick Test:** "Do passengers book the entire vehicle or individual seats?"
+
 - Entire vehicle → Black Car
 - Individual seats → Shuttle Platform
 
 ### Three Variations
 
-| Variation | Use When | Primary Driver | Sales Cycle |
-|-----------|----------|----------------|-------------|
-| [University](./university.md) | Campus, students | Student experience | 4-6 months (RFP) |
-| [Corporate](./corporate.md) | Employees, HR | Retention & ROI | 3-4 months |
-| [Operator](./operator.md) | Contracts, multiple clients | Win contracts, margins | 2-3 months |
+| Variation                     | Use When                    | Primary Driver         | Sales Cycle      |
+| ----------------------------- | --------------------------- | ---------------------- | ---------------- |
+| [University](./university.md) | Campus, students            | Student experience     | 4-6 months (RFP) |
+| [Corporate](./corporate.md)   | Employees, HR               | Retention & ROI        | 3-4 months       |
+| [Operator](./operator.md)     | Contracts, multiple clients | Win contracts, margins | 2-3 months       |
 
 ### Top 8 Shared Pain Points
+
 1. **Route & schedule management** - Updating multiple systems manually
 2. **Capacity management** - Overcrowding, no seat visibility
 3. **No real-time visibility** - Riders don't know when shuttle arrives
@@ -39,12 +41,14 @@ Core definition and shared elements across all Shuttle Platform segments. For se
 8. **Technology fragmentation** - Multiple disconnected tools
 
 ### Core Messaging
+
 - "Complete shuttle platform for your entire program"
 - "Real-time visibility for every rider"
 - "Publish routes once, update everywhere"
 - "Multi-stakeholder dashboards"
 
 ### Messaging Don'ts
+
 - Never use "private vehicles," "VIP service," "chauffeur"
 - Never use "one-way bookings" or "point-to-point dispatch"
 - Never promise "DIY solution" or "instant setup"
@@ -58,6 +62,7 @@ Core definition and shared elements across all Shuttle Platform segments. For se
 Shuttle platform customers run fixed-route, recurring transportation programs where passengers book individual seats, not entire vehicles. These are scheduled, predictable routes (commuter shuttles, campus loops, airport routes) with multiple riders per vehicle.
 
 **Service Model Characteristics:**
+
 - Fixed or semi-fixed routes with multiple stops
 - Published timetables and schedules
 - Per-seat bookings (not private vehicle rentals)
@@ -65,6 +70,7 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 - Recurring, program-based operations (not ad-hoc)
 
 **Common Service Types:**
+
 - Campus shuttle loops (university transportation)
 - Employee commuter routes (corporate shuttles)
 - Airport shuttle services (hotel ↔ airport)
@@ -146,12 +152,14 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 ### Current Technology Stack (Common Patterns)
 
 **Legacy Shuttle Software:**
+
 - TransLoc, Routematch, older dispatch systems
 - Limited real-time tracking capabilities
 - Poor mobile experience
 - Outdated interfaces
 
 **Patchwork Solutions:**
+
 - Route planning: Google Maps, manual spreadsheets
 - Rider communication: Email lists, SMS services
 - Tracking: Basic GPS units (no rider-facing tracking)
@@ -161,6 +169,7 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 ### Technology Needs (Universal)
 
 **Must-Have Capabilities:**
+
 1. Real-time tracking (for riders and dispatchers)
 2. Capacity management (seat counts and reservations)
 3. Route and schedule publishing (centralized, easy updates)
@@ -171,6 +180,7 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 8. Program analytics and reporting
 
 **Integration Requirements:**
+
 - Campus/corporate systems (SSO, employee directories)
 - Payment processing (if applicable)
 - Mapping services
@@ -184,36 +194,42 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 ### Moovs Shuttle Platform Core Features
 
 **1. Real-Time Visibility for All Stakeholders**
+
 - Live vehicle tracking on rider app
 - ETAs for each stop
 - Dispatcher view of entire fleet
 - Historical route playback
 
 **2. Capacity Management**
+
 - Real-time seat count tracking
 - Reservation system (if needed)
 - Overbooking prevention
 - Demand forecasting tools
 
 **3. Route & Schedule Publishing**
+
 - Publish routes and timetables once
 - Update everywhere instantly (app, web, dashboards)
 - Route optimization tools
 - Schedule templates for recurring patterns
 
 **4. Multi-App Ecosystem**
+
 - Passenger App: Route maps, live tracking, ETAs, trip history
 - Driver App: Route guidance, stop lists, navigation, compliance
 - Operator Dashboard: Fleet management, dispatch, analytics
 - Client Dashboard: Program visibility, reporting, KPIs
 
 **5. Automated Communication**
+
 - Push notifications for delays or changes
 - Scheduled rider updates
 - In-app messaging
 - Bulk communication tools
 
 **6. Program Analytics & Reporting**
+
 - Ridership metrics (daily, weekly, monthly)
 - Utilization rates (passengers per vehicle, cost per ride)
 - On-time performance tracking
@@ -225,6 +241,7 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 ## Universal Disqualifiers (DO NOT PURSUE)
 
 **Hard Disqualifiers Across All Shuttle Segments:**
+
 - Private vehicle/black car services (wrong segment → Black Car ICP)
 - On-demand ride-hail services (not fixed-route programs)
 - Ad-hoc charter services (not recurring programs)
@@ -273,12 +290,14 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 ### Supporting Value Props
 
 **For Riders:**
+
 - Know exactly when the shuttle arrives (live ETAs)
 - See route maps and service updates
 - Book seats in advance (if capacity-controlled)
 - Provide feedback easily
 
 **For Program Managers:**
+
 - Real-time fleet visibility
 - Capacity management and overbooking prevention
 - Route optimization and planning
@@ -286,12 +305,14 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 - Comprehensive program analytics
 
 **For Drivers:**
+
 - Simple route guidance
 - Clear stop lists and instructions
 - One-tap trip management
 - Built-in navigation
 
 **For Administrators/Clients:**
+
 - Program performance dashboards
 - Ridership and utilization metrics
 - Cost-per-ride analytics
@@ -331,11 +352,13 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 ### Clear Boundary Rules
 
 **Shuttle Platform customers are NOT:**
+
 - Black car operators (even if they have some fixed routes)
 - Limo/sedan services (private vehicle bookings)
 - Executive transport services (VIP, private)
 
 **Shuttle Platform customers ARE:**
+
 - Running fixed-route programs with seat-level bookings
 - Serving commuters, students, employees (not private VIPs)
 - Operating scheduled, recurring transportation (not on-demand)
@@ -357,21 +380,24 @@ Shuttle platform customers run fixed-route, recurring transportation programs wh
 To create segment-specific content or strategy, reference the appropriate variation:
 
 ### [University Programs](./university.md)
+
 - Universities and colleges running campus shuttles
 - Student transportation programs
 - Campus services departments
 
 ### [Corporate Programs](./corporate.md)
+
 - Corporations running employee commuter shuttles
 - HR or Facilities-led programs
 - Employee transportation benefits
 
 ### [Third-Party Operators](./operator.md)
+
 - Operators running shuttle contracts for multiple clients
 - Contract-based shuttle services
 - Multi-client transportation providers
 
 ---
 
-*Last Updated: January 2026*
-*Maintained By: GTM Leadership*
+_Last Updated: January 2026_
+_Maintained By: GTM Leadership_

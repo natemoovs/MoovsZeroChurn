@@ -64,23 +64,16 @@ export async function GET(request: NextRequest) {
       .map((csm) => {
         const email = csm.ownerEmail!
         const healthStats = healthByOwner.filter((h) => h.ownerEmail === email)
-        const taskCount =
-          tasksByOwner.find((t) => t.ownerEmail === email)?._count.id || 0
+        const taskCount = tasksByOwner.find((t) => t.ownerEmail === email)?._count.id || 0
 
-        const healthyAccounts =
-          healthStats.find((h) => h.healthScore === "green")?._count.id || 0
-        const warningAccounts =
-          healthStats.find((h) => h.healthScore === "yellow")?._count.id || 0
-        const atRiskAccounts =
-          healthStats.find((h) => h.healthScore === "red")?._count.id || 0
+        const healthyAccounts = healthStats.find((h) => h.healthScore === "green")?._count.id || 0
+        const warningAccounts = healthStats.find((h) => h.healthScore === "yellow")?._count.id || 0
+        const atRiskAccounts = healthStats.find((h) => h.healthScore === "red")?._count.id || 0
 
         // Calculate a score for ranking
         // Weights: healthy accounts (+10), tasks completed (+5), at-risk (-5), MRR (+0.001 per $)
         const score =
-          healthyAccounts * 10 +
-          taskCount * 5 -
-          atRiskAccounts * 5 +
-          (csm._sum.mrr || 0) * 0.001
+          healthyAccounts * 10 + taskCount * 5 - atRiskAccounts * 5 + (csm._sum.mrr || 0) * 0.001
 
         return {
           email,
@@ -101,15 +94,9 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.score - a.score)
 
     // Determine highlights
-    const topSaver = [...csmStats].sort(
-      (a, b) => b.savedAccounts - a.savedAccounts
-    )[0]
-    const topExpander = [...csmStats].sort(
-      (a, b) => b.expansionRevenue - a.expansionRevenue
-    )[0]
-    const mostResponsive = [...csmStats].sort(
-      (a, b) => a.avgResponseTime - b.avgResponseTime
-    )[0]
+    const topSaver = [...csmStats].sort((a, b) => b.savedAccounts - a.savedAccounts)[0]
+    const topExpander = [...csmStats].sort((a, b) => b.expansionRevenue - a.expansionRevenue)[0]
+    const mostResponsive = [...csmStats].sort((a, b) => a.avgResponseTime - b.avgResponseTime)[0]
     const healthChampion = [...csmStats].sort(
       (a, b) =>
         b.healthyAccounts / Math.max(b.accountCount, 1) -
@@ -117,7 +104,7 @@ export async function GET(request: NextRequest) {
     )[0]
 
     return NextResponse.json({
-      csms: csmStats.map(({ score, ...rest }) => rest), // Remove internal score
+      csms: csmStats.map(({ score: _score, ...rest }) => rest), // Remove internal score
       period,
       highlights: {
         topSaver: topSaver?.name || "N/A",

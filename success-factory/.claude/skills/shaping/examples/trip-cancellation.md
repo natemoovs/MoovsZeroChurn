@@ -23,6 +23,7 @@ The whole process took 15 minutes, and she still wasn't confident the driver got
 ### Current Workaround
 
 Operators either:
+
 - Delete trips (losing data)
 - Mark trips as "completed" with $0 fare (corrupts reporting)
 - Maintain separate spreadsheets of cancellations
@@ -50,6 +51,7 @@ Drivers sometimes get notified, sometimes don't. Refunds are always manual.
 ### Success Criteria
 
 Within this appetite, success means:
+
 - [ ] Dispatchers can cancel a trip with 2 clicks
 - [ ] Drivers receive an immediate notification
 - [ ] Passengers receive an email confirmation
@@ -63,6 +65,7 @@ Within this appetite, success means:
 ### Solution Overview
 
 Add a "Cancel Trip" action to the trip detail view. When triggered, show a modal that:
+
 1. Asks for cancellation reason (dropdown)
 2. Shows refund amount (calculated based on policy)
 3. Sends notifications to driver and passenger
@@ -96,10 +99,12 @@ Trip Detail Page
 **Purpose:** Entry point for cancellation
 
 **Elements:**
+
 - Cancel Trip button (red, destructive styling)
 - Only visible for future trips (not completed/cancelled)
 
 **Behavior:**
+
 - Click opens Cancellation Modal
 - Not visible for trips in "In Progress" status
 
@@ -108,6 +113,7 @@ Trip Detail Page
 **Purpose:** Confirm cancellation and configure options
 
 **Elements:**
+
 - Cancellation reason dropdown:
   - Customer requested
   - No-show
@@ -138,7 +144,8 @@ Trip Detail Page
 ```
 
 **Behavior:**
-- Refund calculated based on: 
+
+- Refund calculated based on:
   - 24+ hours before: full refund
   - 12-24 hours: 50% refund
   - <12 hours: no refund
@@ -147,12 +154,14 @@ Trip Detail Page
 ### Data Requirements
 
 **Reads:**
+
 - Trip details (passenger, driver, fare, scheduled time)
 - Stripe payment intent ID
 - Driver phone number
 - Passenger email
 
 **Writes:**
+
 - Trip.status = "cancelled"
 - Trip.cancellation_reason
 - Trip.cancelled_at
@@ -161,6 +170,7 @@ Trip Detail Page
 - Trip.refund_status
 
 **New Data:**
+
 - Add `cancellation_reason` enum field to trips
 - Add `cancelled_at` timestamp to trips
 - Add `cancelled_by` user reference to trips
@@ -168,11 +178,11 @@ Trip Detail Page
 
 ### Integration Points
 
-| System | Integration Type | Notes |
-|--------|------------------|-------|
-| Stripe | Write | Call Refund API with payment intent |
-| Twilio | Write | Send SMS to driver |
-| SendGrid | Write | Send email to passenger |
+| System   | Integration Type | Notes                               |
+| -------- | ---------------- | ----------------------------------- |
+| Stripe   | Write            | Call Refund API with payment intent |
+| Twilio   | Write            | Send SMS to driver                  |
+| SendGrid | Write            | Send email to passenger             |
 
 ---
 
@@ -253,4 +263,4 @@ This project is done when:
 
 ---
 
-*This shaping document is ready for the betting table.*
+_This shaping document is ready for the betting table._

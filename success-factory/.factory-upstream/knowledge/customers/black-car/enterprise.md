@@ -7,17 +7,19 @@ Large, established transportation businesses generating $1M+ in annual revenue w
 ## Quick Reference
 
 ### Key Stats
-| Attribute | Value |
-|-----------|-------|
-| Revenue | $1M+ |
-| Fleet | 20-52+ vehicles |
-| Monthly Rides | 300+ |
-| Drivers | 25+ |
-| Budget | Enterprise pricing ($30K-$100K+/year) |
-| Sales Cycle | 3-6 months |
-| Annual Software Spend | $30K-$100K+ |
+
+| Attribute             | Value                                 |
+| --------------------- | ------------------------------------- |
+| Revenue               | $1M+                                  |
+| Fleet                 | 20-52+ vehicles                       |
+| Monthly Rides         | 300+                                  |
+| Drivers               | 25+                                   |
+| Budget                | Enterprise pricing ($30K-$100K+/year) |
+| Sales Cycle           | 3-6 months                            |
+| Annual Software Spend | $30K-$100K+                           |
 
 ### Top 5 Pain Points
+
 1. **Disconnected systems** - Using 5-10+ tools, no single source of truth
 2. **Manual scheduling** - 3-4 hours daily assigning 150+ trips
 3. **Trip intake chaos** - Processing manifests, CSVs, PDFs manually
@@ -25,6 +27,7 @@ Large, established transportation businesses generating $1M+ in annual revenue w
 5. **Migration fear** - Worried about disrupting live operations
 
 ### Messaging Do's
+
 - Lead with consolidation and "single source of truth"
 - Emphasize reliability and enterprise-grade uptime
 - Highlight white-glove migration and support
@@ -32,6 +35,7 @@ Large, established transportation businesses generating $1M+ in annual revenue w
 - Reference similar enterprise operators
 
 ### Messaging Don'ts
+
 - Use "DIY solution" or "self-service"
 - Position as "cheapest option"
 - Use shuttle/per-seat language
@@ -39,9 +43,11 @@ Large, established transportation businesses generating $1M+ in annual revenue w
 - Ignore migration concerns
 
 ### Primary CTA
+
 "Schedule Enterprise Demo"
 
 ### Proof Points to Use
+
 - Roberts Hawaii: 150+ daily trips, 3-4 hours → 15 minutes
 - Butler: 34% increase in repeat bookings
 - California Wine Tours: Landmark automation for consistency
@@ -58,6 +64,7 @@ Large, established transportation businesses generating $1M+ in annual revenue w
 Enterprise Black Car operators are high-volume, premium transportation providers generating $1M+ in annual revenue, typically running fleets of 20-52+ luxury vehicles (sedans, SUVs, limousines, party buses) serving corporate executives, VIPs, airport transfers, and special events. Their business model is based on private vehicle bookings where customers rent the entire vehicle, not individual seats.
 
 **Revenue Profile:**
+
 - Annual Revenue: $1M+ (primary indicator)
 - Fleet Size: Typically 20-52+ vehicles (but revenue matters more)
 - Business Stage: Established enterprise with full management team
@@ -66,6 +73,7 @@ Enterprise Black Car operators are high-volume, premium transportation providers
 **Key Principle:** Revenue is the primary segmentation indicator. An operator with 15 coaches generating $1.5M is Enterprise. An operator with 25 sedans generating $800K is Mid-Market.
 
 **Service Types:**
+
 - Hourly bookings (charter by the hour)
 - One-way trips (point A to point B)
 - Round-trip transportation
@@ -84,17 +92,20 @@ Enterprise Black Car operators are high-volume, premium transportation providers
 ### Company Size & Scale
 
 **Revenue (Primary Indicator):**
+
 - Minimum: $1M annually
 - Sweet Spot: $1M-$10M
 - Rule: If revenue conflicts with fleet size, revenue determines segment
 
 **Fleet Size (Supporting Indicator):**
+
 - Minimum: 20 vehicles (enterprise threshold)
 - Sweet Spot: 25-100 vehicles
 - Note: 15 coaches at $1.5M revenue = Enterprise (revenue trumps fleet)
 - Note: 25 sedans at $800K revenue = Mid-Market (revenue determines)
 
 **Staff Structure:**
+
 - Dispatchers (multiple)
 - Operations managers
 - Sales teams
@@ -125,15 +136,18 @@ Enterprise Black Car operators are high-volume, premium transportation providers
 ### Current Technology Stack
 
 **Legacy Dispatch Systems:**
+
 - Santa Cruz, Limo Anywhere, FASTTRAK, TaxiCaller
 - Limited capabilities, outdated interfaces
 
 **Patchwork Solutions:**
+
 - Spreadsheets, remote desktop tools, point solutions
 - Separate CRM, dispatch, accounting, booking platforms
 - Common Pain: Manual data re-entry across multiple systems
 
 **Technology Posture:**
+
 - Looking to modernize operations
 - Need to consolidate multiple software licenses
 - Often use 5-10+ different tools
@@ -142,6 +156,7 @@ Enterprise Black Car operators are high-volume, premium transportation providers
 ### Technology Needs
 
 **Must-Have Capabilities:**
+
 1. Unified platform (replace 5-10 tools)
 2. AI-powered scheduling and dispatch
 3. Enterprise integrations (accounting, HR, APIs)
@@ -210,18 +225,22 @@ Enterprise Black Car operators are high-volume, premium transportation providers
 ### Buying Committee (Multi-Stakeholder)
 
 **Primary Decision Maker:**
+
 - Role: Owner/CEO or Managing Partner
 - Authority: Final decision
 
 **Economic Buyer:**
+
 - Role: CFO or Owner
 - Concerns: ROI, total cost
 
 **Champion:**
+
 - Role: Operations Director or Dispatch Manager
 - Day-to-day user who will drive adoption
 
 **Influencers:**
+
 - Sales/Marketing leadership (need CRM integration)
 - IT/Technical lead (integration and security requirements)
 - Senior drivers/dispatchers (will block if not user-friendly)
@@ -252,6 +271,7 @@ Enterprise Black Car operators are high-volume, premium transportation providers
 **Cycle Length:** 3-6 months (enterprise sales cycle)
 
 **Typical Process:**
+
 - Demo Required: Yes (must see it work with their data)
 - Pilot/Sandbox: Parallel run for 1-2 weeks
 - Contract Type: Annual or multi-year agreements
@@ -269,6 +289,7 @@ Enterprise Black Car operators are high-volume, premium transportation providers
 ## Disqualifiers (DO NOT PURSUE)
 
 **Hard Disqualifiers:**
+
 - Revenue under $1M (SMB or Mid-Market segment)
 - Per-seat shuttle services (wrong segment → Shuttle ICP)
 - Ride-hail or on-demand consumer apps (not our model)
@@ -277,6 +298,7 @@ Enterprise Black Car operators are high-volume, premium transportation providers
 - Non-luxury transportation (taxis, rideshare)
 
 **Edge Cases - When to Qualify as Enterprise:**
+
 - 15 coaches, $1.5M revenue → Enterprise (revenue trumps fleet)
 - 18 specialty vehicles, $2M revenue → Enterprise (high revenue = enterprise complexity)
 - 25 sedans, $800K revenue → Mid-Market (revenue determines)
@@ -348,6 +370,7 @@ Enterprise Black Car operators are high-volume, premium transportation providers
 **Sales-Led: High-touch, consultative enterprise sales**
 
 **Only Sell When:**
+
 - Prospect operates ≥20 vehicles
 - Intends to upgrade from legacy/patchwork systems
 - Has business champion willing to drive internal adoption
@@ -368,15 +391,19 @@ Discovery → Demo → Sandbox/Pilot → Negotiation → White-glove Migration
 ### Typical Objections & Responses
 
 **"We can't afford any downtime during migration."**
+
 > "We do parallel runs. Your current system stays live while we migrate. Zero downtime. Roberts Hawaii made the switch with 150+ daily trips running simultaneously."
 
 **"Our drivers won't adopt new technology."**
+
 > "94% of staff prefer Moovs over their legacy system after 30 days. We have drivers in their 60s using it daily. Plus we provide on-site training and a driver adoption guarantee."
 
 **"We've invested too much in our current systems."**
+
 > "Operators typically reduce software costs by 22% by consolidating. You're paying for 8 tools that don't talk to each other. With Moovs, you replace them all and spend less."
 
 **"What if it doesn't work for our complex operations?"**
+
 > "We handle 150+ trip operations daily with Roberts Hawaii. We can run a pilot with a subset of your fleet to prove it works before full migration."
 
 ---
@@ -385,29 +412,29 @@ Discovery → Demo → Sandbox/Pilot → Negotiation → White-glove Migration
 
 ### Enterprise vs. Mid-Market
 
-| Attribute | Mid-Market | Enterprise |
-|-----------|------------|------------|
-| Revenue | $250K-$1M | $1M+ |
-| Structure | Owner + managers | Full management team |
-| Pain | "Need to scale efficiently" | "Need to consolidate systems" |
-| Budget | $250-$500/month | Enterprise pricing |
-| Sales Motion | Sales-assisted | High-touch Enterprise |
-| Cycle | 45 days | 3-6 months |
-| Values | Growth, efficiency | Consolidation, reliability |
+| Attribute    | Mid-Market                  | Enterprise                    |
+| ------------ | --------------------------- | ----------------------------- |
+| Revenue      | $250K-$1M                   | $1M+                          |
+| Structure    | Owner + managers            | Full management team          |
+| Pain         | "Need to scale efficiently" | "Need to consolidate systems" |
+| Budget       | $250-$500/month             | Enterprise pricing            |
+| Sales Motion | Sales-assisted              | High-touch Enterprise         |
+| Cycle        | 45 days                     | 3-6 months                    |
+| Values       | Growth, efficiency          | Consolidation, reliability    |
 
 ### Enterprise vs. SMB
 
-| Attribute | SMB | Enterprise |
-|-----------|-----|------------|
-| Revenue | $50K-$250K | $1M+ |
-| Structure | Owner-operator | Full management team |
-| Pain | "Everything is manual" | "Need to consolidate systems" |
-| Budget | $150-$250/month | Enterprise pricing |
-| Sales Motion | PLG/self-serve | High-touch Enterprise |
-| Cycle | 30 days | 3-6 months |
-| Tech Needs | Basic, simple | Advanced, integrated |
+| Attribute    | SMB                    | Enterprise                    |
+| ------------ | ---------------------- | ----------------------------- |
+| Revenue      | $50K-$250K             | $1M+                          |
+| Structure    | Owner-operator         | Full management team          |
+| Pain         | "Everything is manual" | "Need to consolidate systems" |
+| Budget       | $150-$250/month        | Enterprise pricing            |
+| Sales Motion | PLG/self-serve         | High-touch Enterprise         |
+| Cycle        | 30 days                | 3-6 months                    |
+| Tech Needs   | Basic, simple          | Advanced, integrated          |
 
 ---
 
-*Last Updated: January 2026*
-*Maintained By: GTM Leadership*
+_Last Updated: January 2026_
+_Maintained By: GTM Leadership_

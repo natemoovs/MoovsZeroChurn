@@ -6,14 +6,14 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 
 ## Quick Stats
 
-| Attribute | Value |
-|-----------|-------|
-| Revenue | $1M+ |
-| Fleet | 20-52+ vehicles |
-| Drivers | 25+ |
-| Budget | Enterprise pricing ($30K-$100K+/year) |
-| CSM Model | Named CSM |
-| Sales Cycle | 3-6 months |
+| Attribute   | Value                                 |
+| ----------- | ------------------------------------- |
+| Revenue     | $1M+                                  |
+| Fleet       | 20-52+ vehicles                       |
+| Drivers     | 25+                                   |
+| Budget      | Enterprise pricing ($30K-$100K+/year) |
+| CSM Model   | Named CSM                             |
+| Sales Cycle | 3-6 months                            |
 
 ---
 
@@ -31,14 +31,14 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 
 ### Key Success Metrics
 
-| Metric | Healthy | At Risk |
-|--------|---------|---------|
-| Stakeholder engagement | 3+ active users | Champion-only |
-| System consolidation | 5+ tools replaced | Still parallel systems |
-| AI feature adoption | 1+ AI module | None |
-| Executive visibility | Quarterly exec touch | No exec relationship |
-| NPS | 9+ | <7 |
-| Expansion revenue | +15% annually | Flat |
+| Metric                 | Healthy              | At Risk                |
+| ---------------------- | -------------------- | ---------------------- |
+| Stakeholder engagement | 3+ active users      | Champion-only          |
+| System consolidation   | 5+ tools replaced    | Still parallel systems |
+| AI feature adoption    | 1+ AI module         | None                   |
+| Executive visibility   | Quarterly exec touch | No exec relationship   |
+| NPS                    | 9+                   | <7                     |
+| Expansion revenue      | +15% annually        | Flat                   |
 
 ### Success Milestones
 
@@ -53,31 +53,31 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 
 ### Early Warning (Act Same Day)
 
-| Signal | Why It Matters | Response |
-|--------|----------------|----------|
-| **Executive sponsor change** | Lost air cover | Find new executive champion |
-| **M&A announcement** | Business disruption | Immediate relationship call |
-| **RFP process started** | Active evaluation | Executive escalation |
-| **Major system failure** | Confidence shattered | All-hands recovery |
+| Signal                       | Why It Matters       | Response                    |
+| ---------------------------- | -------------------- | --------------------------- |
+| **Executive sponsor change** | Lost air cover       | Find new executive champion |
+| **M&A announcement**         | Business disruption  | Immediate relationship call |
+| **RFP process started**      | Active evaluation    | Executive escalation        |
+| **Major system failure**     | Confidence shattered | All-hands recovery          |
 
 ### Yellow Flags (Act Within 48 Hours)
 
-| Signal | Why It Matters | Response |
-|--------|----------------|----------|
-| **Champion frustration** | Primary relationship at risk | Deep-dive call |
-| **Feature requests backlogged** | Feeling deprioritized | Product escalation |
-| **Competitor mentioned casually** | Seeds of evaluation | Proactive value review |
-| **Renewal pushed** | Budget or satisfaction concern | Discovery conversation |
-| **Parallel systems still running** | Not fully committed | Migration completion plan |
+| Signal                             | Why It Matters                 | Response                  |
+| ---------------------------------- | ------------------------------ | ------------------------- |
+| **Champion frustration**           | Primary relationship at risk   | Deep-dive call            |
+| **Feature requests backlogged**    | Feeling deprioritized          | Product escalation        |
+| **Competitor mentioned casually**  | Seeds of evaluation            | Proactive value review    |
+| **Renewal pushed**                 | Budget or satisfaction concern | Discovery conversation    |
+| **Parallel systems still running** | Not fully committed            | Migration completion plan |
 
 ### Red Flags (Executive Escalation Immediately)
 
-| Signal | Why It Matters | Response |
-|--------|----------------|----------|
-| **"We're evaluating options"** | Active churn process | Executive save call |
-| **New CTO/COO hired** | Change agent with opinions | Relationship building |
-| **Significant downsize** | Budget pressure | Value defense |
-| **Asked to pause contract** | Financial distress | Flexible solutions |
+| Signal                         | Why It Matters             | Response              |
+| ------------------------------ | -------------------------- | --------------------- |
+| **"We're evaluating options"** | Active churn process       | Executive save call   |
+| **New CTO/COO hired**          | Change agent with opinions | Relationship building |
+| **Significant downsize**       | Budget pressure            | Value defense         |
+| **Asked to pause contract**    | Financial distress         | Flexible solutions    |
 
 ---
 
@@ -124,24 +124,26 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 
 ### When to Suggest Expansion
 
-| Trigger | Expansion | Why Now |
-|---------|-----------|---------|
-| Manual scheduling still taking hours | AI Scheduler | 3-4 hours → 15 minutes |
-| Processing manifests manually | AI Import | Automate intake |
-| Missed calls/after-hours | AI Contact Center | 24/7 coverage |
-| Corporate clients want reports | Moovs Insights | One-click reporting |
-| Opening new market | Additional location | Multi-location support |
-| Shuttle contract won | Shuttle Platform | New capability |
+| Trigger                              | Expansion           | Why Now                |
+| ------------------------------------ | ------------------- | ---------------------- |
+| Manual scheduling still taking hours | AI Scheduler        | 3-4 hours → 15 minutes |
+| Processing manifests manually        | AI Import           | Automate intake        |
+| Missed calls/after-hours             | AI Contact Center   | 24/7 coverage          |
+| Corporate clients want reports       | Moovs Insights      | One-click reporting    |
+| Opening new market                   | Additional location | Multi-location support |
+| Shuttle contract won                 | Shuttle Platform    | New capability         |
 
 ### Enterprise Expansion Playbook
 
 **Do:**
+
 - Connect expansion to business goals they've stated
 - Use their own data to show need
 - Pilot before full rollout
 - Executive sponsorship for new modules
 
 **Don't:**
+
 - Push multiple expansions at once
 - Surprise them with big invoices
 - Sell features they haven't asked about
@@ -150,12 +152,15 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 ### Expansion Conversation Starters
 
 **AI Scheduler:**
+
 > "You mentioned dispatch still takes 3 hours for your 150 daily trips. Roberts Hawaii cut that to 15 minutes with AI Scheduler. Want to pilot it with one dispatch team?"
 
 **AI Import:**
+
 > "I know those airline manifests are killing your team. AI Import can read them automatically. One operator saved 10 hours a week. Want to try it with one corporate account?"
 
 **New Location:**
+
 > "Congrats on the San Francisco expansion. We can set up a separate location view so your local team has their own dashboard while you see the full picture."
 
 ---
@@ -167,17 +172,20 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 **Critical:** Migration must go flawlessly. This sets the tone.
 
 **Pre-Launch:**
+
 - Detailed migration plan
 - Stakeholder mapping
 - Success metrics agreed
 - Parallel run schedule
 
 **Launch:**
+
 - White-glove migration execution
 - Daily check-ins first week
 - Issue resolution within hours
 
 **Post-Launch:**
+
 - 30-day health check with executive
 - 60-day efficiency review
 - 90-day success documentation
@@ -185,16 +193,19 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 ### Ongoing (Named CSM)
 
 **Weekly:**
+
 - Health monitoring
 - Issue tracking
 - Champion touch-base
 
 **Monthly:**
+
 - Formal business review
 - Feature adoption check
 - Expansion opportunity review
 
 **Quarterly:**
+
 - Executive QBR
 - ROI documentation
 - Strategic planning
@@ -202,20 +213,24 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 ### Renewal (Annual)
 
 **120 days out:**
+
 - Renewal planning starts
 - Value documentation compiled
 - Expansion opportunities identified
 
 **90 days out:**
+
 - Executive business review
 - Renewal proposal presented
 - Expansion discussion
 
 **60 days out:**
+
 - Negotiation/alignment
 - Contract finalization
 
 **30 days out:**
+
 - Signature
 - Next year success planning
 
@@ -225,14 +240,14 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 
 ### Key Stakeholders to Engage
 
-| Role | Priority | Engagement |
-|------|----------|------------|
-| CEO/Owner | Executive Sponsor | Quarterly touch |
-| COO/Ops Director | Champion | Weekly/bi-weekly |
-| Dispatch Manager | Power User | As needed |
-| CFO/Finance | Economic Buyer | Renewal, ROI |
-| IT/Technical | Integration Owner | As needed |
-| Drivers | End Users | Adoption tracking |
+| Role             | Priority          | Engagement        |
+| ---------------- | ----------------- | ----------------- |
+| CEO/Owner        | Executive Sponsor | Quarterly touch   |
+| COO/Ops Director | Champion          | Weekly/bi-weekly  |
+| Dispatch Manager | Power User        | As needed         |
+| CFO/Finance      | Economic Buyer    | Renewal, ROI      |
+| IT/Technical     | Integration Owner | As needed         |
+| Drivers          | End Users         | Adoption tracking |
 
 ### Multi-Threading Strategy
 
@@ -274,15 +289,15 @@ Large transportation operations with $1M+ revenue, 20-52+ vehicles. High-value a
 
 ## Key Metrics to Track
 
-| Metric | Definition | Target |
-|--------|------------|--------|
-| **Health Score** | Composite engagement metric | >80 |
-| **Executive Engagement** | Exec touch last quarter | Yes |
-| **Consolidation** | Tools replaced | 5+ |
-| **AI Adoption** | Using AI modules | 1+ |
-| **NRR** | Net Revenue Retention | >110% |
-| **Reference Status** | Case study/reference | Yes |
+| Metric                   | Definition                  | Target |
+| ------------------------ | --------------------------- | ------ |
+| **Health Score**         | Composite engagement metric | >80    |
+| **Executive Engagement** | Exec touch last quarter     | Yes    |
+| **Consolidation**        | Tools replaced              | 5+     |
+| **AI Adoption**          | Using AI modules            | 1+     |
+| **NRR**                  | Net Revenue Retention       | >110%  |
+| **Reference Status**     | Case study/reference        | Yes    |
 
 ---
 
-*For playbooks on specific scenarios, see /csm-playbooks/*
+_For playbooks on specific scenarios, see /csm-playbooks/_

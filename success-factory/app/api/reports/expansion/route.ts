@@ -5,7 +5,6 @@ import {
   getSegmentDisplayName,
   identifyPricingTier,
   checkPlanMisalignment,
-  identifyUpsellOpportunities,
   calculateExpansionPotential,
   PRICING_TIERS,
 } from "@/lib/segments"
@@ -204,7 +203,8 @@ export async function GET(request: NextRequest) {
         totalExpansionValue,
         tierUpgrades,
         addOnOpportunities: addOnCount,
-        avgExpansionPerAccount: topAccounts.length > 0 ? Math.round(totalExpansionValue / topAccounts.length) : 0,
+        avgExpansionPerAccount:
+          topAccounts.length > 0 ? Math.round(totalExpansionValue / topAccounts.length) : 0,
       },
       bySegment,
       byOpportunityType,
@@ -216,7 +216,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Expansion report error:", error)
     return NextResponse.json(
-      { error: "Failed to generate expansion report", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Failed to generate expansion report",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }
@@ -231,7 +234,9 @@ function generateExpansionInsights(
 
   // Total opportunity
   if (totalValue > 0) {
-    insights.push(`$${totalValue.toLocaleString()}/month expansion opportunity across ${accounts.length} accounts`)
+    insights.push(
+      `$${totalValue.toLocaleString()}/month expansion opportunity across ${accounts.length} accounts`
+    )
   }
 
   // Segment-specific insights
@@ -267,16 +272,18 @@ function generateExpansionInsights(
     (a) => a.currentTier === "Free" && a.monthlyTrips && a.monthlyTrips > 10
   )
   if (freeWithUsage.length > 0) {
-    insights.push(
-      `${freeWithUsage.length} Free accounts with active usage - ready for conversion`
-    )
+    insights.push(`${freeWithUsage.length} Free accounts with active usage - ready for conversion`)
   }
 
   // Add-on opportunities
-  const addOnOpportunities = accounts.flatMap((a) => a.opportunities.filter((o) => o.type === "add_on"))
+  const addOnOpportunities = accounts.flatMap((a) =>
+    a.opportunities.filter((o) => o.type === "add_on")
+  )
   if (addOnOpportunities.length > 0) {
     const addOnValue = addOnOpportunities.reduce((sum, o) => sum + o.value, 0)
-    insights.push(`${addOnOpportunities.length} add-on opportunities totaling $${addOnValue.toLocaleString()}/month`)
+    insights.push(
+      `${addOnOpportunities.length} add-on opportunities totaling $${addOnValue.toLocaleString()}/month`
+    )
   }
 
   return insights.slice(0, 5)

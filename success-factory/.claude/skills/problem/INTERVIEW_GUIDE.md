@@ -13,6 +13,7 @@ This guide provides the question framework for conducting problem discovery inte
 ### What Makes a Good Problem Discovery Question
 
 Good problem discovery questions:
+
 - **Surface pain** - "What's frustrating about this?"
 - **Get specific** - "Tell me about the last time this happened"
 - **Reveal stakes** - "What happened as a result?"
@@ -20,6 +21,7 @@ Good problem discovery questions:
 - **Challenge solutions** - "That sounds like a solution. What problem does it solve?"
 
 Bad problem discovery questions:
+
 - "What features do you need?" (solution-seeking)
 - "Would X be helpful?" (leading)
 - "On a scale of 1-10, how important is this?" (abstract)
@@ -28,6 +30,7 @@ Bad problem discovery questions:
 ### Your Role
 
 You are NOT a requirements gatherer. You are an investigative journalist trying to understand:
+
 1. What is actually happening today?
 2. Why is it painful?
 3. For whom?
@@ -214,6 +217,7 @@ Goal: Confirm understanding and identify gaps.
 When someone gives you a surface-level problem, use "Why?" to dig deeper:
 
 **Example:**
+
 - "We need better reporting" → **Why?**
 - "Because we can't see trip performance" → **Why do you need to see that?**
 - "Because we don't know which drivers are running late" → **Why does that matter?**
@@ -241,18 +245,23 @@ If you can't write any of these, keep asking questions.
 ## Red Flags to Watch For
 
 ### "We need X" without pain
+
 If they can't describe actual pain, this might be a solution looking for a problem.
 
 ### Everyone's affected but no one can give a story
+
 Theoretical problems aren't problems yet.
 
 ### The workaround works fine
+
 If the workaround is acceptable, the problem isn't urgent.
 
 ### No quantifiable cost
+
 "It's frustrating" isn't enough. Time, money, or relationships should be at stake.
 
 ### Solution already baked in
+
 If they've decided the solution, they might resist problem exploration. Push back gently: "I want to make sure we solve the right problem."
 
 ---

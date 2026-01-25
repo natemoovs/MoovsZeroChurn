@@ -134,6 +134,7 @@ model UserPreference {
   hubspotOwnerId  String?  // HubSpot owner ID (optional, for linking)
   email           String
   name            String?
+  avatarUrl       String?  // Profile picture URL (Vercel Blob)
   slackUserId     String?  // For direct Slack notifications
   alertPreferences Json?   // What alerts they want
   createdAt       DateTime @default(now())

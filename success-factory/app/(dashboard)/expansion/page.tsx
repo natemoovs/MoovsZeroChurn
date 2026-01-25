@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
-  ChevronRight,
   Sparkles,
   RefreshCw,
 } from "lucide-react"
@@ -149,30 +148,19 @@ export default function ExpansionPage() {
     { value: "won", label: "Won", count: stats?.won || 0 },
   ]
 
-  // Calculate NRR
-  const nrr = stats
-    ? ((((stats.totalWonValue || 0) + (stats.totalPotentialValue || 0)) /
-        Math.max(stats.totalPotentialValue || 1, 1)) *
-        100)
-    : 0
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-content-primary">
-              Expansion Pipeline
-            </h1>
-            <p className="mt-1 text-content-secondary">
-              Track upsell and cross-sell opportunities
-            </p>
+            <h1 className="text-content-primary text-2xl font-bold">Expansion Pipeline</h1>
+            <p className="text-content-secondary mt-1">Track upsell and cross-sell opportunities</p>
           </div>
           <button
             onClick={runDetection}
             disabled={detecting}
-            className="flex items-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success-700 disabled:opacity-50"
+            className="bg-success-600 hover:bg-success-700 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
           >
             {detecting ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -187,14 +175,12 @@ export default function ExpansionPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100 dark:bg-success-900/30">
-                <DollarSign className="h-5 w-5 text-success-600 dark:text-success-400" />
+              <div className="bg-success-100 dark:bg-success-900/30 flex h-10 w-10 items-center justify-center rounded-lg">
+                <DollarSign className="text-success-600 dark:text-success-400 h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-content-secondary">
-                  Pipeline Value
-                </p>
-                <p className="text-xl font-bold text-content-primary">
+                <p className="text-content-secondary text-sm">Pipeline Value</p>
+                <p className="text-content-primary text-xl font-bold">
                   {formatCurrency(stats?.totalPotentialValue || 0)}
                 </p>
               </div>
@@ -203,14 +189,12 @@ export default function ExpansionPage() {
 
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
-                <TrendingUp className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+              <div className="bg-primary-100 dark:bg-primary-900/30 flex h-10 w-10 items-center justify-center rounded-lg">
+                <TrendingUp className="text-primary-600 dark:text-primary-400 h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-content-secondary">
-                  Won Value
-                </p>
-                <p className="text-xl font-bold text-content-primary">
+                <p className="text-content-secondary text-sm">Won Value</p>
+                <p className="text-content-primary text-xl font-bold">
                   {formatCurrency(stats?.totalWonValue || 0)}
                 </p>
               </div>
@@ -219,17 +203,13 @@ export default function ExpansionPage() {
 
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
-                <Target className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+              <div className="bg-primary-100 dark:bg-primary-900/30 flex h-10 w-10 items-center justify-center rounded-lg">
+                <Target className="text-primary-600 dark:text-primary-400 h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-content-secondary">
-                  Active Opportunities
-                </p>
-                <p className="text-xl font-bold text-content-primary">
-                  {(stats?.identified || 0) +
-                    (stats?.qualified || 0) +
-                    (stats?.inProgress || 0)}
+                <p className="text-content-secondary text-sm">Active Opportunities</p>
+                <p className="text-content-primary text-xl font-bold">
+                  {(stats?.identified || 0) + (stats?.qualified || 0) + (stats?.inProgress || 0)}
                 </p>
               </div>
             </div>
@@ -237,18 +217,14 @@ export default function ExpansionPage() {
 
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-100 dark:bg-warning-900/30">
-                <ArrowUpRight className="h-5 w-5 text-warning-600 dark:text-warning-400" />
+              <div className="bg-warning-100 dark:bg-warning-900/30 flex h-10 w-10 items-center justify-center rounded-lg">
+                <ArrowUpRight className="text-warning-600 dark:text-warning-400 h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-content-secondary">
-                  Win Rate
-                </p>
-                <p className="text-xl font-bold text-content-primary">
+                <p className="text-content-secondary text-sm">Win Rate</p>
+                <p className="text-content-primary text-xl font-bold">
                   {stats && stats.won + stats.lost > 0
-                    ? Math.round(
-                        (stats.won / (stats.won + stats.lost)) * 100
-                      )
+                    ? Math.round((stats.won / (stats.won + stats.lost)) * 100)
                     : 0}
                   %
                 </p>
@@ -258,7 +234,7 @@ export default function ExpansionPage() {
         </div>
 
         {/* Status Filters */}
-        <div className="flex flex-wrap gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
+        <div className="border-border-default bg-bg-secondary flex flex-wrap gap-1 rounded-lg border p-1">
           {filterButtons.map((btn) => (
             <button
               key={btn.value}
@@ -274,9 +250,7 @@ export default function ExpansionPage() {
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-xs",
-                  statusFilter === btn.value
-                    ? "bg-bg-secondary"
-                    : "bg-bg-tertiary"
+                  statusFilter === btn.value ? "bg-bg-secondary" : "bg-bg-tertiary"
                 )}
               >
                 {btn.count}
@@ -289,21 +263,16 @@ export default function ExpansionPage() {
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="shimmer h-24 rounded-xl"
-              />
+              <div key={i} className="shimmer h-24 rounded-xl" />
             ))}
           </div>
         ) : filteredOpportunities.length === 0 ? (
           <div className="card-sf p-12 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-bg-secondary">
-              <Target className="h-6 w-6 text-content-tertiary" />
+            <div className="bg-bg-secondary mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <Target className="text-content-tertiary h-6 w-6" />
             </div>
-            <h3 className="text-lg font-medium text-content-primary">
-              No opportunities found
-            </h3>
-            <p className="mt-1 text-content-secondary">
+            <h3 className="text-content-primary text-lg font-medium">No opportunities found</h3>
+            <p className="text-content-secondary mt-1">
               Click &quot;Detect Signals&quot; to automatically find expansion opportunities
             </p>
           </div>
@@ -314,7 +283,7 @@ export default function ExpansionPage() {
               return (
                 <div
                   key={opp.id}
-                  className="card-sf p-4 transition-colors hover:border-border-hover"
+                  className="card-sf hover:border-border-hover p-4 transition-colors"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 flex-1">
@@ -328,22 +297,17 @@ export default function ExpansionPage() {
                           {typeLabels[opp.type]}
                         </span>
                         <span
-                          className={cn(
-                            "text-xs font-medium",
-                            confidenceColors[opp.confidence]
-                          )}
+                          className={cn("text-xs font-medium", confidenceColors[opp.confidence])}
                         >
                           {opp.confidence} confidence
                         </span>
                       </div>
-                      <h3 className="mt-1 truncate font-medium text-content-primary">
+                      <h3 className="text-content-primary mt-1 truncate font-medium">
                         {opp.title}
                       </h3>
-                      <p className="mt-0.5 text-sm text-content-secondary">
-                        {opp.companyName}
-                      </p>
+                      <p className="text-content-secondary mt-0.5 text-sm">{opp.companyName}</p>
                       {opp.description && (
-                        <p className="mt-1 line-clamp-1 text-sm text-content-secondary">
+                        <p className="text-content-secondary mt-1 line-clamp-1 text-sm">
                           {opp.description}
                         </p>
                       )}
@@ -351,10 +315,8 @@ export default function ExpansionPage() {
 
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-sm text-content-secondary">
-                          Potential
-                        </p>
-                        <p className="font-semibold text-success-600 dark:text-success-400">
+                        <p className="text-content-secondary text-sm">Potential</p>
+                        <p className="text-success-600 dark:text-success-400 font-semibold">
                           +{formatCurrency(opp.potentialValue)}
                         </p>
                       </div>
@@ -362,7 +324,7 @@ export default function ExpansionPage() {
                       {opp.status === "identified" && (
                         <button
                           onClick={() => updateStatus(opp.id, "qualified")}
-                          className="rounded-lg bg-success-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-success-700"
+                          className="bg-success-600 hover:bg-success-700 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors"
                         >
                           Qualify
                         </button>
@@ -370,7 +332,7 @@ export default function ExpansionPage() {
                       {opp.status === "qualified" && (
                         <button
                           onClick={() => updateStatus(opp.id, "in_progress")}
-                          className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+                          className="bg-primary-600 hover:bg-primary-700 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors"
                         >
                           Start
                         </button>
@@ -379,13 +341,13 @@ export default function ExpansionPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => updateStatus(opp.id, "won")}
-                            className="rounded-lg bg-success-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-success-700"
+                            className="bg-success-600 hover:bg-success-700 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors"
                           >
                             Won
                           </button>
                           <button
                             onClick={() => updateStatus(opp.id, "lost")}
-                            className="rounded-lg bg-bg-secondary px-3 py-1.5 text-sm font-medium text-content-primary transition-colors hover:bg-bg-tertiary"
+                            className="bg-bg-secondary text-content-primary hover:bg-bg-tertiary rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
                           >
                             Lost
                           </button>
@@ -396,9 +358,7 @@ export default function ExpansionPage() {
                           <StatusIcon
                             className={cn(
                               "h-5 w-5",
-                              opp.status === "won"
-                                ? "text-success-500"
-                                : "text-error-500"
+                              opp.status === "won" ? "text-success-500" : "text-error-500"
                             )}
                           />
                           <span

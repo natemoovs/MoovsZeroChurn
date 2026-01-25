@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import {
-  getAnthropicClient,
-  AI_MODEL,
-  TOKEN_LIMITS,
-  extractText,
-} from "@/lib/ai"
+import { getAnthropicClient, AI_MODEL, TOKEN_LIMITS, extractText } from "@/lib/ai"
 import { skillTools, executeTool } from "@/lib/skills/tools"
 import { requireAuth } from "@/lib/auth/api-middleware"
 import { createLogger } from "@/lib/logger"
@@ -58,8 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     const anthropic = getAnthropicClient()
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
     // Convert to Anthropic message format
     const anthropicMessages: Anthropic.MessageParam[] = messages.map((m) => ({
@@ -95,7 +89,7 @@ async function streamingResponse(
       }
 
       try {
-        let currentMessages = [...messages]
+        const currentMessages = [...messages]
         let iterations = 0
         const MAX_ITERATIONS = 10
 
@@ -138,10 +132,7 @@ async function streamingResponse(
               if (event.delta.type === "text_delta") {
                 fullText += event.delta.text
                 send({ type: "text", content: event.delta.text })
-              } else if (
-                event.delta.type === "input_json_delta" &&
-                currentToolUse
-              ) {
+              } else if (event.delta.type === "input_json_delta" && currentToolUse) {
                 currentToolUse.inputJson += event.delta.partial_json
               }
             } else if (event.type === "content_block_stop") {
@@ -193,9 +184,7 @@ async function streamingResponse(
               toolResults.push({
                 type: "tool_result",
                 tool_use_id: tool.id,
-                content: JSON.stringify(
-                  result.success ? result.data : { error: result.error }
-                ),
+                content: JSON.stringify(result.success ? result.data : { error: result.error }),
               })
             }
 
@@ -239,7 +228,7 @@ async function nonStreamingResponse(
   messages: Anthropic.MessageParam[],
   baseUrl: string
 ) {
-  let currentMessages = [...messages]
+  const currentMessages = [...messages]
   let iterations = 0
   const MAX_ITERATIONS = 10
   let finalText = ""
@@ -280,9 +269,7 @@ async function nonStreamingResponse(
           toolResults.push({
             type: "tool_result",
             tool_use_id: block.id,
-            content: JSON.stringify(
-              result.success ? result.data : { error: result.error }
-            ),
+            content: JSON.stringify(result.success ? result.data : { error: result.error }),
           })
         }
       }

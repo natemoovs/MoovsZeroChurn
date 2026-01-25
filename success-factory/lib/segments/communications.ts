@@ -252,9 +252,11 @@ export function getTemplate(
   type: CommunicationType,
   segment: CustomerSegment
 ): CommunicationTemplate | null {
-  return COMMUNICATION_TEMPLATES.find(
-    (t) => t.type === type && t.applicableSegments.includes(segment)
-  ) || null
+  return (
+    COMMUNICATION_TEMPLATES.find(
+      (t) => t.type === type && t.applicableSegments.includes(segment)
+    ) || null
+  )
 }
 
 /**
@@ -321,7 +323,8 @@ export function generatePlaybookCommunication(
     interpretation: "there might be something we can help with",
     daysAgo: String(customerData.daysAgo || 7),
     renewalDate: customerData.renewalDate || "soon",
-    achievements: customerData.achievements || "• Managed trips efficiently\n• Grown your operation",
+    achievements:
+      customerData.achievements || "• Managed trips efficiently\n• Grown your operation",
     growthSignal: customerData.growthSignal || "increased trip volume",
     paymentDate: customerData.paymentDate || "recently",
     featureName: customerData.featureName || "this feature",

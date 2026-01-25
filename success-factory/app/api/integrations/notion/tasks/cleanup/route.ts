@@ -11,10 +11,7 @@ const CSM_DATABASE_ID = process.env.NOTION_CSM_DATABASE_ID
  */
 export async function POST() {
   if (!process.env.NOTION_API_KEY || !CSM_DATABASE_ID) {
-    return NextResponse.json(
-      { error: "Notion not configured" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Notion not configured" }, { status: 500 })
   }
 
   try {

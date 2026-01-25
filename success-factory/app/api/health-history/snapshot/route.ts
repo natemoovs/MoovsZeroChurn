@@ -91,7 +91,9 @@ export async function POST(request: NextRequest) {
   try {
     // Fetch current portfolio data
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    const portfolioRes = await fetch(`${baseUrl}/api/integrations/portfolio?segment=all&refresh=true`)
+    const portfolioRes = await fetch(
+      `${baseUrl}/api/integrations/portfolio?segment=all&refresh=true`
+    )
     const portfolioData = await portfolioRes.json()
 
     if (!portfolioData.summaries) {
@@ -111,9 +113,7 @@ export async function POST(request: NextRequest) {
       distinct: ["companyId"],
     })
 
-    const previousMap = new Map(
-      previousSnapshots.map((s) => [s.companyId, s])
-    )
+    const previousMap = new Map(previousSnapshots.map((s) => [s.companyId, s]))
 
     // Create snapshots for all accounts
     const snapshots = summaries.map((s) => ({
@@ -157,7 +157,9 @@ export async function POST(request: NextRequest) {
     // Filter for negative changes (downgrades)
     const downgrades = changes.filter((c) => {
       const scoreOrder = { green: 3, yellow: 2, red: 1, unknown: 0 }
-      return scoreOrder[c.to as keyof typeof scoreOrder] < scoreOrder[c.from as keyof typeof scoreOrder]
+      return (
+        scoreOrder[c.to as keyof typeof scoreOrder] < scoreOrder[c.from as keyof typeof scoreOrder]
+      )
     })
 
     // Execute playbooks for health changes
@@ -216,10 +218,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Health snapshot error:", error)
-    return NextResponse.json(
-      { error: "Failed to create health snapshots" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to create health snapshots" }, { status: 500 })
   }
 }
 
@@ -268,10 +267,13 @@ export async function GET(request: NextRequest) {
 
 async function triggerSnapshot() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000"
-    const portfolioRes = await fetch(`${baseUrl}/api/integrations/portfolio?segment=all&refresh=true`)
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000"
+    const portfolioRes = await fetch(
+      `${baseUrl}/api/integrations/portfolio?segment=all&refresh=true`
+    )
     const portfolioData = await portfolioRes.json()
 
     if (!portfolioData.summaries) {
@@ -290,9 +292,7 @@ async function triggerSnapshot() {
       distinct: ["companyId"],
     })
 
-    const previousMap = new Map(
-      previousSnapshots.map((s) => [s.companyId, s])
-    )
+    const previousMap = new Map(previousSnapshots.map((s) => [s.companyId, s]))
 
     const snapshots = summaries.map((s) => ({
       companyId: s.companyId,
@@ -332,7 +332,9 @@ async function triggerSnapshot() {
 
     const downgrades = changes.filter((c) => {
       const scoreOrder = { green: 3, yellow: 2, red: 1, unknown: 0 }
-      return scoreOrder[c.to as keyof typeof scoreOrder] < scoreOrder[c.from as keyof typeof scoreOrder]
+      return (
+        scoreOrder[c.to as keyof typeof scoreOrder] < scoreOrder[c.from as keyof typeof scoreOrder]
+      )
     })
 
     // Execute playbooks for health changes (same logic as POST)
@@ -364,9 +366,6 @@ async function triggerSnapshot() {
     })
   } catch (error) {
     console.error("Health snapshot error:", error)
-    return NextResponse.json(
-      { error: "Failed to create health snapshots" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to create health snapshots" }, { status: 500 })
   }
 }

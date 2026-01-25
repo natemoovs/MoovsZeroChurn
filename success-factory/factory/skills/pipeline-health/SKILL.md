@@ -29,14 +29,18 @@ Generate a comprehensive pipeline review showing renewals, at-risk accounts, and
 ## Questions
 
 ### timeframe: What timeframe do you want to review?
+
 Options:
+
 - This week - Next 7 days focus
 - Next 2 weeks - 14 day planning
 - This month - 30 day view
 - This quarter - 90 day strategic view
 
 ### focusArea: Any specific focus for this review?
+
 Options:
+
 - Renewals - Prioritize upcoming renewals
 - At-risk accounts - Focus on red/yellow health
 - Expansion opportunities - Look for upsell/growth
@@ -44,7 +48,9 @@ Options:
 - All areas - Full portfolio review
 
 ### includeMetrics: What metrics matter most to you right now?
+
 Examples:
+
 - NRR and churn rate
 - Renewal close rate
 - Time to value for new customers
@@ -58,20 +64,23 @@ Examples:
 Generate a pipeline review with:
 
 ### Portfolio Snapshot
-| Metric | Current | Trend |
-|--------|---------|-------|
-| Total Accounts | [count] | [up/down/stable] |
-| Total ARR | $[amount] | [trend] |
-| Health: Green | [count] ([%]) | [trend] |
-| Health: Yellow | [count] ([%]) | [trend] |
-| Health: Red | [count] ([%]) | [trend] |
+
+| Metric         | Current       | Trend            |
+| -------------- | ------------- | ---------------- |
+| Total Accounts | [count]       | [up/down/stable] |
+| Total ARR      | $[amount]     | [trend]          |
+| Health: Green  | [count] ([%]) | [trend]          |
+| Health: Yellow | [count] ([%]) | [trend]          |
+| Health: Red    | [count] ([%]) | [trend]          |
 
 ### Renewals in [Timeframe]
-| Customer | ARR | Renewal Date | Health | Risk Level | Action Needed |
-|----------|-----|--------------|--------|-------------|---------------|
-| [name] | $[arr] | [date] | [health] | [risk] | [action] |
+
+| Customer | ARR    | Renewal Date | Health   | Risk Level | Action Needed |
+| -------- | ------ | ------------ | -------- | ---------- | ------------- |
+| [name]   | $[arr] | [date]       | [health] | [risk]     | [action]      |
 
 ### At-Risk Accounts (Priority Order)
+
 1. **[Customer]** - $[ARR]
    - Risk signals: [list]
    - Recommended action: [action]
@@ -82,22 +91,27 @@ Generate a pipeline review with:
    - Recommended action: [action]
 
 ### Expansion Opportunities
-| Customer | Current ARR | Opportunity | Next Step |
-|----------|-------------|-------------|-----------|
-| [name] | $[arr] | [opportunity] | [step] |
+
+| Customer | Current ARR | Opportunity   | Next Step |
+| -------- | ----------- | ------------- | --------- |
+| [name]   | $[arr]      | [opportunity] | [step]    |
 
 ### This Week's Focus
+
 Based on urgency and impact, prioritize:
+
 1. **[Action]** for [Customer] - [reason]
 2. **[Action]** for [Customer] - [reason]
 3. **[Action]** for [Customer] - [reason]
 
 ### Health Trend Analysis
+
 - Accounts improving: [list]
 - Accounts declining: [list]
 - New risks identified: [list]
 
 ### Notes for Manager 1:1
+
 - Key wins this period: [list]
 - Blockers needing escalation: [list]
 - Resource requests: [list]

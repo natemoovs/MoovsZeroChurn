@@ -126,12 +126,7 @@ export interface StripeInvoice {
   }
 }
 
-export type StripeInvoiceStatus =
-  | "draft"
-  | "open"
-  | "paid"
-  | "uncollectible"
-  | "void"
+export type StripeInvoiceStatus = "draft" | "open" | "paid" | "uncollectible" | "void"
 
 export interface StripeInvoiceLineItem {
   id: string
@@ -222,15 +217,12 @@ function getHeaders(): HeadersInit {
     throw new Error("STRIPE_SECRET_KEY environment variable is not set")
   }
   return {
-    "Authorization": `Bearer ${STRIPE_SECRET_KEY}`,
+    Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
     "Content-Type": "application/x-www-form-urlencoded",
   }
 }
 
-async function stripeFetch<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function stripeFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -272,9 +264,7 @@ export async function getCustomer(id: string): Promise<StripeCustomer> {
  */
 export async function getCustomerByEmail(email: string): Promise<StripeCustomer | null> {
   const params = toFormData({ email, limit: 1 })
-  const result = await stripeFetch<StripeListResponse<StripeCustomer>>(
-    `/customers?${params}`
-  )
+  const result = await stripeFetch<StripeListResponse<StripeCustomer>>(`/customers?${params}`)
   return result.data[0] || null
 }
 
@@ -309,9 +299,7 @@ export async function getInvoices(
     status: options.status,
     limit: options.limit || 100,
   })
-  const result = await stripeFetch<StripeListResponse<StripeInvoice>>(
-    `/invoices?${params}`
-  )
+  const result = await stripeFetch<StripeListResponse<StripeInvoice>>(`/invoices?${params}`)
   return result.data
 }
 
@@ -326,22 +314,16 @@ export async function getPaymentHistory(
     customer: customerId,
     limit: options.limit || 100,
   })
-  const result = await stripeFetch<StripeListResponse<StripeCharge>>(
-    `/charges?${params}`
-  )
+  const result = await stripeFetch<StripeListResponse<StripeCharge>>(`/charges?${params}`)
   return result.data
 }
 
 /**
  * List all customers (paginated)
  */
-export async function listCustomers(
-  limit: number = 100
-): Promise<StripeCustomer[]> {
+export async function listCustomers(limit: number = 100): Promise<StripeCustomer[]> {
   const params = toFormData({ limit })
-  const result = await stripeFetch<StripeListResponse<StripeCustomer>>(
-    `/customers?${params}`
-  )
+  const result = await stripeFetch<StripeListResponse<StripeCustomer>>(`/customers?${params}`)
   return result.data
 }
 

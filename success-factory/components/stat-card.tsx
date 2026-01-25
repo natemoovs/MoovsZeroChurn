@@ -47,23 +47,12 @@ export function StatCard({
   const styles = variantStyles[variant]
 
   return (
-    <div
-      className={cn(
-        "p-5 transition-shadow-smooth",
-        styles.bg
-      )}
-    >
+    <div className={cn("transition-shadow-smooth p-5", styles.bg)}>
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-content-secondary">
-            {title}
-          </p>
-          <p className="text-2xl font-bold text-content-primary">
-            {value}
-          </p>
-          {subtitle && (
-            <p className="text-sm text-content-secondary">{subtitle}</p>
-          )}
+          <p className="text-content-secondary text-sm font-medium">{title}</p>
+          <p className="text-content-primary text-2xl font-bold">{value}</p>
+          {subtitle && <p className="text-content-secondary text-sm">{subtitle}</p>}
           {trend && (
             <p
               className={cn(

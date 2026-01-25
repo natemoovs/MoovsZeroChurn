@@ -96,13 +96,16 @@ export const SERVICE_TYPE_PROFILES: Record<ServiceType, ServiceTypeProfile> = {
 }
 
 // Shuttle variations from ICP
-export const SHUTTLE_VARIATIONS: Record<ShuttleVariation, {
-  name: string
-  primaryDriver: string
-  salesCycle: string
-  keyStakeholders: string[]
-  uniquePains: string[]
-}> = {
+export const SHUTTLE_VARIATIONS: Record<
+  ShuttleVariation,
+  {
+    name: string
+    primaryDriver: string
+    salesCycle: string
+    keyStakeholders: string[]
+    uniquePains: string[]
+  }
+> = {
   university: {
     name: "University Programs",
     primaryDriver: "Student experience & safety",
@@ -175,7 +178,8 @@ export function classifyServiceType(signals: {
   if (signals.tripType) {
     const type = signals.tripType.toLowerCase()
     if (type.includes("shuttle") || type.includes("commuter")) return "shuttle"
-    if (type.includes("black car") || type.includes("sedan") || type.includes("limo")) return "black_car"
+    if (type.includes("black car") || type.includes("sedan") || type.includes("limo"))
+      return "black_car"
   }
 
   // Fixed routes + seat bookings = shuttle
@@ -185,7 +189,7 @@ export function classifyServiceType(signals: {
 
   // Vehicle type indicators
   if (signals.vehicleTypes && signals.vehicleTypes.length > 0) {
-    const types = signals.vehicleTypes.map(v => v.toLowerCase()).join(" ")
+    const types = signals.vehicleTypes.map((v) => v.toLowerCase()).join(" ")
     if (types.includes("bus") || types.includes("coach") || types.includes("transit")) {
       return "shuttle"
     }
@@ -209,7 +213,9 @@ export function identifyShuttleVariation(signals: {
     signals.industry || "",
     signals.customerName || "",
     ...(signals.domainKeywords || []),
-  ].join(" ").toLowerCase()
+  ]
+    .join(" ")
+    .toLowerCase()
 
   // University indicators
   if (
@@ -254,19 +260,25 @@ export function getServiceTypeRecommendations(
   riskSignals: string[]
 ): string[] {
   const recommendations: string[] = []
-  const signalsLower = riskSignals.map(s => s.toLowerCase()).join(" ")
+  const signalsLower = riskSignals.map((s) => s.toLowerCase()).join(" ")
 
   if (serviceType === "shuttle") {
     if (signalsLower.includes("route") || signalsLower.includes("schedule")) {
-      recommendations.push("Review route optimization - complex schedules may be causing operational issues")
+      recommendations.push(
+        "Review route optimization - complex schedules may be causing operational issues"
+      )
     }
     if (signalsLower.includes("rider") || signalsLower.includes("passenger")) {
-      recommendations.push("Check rider satisfaction - shuttle programs live or die on rider experience")
+      recommendations.push(
+        "Check rider satisfaction - shuttle programs live or die on rider experience"
+      )
     }
     if (signalsLower.includes("contract") || signalsLower.includes("renewal")) {
       recommendations.push("Prepare program performance report for contract renewal discussion")
     }
-    recommendations.push("Shuttle programs have high retention once established - focus on program success")
+    recommendations.push(
+      "Shuttle programs have high retention once established - focus on program success"
+    )
   }
 
   if (serviceType === "black_car") {
@@ -303,14 +315,16 @@ export function calculateServiceTypeFit(
 
   // Check minimum price
   if (currentPlanPrice < profile.minPrice) {
-    gaps.push(`${profile.type === "shuttle" ? "Shuttle Platform" : "Service"} requires minimum $${profile.minPrice}/mo plan`)
+    gaps.push(
+      `${profile.type === "shuttle" ? "Shuttle Platform" : "Service"} requires minimum $${profile.minPrice}/mo plan`
+    )
     recommendations.push(`Upgrade discussion needed - current plan below ${serviceType} minimum`)
   }
 
   // Check critical features
   if (serviceType === "shuttle") {
     const shuttleFeatures = ["route_management", "seat_booking", "rider_app", "real_time_tracking"]
-    const missing = shuttleFeatures.filter(f => !features.includes(f))
+    const missing = shuttleFeatures.filter((f) => !features.includes(f))
     if (missing.length > 0) {
       gaps.push(`Missing shuttle features: ${missing.join(", ")}`)
       recommendations.push("Review shuttle platform feature adoption")
@@ -319,7 +333,7 @@ export function calculateServiceTypeFit(
 
   if (serviceType === "black_car") {
     const blackCarFeatures = ["dispatch", "driver_app", "customer_portal", "payments"]
-    const missing = blackCarFeatures.filter(f => !features.includes(f))
+    const missing = blackCarFeatures.filter((f) => !features.includes(f))
     if (missing.length > 0) {
       gaps.push(`Missing black car features: ${missing.join(", ")}`)
       recommendations.push("Review core feature adoption")
@@ -327,7 +341,7 @@ export function calculateServiceTypeFit(
   }
 
   // Calculate fit score
-  const fitScore = Math.max(0, 100 - (gaps.length * 25))
+  const fitScore = Math.max(0, 100 - gaps.length * 25)
 
   return { fitScore, gaps, recommendations }
 }

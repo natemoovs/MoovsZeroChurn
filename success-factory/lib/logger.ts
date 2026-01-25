@@ -24,18 +24,18 @@ const SENSITIVE_PATTERNS = [
 
 // Fields to always redact
 const REDACT_FIELDS = new Set([
-  'password',
-  'apiKey',
-  'api_key',
-  'token',
-  'secret',
-  'authorization',
-  'stripeAccountId',
-  'operatorId',
-  'hubspotId',
-  'email',
-  'primaryContactEmail',
-  'ownerEmail',
+  "password",
+  "apiKey",
+  "api_key",
+  "token",
+  "secret",
+  "authorization",
+  "stripeAccountId",
+  "operatorId",
+  "hubspotId",
+  "email",
+  "primaryContactEmail",
+  "ownerEmail",
 ])
 
 function isSensitive(key: string): boolean {
@@ -46,14 +46,14 @@ function isSensitive(key: string): boolean {
 function sanitizeValue(value: unknown): unknown {
   if (value === null || value === undefined) return value
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     // Check if string looks like sensitive data
     if (SENSITIVE_PATTERNS.some((pattern) => pattern.test(value))) {
-      return '[REDACTED]'
+      return "[REDACTED]"
     }
     // Truncate long strings
     if (value.length > 100) {
-      return value.slice(0, 100) + '...[truncated]'
+      return value.slice(0, 100) + "...[truncated]"
     }
     return value
   }
@@ -66,7 +66,7 @@ function sanitizeValue(value: unknown): unknown {
     return value.map(sanitizeValue)
   }
 
-  if (typeof value === 'object') {
+  if (typeof value === "object") {
     return sanitizeObject(value as Record<string, unknown>)
   }
 
@@ -78,7 +78,7 @@ function sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
 
   for (const [key, value] of Object.entries(obj)) {
     if (isSensitive(key)) {
-      result[key] = '[REDACTED]'
+      result[key] = "[REDACTED]"
     } else {
       result[key] = sanitizeValue(value)
     }
@@ -98,8 +98,8 @@ export function logError(context: string, error: unknown, data?: LogContext): vo
   const sanitized = {
     context,
     timestamp: new Date().toISOString(),
-    message: error instanceof Error ? error.message : 'Unknown error',
-    stack: error instanceof Error ? error.stack?.split('\n').slice(0, 3).join('\n') : undefined,
+    message: error instanceof Error ? error.message : "Unknown error",
+    stack: error instanceof Error ? error.stack?.split("\n").slice(0, 3).join("\n") : undefined,
     ...(data ? { data: sanitizeObject(data) } : {}),
   }
   console.error(JSON.stringify(sanitized))

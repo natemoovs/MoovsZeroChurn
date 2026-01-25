@@ -19,6 +19,7 @@ This happens daily across all DPV operations. Drivers arrive, passengers don't k
 ### Current Workaround
 
 Drivers either:
+
 - Call the passenger directly (if they have the number, which they often don't)
 - Call dispatch, who calls the passenger
 - Just wait and hope
@@ -46,6 +47,7 @@ There's no systematic way for "driver arrived" to reach the passenger.
 ### Success Criteria
 
 Within this appetite, success means:
+
 - [ ] Driver can tap "I've arrived" in their app
 - [ ] Passenger receives SMS within 30 seconds
 - [ ] Dispatch can see that notification was sent
@@ -82,6 +84,7 @@ Driver Active Trip View
 **Purpose:** Allow driver to notify passenger of arrival
 
 **Elements:**
+
 - "I've Arrived" button (prominent, only visible when trip status is "en route to pickup")
 - After tapping: Button becomes disabled, shows "Arrival Sent ✓" with timestamp
 
@@ -105,6 +108,7 @@ After tapping:
 ```
 
 **Behavior:**
+
 - Button only visible when trip status = "en_route_to_pickup"
 - Can only be pressed once per trip
 - If SMS fails, show error toast but don't block driver
@@ -114,27 +118,31 @@ After tapping:
 **Purpose:** Show that arrival notification was sent
 
 **Elements:**
+
 - In the trip activity log, show: "Driver arrival notification sent to passenger at [time]"
 
 ### Data Requirements
 
 **Reads:**
+
 - Trip passenger phone number
 - Driver name
 - Vehicle description (make, model, color, plate)
 
 **Writes:**
+
 - Trip.arrival_notified_at (timestamp)
 - Activity log entry
 
 **New Data:**
+
 - Add `arrival_notified_at` timestamp field to trips
 
 ### Integration Points
 
-| System | Integration Type | Notes |
-|--------|------------------|-------|
-| Twilio | Write | Send SMS to passenger |
+| System | Integration Type | Notes                 |
+| ------ | ---------------- | --------------------- |
+| Twilio | Write            | Send SMS to passenger |
 
 ---
 
@@ -210,4 +218,4 @@ This project is done when:
 
 ---
 
-*This shaping document is ready for the betting table.*
+_This shaping document is ready for the betting table._

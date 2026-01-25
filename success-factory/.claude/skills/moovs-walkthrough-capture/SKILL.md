@@ -19,6 +19,7 @@ Documentation that shows rather than tells is more effective. When onboarding op
 ## When to Use This Skill
 
 Use this skill when:
+
 - Creating training materials for operators
 - Documenting a new feature for release notes
 - Building help center content
@@ -30,11 +31,13 @@ Use this skill when:
 Before running walkthroughs, ensure:
 
 1. **Python environment** with required dependencies:
+
    ```bash
    pip install -r .claude/skills/moovs-walkthrough-capture/requirements.txt
    ```
 
 2. **Playwright browsers installed**:
+
    ```bash
    playwright install chromium
    ```
@@ -91,15 +94,15 @@ workflow:
 
 ## Available Actions
 
-| Action | Description | Required Fields |
-|--------|-------------|-----------------|
-| `navigate` | Go to a URL | `url` |
-| `click` | Click an element | `selector` |
-| `fill` | Type into a field | `selector`, `value` |
-| `select` | Choose dropdown option | `selector`, `value` |
-| `wait` | Pause for timing | `duration` (ms) |
-| `scroll` | Scroll to element | `selector` |
-| `hover` | Hover over element | `selector` |
+| Action     | Description            | Required Fields     |
+| ---------- | ---------------------- | ------------------- |
+| `navigate` | Go to a URL            | `url`               |
+| `click`    | Click an element       | `selector`          |
+| `fill`     | Type into a field      | `selector`, `value` |
+| `select`   | Choose dropdown option | `selector`, `value` |
+| `wait`     | Pause for timing       | `duration` (ms)     |
+| `scroll`   | Scroll to element      | `selector`          |
+| `hover`    | Hover over element     | `selector`          |
 
 ## Selectors
 
@@ -116,12 +119,12 @@ Refer to [references/moovs-routes.md](references/moovs-routes.md) for URL patter
 
 ```yaml
 gif_settings:
-  frame_duration: 2000    # ms per screenshot
-  transition: fade        # none, fade, slide
+  frame_duration: 2000 # ms per screenshot
+  transition: fade # none, fade, slide
   loop: true
   max_width: 800
-  quality: high           # low, medium, high
-  annotations: true       # add step labels
+  quality: high # low, medium, high
+  annotations: true # add step labels
 ```
 
 ## Running a Capture
@@ -133,6 +136,7 @@ When you invoke this skill, describe the workflow you want to capture:
 > "Capture a GIF of creating a new trip in the dispatch dashboard"
 
 The skill will:
+
 1. Identify the workflow steps needed
 2. Show you the proposed sequence for approval
 3. Execute the capture
@@ -162,10 +166,12 @@ See [references/common-workflows.md](references/common-workflows.md) for ready-t
 ## Output
 
 Generated GIFs are saved to:
+
 - **Default**: `./walkthroughs/{workflow-name}-{timestamp}.gif`
 - **Custom**: Specify with `--output` flag
 
 Each capture also generates:
+
 - `{name}-frames/` - Individual screenshots
 - `{name}.json` - Workflow metadata and timing
 
@@ -173,12 +179,12 @@ Each capture also generates:
 
 ### Common Issues
 
-| Issue | Solution |
-|-------|----------|
+| Issue             | Solution                                 |
+| ----------------- | ---------------------------------------- |
 | Element not found | Wait for element to load, check selector |
-| Screenshot blank | Add `wait` step after navigation |
-| GIF too large | Reduce `max_width` or `quality` |
-| Timing feels off | Adjust `frame_duration` |
+| Screenshot blank  | Add `wait` step after navigation         |
+| GIF too large     | Reduce `max_width` or `quality`          |
+| Timing feels off  | Adjust `frame_duration`                  |
 
 ### Debug Mode
 

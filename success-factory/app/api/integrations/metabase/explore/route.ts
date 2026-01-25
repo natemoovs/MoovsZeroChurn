@@ -47,7 +47,10 @@ export async function GET() {
 
     // Search for commonly useful questions
     const searchTerms = ["customer", "usage", "trip", "booking", "revenue", "active", "churn"]
-    const questionResults: Record<string, Array<{ id: number; name: string; description: string | null }>> = {}
+    const questionResults: Record<
+      string,
+      Array<{ id: number; name: string; description: string | null }>
+    > = {}
 
     for (const term of searchTerms) {
       try {

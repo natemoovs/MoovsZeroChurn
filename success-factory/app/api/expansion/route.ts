@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { ExpansionOpportunity } from "@prisma/client"
 import { requireAuth } from "@/lib/auth/api-middleware"
 
 /**
@@ -24,11 +23,7 @@ export async function GET(request: NextRequest) {
 
     const opportunities = await prisma.expansionOpportunity.findMany({
       where,
-      orderBy: [
-        { status: "asc" },
-        { potentialValue: "desc" },
-        { createdAt: "desc" },
-      ],
+      orderBy: [{ status: "asc" }, { potentialValue: "desc" }, { createdAt: "desc" }],
     })
 
     // Calculate summary stats
@@ -53,10 +48,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Failed to fetch expansion opportunities:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch opportunities" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch opportunities" }, { status: 500 })
   }
 }
 
@@ -138,9 +130,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, opportunity })
   } catch (error) {
     console.error("Failed to create expansion opportunity:", error)
-    return NextResponse.json(
-      { error: "Failed to create opportunity" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to create opportunity" }, { status: 500 })
   }
 }

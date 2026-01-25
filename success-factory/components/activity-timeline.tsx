@@ -9,7 +9,6 @@ import {
   ThumbsUp,
   ThumbsDown,
   Mail,
-  Phone,
   Calendar,
   CreditCard,
   HelpCircle,
@@ -94,7 +93,7 @@ export function ActivityTimeline({
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-content-tertiary" />
+        <Loader2 className="text-content-tertiary h-6 w-6 animate-spin" />
       </div>
     )
   }
@@ -102,10 +101,8 @@ export function ActivityTimeline({
   if (grouped.length === 0) {
     return (
       <div className="card-sf p-6 text-center">
-        <Activity className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
-        <p className="text-sm text-content-secondary">
-          No activity recorded yet
-        </p>
+        <Activity className="text-content-tertiary mx-auto mb-2 h-8 w-8" />
+        <p className="text-content-secondary text-sm">No activity recorded yet</p>
       </div>
     )
   }
@@ -115,13 +112,13 @@ export function ActivityTimeline({
       {/* Filters */}
       {showFilters && (
         <div className="flex flex-wrap items-center gap-2">
-          <Filter className="h-4 w-4 text-content-tertiary" />
+          <Filter className="text-content-tertiary h-4 w-4" />
           <button
             onClick={() => setSelectedSource(null)}
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",
               !selectedSource
-                ? "bg-content-primary text-bg-elevated dark:bg-white dark:text-bg-elevated"
+                ? "bg-content-primary text-bg-elevated dark:text-bg-elevated dark:bg-white"
                 : "bg-bg-tertiary text-content-secondary hover:bg-surface-hover"
             )}
           >
@@ -136,7 +133,7 @@ export function ActivityTimeline({
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors",
                   selectedSource === source
-                    ? "bg-content-primary text-bg-elevated dark:bg-white dark:text-bg-elevated"
+                    ? "bg-content-primary text-bg-elevated dark:text-bg-elevated dark:bg-white"
                     : "bg-bg-tertiary text-content-secondary hover:bg-surface-hover"
                 )}
               >
@@ -153,18 +150,18 @@ export function ActivityTimeline({
         {grouped.map((group) => (
           <div key={group.date}>
             {/* Date Header */}
-            <div className="sticky top-0 z-10 mb-3 flex items-center gap-2 bg-bg-secondary/80 py-1 backdrop-blur-sm">
-              <div className="h-px flex-1 bg-bg-tertiary" />
-              <span className="text-xs font-medium text-content-secondary">
+            <div className="bg-bg-secondary/80 sticky top-0 z-10 mb-3 flex items-center gap-2 py-1 backdrop-blur-sm">
+              <div className="bg-bg-tertiary h-px flex-1" />
+              <span className="text-content-secondary text-xs font-medium">
                 {formatDate(group.date)}
               </span>
-              <div className="h-px flex-1 bg-bg-tertiary" />
+              <div className="bg-bg-tertiary h-px flex-1" />
             </div>
 
             {/* Events for this date */}
             <div className="relative space-y-3 pl-6">
               {/* Vertical line */}
-              <div className="absolute left-2.5 top-2 h-[calc(100%-1rem)] w-px bg-bg-tertiary" />
+              <div className="bg-bg-tertiary absolute top-2 left-2.5 h-[calc(100%-1rem)] w-px" />
 
               {group.events.map((event) => (
                 <TimelineEventCard key={event.id} event={event} />
@@ -187,7 +184,8 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
     EventIcon = event.metadata?.newScore === "red" ? AlertTriangle : Activity
   } else if (event.eventType === "nps_response") {
     const category = event.metadata?.category as string
-    EventIcon = category === "promoter" ? ThumbsUp : category === "detractor" ? ThumbsDown : MessageSquare
+    EventIcon =
+      category === "promoter" ? ThumbsUp : category === "detractor" ? ThumbsDown : MessageSquare
   }
 
   return (
@@ -197,14 +195,14 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
         event.importance === "critical"
           ? "border-error-200 bg-error-50 dark:border-error-900 dark:bg-error-950/30"
           : event.importance === "high"
-          ? "border-warning-200 bg-warning-50 dark:border-warning-900 dark:bg-warning-950/30"
-          : "border-border-default bg-bg-elevated"
+            ? "border-warning-200 bg-warning-50 dark:border-warning-900 dark:bg-warning-950/30"
+            : "border-border-default bg-bg-elevated"
       )}
     >
       {/* Icon dot */}
       <div
         className={cn(
-          "absolute -left-6 top-3 flex h-5 w-5 items-center justify-center rounded-full",
+          "absolute top-3 -left-6 flex h-5 w-5 items-center justify-center rounded-full",
           colorClass
         )}
       >
@@ -214,16 +212,12 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
       {/* Content */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="font-medium text-content-primary">
-            {event.title}
-          </p>
+          <p className="text-content-primary font-medium">{event.title}</p>
           {event.description && (
-            <p className="mt-0.5 text-sm text-content-secondary">
-              {event.description}
-            </p>
+            <p className="text-content-secondary mt-0.5 text-sm">{event.description}</p>
           )}
         </div>
-        <span className="shrink-0 text-xs text-content-tertiary">
+        <span className="text-content-tertiary shrink-0 text-xs">
           {formatTime(event.occurredAt)}
         </span>
       </div>

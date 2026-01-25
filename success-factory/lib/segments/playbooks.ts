@@ -60,7 +60,11 @@ export const PLAYBOOK_TRIGGERS: PlaybookTrigger[] = [
     actions: [
       { type: "alert", description: "Immediate CSM notification" },
       { type: "task", description: "Schedule urgent customer call within 24h", assignTo: "owner" },
-      { type: "escalate", description: "Notify CSM lead if Enterprise account", assignTo: "csm_lead" },
+      {
+        type: "escalate",
+        description: "Notify CSM lead if Enterprise account",
+        assignTo: "csm_lead",
+      },
     ],
     applicableSegments: ["smb", "mid_market", "enterprise"],
     applicableServiceTypes: ["black_car", "shuttle"],
@@ -71,12 +75,14 @@ export const PLAYBOOK_TRIGGERS: PlaybookTrigger[] = [
     name: "Health Score Decline",
     description: "Health score dropped from green to yellow",
     priority: "high",
-    conditions: [
-      { field: "healthScore", operator: "changed_to", value: "yellow" },
-    ],
+    conditions: [{ field: "healthScore", operator: "changed_to", value: "yellow" }],
     actions: [
       { type: "alert", description: "CSM notification of health decline" },
-      { type: "task", description: "Review account and schedule check-in within 7 days", assignTo: "owner" },
+      {
+        type: "task",
+        description: "Review account and schedule check-in within 7 days",
+        assignTo: "owner",
+      },
     ],
     applicableSegments: ["smb", "mid_market", "enterprise"],
     applicableServiceTypes: ["black_car", "shuttle"],
@@ -93,8 +99,16 @@ export const PLAYBOOK_TRIGGERS: PlaybookTrigger[] = [
     ],
     actions: [
       { type: "alert", description: "Usage decline detected" },
-      { type: "task", description: "Investigate usage drop - business change or issue?", assignTo: "owner" },
-      { type: "email", description: "Send check-in email asking about business changes", template: "usage_checkin" },
+      {
+        type: "task",
+        description: "Investigate usage drop - business change or issue?",
+        assignTo: "owner",
+      },
+      {
+        type: "email",
+        description: "Send check-in email asking about business changes",
+        template: "usage_checkin",
+      },
     ],
     applicableSegments: ["smb", "mid_market", "enterprise"],
     applicableServiceTypes: ["black_car", "shuttle"],
@@ -112,7 +126,11 @@ export const PLAYBOOK_TRIGGERS: PlaybookTrigger[] = [
     actions: [
       { type: "alert", description: "Onboarding appears stalled" },
       { type: "task", description: "Call customer to assist with setup", assignTo: "owner" },
-      { type: "email", description: "Send activation email with quick start guide", template: "activation" },
+      {
+        type: "email",
+        description: "Send activation email with quick start guide",
+        template: "activation",
+      },
     ],
     applicableSegments: ["free", "smb", "mid_market"],
     applicableServiceTypes: ["black_car", "shuttle"],
@@ -124,9 +142,7 @@ export const PLAYBOOK_TRIGGERS: PlaybookTrigger[] = [
     name: "Payment Failed",
     description: "Payment failure detected",
     priority: "high",
-    conditions: [
-      { field: "paymentHealth", operator: "equals", value: "critical" },
-    ],
+    conditions: [{ field: "paymentHealth", operator: "equals", value: "critical" }],
     actions: [
       { type: "alert", description: "Payment failure alert" },
       { type: "task", description: "Contact customer about payment issue", assignTo: "owner" },
@@ -147,8 +163,16 @@ export const PLAYBOOK_TRIGGERS: PlaybookTrigger[] = [
       { field: "daysToRenewal", operator: "gt", value: 0 },
     ],
     actions: [
-      { type: "task", description: "Prepare renewal discussion and value summary", assignTo: "owner" },
-      { type: "task", description: "Identify expansion opportunities before renewal", assignTo: "owner" },
+      {
+        type: "task",
+        description: "Prepare renewal discussion and value summary",
+        assignTo: "owner",
+      },
+      {
+        type: "task",
+        description: "Identify expansion opportunities before renewal",
+        assignTo: "owner",
+      },
     ],
     applicableSegments: ["mid_market", "enterprise"],
     applicableServiceTypes: ["black_car", "shuttle"],
@@ -195,9 +219,7 @@ export const PLAYBOOK_TRIGGERS: PlaybookTrigger[] = [
     name: "High Churn Risk",
     description: "Multiple churn risk signals detected",
     priority: "critical",
-    conditions: [
-      { field: "riskSignalCount", operator: "gte", value: 3 },
-    ],
+    conditions: [{ field: "riskSignalCount", operator: "gte", value: 3 }],
     actions: [
       { type: "alert", description: "High churn risk - multiple signals" },
       { type: "task", description: "Create immediate intervention plan", assignTo: "owner" },
@@ -221,7 +243,11 @@ export const PLAYBOOK_TRIGGERS: PlaybookTrigger[] = [
       { field: "totalTrips", operator: "lt", value: 3 },
     ],
     actions: [
-      { type: "email", description: "Send activation campaign - quick wins focus", template: "smb_activation" },
+      {
+        type: "email",
+        description: "Send activation campaign - quick wins focus",
+        template: "smb_activation",
+      },
       { type: "task", description: "Offer 1:1 onboarding call", assignTo: "support" },
     ],
     applicableSegments: ["free"],
@@ -321,25 +347,30 @@ export function evaluatePlaybookTriggers(customerData: {
 
     switch (playbook.type) {
       case "health_critical":
-        triggered = customerData.healthScore === "red" ||
+        triggered =
+          customerData.healthScore === "red" ||
           (customerData.numericHealthScore !== null && customerData.numericHealthScore < 30)
         break
 
       case "health_declined":
         // Would need historical data to detect change
-        triggered = customerData.healthScore === "yellow" &&
-          (customerData.numericHealthScore !== null && customerData.numericHealthScore < 50)
+        triggered =
+          customerData.healthScore === "yellow" &&
+          customerData.numericHealthScore !== null &&
+          customerData.numericHealthScore < 50
         break
 
       case "usage_dropped":
-        triggered = customerData.tripsLast30Days !== null &&
+        triggered =
+          customerData.tripsLast30Days !== null &&
           customerData.totalTrips !== null &&
           customerData.totalTrips > 20 &&
           customerData.tripsLast30Days === 0
         break
 
       case "onboarding_stalled":
-        triggered = customerData.totalTrips !== null &&
+        triggered =
+          customerData.totalTrips !== null &&
           customerData.totalTrips < 3 &&
           customerData.daysSinceLastLogin !== null &&
           customerData.daysSinceLastLogin > 14
@@ -350,7 +381,8 @@ export function evaluatePlaybookTriggers(customerData: {
         break
 
       case "renewal_approaching":
-        triggered = customerData.daysToRenewal !== null &&
+        triggered =
+          customerData.daysToRenewal !== null &&
           customerData.daysToRenewal <= 90 &&
           customerData.daysToRenewal > 0
         break
@@ -360,12 +392,12 @@ export function evaluatePlaybookTriggers(customerData: {
         break
 
       case "support_escalation":
-        triggered = customerData.segment === "enterprise" &&
-          customerData.openTicketCount >= 3
+        triggered = customerData.segment === "enterprise" && customerData.openTicketCount >= 3
         break
 
       case "expansion_ready":
-        triggered = customerData.healthScore === "green" &&
+        triggered =
+          customerData.healthScore === "green" &&
           customerData.tripsLast30Days !== null &&
           customerData.tripsLast30Days > 50
         break

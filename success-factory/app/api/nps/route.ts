@@ -41,9 +41,7 @@ export async function GET(request: NextRequest) {
     const detractors = responses.filter((r) => r.score !== null && r.score <= 6).length
     const total = responses.filter((r) => r.score !== null).length
 
-    const npsScore = total > 0
-      ? Math.round(((promoters - detractors) / total) * 100)
-      : null
+    const npsScore = total > 0 ? Math.round(((promoters - detractors) / total) * 100) : null
 
     // Get distribution
     const distribution = {
@@ -54,9 +52,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get recent responses with comments
-    const recentWithComments = responses
-      .filter((r) => r.comment)
-      .slice(0, 10)
+    const recentWithComments = responses.filter((r) => r.comment).slice(0, 10)
 
     // Get pending surveys
     const pending = await prisma.nPSSurvey.count({
@@ -77,10 +73,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("NPS fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch NPS data" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch NPS data" }, { status: 500 })
   }
 }
 
@@ -92,7 +85,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { companyId, companyName, contacts, triggerType = "manual" } = body as {
+    const {
+      companyId,
+      companyName,
+      contacts,
+      triggerType = "manual",
+    } = body as {
       companyId: string
       companyName: string
       contacts: Array<{ email: string; name?: string }>
@@ -191,9 +189,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("NPS send error:", error)
-    return NextResponse.json(
-      { error: "Failed to send NPS surveys" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to send NPS surveys" }, { status: 500 })
   }
 }

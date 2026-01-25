@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db"
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const EMAIL_FROM = process.env.EMAIL_FROM || "alerts@successfactory.app"
-const DIGEST_RECIPIENTS = process.env.DIGEST_EMAIL_RECIPIENTS?.split(",").map(e => e.trim()) || []
+const DIGEST_RECIPIENTS = process.env.DIGEST_EMAIL_RECIPIENTS?.split(",").map((e) => e.trim()) || []
 
 interface PortfolioSummary {
   companyId: string
@@ -114,20 +114,19 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Email digest error:", error)
-    await prisma.alertLog.create({
-      data: {
-        type: "digest",
-        channel: "email",
-        payload: {},
-        success: false,
-        error: String(error),
-      },
-    }).catch(() => {})
+    await prisma.alertLog
+      .create({
+        data: {
+          type: "digest",
+          channel: "email",
+          payload: {},
+          success: false,
+          error: String(error),
+        },
+      })
+      .catch(() => {})
 
-    return NextResponse.json(
-      { error: "Failed to send email digest" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to send email digest" }, { status: 500 })
   }
 }
 
@@ -247,12 +246,16 @@ function buildDigestEmail(
         </div>
       </div>
 
-      ${stats.atRisk > 0 ? `
+      ${
+        stats.atRisk > 0
+          ? `
       <div class="at-risk-section">
         <div class="at-risk-header">
           🚨 At-Risk Accounts ($${stats.atRiskMrr.toLocaleString()} MRR at risk)
         </div>
-        ${topAtRisk.map(account => `
+        ${topAtRisk
+          .map(
+            (account) => `
         <div class="account-card">
           <div class="account-name">${account.companyName}</div>
           <div class="account-meta">${account.mrr ? `$${account.mrr.toLocaleString()}/mo` : "No MRR data"}</div>
@@ -261,10 +264,14 @@ function buildDigestEmail(
             <a href="${baseUrl}/accounts/${account.companyId}" class="account-link">View account →</a>
           </div>
         </div>
-        `).join("")}
+        `
+          )
+          .join("")}
         ${stats.atRisk > 5 ? `<p style="color: #6b7280; font-size: 14px; text-align: center;">+ ${stats.atRisk - 5} more at-risk accounts</p>` : ""}
       </div>
-      ` : ""}
+      `
+          : ""
+      }
     </div>
 
     <div class="btn-container">

@@ -107,9 +107,7 @@ ${
 ## Recent Tasks
 ${
   recentTasks.length
-    ? recentTasks
-        .map((t) => `- [${t.status}] ${t.title} (${t.priority})`)
-        .join("\n")
+    ? recentTasks.map((t) => `- [${t.status}] ${t.title} (${t.priority})`).join("\n")
     : "- No recent tasks"
 }
 `

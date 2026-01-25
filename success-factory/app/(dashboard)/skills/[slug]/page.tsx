@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useState, useEffect } from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -37,7 +37,6 @@ function isCompanyQuestion(id: string, question: string): boolean {
 
 function SkillPageContent() {
   const params = useParams()
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [skill, setSkill] = useState<Skill | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
@@ -69,7 +68,7 @@ function SkillPageContent() {
     return (
       <DashboardLayout>
         <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-success-500 border-t-transparent" />
+          <div className="border-success-500 h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
         </div>
       </DashboardLayout>
     )
@@ -80,9 +79,10 @@ function SkillPageContent() {
   const isLastQuestionStep = currentStep === skill.questions.length - 1
   const currentQuestion = skill.questions[currentStep]
   const progress = result ? 100 : ((currentStep + 1) / totalSteps) * 100
-  const currentAnswer = currentQuestion ? (answers[currentQuestion.id] || "") : ""
-  const hasLongExamples = currentQuestion?.examples && currentQuestion.examples.some((e) => e.length > 50)
-  const allQuestionsAnswered = skill.questions.every(q => answers[q.id]?.trim())
+  const currentAnswer = currentQuestion ? answers[currentQuestion.id] || "" : ""
+  const hasLongExamples =
+    currentQuestion?.examples && currentQuestion.examples.some((e) => e.length > 50)
+  const allQuestionsAnswered = skill.questions.every((q) => answers[q.id]?.trim())
 
   const handleAnswer = (value: string) => {
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }))
@@ -163,14 +163,12 @@ function SkillPageContent() {
             <div>
               <Link
                 href="/skills"
-                className="inline-flex items-center gap-2 text-sm text-content-secondary hover:text-content-primary"
+                className="text-content-secondary hover:text-content-primary inline-flex items-center gap-2 text-sm"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Skills
               </Link>
-              <h1 className="mt-2 text-2xl font-bold text-content-primary">
-                {skill.name}
-              </h1>
+              <h1 className="text-content-primary mt-2 text-2xl font-bold">{skill.name}</h1>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleReset}>
@@ -181,14 +179,14 @@ function SkillPageContent() {
           </div>
 
           {/* Result Card */}
-          <div className="rounded-xl border border-border-default bg-bg-elevated shadow-sm">
+          <div className="border-border-default bg-bg-elevated rounded-xl border shadow-sm">
             {/* Actions Bar */}
-            <div className="flex items-center justify-between border-b border-border-default px-4 py-3">
+            <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success-100 dark:bg-success-950">
-                  <Check className="h-4 w-4 text-success-600 dark:text-success-400" />
+                <div className="bg-success-100 dark:bg-success-950 flex h-8 w-8 items-center justify-center rounded-full">
+                  <Check className="text-success-600 dark:text-success-400 h-4 w-4" />
                 </div>
-                <span className="text-sm font-medium text-content-primary">
+                <span className="text-content-primary text-sm font-medium">
                   Generated successfully
                 </span>
               </div>
@@ -209,7 +207,7 @@ function SkillPageContent() {
                 >
                   <ThumbsDown className={cn("h-4 w-4", feedback === "down" && "text-error-600")} />
                 </Button>
-                <div className="mx-2 h-6 w-px bg-bg-tertiary" />
+                <div className="bg-bg-tertiary mx-2 h-6 w-px" />
                 <Button variant="outline" size="sm" onClick={handleCopy}>
                   {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
                   {copied ? "Copied!" : "Copy"}
@@ -224,7 +222,7 @@ function SkillPageContent() {
             {/* Result Content */}
             <div className="p-6">
               <div className="prose dark:prose-invert max-w-none">
-                <pre className="whitespace-pre-wrap rounded-lg bg-bg-secondary p-4 text-sm">
+                <pre className="bg-bg-secondary rounded-lg p-4 text-sm whitespace-pre-wrap">
                   {result}
                 </pre>
               </div>
@@ -243,17 +241,13 @@ function SkillPageContent() {
         <div>
           <Link
             href="/skills"
-            className="inline-flex items-center gap-2 text-sm text-content-secondary hover:text-content-primary"
+            className="text-content-secondary hover:text-content-primary inline-flex items-center gap-2 text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Skills
           </Link>
-          <h1 className="mt-2 text-2xl font-bold text-content-primary">
-            {skill.name}
-          </h1>
-          <p className="mt-1 text-content-secondary">
-            {skill.description}
-          </p>
+          <h1 className="text-content-primary mt-2 text-2xl font-bold">{skill.name}</h1>
+          <p className="text-content-secondary mt-1">{skill.description}</p>
         </div>
 
         {/* Progress */}
@@ -262,15 +256,13 @@ function SkillPageContent() {
             <span className="text-content-secondary">
               Step {currentStep + 1} of {totalSteps}
             </span>
-            <span className="font-medium text-content-primary">
-              {Math.round(progress)}%
-            </span>
+            <span className="text-content-primary font-medium">{Math.round(progress)}%</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
 
         {/* Question Card or Review Card */}
-        <div className="rounded-xl border border-border-default bg-bg-elevated p-6 shadow-sm">
+        <div className="border-border-default bg-bg-elevated rounded-xl border p-6 shadow-sm">
           {/* Steps indicator */}
           <div className="mb-6 flex items-center justify-center gap-2">
             {skill.questions.map((_, index) => (
@@ -279,10 +271,10 @@ function SkillPageContent() {
                 className={cn(
                   "h-2 w-2 rounded-full transition-all",
                   index === currentStep
-                    ? "w-6 bg-success-500"
+                    ? "bg-success-500 w-6"
                     : index < currentStep
-                    ? "bg-success-500"
-                    : "bg-bg-tertiary"
+                      ? "bg-success-500"
+                      : "bg-bg-tertiary"
                 )}
               />
             ))}
@@ -291,10 +283,10 @@ function SkillPageContent() {
               className={cn(
                 "h-2 w-2 rounded-full transition-all",
                 isReviewStep
-                  ? "w-6 bg-success-500"
+                  ? "bg-success-500 w-6"
                   : allQuestionsAnswered
-                  ? "bg-success-500"
-                  : "bg-bg-tertiary"
+                    ? "bg-success-500"
+                    : "bg-bg-tertiary"
               )}
             />
           </div>
@@ -303,14 +295,12 @@ function SkillPageContent() {
             /* Review Step */
             <>
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-100 dark:bg-success-950">
-                  <Check className="h-5 w-5 text-success-600 dark:text-success-400" />
+                <div className="bg-success-100 dark:bg-success-950 flex h-10 w-10 items-center justify-center rounded-full">
+                  <Check className="text-success-600 dark:text-success-400 h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-content-primary">
-                    Review & Generate
-                  </h2>
-                  <p className="text-sm text-content-secondary">
+                  <h2 className="text-content-primary text-xl font-semibold">Review & Generate</h2>
+                  <p className="text-content-secondary text-sm">
                     Confirm your answers before generating
                   </p>
                 </div>
@@ -320,19 +310,19 @@ function SkillPageContent() {
                 {skill.questions.map((q, index) => (
                   <div
                     key={q.id}
-                    className="flex items-start justify-between rounded-lg border border-border-default bg-bg-secondary p-3"
+                    className="border-border-default bg-bg-secondary flex items-start justify-between rounded-lg border p-3"
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-content-secondary">
-                        {q.question}
-                      </p>
-                      <p className="mt-1 text-sm text-content-primary truncate">
-                        {answers[q.id] || <span className="text-content-tertiary italic">Not answered</span>}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-content-secondary text-sm font-medium">{q.question}</p>
+                      <p className="text-content-primary mt-1 truncate text-sm">
+                        {answers[q.id] || (
+                          <span className="text-content-tertiary italic">Not answered</span>
+                        )}
                       </p>
                     </div>
                     <button
                       onClick={() => setCurrentStep(index)}
-                      className="ml-2 text-xs text-success-600 hover:text-success-700 dark:text-success-400"
+                      className="text-success-600 hover:text-success-700 dark:text-success-400 ml-2 text-xs"
                     >
                       Edit
                     </button>
@@ -343,17 +333,15 @@ function SkillPageContent() {
           ) : (
             /* Question Step */
             <>
-              <h2 className="mb-4 text-xl font-semibold text-content-primary">
+              <h2 className="text-content-primary mb-4 text-xl font-semibold">
                 {currentQuestion.question}
               </h2>
 
               {/* Examples */}
               {currentQuestion.examples && currentQuestion.examples.length > 0 && (
-                <div className="mb-4 rounded-lg bg-bg-secondary p-4">
-                  <p className="mb-2 text-sm font-medium text-content-secondary">
-                    Examples:
-                  </p>
-                  <ul className="space-y-1 text-sm text-content-secondary">
+                <div className="bg-bg-secondary mb-4 rounded-lg p-4">
+                  <p className="text-content-secondary mb-2 text-sm font-medium">Examples:</p>
+                  <ul className="text-content-secondary space-y-1 text-sm">
                     {currentQuestion.examples.map((example, i) => (
                       <li key={i}>• {example}</li>
                     ))}
@@ -388,7 +376,7 @@ function SkillPageContent() {
 
           {/* Error */}
           {error && (
-            <div className="mt-4 rounded-lg bg-error-50 p-3 text-sm text-error-700 dark:bg-error-950/50 dark:text-error-400">
+            <div className="bg-error-50 text-error-700 dark:bg-error-950/50 dark:text-error-400 mt-4 rounded-lg p-3 text-sm">
               {error}
             </div>
           )}
@@ -396,11 +384,7 @@ function SkillPageContent() {
 
         {/* Navigation */}
         <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={currentStep === 0}
-          >
+          <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -442,13 +426,13 @@ function SkillPageLoading() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-2xl space-y-6">
-        <div className="h-6 w-32 shimmer rounded" />
-        <div className="h-8 w-64 shimmer rounded" />
-        <div className="h-4 w-96 shimmer rounded" />
-        <div className="rounded-xl border border-border-default bg-bg-elevated p-6">
+        <div className="shimmer h-6 w-32 rounded" />
+        <div className="shimmer h-8 w-64 rounded" />
+        <div className="shimmer h-4 w-96 rounded" />
+        <div className="border-border-default bg-bg-elevated rounded-xl border p-6">
           <div className="space-y-4">
-            <div className="h-6 w-full shimmer rounded" />
-            <div className="h-12 w-full shimmer rounded" />
+            <div className="shimmer h-6 w-full rounded" />
+            <div className="shimmer h-12 w-full rounded" />
           </div>
         </div>
       </div>

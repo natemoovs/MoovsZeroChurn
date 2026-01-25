@@ -50,9 +50,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const churnByCompany = new Map(
-      churnRecords.map((c) => [c.companyId, c])
-    )
+    const churnByCompany = new Map(churnRecords.map((c) => [c.companyId, c]))
 
     // Build cohort data
     const cohorts = new Map<string, CohortMetrics>()
@@ -120,12 +118,9 @@ export async function GET(request: NextRequest) {
     // Calculate derived metrics
     for (const cohort of cohorts.values()) {
       if (cohort.totalCompanies > 0) {
-        cohort.retentionRate = Math.round(
-          (cohort.activeCompanies / cohort.totalCompanies) * 100
-        )
-        cohort.avgMrr = cohort.activeCompanies > 0
-          ? Math.round(cohort.totalMrr / cohort.activeCompanies)
-          : 0
+        cohort.retentionRate = Math.round((cohort.activeCompanies / cohort.totalCompanies) * 100)
+        cohort.avgMrr =
+          cohort.activeCompanies > 0 ? Math.round(cohort.totalMrr / cohort.activeCompanies) : 0
       }
     }
 
@@ -144,51 +139,35 @@ export async function GET(request: NextRequest) {
         if (remaining > 0) {
           const churned = cohortArray[i]?.churnedCompanies || 0
           remaining = Math.max(0, remaining - churned)
-          retentionCurve.push(
-            Math.round((remaining / firstCohort.totalCompanies) * 100)
-          )
+          retentionCurve.push(Math.round((remaining / firstCohort.totalCompanies) * 100))
         }
       }
     }
 
     // Summary stats
-    const totalCompanies = cohortArray.reduce(
-      (sum, c) => sum + c.totalCompanies,
-      0
-    )
+    const totalCompanies = cohortArray.reduce((sum, c) => sum + c.totalCompanies, 0)
     const totalMrr = cohortArray.reduce((sum, c) => sum + c.totalMrr, 0)
     const summary = {
       totalCohorts: cohortArray.length,
       totalCompanies,
-      overallRetention: cohortArray.length > 0
-        ? Math.round(
-            cohortArray.reduce((sum, c) => sum + c.retentionRate, 0) /
-              cohortArray.length
-          )
-        : 0,
-      avgMrrPerCohort: cohortArray.length > 0
-        ? Math.round(totalMrr / cohortArray.length)
-        : 0,
+      overallRetention:
+        cohortArray.length > 0
+          ? Math.round(
+              cohortArray.reduce((sum, c) => sum + c.retentionRate, 0) / cohortArray.length
+            )
+          : 0,
+      avgMrrPerCohort: cohortArray.length > 0 ? Math.round(totalMrr / cohortArray.length) : 0,
       bestCohort: cohortArray.reduce(
         (best, c) => (c.retentionRate > (best?.retentionRate || 0) ? c : best),
         cohortArray[0]
       ),
       worstCohort: cohortArray.reduce(
         (worst, c) =>
-          c.totalCompanies > 0 &&
-          c.retentionRate < (worst?.retentionRate || 100)
-            ? c
-            : worst,
+          c.totalCompanies > 0 && c.retentionRate < (worst?.retentionRate || 100) ? c : worst,
         cohortArray[0]
       ),
-      totalActiveCompanies: cohortArray.reduce(
-        (sum, c) => sum + c.activeCompanies,
-        0
-      ),
-      totalChurnedCompanies: cohortArray.reduce(
-        (sum, c) => sum + c.churnedCompanies,
-        0
-      ),
+      totalActiveCompanies: cohortArray.reduce((sum, c) => sum + c.activeCompanies, 0),
+      totalChurnedCompanies: cohortArray.reduce((sum, c) => sum + c.churnedCompanies, 0),
     }
 
     return NextResponse.json({
@@ -198,10 +177,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Failed to fetch cohort data:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch cohort data" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch cohort data" }, { status: 500 })
   }
 }
 
@@ -256,8 +232,7 @@ export async function POST() {
           company.totalTrips && company.totalTrips > 0
             ? new Date(signupDate.getTime() + 14 * 24 * 60 * 60 * 1000) // Approximate
             : null,
-        timeToValue:
-          company.totalTrips && company.totalTrips > 0 ? 14 : null,
+        timeToValue: company.totalTrips && company.totalTrips > 0 ? 14 : null,
       }
 
       const existing = await prisma.customerCohort.findUnique({
@@ -289,9 +264,6 @@ export async function POST() {
     })
   } catch (error) {
     console.error("Failed to sync cohort data:", error)
-    return NextResponse.json(
-      { error: "Failed to sync cohort data" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to sync cohort data" }, { status: 500 })
   }
 }

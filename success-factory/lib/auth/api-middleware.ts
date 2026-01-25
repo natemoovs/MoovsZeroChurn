@@ -19,10 +19,7 @@ export async function requireAuth() {
   const user = await getCurrentUser()
 
   if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized. Please log in." },
-      { status: 401 }
-    )
+    return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 })
   }
 
   return user

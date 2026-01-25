@@ -10,18 +10,18 @@ const MAX_RETRY_DELAY_MS = 16000 // 16 seconds
 
 // Token limits for different use cases
 export const TOKEN_LIMITS = {
-  small: 800,      // Quick responses, win-back messages
-  medium: 1500,    // Playbooks, payment recovery
-  standard: 2000,  // Reports, QBR prep
-  large: 4096,     // Skill generation
-  toolUse: 8192,   // Tool use with iterations
+  small: 800, // Quick responses, win-back messages
+  medium: 1500, // Playbooks, payment recovery
+  standard: 2000, // Reports, QBR prep
+  large: 4096, // Skill generation
+  toolUse: 8192, // Tool use with iterations
 }
 
 /**
  * Sleep for a specified duration
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 /**
@@ -44,10 +44,12 @@ function isRetryableError(error: unknown): boolean {
   // Retry on network errors
   if (error instanceof Error) {
     const message = error.message.toLowerCase()
-    return message.includes("network") ||
-           message.includes("timeout") ||
-           message.includes("econnreset") ||
-           message.includes("socket")
+    return (
+      message.includes("network") ||
+      message.includes("timeout") ||
+      message.includes("econnreset") ||
+      message.includes("socket")
+    )
   }
   return false
 }
@@ -92,7 +94,8 @@ export async function createMessage(
 
       // Calculate delay and wait
       const delay = getRetryDelay(attempt)
-      console.warn(`[AI] Retryable error on attempt ${attempt + 1}, retrying in ${delay}ms`,
+      console.warn(
+        `[AI] Retryable error on attempt ${attempt + 1}, retrying in ${delay}ms`,
         error instanceof Anthropic.APIError ? `Status: ${error.status}` : error
       )
       await sleep(delay)
@@ -116,7 +119,7 @@ export async function createMessageWithTools(
  * Extract text content from a message response
  */
 export function extractText(message: Anthropic.Message): string {
-  const textBlock = message.content.find(block => block.type === "text")
+  const textBlock = message.content.find((block) => block.type === "text")
   return textBlock && textBlock.type === "text" ? textBlock.text : ""
 }
 
@@ -132,7 +135,10 @@ export function getErrorResponse(error: unknown): { message: string; status: num
         return { message: "Rate limit exceeded. Please wait a moment and try again.", status: 429 }
       case 500:
       case 503:
-        return { message: "Claude is temporarily unavailable. Please try again in a few moments.", status: 503 }
+        return {
+          message: "Claude is temporarily unavailable. Please try again in a few moments.",
+          status: 503,
+        }
       default:
         return { message: `API error: ${error.message}`, status: error.status }
     }

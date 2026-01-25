@@ -4,20 +4,20 @@ export interface HistoryItem {
   skillName: string
   answers: Record<string, string>
   result: string
-  feedback?: 'up' | 'down'
+  feedback?: "up" | "down"
   createdAt: string
 }
 
-const HISTORY_KEY = 'success-factory-history'
+const HISTORY_KEY = "success-factory-history"
 const MAX_HISTORY = 50
 
 export function getHistory(): HistoryItem[] {
-  if (typeof window === 'undefined') return []
+  if (typeof window === "undefined") return []
   const stored = localStorage.getItem(HISTORY_KEY)
   return stored ? JSON.parse(stored) : []
 }
 
-export function addToHistory(item: Omit<HistoryItem, 'id' | 'createdAt'>): HistoryItem {
+export function addToHistory(item: Omit<HistoryItem, "id" | "createdAt">): HistoryItem {
   const history = getHistory()
   const newItem: HistoryItem = {
     ...item,
@@ -30,17 +30,15 @@ export function addToHistory(item: Omit<HistoryItem, 'id' | 'createdAt'>): Histo
   return newItem
 }
 
-export function updateFeedback(id: string, feedback: 'up' | 'down'): void {
+export function updateFeedback(id: string, feedback: "up" | "down"): void {
   const history = getHistory()
-  const updated = history.map(item =>
-    item.id === id ? { ...item, feedback } : item
-  )
+  const updated = history.map((item) => (item.id === id ? { ...item, feedback } : item))
   localStorage.setItem(HISTORY_KEY, JSON.stringify(updated))
 }
 
 export function deleteHistoryItem(id: string): void {
   const history = getHistory()
-  const updated = history.filter(item => item.id !== id)
+  const updated = history.filter((item) => item.id !== id)
   localStorage.setItem(HISTORY_KEY, JSON.stringify(updated))
 }
 

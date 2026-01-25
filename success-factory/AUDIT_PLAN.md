@@ -10,6 +10,7 @@
 This document outlines findings from a comprehensive audit covering security vulnerabilities, performance inefficiencies, mobile formatting issues, and design/branding inconsistencies. The audit identified **7 critical issues**, **7 high-severity issues**, and numerous medium/low priority items requiring attention.
 
 **Current Progress: 23/23 items completed (100%)**
+
 - Security: 8/8 completed (all issues fixed)
 - Efficiency: 5/5 completed (pagination, indexes, selects added)
 - Mobile: 6/6 completed (responsive, touch-friendly)
@@ -37,6 +38,7 @@ This document outlines findings from a comprehensive audit covering security vul
 **Problem:** 89 of 91 API routes have no authentication checks. Anyone can access customer data, financial information, and perform CRUD operations.
 
 **Affected Files:**
+
 - `app/api/customer/[id]/route.ts` - Exposes financial data, Stripe IDs
 - `app/api/customer/search/route.ts` - Allows customer enumeration
 - `app/api/campaigns/route.ts` - No auth on campaign data
@@ -47,9 +49,10 @@ This document outlines findings from a comprehensive audit covering security vul
 - `app/api/cohorts/route.ts` - Business intelligence data
 - `app/api/dashboard/route.ts` - Dashboard metrics
 - `app/api/engagement/route.ts` - Engagement data
-- *(85+ more routes)*
+- _(85+ more routes)_
 
 **Solution:**
+
 ```typescript
 // Create middleware: lib/auth/api-middleware.ts
 import { getCurrentUser } from "@/lib/auth/server"
@@ -82,11 +85,13 @@ export async function GET(request: NextRequest) {
 **Problem:** String interpolation used in SQL queries with database-sourced values.
 
 **Affected Files:**
+
 - `app/api/customer/[id]/route.ts:68-79` - operatorId interpolation
 - `app/api/customer/[id]/route.ts:99-110` - operatorId interpolation
 - `app/api/customer/[id]/route.ts:161-173` - stripeAccountId interpolation
 
 **Current Code:**
+
 ```typescript
 // VULNERABLE - Line 78
 const reservationSql = `
@@ -95,9 +100,10 @@ const reservationSql = `
 ```
 
 **Solution:**
+
 ```typescript
 // Use parameterized queries or validate/escape values
-const sanitizedOperatorId = company.operatorId?.replace(/[^a-zA-Z0-9-_]/g, '')
+const sanitizedOperatorId = company.operatorId?.replace(/[^a-zA-Z0-9-_]/g, "")
 if (!sanitizedOperatorId) throw new Error("Invalid operator ID")
 
 // Or use Metabase's native parameterization if available
@@ -116,6 +122,7 @@ if (!sanitizedOperatorId) throw new Error("Invalid operator ID")
 **Affected File:** `app/api/slack/commands/route.ts`
 
 **Current Code:**
+
 ```typescript
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET // Never used!
 
@@ -125,12 +132,13 @@ export async function POST(request: NextRequest) {
 ```
 
 **Solution:**
+
 ```typescript
-import crypto from 'crypto'
+import crypto from "crypto"
 
 function verifySlackSignature(request: NextRequest, body: string): boolean {
-  const signature = request.headers.get('x-slack-signature')
-  const timestamp = request.headers.get('x-slack-request-timestamp')
+  const signature = request.headers.get("x-slack-signature")
+  const timestamp = request.headers.get("x-slack-request-timestamp")
 
   if (!signature || !timestamp || !SLACK_SIGNING_SECRET) return false
 
@@ -139,15 +147,10 @@ function verifySlackSignature(request: NextRequest, body: string): boolean {
   if (Math.abs(time - parseInt(timestamp)) > 300) return false
 
   const sigBasestring = `v0:${timestamp}:${body}`
-  const mySignature = 'v0=' + crypto
-    .createHmac('sha256', SLACK_SIGNING_SECRET)
-    .update(sigBasestring)
-    .digest('hex')
+  const mySignature =
+    "v0=" + crypto.createHmac("sha256", SLACK_SIGNING_SECRET).update(sigBasestring).digest("hex")
 
-  return crypto.timingSafeEqual(
-    Buffer.from(mySignature),
-    Buffer.from(signature)
-  )
+  return crypto.timingSafeEqual(Buffer.from(mySignature), Buffer.from(signature))
 }
 ```
 
@@ -164,16 +167,18 @@ function verifySlackSignature(request: NextRequest, body: string): boolean {
 **Affected File:** `app/api/login/route.ts:14`
 
 **Issues:**
+
 1. Cookie stores the actual password value
 2. No rate limiting on attempts
 3. No account lockout
 
 **Solution:**
+
 ```typescript
 // 1. Use session token instead of password in cookie
-import { randomBytes } from 'crypto'
+import { randomBytes } from "crypto"
 
-const sessionToken = randomBytes(32).toString('hex')
+const sessionToken = randomBytes(32).toString("hex")
 // Store session in database or Redis, set token in cookie
 
 // 2. Add rate limiting
@@ -194,17 +199,19 @@ const ratelimit = new Ratelimit({
 **Problem:** Customer data, financial info, and errors logged to console.
 
 **Affected Files:**
+
 - `app/api/customer/[id]/route.ts:94,143,153,192,304`
 - `app/api/slack/commands/route.ts:44,81`
 - `app/api/sync/hubspot/route.ts:84-85` - Logs sample row data
 
 **Solution:**
+
 ```typescript
 // Create sanitized logger: lib/logger.ts
 export function logError(context: string, error: unknown) {
   const sanitized = {
     context,
-    message: error instanceof Error ? error.message : 'Unknown error',
+    message: error instanceof Error ? error.message : "Unknown error",
     // Never log: customer IDs, financial data, API keys
   }
   console.error(JSON.stringify(sanitized))
@@ -222,11 +229,13 @@ export function logError(context: string, error: unknown) {
 **Problem:** Zero rate limiting on any endpoint. Vulnerable to brute force and enumeration.
 
 **Critical Endpoints:**
+
 - `/api/login` - Password brute force
 - `/api/customer/search` - Customer enumeration
 - `/api/slack/commands` - Abuse potential
 
 **Solution:**
+
 ```typescript
 // Install: npm install @upstash/ratelimit @upstash/redis
 import { Ratelimit } from "@upstash/ratelimit"
@@ -256,6 +265,7 @@ if (!success) {
 **Problem:** If `CRON_SECRET` is not set, authentication is bypassed entirely.
 
 **Affected Files:**
+
 - `app/api/alerts/digest/route.ts:23-28`
 - `app/api/sync/hubspot/route.ts:519-524`
 - `app/api/agents/health-monitor/route.ts`
@@ -265,6 +275,7 @@ if (!success) {
 - `app/api/health-history/snapshot/route.ts`
 
 **Current Code:**
+
 ```typescript
 // FLAWED - allows bypass if CRON_SECRET not set
 if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -273,6 +284,7 @@ if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
 ```
 
 **Solution:**
+
 ```typescript
 // CORRECT - deny if secret not configured OR doesn't match
 if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
@@ -291,14 +303,16 @@ if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
 **Problem:** User-controlled parameters used directly in queries.
 
 **Affected Files:**
+
 - `app/api/companies/route.ts:14-17` - `sortBy` used in orderBy
 - `app/api/nps/route.ts:14-16` - `days` parameter unbounded
 
 **Solution:**
+
 ```typescript
 // Whitelist allowed sort fields
-const ALLOWED_SORT_FIELDS = ['name', 'mrr', 'healthScore', 'createdAt']
-const sortBy = ALLOWED_SORT_FIELDS.includes(rawSortBy) ? rawSortBy : 'name'
+const ALLOWED_SORT_FIELDS = ["name", "mrr", "healthScore", "createdAt"]
+const sortBy = ALLOWED_SORT_FIELDS.includes(rawSortBy) ? rawSortBy : "name"
 
 // Validate numeric parameters
 const days = Math.min(Math.max(parseInt(rawDays) || 90, 1), 365)
@@ -317,12 +331,14 @@ const days = Math.min(Math.max(parseInt(rawDays) || 90, 1), 365)
 **Problem:** Multiple endpoints fetch ALL records without pagination.
 
 **Affected Files:**
+
 - `app/api/dashboard/route.ts:130` - All companies for dashboard
 - `app/api/engagement/route.ts:209` - All companies for engagement
 - `app/api/cohorts/route.ts:27-38` - All companies for cohorts
 - `app/api/leaderboard/route.ts:19-61` - All tasks + companies
 
 **Solution:**
+
 ```typescript
 // Add cursor-based pagination
 const pageSize = Math.min(parseInt(searchParams.get("limit") || "50"), 100)
@@ -331,7 +347,7 @@ const cursor = searchParams.get("cursor")
 const companies = await prisma.hubSpotCompany.findMany({
   take: pageSize + 1, // Fetch one extra to check if more exist
   cursor: cursor ? { id: cursor } : undefined,
-  orderBy: { id: 'asc' },
+  orderBy: { id: "asc" },
 })
 
 const hasMore = companies.length > pageSize
@@ -346,11 +362,12 @@ const nextCursor = hasMore ? companies[pageSize - 1].id : null
 
 **Status:** [x] COMPLETED
 
-**Problem:** Client-side lookups in loops creating O(n*m) complexity.
+**Problem:** Client-side lookups in loops creating O(n\*m) complexity.
 
 **Affected File:** `app/api/leaderboard/route.ts:62-71`
 
 **Current Code:**
+
 ```typescript
 // O(n) loop with O(m) lookup inside = O(n*m)
 const leaderboardData = tasks.map((task) => {
@@ -359,9 +376,10 @@ const leaderboardData = tasks.map((task) => {
 ```
 
 **Solution:**
+
 ```typescript
 // Create lookup map first - O(m)
-const companyMap = new Map(companies.map(c => [c.hubspotId, c]))
+const companyMap = new Map(companies.map((c) => [c.hubspotId, c]))
 
 // Then O(1) lookups - total O(n+m)
 const leaderboardData = tasks.map((task) => {
@@ -380,11 +398,13 @@ const leaderboardData = tasks.map((task) => {
 **Problem:** List items rerender unnecessarily, no virtualization.
 
 **Affected Files:**
+
 - `app/(dashboard)/accounts/page.tsx:165` - AccountCard not memoized
 - `app/(dashboard)/predictions/page.tsx:274` - 100+ items without virtualization
 - `app/(dashboard)/tasks/page.tsx:521` - TaskRow not memoized
 
 **Solution:**
+
 ```typescript
 // Memoize list items
 const AccountCard = React.memo(function AccountCard({ company }: Props) {
@@ -392,7 +412,7 @@ const AccountCard = React.memo(function AccountCard({ company }: Props) {
 })
 
 // Add virtualization for long lists
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualizer } from "@tanstack/react-virtual"
 
 const virtualizer = useVirtualizer({
   count: items.length,
@@ -412,10 +432,12 @@ const virtualizer = useVirtualizer({
 **Problem:** Queries select all fields when only a few are needed.
 
 **Affected Files:**
+
 - `app/api/expansion/detect/route.ts:156` - Fetches 30+ fields, needs 5
 - `app/api/predictions/route.ts:78-90` - Full company objects
 
 **Solution:**
+
 ```typescript
 // Add explicit select
 const companies = await prisma.hubSpotCompany.findMany({
@@ -425,7 +447,7 @@ const companies = await prisma.hubSpotCompany.findMany({
     mrr: true,
     healthScore: true,
     // Only fields actually used
-  }
+  },
 })
 ```
 
@@ -442,6 +464,7 @@ const companies = await prisma.hubSpotCompany.findMany({
 **Affected File:** `prisma/schema.prisma`
 
 **Recommended Indexes:**
+
 ```prisma
 model HubSpotCompany {
   // ... fields
@@ -472,11 +495,13 @@ model Task {
 **Affected File:** `components/ai-chat.tsx:196`
 
 **Current Code:**
+
 ```typescript
-className="... w-[420px] h-[600px] ..."
+className = "... w-[420px] h-[600px] ..."
 ```
 
 **Solution:**
+
 ```typescript
 className="... w-full sm:w-[420px] h-[80vh] sm:h-[600px] max-h-[calc(100vh-120px)] ..."
 
@@ -506,6 +531,7 @@ className={cn(
 **Affected File:** `app/(dashboard)/tasks/page.tsx:108-151`
 
 **Solution:**
+
 ```typescript
 // Add swipe gestures or touch buttons
 // Option 1: Add action buttons visible on mobile
@@ -535,6 +561,7 @@ import { useSwipeable } from 'react-swipeable'
 **Affected File:** `app/(dashboard)/cohorts/page.tsx:381`
 
 **Solution:**
+
 ```typescript
 // Option 1: Card layout on mobile
 <div className="hidden sm:block">
@@ -568,10 +595,12 @@ import { useSwipeable } from 'react-swipeable'
 **Problem:** Interactive elements smaller than 44px minimum.
 
 **Affected Files:**
+
 - `components/ai-chat.tsx:204` - Close button ~17px
 - `components/sidebar.tsx` - Menu items may be small
 
 **Solution:**
+
 ```typescript
 // Ensure all interactive elements are at least 44x44px
 <Button
@@ -595,6 +624,7 @@ import { useSwipeable } from 'react-swipeable'
 **Affected File:** `components/ai-chat.tsx`
 
 **Investigation Needed:**
+
 - [ ] Check API endpoint `/api/ai/chat` exists and functions
 - [ ] Verify Anthropic API key is configured
 - [ ] Check for client-side errors in message handling
@@ -613,6 +643,7 @@ import { useSwipeable } from 'react-swipeable'
 **Affected File:** `components/ai-chat.tsx:310`
 
 **Solution:**
+
 ```typescript
 // Detect touch device and hide shortcuts
 const isTouchDevice = 'ontouchstart' in window
@@ -633,29 +664,33 @@ const isTouchDevice = 'ontouchstart' in window
 **Status:** [x] COMPLETED
 
 **Problem:** Hard-coded Tailwind color classes (zinc, emerald, red, amber, blue, purple, etc.) used throughout the codebase instead of semantic design tokens. This caused:
+
 - Inconsistent visual appearance across pages
 - Poor dark mode support
 - No alignment with Moovs brand guidelines
 - Difficult to maintain and update colors globally
 
 **Scale of Impact:**
+
 - 983+ hard-coded color classes replaced
 - 50+ files affected across components and pages
 
 **Solution Implemented:**
+
 ```typescript
 // BEFORE - hard-coded colors
-className="text-zinc-600 bg-zinc-100 border-zinc-200"
-className="text-emerald-600 bg-emerald-100"
-className="text-red-600 bg-red-50"
+className = "text-zinc-600 bg-zinc-100 border-zinc-200"
+className = "text-emerald-600 bg-emerald-100"
+className = "text-red-600 bg-red-50"
 
 // AFTER - semantic tokens
-className="text-content-secondary bg-bg-secondary border-border-default"
-className="text-success-600 bg-success-50"
-className="text-error-600 bg-error-50"
+className = "text-content-secondary bg-bg-secondary border-border-default"
+className = "text-success-600 bg-success-50"
+className = "text-error-600 bg-error-50"
 ```
 
 **Color System Features:**
+
 - CSS custom properties in `globals.css` for light/dark mode
 - Tailwind config extended with semantic tokens
 - Consistent palette aligned with Moovs brand (#2563EB electric blue)
@@ -663,6 +698,7 @@ className="text-error-600 bg-error-50"
 - Premium glass/glow effects (iOS 18 aesthetic)
 
 **Files Modified:**
+
 - `app/globals.css` - CSS variables and utility classes
 - `tailwind.config.ts` - Extended with semantic color tokens (if applicable)
 - 50+ page and component files across the dashboard
@@ -676,6 +712,7 @@ className="text-error-600 bg-error-50"
 **Problem:** Application using placeholder or missing Moovs branding.
 
 **Solution Implemented:**
+
 - Added official Moovs logo (`public/logo.jpg`, `public/logo-wide.png`)
 - Updated header and sidebar to use branded assets
 - Applied Moovs electric blue (#2563EB) as primary brand color
@@ -689,6 +726,7 @@ className="text-error-600 bg-error-50"
 **Problem:** Application lacked premium visual polish expected for a B2B SaaS dashboard.
 
 **Solution Implemented:**
+
 - Added glass effects for elevated surfaces (`.glass`, `.glass-subtle`, `.glass-heavy`)
 - Implemented glow effects for interactive elements (`.glow`, `.glow-sm`, `.glow-lg`)
 - Added gradient text and backgrounds for premium feel
@@ -705,6 +743,7 @@ className="text-error-600 bg-error-50"
 **Problem:** Inconsistent styling patterns across similar components.
 
 **Solution Implemented:**
+
 - Standardized button classes (`.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.btn-glass`)
 - Card variants (`.card`, `.card-interactive`, `.card-featured`, `.card-glow`)
 - Input styling with focus glow effects
@@ -716,6 +755,7 @@ className="text-error-600 bg-error-50"
 ## 5. Implementation Phases
 
 ### Phase 1: Critical Security (Week 1)
+
 - [x] 1.1 Add authentication middleware to API routes (PARTIAL - 17 routes protected)
 - [x] 1.2 Fix SQL injection in Metabase queries (DONE)
 - [x] 1.3 Implement Slack signature verification (DONE)
@@ -723,18 +763,21 @@ className="text-error-600 bg-error-50"
 - [x] 1.8 Add input validation (DONE - sortBy whitelist, days bounds)
 
 ### Phase 2: High Security + Critical Performance (Completed)
+
 - [x] 1.4 Improve password authentication (DONE - session tokens, rate limiting)
 - [x] 1.5 Sanitize logging (DONE - created lib/logger.ts)
 - [x] 1.6 Add rate limiting (DONE - created lib/rate-limit.ts)
 - [x] 2.1 Add pagination to unbounded queries (DONE - explicit selects added)
 
 ### Phase 3: Performance Optimization (Completed)
+
 - [x] 2.2 Fix N+1 query patterns (DONE - using groupBy and joins)
 - [x] 2.3 Add React.memo and virtualization (DONE - components optimized)
 - [x] 2.4 Optimize data fetching with selects (DONE - explicit field selection)
 - [x] 2.5 Add database indexes (DONE - composite indexes added to schema)
 
 ### Phase 4: Mobile Experience (Completed)
+
 - [x] 3.1 Make AI chat responsive (DONE - mobile-friendly layout)
 - [x] 3.2 Add touch alternatives for task shortcuts (DONE - touch-friendly buttons)
 - [x] 3.3 Fix cohort table for mobile (DONE - card view on mobile)
@@ -743,12 +786,14 @@ className="text-error-600 bg-error-50"
 - [x] 3.6 Hide keyboard hints on touch devices (DONE - useTouchDevice hook)
 
 ### Phase 5: Design/Branding (Completed)
+
 - [x] 4.1 Implement Moovs color system (DONE - 983+ color replacements)
 - [x] 4.2 Add brand assets (DONE - logos added)
 - [x] 4.3 Add glassmorphism/premium effects (DONE)
 - [x] 4.4 Standardize component utilities (DONE)
 
 ### Phase 6: Cleanup (Completed)
+
 - [x] Code review of all changes (DONE)
 - [x] Update documentation (DONE - AUDIT_PLAN.md updated)
 - [x] Security re-audit (DONE - all items addressed)
@@ -757,18 +802,19 @@ className="text-error-600 bg-error-50"
 
 ## 6. Progress Tracking
 
-| Category | Critical | High | Medium | Low | Total |
-|----------|----------|------|--------|-----|-------|
-| Security | 3/3 | 3/3 | 2/2 | 0/0 | 8/8 |
-| Efficiency | 1/1 | 2/2 | 2/2 | 0/0 | 5/5 |
-| Mobile | 2/2 | 1/1 | 2/2 | 1/1 | 6/6 |
-| Design/Branding | 1/1 | 1/1 | 1/1 | 1/1 | 4/4 |
-| **Total** | **7/7** | **7/7** | **7/7** | **2/2** | **23/23** |
+| Category        | Critical | High    | Medium  | Low     | Total     |
+| --------------- | -------- | ------- | ------- | ------- | --------- |
+| Security        | 3/3      | 3/3     | 2/2     | 0/0     | 8/8       |
+| Efficiency      | 1/1      | 2/2     | 2/2     | 0/0     | 5/5       |
+| Mobile          | 2/2      | 1/1     | 2/2     | 1/1     | 6/6       |
+| Design/Branding | 1/1      | 1/1     | 1/1     | 1/1     | 4/4       |
+| **Total**       | **7/7**  | **7/7** | **7/7** | **2/2** | **23/23** |
 
 ### Completed Fixes (January 24-25, 2026)
 
 #### Security Fixes (January 24)
-1. **CRON_SECRET bypass** - Fixed in 8 API routes (agents/*, alerts/*, health-history, sync/hubspot)
+
+1. **CRON_SECRET bypass** - Fixed in 8 API routes (agents/_, alerts/_, health-history, sync/hubspot)
 2. **Slack signature verification** - Added HMAC-SHA256 verification with timing-safe comparison
 3. **SQL injection in Metabase** - Added sanitizeIdForSql() helper for operatorId and stripeAccountId
 4. **Authentication middleware** - Created reusable middleware, protected 17 critical routes:
@@ -777,6 +823,7 @@ className="text-error-600 bg-error-50"
 5. **Input validation** - Added sortBy whitelist for companies route, days bounds checking for nps route
 
 #### Security Fixes (January 25)
+
 6. **Session-based authentication** - Replaced password-in-cookie with secure session tokens
    - Created `lib/rate-limit.ts` for in-memory rate limiting
    - Login route now uses hashed session tokens
@@ -787,12 +834,14 @@ className="text-error-600 bg-error-50"
    - Provides scoped logger creation
 
 #### Efficiency Fixes (January 25)
+
 8. **Database indexes** - Added composite indexes to Prisma schema:
    - HubSpotCompany: healthScore+mrr, customerSegment+mrr, ownerId+healthScore
    - Task: status+dueDate, companyId+status, ownerEmail+status
 9. **Query optimization** - Routes already use explicit `select` clauses
 
 #### Mobile Fixes (January 25)
+
 10. **Touch device detection** - Created `hooks/use-touch-device.ts` hook
 11. **Keyboard hints hidden** - AI chat and tasks page hide shortcuts on touch
 12. **Cohort table mobile** - Added card-based layout for mobile view
@@ -800,10 +849,13 @@ className="text-error-600 bg-error-50"
 14. **AI chat auth** - Added authentication to chat API route
 
 #### Design/Branding Fixes (January 25)
+
 15. **Color system overhaul** - Complete replacement of 983+ hard-coded colors with semantic tokens:
-   - Implemented Moovs-aligned color system with CSS custom properties
-   - Added full light/dark mode support
-   - Applied to 50+ component and page files
+
+- Implemented Moovs-aligned color system with CSS custom properties
+- Added full light/dark mode support
+- Applied to 50+ component and page files
+
 16. **Brand assets** - Added official Moovs logos (logo.jpg, logo-wide.png)
 17. **Premium visual effects** - Implemented glassmorphism, glow effects, gradient borders
 18. **Component standardization** - Created utility classes for buttons, cards, inputs, badges
@@ -811,6 +863,7 @@ className="text-error-600 bg-error-50"
 ### Files Modified
 
 #### Security Changes
+
 - `lib/auth/api-middleware.ts` (new)
 - `app/api/customer/[id]/route.ts`
 - `app/api/customer/search/route.ts`
@@ -836,6 +889,7 @@ className="text-error-600 bg-error-50"
 - `app/api/roi/route.ts` (auth added)
 
 #### Design/Branding Changes (50+ files)
+
 - `app/globals.css` - CSS custom properties and utility classes
 - `hooks/use-spotlight.ts` (new) - Spotlight effect hook
 - `public/logo.jpg`, `public/logo-wide.png` (new) - Brand assets
@@ -886,6 +940,7 @@ className="text-error-600 bg-error-50"
   - `components/account-handoff.tsx`
 
 #### Additional Files (January 25)
+
 - `lib/logger.ts` (new) - Sanitized logging utility
 - `lib/rate-limit.ts` (new) - In-memory rate limiting
 - `hooks/use-touch-device.ts` (new) - Touch device detection hook
@@ -912,5 +967,5 @@ className="text-error-600 bg-error-50"
 
 ---
 
-*Last Updated: January 25, 2026*
-*Audit Status: COMPLETE (23/23 items)*
+_Last Updated: January 25, 2026_
+_Audit Status: COMPLETE (23/23 items)_

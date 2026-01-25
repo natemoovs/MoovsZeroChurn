@@ -20,6 +20,7 @@ Use this template to generate the final shaping document after completing the in
 ### The Story
 
 [Write a specific narrative describing when this problem occurs. Include:
+
 - WHO experiences this problem (specific role/persona)
 - WHAT they're trying to do
 - WHAT goes wrong
@@ -28,11 +29,12 @@ Use this template to generate the final shaping document after completing the in
 This should be a concrete story, not an abstract description.]
 
 **Example:**
-> Sarah is a dispatcher at Roberts Hawaii. At 6 AM, she gets a call from a panicked 
-> driver: "I'm supposed to pick up 12 people at the airport in 20 minutes, but I don't 
-> know which terminal." Sarah opens Moovs, but the flight info isn't connected to the 
-> trip—she has to open FlightAware in another tab, cross-reference the airline code, 
-> and then call the driver back. By the time she figures it out, the driver is late, 
+
+> Sarah is a dispatcher at Roberts Hawaii. At 6 AM, she gets a call from a panicked
+> driver: "I'm supposed to pick up 12 people at the airport in 20 minutes, but I don't
+> know which terminal." Sarah opens Moovs, but the flight info isn't connected to the
+> trip—she has to open FlightAware in another tab, cross-reference the airline code,
+> and then call the driver back. By the time she figures it out, the driver is late,
 > and the customer is frustrated.
 
 ### Current Workaround
@@ -59,6 +61,7 @@ This should be a concrete story, not an abstract description.]
 ### Success Criteria
 
 Within this appetite, success means:
+
 - [ ] [Specific measurable outcome 1]
 - [ ] [Specific measurable outcome 2]
 - [ ] [Specific measurable outcome 3]
@@ -74,15 +77,16 @@ Within this appetite, success means:
 ### User Flow
 
 [Describe the step-by-step flow. Use a breadboard format:]
-
 ```
+
 [Starting Point]
-    |
-    v
+|
+v
 [Screen/State 1] --> [Affordance: Button/Link] --> [Screen/State 2]
-    |
-    v
+|
+v
 [Affordance: Action] --> [Outcome]
+
 ```
 
 ### Key Screens / Interactions

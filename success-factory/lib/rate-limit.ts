@@ -42,10 +42,7 @@ interface RateLimitResult {
 /**
  * Check rate limit for a given identifier
  */
-export function checkRateLimit(
-  identifier: string,
-  config: RateLimitConfig
-): RateLimitResult {
+export function checkRateLimit(identifier: string, config: RateLimitConfig): RateLimitResult {
   const now = Date.now()
   const windowMs = config.windowSec * 1000
   const key = `${identifier}`
@@ -118,16 +115,16 @@ export const rateLimiters = {
  */
 export function getClientIp(request: Request): string {
   // Check common headers for proxied requests
-  const forwardedFor = request.headers.get('x-forwarded-for')
+  const forwardedFor = request.headers.get("x-forwarded-for")
   if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim()
+    return forwardedFor.split(",")[0].trim()
   }
 
-  const realIp = request.headers.get('x-real-ip')
+  const realIp = request.headers.get("x-real-ip")
   if (realIp) {
     return realIp
   }
 
   // Fallback
-  return '127.0.0.1'
+  return "127.0.0.1"
 }

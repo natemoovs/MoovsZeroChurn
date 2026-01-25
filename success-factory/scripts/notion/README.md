@@ -27,6 +27,7 @@ python3 scripts/notion/create-ticket.py \
 ```
 
 **Options:**
+
 - `--name`, `-n`: Ticket name (required)
 - `--summary`, `-s`: Short summary
 - `--priority`, `-p`: Low, Medium, High (default: Medium)
@@ -50,6 +51,7 @@ python3 scripts/notion/create-task.py \
 ```
 
 **Options:**
+
 - `--name`, `-n`: Task name (required)
 - `--summary`, `-s`: Task summary
 - `--priority`, `-p`: Low, Medium, High (default: Medium)
@@ -70,6 +72,7 @@ python3 scripts/notion/create-document.py \
 ```
 
 **Options:**
+
 - `--name`, `-n`: Document name (required)
 - `--status`, `-s`: Open, Urgent, Archived, Done, Launched, Implementation (default: Open)
 - `--category`, `-c`: Project, Research, Marketing, ICP, Process, etc.
@@ -90,6 +93,7 @@ python3 scripts/notion/create-page.py \
 ```
 
 **Options:**
+
 - `--parent`, `-p`: Parent page ID (required)
 - `--name`, `-n`: Page title (required)
 - `--body`, `-b`: Markdown content
@@ -97,13 +101,13 @@ python3 scripts/notion/create-page.py \
 
 ## Database IDs
 
-| Database | ID |
-|----------|-----|
+| Database             | ID                                     |
+| -------------------- | -------------------------------------- |
 | Moovs Tickets (DOOM) | `13b8aeaa-3759-80f8-8d7c-dd2f627d2578` |
-| Moovs Tasks | `739c0084-7ce2-4e58-a7c2-f205d5910567` |
-| Documents | `c6e840ca-0c08-4565-99ef-ec7b2dfa6789` |
-| Problem Docs | `2e88aeaa-3759-8063-ae62-e4005676ae46` |
-| Mooving Board | `2d98aeaa-3759-807f-955f-e439615a02d4` |
+| Moovs Tasks          | `739c0084-7ce2-4e58-a7c2-f205d5910567` |
+| Documents            | `c6e840ca-0c08-4565-99ef-ec7b2dfa6789` |
+| Problem Docs         | `2e88aeaa-3759-8063-ae62-e4005676ae46` |
+| Mooving Board        | `2d98aeaa-3759-807f-955f-e439615a02d4` |
 
 ## Markdown Support
 

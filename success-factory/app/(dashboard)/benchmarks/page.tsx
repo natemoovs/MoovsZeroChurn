@@ -12,8 +12,6 @@ import {
   DollarSign,
   Activity,
   Clock,
-  ChevronRight,
-  BarChart2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -74,9 +72,9 @@ function getScoreColor(score: number): string {
 }
 
 function getComparisonIcon(value: number) {
-  if (value > 10) return <TrendingUp className="h-4 w-4 text-success-500" />
-  if (value < -10) return <TrendingDown className="h-4 w-4 text-error-500" />
-  return <Minus className="h-4 w-4 text-content-tertiary" />
+  if (value > 10) return <TrendingUp className="text-success-500 h-4 w-4" />
+  if (value < -10) return <TrendingDown className="text-error-500 h-4 w-4" />
+  return <Minus className="text-content-tertiary h-4 w-4" />
 }
 
 function getPercentileLabel(percentile: number): string {
@@ -99,7 +97,9 @@ export default function BenchmarksPage() {
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null)
   const [companyBenchmark, setCompanyBenchmark] = useState<CompanyBenchmark | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<{ companyId: string; companyName: string }[]>([])
+  const [searchResults, setSearchResults] = useState<{ companyId: string; companyName: string }[]>(
+    []
+  )
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -138,12 +138,10 @@ export default function BenchmarksPage() {
     try {
       const res = await fetch(`/api/integrations/hubspot/companies?q=${encodeURIComponent(query)}`)
       const data = await res.json()
-      const results = (data.companies || [])
-        .slice(0, 5)
-        .map((c: { id: string; name: string }) => ({
-          companyId: c.id,
-          companyName: c.name,
-        }))
+      const results = (data.companies || []).slice(0, 5).map((c: { id: string; name: string }) => ({
+        companyId: c.id,
+        companyName: c.name,
+      }))
       setSearchResults(results)
     } catch (error) {
       console.error("Failed to search companies:", error)
@@ -157,14 +155,10 @@ export default function BenchmarksPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <Scale className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-              <h1 className="text-2xl font-bold text-content-primary">
-                Health Benchmarks
-              </h1>
+              <Scale className="text-primary-600 dark:text-primary-400 h-6 w-6" />
+              <h1 className="text-content-primary text-2xl font-bold">Health Benchmarks</h1>
             </div>
-            <p className="mt-1 text-content-secondary">
-              Compare accounts against segment averages
-            </p>
+            <p className="text-content-secondary mt-1">Compare accounts against segment averages</p>
           </div>
 
           {/* Company Search */}
@@ -177,10 +171,10 @@ export default function BenchmarksPage() {
                 setSearchQuery(e.target.value)
                 searchCompanies(e.target.value)
               }}
-              className="h-10 w-full rounded-lg border border-border-default bg-bg-elevated pl-4 pr-4 text-sm outline-none transition-colors placeholder:text-content-tertiary focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+              className="border-border-default bg-bg-elevated placeholder:text-content-tertiary focus:border-primary-500 focus:ring-primary-500/20 h-10 w-full rounded-lg border pr-4 pl-4 text-sm transition-colors outline-none focus:ring-2"
             />
             {searchResults.length > 0 && (
-              <div className="absolute top-full z-10 mt-1 w-full rounded-lg border border-border-default bg-bg-elevated shadow-lg">
+              <div className="border-border-default bg-bg-elevated absolute top-full z-10 mt-1 w-full rounded-lg border shadow-lg">
                 {searchResults.map((result) => (
                   <button
                     key={result.companyId}
@@ -189,7 +183,7 @@ export default function BenchmarksPage() {
                       setSearchQuery("")
                       setSearchResults([])
                     }}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-bg-secondary"
+                    className="hover:bg-bg-secondary flex w-full items-center gap-2 px-4 py-2 text-left text-sm"
                   >
                     {result.companyName}
                   </button>
@@ -201,68 +195,59 @@ export default function BenchmarksPage() {
 
         {/* Segment Overview */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {loading ? (
-            [1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="shimmer h-32 rounded-xl"
-              />
-            ))
-          ) : (
-            segments.slice(0, 4).map((segment) => (
-              <button
-                key={segment.segment}
-                onClick={() => setSelectedSegment(segment.segment)}
-                className={cn(
-                  "rounded-xl border p-4 text-left transition-all",
-                  selectedSegment === segment.segment
-                    ? "border-primary-500 bg-primary-50 dark:border-primary-500 dark:bg-primary-950/30"
-                    : "border-border-default bg-bg-elevated hover:border-border-hover"
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium capitalize text-content-secondary">
-                    {segment.segment.replace("_", " ")}
-                  </span>
-                  <span className="rounded-full bg-bg-secondary px-2 py-0.5 text-xs font-medium text-content-secondary">
-                    {segment.accountCount}
-                  </span>
-                </div>
-                <p className="mt-2 text-xl font-bold text-content-primary">
-                  {formatCurrency(segment.metrics.avgMrr)}
-                </p>
-                <p className="text-xs text-content-secondary">
-                  avg MRR
-                </p>
-                <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-bg-secondary">
-                  <div
-                    className="bg-success-500"
-                    style={{
-                      width: `${(segment.metrics.healthDistribution.green / segment.accountCount) * 100}%`,
-                    }}
-                  />
-                  <div
-                    className="bg-warning-500"
-                    style={{
-                      width: `${(segment.metrics.healthDistribution.yellow / segment.accountCount) * 100}%`,
-                    }}
-                  />
-                  <div
-                    className="bg-error-500"
-                    style={{
-                      width: `${(segment.metrics.healthDistribution.red / segment.accountCount) * 100}%`,
-                    }}
-                  />
-                </div>
-              </button>
-            ))
-          )}
+          {loading
+            ? [1, 2, 3, 4].map((i) => <div key={i} className="shimmer h-32 rounded-xl" />)
+            : segments.slice(0, 4).map((segment) => (
+                <button
+                  key={segment.segment}
+                  onClick={() => setSelectedSegment(segment.segment)}
+                  className={cn(
+                    "rounded-xl border p-4 text-left transition-all",
+                    selectedSegment === segment.segment
+                      ? "border-primary-500 bg-primary-50 dark:border-primary-500 dark:bg-primary-950/30"
+                      : "border-border-default bg-bg-elevated hover:border-border-hover"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-content-secondary text-sm font-medium capitalize">
+                      {segment.segment.replace("_", " ")}
+                    </span>
+                    <span className="bg-bg-secondary text-content-secondary rounded-full px-2 py-0.5 text-xs font-medium">
+                      {segment.accountCount}
+                    </span>
+                  </div>
+                  <p className="text-content-primary mt-2 text-xl font-bold">
+                    {formatCurrency(segment.metrics.avgMrr)}
+                  </p>
+                  <p className="text-content-secondary text-xs">avg MRR</p>
+                  <div className="bg-bg-secondary mt-2 flex h-2 overflow-hidden rounded-full">
+                    <div
+                      className="bg-success-500"
+                      style={{
+                        width: `${(segment.metrics.healthDistribution.green / segment.accountCount) * 100}%`,
+                      }}
+                    />
+                    <div
+                      className="bg-warning-500"
+                      style={{
+                        width: `${(segment.metrics.healthDistribution.yellow / segment.accountCount) * 100}%`,
+                      }}
+                    />
+                    <div
+                      className="bg-error-500"
+                      style={{
+                        width: `${(segment.metrics.healthDistribution.red / segment.accountCount) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </button>
+              ))}
         </div>
 
         {/* Selected Segment Detail */}
         {selectedSegment && (
           <div className="card-sf p-6">
-            <h2 className="mb-4 text-lg font-semibold capitalize text-content-primary">
+            <h2 className="text-content-primary mb-4 text-lg font-semibold capitalize">
               {selectedSegment.replace("_", " ")} Segment Benchmarks
             </h2>
             {(() => {
@@ -273,45 +258,37 @@ export default function BenchmarksPage() {
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-content-tertiary" />
-                      <span className="text-sm text-content-secondary">
-                        Average MRR
-                      </span>
+                      <DollarSign className="text-content-tertiary h-4 w-4" />
+                      <span className="text-content-secondary text-sm">Average MRR</span>
                     </div>
-                    <p className="mt-1 text-2xl font-bold text-content-primary">
+                    <p className="text-content-primary mt-1 text-2xl font-bold">
                       {formatCurrency(segment.metrics.avgMrr)}
                     </p>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-content-tertiary" />
-                      <span className="text-sm text-content-secondary">
-                        Avg Trips/Month
-                      </span>
+                      <Activity className="text-content-tertiary h-4 w-4" />
+                      <span className="text-content-secondary text-sm">Avg Trips/Month</span>
                     </div>
-                    <p className="mt-1 text-2xl font-bold text-content-primary">
+                    <p className="text-content-primary mt-1 text-2xl font-bold">
                       {segment.metrics.avgTripsPerMonth}
                     </p>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-content-tertiary" />
-                      <span className="text-sm text-content-secondary">
-                        Avg Days Since Login
-                      </span>
+                      <Clock className="text-content-tertiary h-4 w-4" />
+                      <span className="text-content-secondary text-sm">Avg Days Since Login</span>
                     </div>
-                    <p className="mt-1 text-2xl font-bold text-content-primary">
+                    <p className="text-content-primary mt-1 text-2xl font-bold">
                       {segment.metrics.avgDaysSinceLogin}
                     </p>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-content-tertiary" />
-                      <span className="text-sm text-content-secondary">
-                        Avg Tenure
-                      </span>
+                      <Users className="text-content-tertiary h-4 w-4" />
+                      <span className="text-content-secondary text-sm">Avg Tenure</span>
                     </div>
-                    <p className="mt-1 text-2xl font-bold text-content-primary">
+                    <p className="text-content-primary mt-1 text-2xl font-bold">
                       {segment.metrics.avgTenureMonths} months
                     </p>
                   </div>
@@ -323,155 +300,158 @@ export default function BenchmarksPage() {
 
         {/* Company Comparison */}
         {companyBenchmark && (
-          <div className="rounded-xl border border-primary-200 bg-primary-50 p-6 dark:border-primary-900/50 dark:bg-primary-950/30">
+          <div className="border-primary-200 bg-primary-50 dark:border-primary-900/50 dark:bg-primary-950/30 rounded-xl border p-6">
             <div className="mb-6 flex items-start justify-between">
               <div>
                 <Link
                   href={`/accounts/${companyBenchmark.companyId}`}
-                  className="text-xl font-bold text-content-primary hover:text-primary-600 dark:hover:text-primary-400"
+                  className="text-content-primary hover:text-primary-600 dark:hover:text-primary-400 text-xl font-bold"
                 >
                   {companyBenchmark.companyName}
                 </Link>
-                <p className="text-sm capitalize text-content-secondary">
+                <p className="text-content-secondary text-sm capitalize">
                   {companyBenchmark.segment.replace("_", " ")} segment
                 </p>
               </div>
               <div className="text-right">
                 <div
-                  className={cn(
-                    "text-3xl font-bold",
-                    getScoreColor(companyBenchmark.overallScore)
-                  )}
+                  className={cn("text-3xl font-bold", getScoreColor(companyBenchmark.overallScore))}
                 >
                   {companyBenchmark.overallScore}
                 </div>
-                <p className="text-sm text-content-secondary">
-                  Overall Score
-                </p>
+                <p className="text-content-secondary text-sm">Overall Score</p>
               </div>
             </div>
 
             {/* Comparison Grid */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {/* MRR */}
-              <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
+              <div className="border-border-default bg-bg-elevated rounded-lg border p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-content-secondary">MRR</span>
+                  <span className="text-content-secondary text-sm">MRR</span>
                   {getComparisonIcon(companyBenchmark.comparison.mrrVsSegment)}
                 </div>
-                <p className="mt-1 text-xl font-bold text-content-primary">
+                <p className="text-content-primary mt-1 text-xl font-bold">
                   {formatCurrency(companyBenchmark.metrics.mrr)}
                 </p>
-                <p className={cn(
-                  "text-sm font-medium",
-                  companyBenchmark.comparison.mrrVsSegment >= 0
-                    ? "text-success-600 dark:text-success-400"
-                    : "text-error-600 dark:text-error-400"
-                )}>
+                <p
+                  className={cn(
+                    "text-sm font-medium",
+                    companyBenchmark.comparison.mrrVsSegment >= 0
+                      ? "text-success-600 dark:text-success-400"
+                      : "text-error-600 dark:text-error-400"
+                  )}
+                >
                   {companyBenchmark.comparison.mrrVsSegment >= 0 ? "+" : ""}
                   {companyBenchmark.comparison.mrrVsSegment}% vs segment
                 </p>
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-bg-secondary">
+                  <div className="bg-bg-secondary h-1.5 flex-1 overflow-hidden rounded-full">
                     <div
                       className={getPercentileColor(companyBenchmark.percentiles.mrr)}
                       style={{ width: `${companyBenchmark.percentiles.mrr}%` }}
                     />
                   </div>
-                  <span className="text-xs text-content-secondary">
+                  <span className="text-content-secondary text-xs">
                     {getPercentileLabel(companyBenchmark.percentiles.mrr)}
                   </span>
                 </div>
               </div>
 
               {/* Usage */}
-              <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
+              <div className="border-border-default bg-bg-elevated rounded-lg border p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-content-secondary">Usage</span>
+                  <span className="text-content-secondary text-sm">Usage</span>
                   {getComparisonIcon(companyBenchmark.comparison.usageVsSegment)}
                 </div>
-                <p className="mt-1 text-xl font-bold text-content-primary">
+                <p className="text-content-primary mt-1 text-xl font-bold">
                   {companyBenchmark.metrics.tripsPerMonth}/mo
                 </p>
-                <p className={cn(
-                  "text-sm font-medium",
-                  companyBenchmark.comparison.usageVsSegment >= 0
-                    ? "text-success-600 dark:text-success-400"
-                    : "text-error-600 dark:text-error-400"
-                )}>
+                <p
+                  className={cn(
+                    "text-sm font-medium",
+                    companyBenchmark.comparison.usageVsSegment >= 0
+                      ? "text-success-600 dark:text-success-400"
+                      : "text-error-600 dark:text-error-400"
+                  )}
+                >
                   {companyBenchmark.comparison.usageVsSegment >= 0 ? "+" : ""}
                   {companyBenchmark.comparison.usageVsSegment}% vs segment
                 </p>
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-bg-secondary">
+                  <div className="bg-bg-secondary h-1.5 flex-1 overflow-hidden rounded-full">
                     <div
                       className={getPercentileColor(companyBenchmark.percentiles.usage)}
                       style={{ width: `${companyBenchmark.percentiles.usage}%` }}
                     />
                   </div>
-                  <span className="text-xs text-content-secondary">
+                  <span className="text-content-secondary text-xs">
                     {getPercentileLabel(companyBenchmark.percentiles.usage)}
                   </span>
                 </div>
               </div>
 
               {/* Activity */}
-              <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
+              <div className="border-border-default bg-bg-elevated rounded-lg border p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-content-secondary">Activity</span>
+                  <span className="text-content-secondary text-sm">Activity</span>
                   {getComparisonIcon(companyBenchmark.comparison.activityVsSegment)}
                 </div>
-                <p className="mt-1 text-xl font-bold text-content-primary">
+                <p className="text-content-primary mt-1 text-xl font-bold">
                   {companyBenchmark.metrics.daysSinceLogin}d ago
                 </p>
-                <p className={cn(
-                  "text-sm font-medium",
-                  companyBenchmark.comparison.activityVsSegment >= 0
-                    ? "text-success-600 dark:text-success-400"
-                    : "text-error-600 dark:text-error-400"
-                )}>
+                <p
+                  className={cn(
+                    "text-sm font-medium",
+                    companyBenchmark.comparison.activityVsSegment >= 0
+                      ? "text-success-600 dark:text-success-400"
+                      : "text-error-600 dark:text-error-400"
+                  )}
+                >
                   {companyBenchmark.comparison.activityVsSegment >= 0 ? "+" : ""}
                   {companyBenchmark.comparison.activityVsSegment}% more active
                 </p>
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-bg-secondary">
+                  <div className="bg-bg-secondary h-1.5 flex-1 overflow-hidden rounded-full">
                     <div
                       className={getPercentileColor(companyBenchmark.percentiles.activity)}
                       style={{ width: `${companyBenchmark.percentiles.activity}%` }}
                     />
                   </div>
-                  <span className="text-xs text-content-secondary">
+                  <span className="text-content-secondary text-xs">
                     {getPercentileLabel(companyBenchmark.percentiles.activity)}
                   </span>
                 </div>
               </div>
 
               {/* Tenure */}
-              <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
+              <div className="border-border-default bg-bg-elevated rounded-lg border p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-content-secondary">Tenure</span>
+                  <span className="text-content-secondary text-sm">Tenure</span>
                   {getComparisonIcon(companyBenchmark.comparison.tenureVsSegment)}
                 </div>
-                <p className="mt-1 text-xl font-bold text-content-primary">
+                <p className="text-content-primary mt-1 text-xl font-bold">
                   {companyBenchmark.metrics.tenureMonths} months
                 </p>
-                <p className={cn(
-                  "text-sm font-medium",
-                  companyBenchmark.comparison.tenureVsSegment >= 0
-                    ? "text-success-600 dark:text-success-400"
-                    : "text-error-600 dark:text-error-400"
-                )}>
+                <p
+                  className={cn(
+                    "text-sm font-medium",
+                    companyBenchmark.comparison.tenureVsSegment >= 0
+                      ? "text-success-600 dark:text-success-400"
+                      : "text-error-600 dark:text-error-400"
+                  )}
+                >
                   {companyBenchmark.comparison.tenureVsSegment >= 0 ? "+" : ""}
                   {companyBenchmark.comparison.tenureVsSegment}% vs segment
                 </p>
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-bg-secondary">
+                  <div className="bg-bg-secondary h-1.5 flex-1 overflow-hidden rounded-full">
                     <div
                       className={getPercentileColor(companyBenchmark.percentiles.tenure)}
                       style={{ width: `${companyBenchmark.percentiles.tenure}%` }}
                     />
                   </div>
-                  <span className="text-xs text-content-secondary">
+                  <span className="text-content-secondary text-xs">
                     {getPercentileLabel(companyBenchmark.percentiles.tenure)}
                   </span>
                 </div>
@@ -485,26 +465,26 @@ export default function BenchmarksPage() {
           <div className="card-sf overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border-default">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-content-secondary">
+                <tr className="border-border-default border-b">
+                  <th className="text-content-secondary px-4 py-3 text-left text-sm font-medium">
                     Segment
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-content-secondary">
+                  <th className="text-content-secondary px-4 py-3 text-right text-sm font-medium">
                     Accounts
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-content-secondary">
+                  <th className="text-content-secondary px-4 py-3 text-right text-sm font-medium">
                     Avg MRR
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-content-secondary">
+                  <th className="text-content-secondary px-4 py-3 text-right text-sm font-medium">
                     Usage/Mo
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-content-secondary">
+                  <th className="text-content-secondary px-4 py-3 text-right text-sm font-medium">
                     Days Since Login
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-content-secondary">
+                  <th className="text-content-secondary px-4 py-3 text-right text-sm font-medium">
                     Avg Tenure
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-content-secondary">
+                  <th className="text-content-secondary px-4 py-3 text-left text-sm font-medium">
                     Health
                   </th>
                 </tr>
@@ -514,30 +494,30 @@ export default function BenchmarksPage() {
                   <tr
                     key={segment.segment}
                     className={cn(
-                      "border-b border-border-default transition-colors hover:bg-bg-secondary",
+                      "border-border-default hover:bg-bg-secondary border-b transition-colors",
                       idx === segments.length - 1 && "border-b-0"
                     )}
                   >
-                    <td className="px-4 py-3 font-medium capitalize text-content-primary">
+                    <td className="text-content-primary px-4 py-3 font-medium capitalize">
                       {segment.segment.replace("_", " ")}
                     </td>
-                    <td className="px-4 py-3 text-right text-content-secondary">
+                    <td className="text-content-secondary px-4 py-3 text-right">
                       {segment.accountCount}
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-content-primary">
+                    <td className="text-content-primary px-4 py-3 text-right font-medium">
                       {formatCurrency(segment.metrics.avgMrr)}
                     </td>
-                    <td className="px-4 py-3 text-right text-content-secondary">
+                    <td className="text-content-secondary px-4 py-3 text-right">
                       {segment.metrics.avgTripsPerMonth}
                     </td>
-                    <td className="px-4 py-3 text-right text-content-secondary">
+                    <td className="text-content-secondary px-4 py-3 text-right">
                       {segment.metrics.avgDaysSinceLogin}
                     </td>
-                    <td className="px-4 py-3 text-right text-content-secondary">
+                    <td className="text-content-secondary px-4 py-3 text-right">
                       {segment.metrics.avgTenureMonths} mo
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex h-2 w-24 overflow-hidden rounded-full bg-bg-secondary">
+                      <div className="bg-bg-secondary flex h-2 w-24 overflow-hidden rounded-full">
                         <div
                           className="bg-success-500"
                           style={{

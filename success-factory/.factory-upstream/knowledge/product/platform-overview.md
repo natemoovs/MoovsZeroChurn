@@ -22,20 +22,20 @@ Moovs consists of multiple applications across two main product lines:
 
 ### Black Car Platform (Core)
 
-| Application | Who Uses It | Purpose |
-|-------------|-------------|---------|
-| **Operator App** | Dispatch, office staff, owners | Manage entire business operations |
-| **Customer Portal** | Bookers, passengers | Request quotes, make bookings, track rides |
-| **Driver App** | Drivers | Receive assignments, navigate, update trip status |
-| **Passenger App** | Passengers | Track rides, view history, provide feedback ($499/mo add-on for branded version) |
+| Application         | Who Uses It                    | Purpose                                                                          |
+| ------------------- | ------------------------------ | -------------------------------------------------------------------------------- |
+| **Operator App**    | Dispatch, office staff, owners | Manage entire business operations                                                |
+| **Customer Portal** | Bookers, passengers            | Request quotes, make bookings, track rides                                       |
+| **Driver App**      | Drivers                        | Receive assignments, navigate, update trip status                                |
+| **Passenger App**   | Passengers                     | Track rides, view history, provide feedback ($499/mo add-on for branded version) |
 
 ### Shuttle Platform (Add-on, $499/mo+)
 
-| Application | Who Uses It | Purpose |
-|-------------|-------------|---------|
-| **Shuttle Operator Dashboard** | Program managers, dispatchers | Route management, fleet tracking, analytics |
-| **Shuttle Passenger Interface** | Riders | Route discovery, seat booking, real-time tracking |
-| **Shuttle Driver App** | Shuttle drivers | Check-in, manifests, route execution |
+| Application                     | Who Uses It                   | Purpose                                           |
+| ------------------------------- | ----------------------------- | ------------------------------------------------- |
+| **Shuttle Operator Dashboard**  | Program managers, dispatchers | Route management, fleet tracking, analytics       |
+| **Shuttle Passenger Interface** | Riders                        | Route discovery, seat booking, real-time tracking |
+| **Shuttle Driver App**          | Shuttle drivers               | Check-in, manifests, route execution              |
 
 ---
 
@@ -54,18 +54,21 @@ Moovs consists of multiple applications across two main product lines:
 ## Pricing Tiers
 
 ### Free Tier — $0/month
+
 - 3 users, 10 vehicles, 10 drivers
 - 1 promo code
 - Credit card rate: 4% + $0.30
 - **Best for:** Operators starting out or testing Moovs
 
 ### Standard Tier — $149/month (+$299 setup)
+
 - 3 users, unlimited vehicles/drivers
 - 1 promo code
 - Credit card rate: 3.4% + $0.30
 - **Best for:** Established operators with basic needs
 
 ### Pro Tier — $199/month (+$299 setup)
+
 - 5 users, unlimited vehicles/drivers
 - Unlimited promo codes
 - Credit card rate: 3% + $0.30
@@ -73,6 +76,7 @@ Moovs consists of multiple applications across two main product lines:
 - **Best for:** Growing operators ready to drive more revenue
 
 ### Enterprise Tier — Starting at $499/month (custom)
+
 - Unlimited users, vehicles, drivers
 - Custom credit card rates
 - Premium support, dedicated AM
@@ -81,13 +85,14 @@ Moovs consists of multiple applications across two main product lines:
 - **Best for:** Advanced operators with multiple departments/locations
 
 ### Add-ons (Separate Purchase)
-| Add-on | Price | Notes |
-|--------|-------|-------|
-| Branded Passenger App | $499/month | Operator's logo, colors |
-| Shuttle Platform | $499/month+ | Full shuttle operations |
-| CRM Email Automation | $299/month | Advanced email workflows |
-| Moovs Insights | $149/month | Advanced analytics |
-| Google Tag Manager | $99/month | Tracking integration |
+
+| Add-on                | Price       | Notes                    |
+| --------------------- | ----------- | ------------------------ |
+| Branded Passenger App | $499/month  | Operator's logo, colors  |
+| Shuttle Platform      | $499/month+ | Full shuttle operations  |
+| CRM Email Automation  | $299/month  | Advanced email workflows |
+| Moovs Insights        | $149/month  | Advanced analytics       |
+| Google Tag Manager    | $99/month   | Tracking integration     |
 
 ---
 
@@ -137,11 +142,13 @@ Moovs consists of multiple applications across two main product lines:
 **What it does:** Manage vehicles, drivers, and availability.
 
 **Vehicles:**
+
 - Vehicle setup (name, capacity, license plate, VIN, color, features)
 - Vehicle OOS (Out of Service) — Instant propagation to quotes, manifests, online availability
 - Availability calendar — Prevent double-bookings
 
 **Drivers:**
+
 - Driver profiles — Only first name + cell phone required; additional fields optional
 - Driver tracking — Real-time GPS location, ETAs
 - Availability calendar — Drivers indicate available/unavailable dates
@@ -213,12 +220,14 @@ Moovs consists of multiple applications across two main product lines:
 ## Shuttle Platform Module ($499/mo+)
 
 ### Operator Dashboard
+
 - Route template management (create, bulk generation, versioning)
 - Real-time fleet tracking with conflict detection
 - Driver assignment and availability tracking
 - Performance analytics (ridership, on-time, capacity, revenue)
 
 ### Passenger Interface
+
 - Route discovery and seat booking
 - Real-time route tracking
 - Multi-passenger booking
@@ -226,11 +235,13 @@ Moovs consists of multiple applications across two main product lines:
 - Add-ons (luggage, snowboard, etc.)
 
 ### Check-in & Manifests
+
 - QR code or manual passenger check-in
 - No-show handling
 - Driver workflows: pre-trip (clock in), during-trip (navigation, check-in), post-trip (report, incidents)
 
 ### Program Manager / Executive View
+
 - Real-time KPIs dashboard
 - Historical analytics and trend analysis
 - Compliance reporting
@@ -238,6 +249,7 @@ Moovs consists of multiple applications across two main product lines:
 - On-time performance, capacity utilization, satisfaction metrics
 
 ### Shuttle Enterprise Features
+
 - Digital Wallet for corporate shuttles
 - Bulk ticket purchases
 - Multi-tenant architecture
@@ -249,22 +261,26 @@ Moovs consists of multiple applications across two main product lines:
 ## Enterprise-Only Modules ($499/mo+)
 
 ### AI-Powered Driver Scheduler
+
 - Create schedules in seconds
 - Prevent overtime/double-bookings
 - Automatic reassignment on callouts
 
 ### Moovs Contact Center (AI-Powered)
+
 - Automate inbound/outbound phone calls and texts
 - AI call handling for 24/7 coverage
 - Route messages to correct team, trigger workflows
 - 100 calls/month free for pilots
 
 ### AI Bulk Trip Import
+
 - Upload CSV, PDF, Excel, email content
 - Auto-create trips from manifests
 - AI intake for airline emails → trips
 
 ### Enterprise Integrations
+
 - QuickBooks real-time sync
 - FlightAware flight monitoring
 - Samsara vehicle tracking (live location, speed, alerts)
@@ -272,10 +288,12 @@ Moovs consists of multiple applications across two main product lines:
 - API-ready for custom integrations
 
 ### Enterprise Dashboards
+
 - Revenue, utilization, on-time %, dispatcher performance
 - Unified dispatch grid with flight monitoring, SMS, driver/vehicle tracking
 
 ### Enterprise Migration
+
 - 3-step migration: CSV Export → Sandbox Import → White-Glove Go-Live
 - Parallel run for 1-2 weeks
 - Dedicated Account Manager
@@ -286,41 +304,44 @@ Moovs consists of multiple applications across two main product lines:
 
 ## Integrations
 
-| Integration | Purpose | Availability |
-|-------------|---------|--------------|
-| **Stripe** | Payment processing, payouts | All tiers |
-| **Google Maps** | Routing, ETAs, distance | All tiers |
-| **Twilio** | SMS notifications | All tiers |
-| **GNET** | Affiliate network | All tiers |
-| **FlightAware** | Flight tracking | Enterprise |
-| **QuickBooks** | Accounting sync | Enterprise |
-| **Samsara** | Vehicle tracking | Enterprise |
-| **Zapier** | Custom workflows | Enterprise |
+| Integration     | Purpose                     | Availability |
+| --------------- | --------------------------- | ------------ |
+| **Stripe**      | Payment processing, payouts | All tiers    |
+| **Google Maps** | Routing, ETAs, distance     | All tiers    |
+| **Twilio**      | SMS notifications           | All tiers    |
+| **GNET**        | Affiliate network           | All tiers    |
+| **FlightAware** | Flight tracking             | Enterprise   |
+| **QuickBooks**  | Accounting sync             | Enterprise   |
+| **Samsara**     | Vehicle tracking            | Enterprise   |
+| **Zapier**      | Custom workflows            | Enterprise   |
 
 ---
 
 ## User Roles
 
 ### Operator Roles
-| Role | Primary Interface | Key Responsibilities |
-|------|-------------------|---------------------|
-| Dispatcher | Operator App (Dispatch) | Create reservations, assign drivers, monitor trips |
-| Admin | Operator App (Settings) | Vehicle/driver setup, rate configuration, payroll |
-| Sales | Operator App | Create quotes, manage accounts, sales automation |
-| Program Manager | Shuttle Dashboard | Monitor routes, review KPIs, compliance |
+
+| Role            | Primary Interface       | Key Responsibilities                               |
+| --------------- | ----------------------- | -------------------------------------------------- |
+| Dispatcher      | Operator App (Dispatch) | Create reservations, assign drivers, monitor trips |
+| Admin           | Operator App (Settings) | Vehicle/driver setup, rate configuration, payroll  |
+| Sales           | Operator App            | Create quotes, manage accounts, sales automation   |
+| Program Manager | Shuttle Dashboard       | Monitor routes, review KPIs, compliance            |
 
 ### Driver Roles
-| Role | Primary Interface | Key Responsibilities |
-|------|-------------------|---------------------|
-| Standard Driver | Driver App | Accept/decline trips, navigate, update status |
-| Shuttle Driver | Shuttle Driver App | Check-in passengers, execute routes, report incidents |
+
+| Role            | Primary Interface  | Key Responsibilities                                  |
+| --------------- | ------------------ | ----------------------------------------------------- |
+| Standard Driver | Driver App         | Accept/decline trips, navigate, update status         |
+| Shuttle Driver  | Shuttle Driver App | Check-in passengers, execute routes, report incidents |
 
 ### Customer Roles
-| Role | Primary Interface | Key Responsibilities |
-|------|-------------------|---------------------|
-| Booking Contact | Customer Portal | Make reservations, manage payments |
-| Passenger | Passenger App | Track rides, view trip details, provide feedback |
-| Corporate User | Corporate Portal | Manage recurring bookings, bulk purchases |
+
+| Role            | Primary Interface | Key Responsibilities                             |
+| --------------- | ----------------- | ------------------------------------------------ |
+| Booking Contact | Customer Portal   | Make reservations, manage payments               |
+| Passenger       | Passenger App     | Track rides, view trip details, provide feedback |
+| Corporate User  | Corporate Portal  | Manage recurring bookings, bulk purchases        |
 
 ---
 
@@ -338,28 +359,31 @@ Moovs consists of multiple applications across two main product lines:
 
 Some features are controlled by LaunchDarkly:
 
-| Flag | Feature |
-|------|---------|
-| `shuttleRevamp` | New shuttle management UI |
-| `enablePocketflowsCrm` | CRM features |
-| `aiReservationUpload` | AI-powered reservation import |
-| `enableAutoScheduler` | Automatic driver scheduling |
+| Flag                   | Feature                       |
+| ---------------------- | ----------------------------- |
+| `shuttleRevamp`        | New shuttle management UI     |
+| `enablePocketflowsCrm` | CRM features                  |
+| `aiReservationUpload`  | AI-powered reservation import |
+| `enableAutoScheduler`  | Automatic driver scheduling   |
 
 ---
 
 ## Key Differentiators
 
 ### vs. Generic Software (spreadsheets, QuickBooks)
+
 - Purpose-built for ground transportation workflow
 - Industry-specific features (flight tracking, farm-outs, driver management)
 - Connected end-to-end (booking → dispatch → billing)
 
 ### vs. Ride-hail Apps (Uber, Lyft)
+
 - Operators keep their brand and customer relationships
 - Works for scheduled/reserved rides, not just on-demand
 - Supports corporate accounts, invoicing, complex pricing
 
 ### vs. Legacy Transportation Software (Limo Anywhere, FASTTRAK)
+
 - Modern, mobile-first interface
 - All-in-one platform (no patchwork of tools)
 - No per-trip fees — flat monthly pricing
@@ -370,6 +394,7 @@ Some features are controlled by LaunchDarkly:
 ## Product Boundaries
 
 ### What Moovs Does NOT Do
+
 - Vehicle maintenance tracking
 - Fuel management
 - Employee HR management (beyond driver profiles)
@@ -379,6 +404,7 @@ Some features are controlled by LaunchDarkly:
 - White-label reselling
 
 ### Known Limitations
+
 1. **Invoicing:** Cannot create invoices until ALL trips in a reservation are closed
 2. **Driver search:** Cannot search trips by driver in operator interface (workaround: export report and filter)
 3. **Branded Passenger App:** Requires $499/month add-on
@@ -398,5 +424,5 @@ Some features are controlled by LaunchDarkly:
 
 ---
 
-*Last Updated: January 2026*
-*Source: Evidence-Based Internal Source of Truth*
+_Last Updated: January 2026_
+_Source: Evidence-Based Internal Source of Truth_

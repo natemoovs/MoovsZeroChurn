@@ -1,9 +1,6 @@
 import { authApiHandler } from "@neondatabase/auth/next/server"
 import { NextResponse } from "next/server"
-import {
-  isAllowedEmailDomain,
-  ALLOWED_EMAIL_DOMAINS,
-} from "@/lib/auth/email-validator"
+import { isAllowedEmailDomain, ALLOWED_EMAIL_DOMAINS } from "@/lib/auth/email-validator"
 
 type Params = { path: string[] }
 
@@ -24,10 +21,7 @@ const EMAIL_ENDPOINTS = [
   "email-otp/send-verification-otp",
 ]
 
-async function validateEmailDomain(
-  request: Request,
-  path: string
-): Promise<NextResponse | null> {
+async function validateEmailDomain(request: Request, path: string): Promise<NextResponse | null> {
   // Check if this is an endpoint that requires email validation
   if (!EMAIL_ENDPOINTS.includes(path)) {
     return null
@@ -57,17 +51,11 @@ async function validateEmailDomain(
   return null
 }
 
-export async function GET(
-  request: Request,
-  context: { params: Promise<Params> }
-) {
+export async function GET(request: Request, context: { params: Promise<Params> }) {
   return getHandler().GET(request, context)
 }
 
-export async function POST(
-  request: Request,
-  context: { params: Promise<Params> }
-) {
+export async function POST(request: Request, context: { params: Promise<Params> }) {
   const { path } = await context.params
   const pathString = path.join("/")
 
@@ -80,23 +68,14 @@ export async function POST(
   return getHandler().POST(request, context)
 }
 
-export async function PUT(
-  request: Request,
-  context: { params: Promise<Params> }
-) {
+export async function PUT(request: Request, context: { params: Promise<Params> }) {
   return getHandler().PUT(request, context)
 }
 
-export async function DELETE(
-  request: Request,
-  context: { params: Promise<Params> }
-) {
+export async function DELETE(request: Request, context: { params: Promise<Params> }) {
   return getHandler().DELETE(request, context)
 }
 
-export async function PATCH(
-  request: Request,
-  context: { params: Promise<Params> }
-) {
+export async function PATCH(request: Request, context: { params: Promise<Params> }) {
   return getHandler().PATCH(request, context)
 }

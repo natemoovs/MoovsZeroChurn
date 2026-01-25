@@ -31,6 +31,7 @@ This doesn't mean charging upfront for every trip. For corporate accounts and re
 Most operators either send no confirmation (bad) or send a wall of text with every detail imaginable (also bad).
 
 The sweet spot: one clean confirmation immediately after booking that includes:
+
 - Date and time
 - Pickup address
 - Driver's phone number (or a way to reach dispatch)
@@ -93,13 +94,13 @@ None of these strategies will eliminate no-shows entirely. Stuff happens - fligh
 
 But stack these five together and you'll see meaningful improvement:
 
-| Strategy | Impact |
-|----------|--------|
-| Card on file | -30% no-shows |
-| Clean confirmation | -10% no-shows |
-| Timed reminder | -15% no-shows |
-| Easy cancellation | Converts no-shows to cancellations |
-| Policy enforcement | -20% repeat offenders |
+| Strategy           | Impact                             |
+| ------------------ | ---------------------------------- |
+| Card on file       | -30% no-shows                      |
+| Clean confirmation | -10% no-shows                      |
+| Timed reminder     | -15% no-shows                      |
+| Easy cancellation  | Converts no-shows to cancellations |
+| Policy enforcement | -20% repeat offenders              |
 
 For that operator losing $10,000 per year to no-shows? These strategies could recover $5,000-7,000 of that. Without a single extra marketing dollar or operational hire.
 

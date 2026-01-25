@@ -41,17 +41,11 @@ function verifySlackSignature(
   // Compute HMAC SHA256
   const mySignature =
     "v0=" +
-    crypto
-      .createHmac("sha256", SLACK_SIGNING_SECRET)
-      .update(sigBasestring, "utf8")
-      .digest("hex")
+    crypto.createHmac("sha256", SLACK_SIGNING_SECRET).update(sigBasestring, "utf8").digest("hex")
 
   // Use timing-safe comparison
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(mySignature, "utf8"),
-      Buffer.from(signature, "utf8")
-    )
+    return crypto.timingSafeEqual(Buffer.from(mySignature, "utf8"), Buffer.from(signature, "utf8"))
   } catch {
     return false
   }
@@ -259,11 +253,7 @@ async function handleHealth(companyName: string): Promise<SlackResponse> {
   }
 }
 
-async function handleTask(
-  title: string,
-  userId: string,
-  userName: string
-): Promise<SlackResponse> {
+async function handleTask(title: string, userId: string, userName: string): Promise<SlackResponse> {
   if (!title) {
     return {
       response_type: "ephemeral",
@@ -272,7 +262,7 @@ async function handleTask(
   }
 
   // Create task
-  const task = await prisma.task.create({
+  await prisma.task.create({
     data: {
       companyId: "slack",
       companyName: "Quick Task",

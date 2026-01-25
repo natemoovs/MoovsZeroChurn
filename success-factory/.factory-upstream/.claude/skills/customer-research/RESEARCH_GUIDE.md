@@ -6,31 +6,34 @@ This guide provides frameworks for comprehensive customer research combining dat
 
 ## Data Source Reference
 
-| Source | Purpose | Key Identifier |
-|--------|---------|----------------|
-| **Lago** | Billing, subscriptions, invoices | `external_customer_id` = operator_id |
-| **HubSpot** | Company info, contacts, deals | Search by company name or custom operator_id property |
-| **Metabase (CSM Lookup)** | Customer lookup, master view | `P_STRIPE_ACCOUNT_ID`, `P_COMPANY_NAME`, `P_GENERAL_EMAIL` (Card 1469) |
-| **Metabase (Reservations)** | Reservations, trips, usage metrics | `OPERATOR_ID` = operator_id (Card 642) |
-| **Metabase (Stripe)** | Credit card charges, failed payments, disputes | `OPERATOR_ID` via JOIN (Card 855) |
-| **Notion** | Support tickets, feature requests | Tags or name mentions |
+| Source                      | Purpose                                        | Key Identifier                                                         |
+| --------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
+| **Lago**                    | Billing, subscriptions, invoices               | `external_customer_id` = operator_id                                   |
+| **HubSpot**                 | Company info, contacts, deals                  | Search by company name or custom operator_id property                  |
+| **Metabase (CSM Lookup)**   | Customer lookup, master view                   | `P_STRIPE_ACCOUNT_ID`, `P_COMPANY_NAME`, `P_GENERAL_EMAIL` (Card 1469) |
+| **Metabase (Reservations)** | Reservations, trips, usage metrics             | `OPERATOR_ID` = operator_id (Card 642)                                 |
+| **Metabase (Stripe)**       | Credit card charges, failed payments, disputes | `OPERATOR_ID` via JOIN (Card 855)                                      |
+| **Notion**                  | Support tickets, feature requests              | Tags or name mentions                                                  |
 
 ---
 
 ## 1. Full Customer Profile
 
 ### Purpose
+
 Complete 360-degree view of an operator for calls, reviews, or strategic decisions.
 
 ### Data Fetching Strategy
 
 **Step 1: Get Lago Billing Data**
+
 ```
 Tools: mcp__lago__get_customer, mcp__lago__list_invoices
 Input: operator_id
 ```
 
 **Step 2: Get HubSpot CRM Data**
+
 ```
 Tools: mcp__hubspot__hubspot-search-objects (companies),
        mcp__hubspot__hubspot-list-associations (contacts)
@@ -38,6 +41,7 @@ Input: Search by company name or operator_id property
 ```
 
 **Step 3: Get Metabase Reservation Data**
+
 ```
 Tool: mcp__metabase__execute_query
 Database: 2 (Snowflake)
@@ -47,6 +51,7 @@ Query: SELECT from MODEL - Moovs Operator Reservations WHERE OPERATOR_ID = '<ope
 See [METABASE_GUIDE.md](METABASE_GUIDE.md) for detailed query examples.
 
 **Step 4: Get Stripe Payment Data**
+
 ```
 Tool: mcp__metabase__execute_query
 Database: 2 (Snowflake)
@@ -58,6 +63,7 @@ Query: SELECT from MOZART_NEW.MOOVS_PLATFORM_CHARGES c
 See [STRIPE_GUIDE.md](STRIPE_GUIDE.md) for detailed query examples.
 
 **Step 5: Get Notion Tickets (Optional)**
+
 ```
 Tool: mcp__notion__API-query-data-source
 Database: Moovs Tickets (13b8aeaa-3759-80f8-8d7c-dd2f627d2578)
@@ -76,64 +82,64 @@ Filter: Tags or description contains customer name/id
 
 ## Company Overview
 
-| Field | Value |
-|-------|-------|
-| **Company Name** | {name} |
-| **Legal Name** | {legal_name} |
-| **Industry** | Ground Transportation |
-| **Location** | {city, state} |
-| **Website** | {url} |
+| Field              | Value                          |
+| ------------------ | ------------------------------ |
+| **Company Name**   | {name}                         |
+| **Legal Name**     | {legal_name}                   |
+| **Industry**       | Ground Transportation          |
+| **Location**       | {city, state}                  |
+| **Website**        | {url}                          |
 | **Customer Since** | {earliest date across systems} |
 
 ---
 
 ## Key Contacts
 
-| Name | Role | Email | Phone | Primary |
-|------|------|-------|-------|---------|
-| {name} | {title} | {email} | {phone} | Yes/No |
-| ... | ... | ... | ... | ... |
+| Name   | Role    | Email   | Phone   | Primary |
+| ------ | ------- | ------- | ------- | ------- |
+| {name} | {title} | {email} | {phone} | Yes/No  |
+| ...    | ...     | ...     | ...     | ...     |
 
 ---
 
 ## Billing Summary
 
-| Metric | Value |
-|--------|-------|
-| **Current Plan** | {plan_name} |
-| **Billing Cycle** | {Monthly / Annual} |
-| **MRR** | ${mrr} |
-| **Total Lifetime Value** | ${ltv} |
-| **Payment Health** | {Good / At Risk / Delinquent} |
-| **Outstanding Balance** | ${balance} |
-| **Next Bill Date** | {date} |
+| Metric                   | Value                         |
+| ------------------------ | ----------------------------- |
+| **Current Plan**         | {plan_name}                   |
+| **Billing Cycle**        | {Monthly / Annual}            |
+| **MRR**                  | ${mrr}                        |
+| **Total Lifetime Value** | ${ltv}                        |
+| **Payment Health**       | {Good / At Risk / Delinquent} |
+| **Outstanding Balance**  | ${balance}                    |
+| **Next Bill Date**       | {date}                        |
 
-*See [Billing Details](#billing-details) for full invoice history.*
+_See [Billing Details](#billing-details) for full invoice history._
 
 ---
 
 ## Relationship Summary
 
-| Metric | Value |
-|--------|-------|
-| **Account Age** | {months/years} |
-| **Deal History** | {count} deals, ${total} value |
-| **Last Contact** | {date} - {type of interaction} |
-| **NPS/Satisfaction** | {if available} |
+| Metric               | Value                          |
+| -------------------- | ------------------------------ |
+| **Account Age**      | {months/years}                 |
+| **Deal History**     | {count} deals, ${total} value  |
+| **Last Contact**     | {date} - {type of interaction} |
+| **NPS/Satisfaction** | {if available}                 |
 
 ---
 
 ## Product Engagement
 
-| Metric | Value |
-|--------|-------|
-| **Total Reservations (12mo)** | {count} |
-| **Monthly Avg Trips** | {count} |
-| **Total Trip Revenue** | ${amount} |
-| **Last Trip Date** | {date} |
-| **Open Support Tickets** | {count} |
-| **Feature Requests** | {count} |
-| **Enterprise Commitments** | {count} |
+| Metric                        | Value     |
+| ----------------------------- | --------- |
+| **Total Reservations (12mo)** | {count}   |
+| **Monthly Avg Trips**         | {count}   |
+| **Total Trip Revenue**        | ${amount} |
+| **Last Trip Date**            | {date}    |
+| **Open Support Tickets**      | {count}   |
+| **Feature Requests**          | {count}   |
+| **Enterprise Commitments**    | {count}   |
 
 ---
 
@@ -141,17 +147,19 @@ Filter: Tags or description contains customer name/id
 
 ### Overall Health Score: [X/100] - [Good/At Risk/Critical]
 
-| Dimension | Score | Notes |
-|-----------|-------|-------|
-| Payment Health | {x}/100 | {brief note} |
-| Engagement | {x}/100 | {brief note} |
-| Support Load | {x}/100 | {brief note} |
+| Dimension        | Score   | Notes        |
+| ---------------- | ------- | ------------ |
+| Payment Health   | {x}/100 | {brief note} |
+| Engagement       | {x}/100 | {brief note} |
+| Support Load     | {x}/100 | {brief note} |
 | Growth Potential | {x}/100 | {brief note} |
 
 ### Risk Factors
+
 - {List any concerns}
 
 ### Opportunities
+
 - {List any upsell/expansion opportunities}
 
 ---
@@ -159,6 +167,7 @@ Filter: Tags or description contains customer name/id
 ## Recent Activity
 
 ### Last 30 Days
+
 - {date}: {activity type} - {description}
 - {date}: {activity type} - {description}
 - ...
@@ -176,17 +185,20 @@ Filter: Tags or description contains customer name/id
 ## Appendix
 
 ### Billing Details
+
 {Full invoice table from BILLING_GUIDE.md}
 
 ### Support Ticket History
-| Ticket | Title | Status | Priority | Created |
-|--------|-------|--------|----------|---------|
-| DOOM-XXX | ... | ... | ... | ... |
+
+| Ticket   | Title | Status | Priority | Created |
+| -------- | ----- | ------ | -------- | ------- |
+| DOOM-XXX | ...   | ...    | ...      | ...     |
 
 ### Deal History
+
 | Deal | Stage | Amount | Close Date |
-|------|-------|--------|------------|
-| ... | ... | ... | ... |
+| ---- | ----- | ------ | ---------- |
+| ...  | ...   | ...    | ...        |
 ```
 
 ---
@@ -194,6 +206,7 @@ Filter: Tags or description contains customer name/id
 ## 2. Customer Health Score
 
 ### Purpose
+
 Quick risk assessment to identify churn risk or payment problems.
 
 ### Health Score Calculation
@@ -202,14 +215,15 @@ Quick risk assessment to identify churn risk or payment problems.
 
 Weighted average of four dimensions:
 
-| Dimension | Weight | Score Range |
-|-----------|--------|-------------|
-| Payment Health | 40% | 0-100 |
-| Engagement | 25% | 0-100 |
-| Support Health | 20% | 0-100 |
-| Growth Signals | 15% | 0-100 |
+| Dimension      | Weight | Score Range |
+| -------------- | ------ | ----------- |
+| Payment Health | 40%    | 0-100       |
+| Engagement     | 25%    | 0-100       |
+| Support Health | 20%    | 0-100       |
+| Growth Signals | 15%    | 0-100       |
 
 #### Payment Health (40%)
+
 See [BILLING_GUIDE.md](BILLING_GUIDE.md) for Lago billing and [STRIPE_GUIDE.md](STRIPE_GUIDE.md) for credit card payment analysis.
 
 ```
@@ -224,6 +238,7 @@ Base: 100
 ```
 
 #### Engagement Score (25%)
+
 ```
 Base: 100
 - No reservations in 30 days: -20
@@ -236,6 +251,7 @@ Base: 100
 ```
 
 #### Support Health (20%)
+
 ```
 Base: 100
 - Open ticket > 7 days: -10 each
@@ -247,6 +263,7 @@ Base: 100
 ```
 
 #### Growth Signals (15%)
+
 ```
 Base: 50 (neutral)
 + Plan upgrade in last 6 months: +20
@@ -260,12 +277,12 @@ Base: 50 (neutral)
 
 ### Health Categories
 
-| Score | Status | Action |
-|-------|--------|--------|
-| 80-100 | Healthy | Maintain relationship, look for expansion |
-| 60-79 | Monitor | Check in proactively, address any issues |
-| 40-59 | At Risk | Urgent outreach, understand problems |
-| 0-39 | Critical | Immediate intervention required |
+| Score  | Status   | Action                                    |
+| ------ | -------- | ----------------------------------------- |
+| 80-100 | Healthy  | Maintain relationship, look for expansion |
+| 60-79  | Monitor  | Check in proactively, address any issues  |
+| 40-59  | At Risk  | Urgent outreach, understand problems      |
+| 0-39   | Critical | Immediate intervention required           |
 
 ### Output Format
 
@@ -274,30 +291,34 @@ Base: 50 (neutral)
 
 ### Overall Score: [X/100] - [Status]
 
-| Dimension | Score | Status | Key Factor |
-|-----------|-------|--------|------------|
-| Payment | {x}/100 | {emoji} | {main issue or positive} |
+| Dimension  | Score   | Status  | Key Factor               |
+| ---------- | ------- | ------- | ------------------------ |
+| Payment    | {x}/100 | {emoji} | {main issue or positive} |
 | Engagement | {x}/100 | {emoji} | {main issue or positive} |
-| Support | {x}/100 | {emoji} | {main issue or positive} |
-| Growth | {x}/100 | {emoji} | {main issue or positive} |
+| Support    | {x}/100 | {emoji} | {main issue or positive} |
+| Growth     | {x}/100 | {emoji} | {main issue or positive} |
 
 ### Risk Factors (Immediate Attention)
+
 1. {Most critical issue}
 2. {Second issue}
 3. {Third issue}
 
 ### Positive Signals
+
 1. {Good thing}
 2. {Good thing}
 
 ### Recommended Actions
-| Priority | Action | Owner |
-|----------|--------|-------|
-| High | {action} | {who should do this} |
-| Medium | {action} | {who} |
-| Low | {action} | {who} |
+
+| Priority | Action   | Owner                |
+| -------- | -------- | -------------------- |
+| High     | {action} | {who should do this} |
+| Medium   | {action} | {who}                |
+| Low      | {action} | {who}                |
 
 ### Trend
+
 {Is health improving, declining, or stable compared to 30/60/90 days ago?}
 ```
 
@@ -306,6 +327,7 @@ Base: 50 (neutral)
 ## 3. Customer Lookup
 
 ### Purpose
+
 Find a customer when you don't have the exact operator_id.
 
 ### Search Strategy
@@ -321,6 +343,7 @@ Table: MOOVS.CSM_MOOVS
 ```
 
 **By Stripe Account ID:**
+
 ```sql
 SELECT
   LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -334,6 +357,7 @@ WHERE P_STRIPE_ACCOUNT_ID = '<stripe_account_id>'
 ```
 
 **By Company Name (Fuzzy):**
+
 ```sql
 SELECT
   LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -348,6 +372,7 @@ LIMIT 10
 ```
 
 **By Email:**
+
 ```sql
 SELECT
   LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -362,6 +387,7 @@ WHERE LOWER(P_GENERAL_EMAIL) = LOWER('<email>')
 See [LOOKUP_GUIDE.md](LOOKUP_GUIDE.md) for complete query examples.
 
 **Option 2: Search HubSpot Companies**
+
 ```
 Tool: mcp__hubspot__hubspot-search-objects
 objectType: companies
@@ -370,12 +396,14 @@ properties: ["name", "domain", "operator_id", "city", "state"]
 ```
 
 **Option 3: Search Lago Customers**
+
 ```
 Tool: mcp__lago__list_customers
 # Then filter results client-side by name match
 ```
 
 **Option 4: Search Notion Tickets**
+
 ```
 Tool: mcp__notion__API-query-data-source
 Filter: Name or Tags contains search term
@@ -388,11 +416,11 @@ Filter: Name or Tags contains search term
 
 Found {X} potential matches:
 
-| # | Company Name | Operator ID | Email | Plan | MRR |
-|---|--------------|-------------|-------|------|-----|
-| 1 | {name} | {id} | {email} | {plan} | ${mrr} |
-| 2 | {name} | {id} | {email} | {plan} | ${mrr} |
-| 3 | {name} | {id} | {email} | {plan} | ${mrr} |
+| #   | Company Name | Operator ID | Email   | Plan   | MRR    |
+| --- | ------------ | ----------- | ------- | ------ | ------ |
+| 1   | {name}       | {id}        | {email} | {plan} | ${mrr} |
+| 2   | {name}       | {id}        | {email} | {plan} | ${mrr} |
+| 3   | {name}       | {id}        | {email} | {plan} | ${mrr} |
 
 **Best Match:** {company name} (operator_id: {id})
 
@@ -404,9 +432,11 @@ Would you like me to pull the full profile for any of these?
 ## 4. Comparative Analysis
 
 ### Purpose
+
 Compare customers for prioritization or pattern analysis.
 
 ### Use Cases
+
 - "Compare our top 5 customers by MRR"
 - "Which enterprise customers are at risk?"
 - "Show me customers with outstanding balances"
@@ -416,18 +446,20 @@ Compare customers for prioritization or pattern analysis.
 ```markdown
 ## Customer Comparison: [Criteria]
 
-| Customer | MRR | Health | Plan | Payment Status | Open Tickets |
-|----------|-----|--------|------|----------------|--------------|
-| {name} | ${x} | {score} | {plan} | {status} | {count} |
-| {name} | ${x} | {score} | {plan} | {status} | {count} |
-| ... | ... | ... | ... | ... | ... |
+| Customer | MRR  | Health  | Plan   | Payment Status | Open Tickets |
+| -------- | ---- | ------- | ------ | -------------- | ------------ |
+| {name}   | ${x} | {score} | {plan} | {status}       | {count}      |
+| {name}   | ${x} | {score} | {plan} | {status}       | {count}      |
+| ...      | ...  | ...     | ...    | ...            | ...          |
 
 ### Insights
+
 1. {Pattern or insight}
 2. {Pattern or insight}
 3. {Pattern or insight}
 
 ### Recommended Actions
+
 1. {Action for specific customer}
 2. {Action for group}
 ```
@@ -437,6 +469,7 @@ Compare customers for prioritization or pattern analysis.
 ## HubSpot Query Patterns
 
 ### Find Company by Name
+
 ```json
 Tool: mcp__hubspot__hubspot-search-objects
 {
@@ -448,6 +481,7 @@ Tool: mcp__hubspot__hubspot-search-objects
 ```
 
 ### Get Contacts for a Company
+
 ```json
 Tool: mcp__hubspot__hubspot-list-associations
 {
@@ -460,6 +494,7 @@ Then: mcp__hubspot__hubspot-batch-read-objects to get contact details
 ```
 
 ### Get Deals for a Company
+
 ```json
 Tool: mcp__hubspot__hubspot-list-associations
 {
@@ -470,6 +505,7 @@ Tool: mcp__hubspot__hubspot-list-associations
 ```
 
 ### Search by Custom Property (operator_id)
+
 ```json
 Tool: mcp__hubspot__hubspot-search-objects
 {
@@ -494,6 +530,7 @@ Tool: mcp__hubspot__hubspot-search-objects
 ## Notion Query Patterns
 
 ### Find Tickets for a Customer
+
 ```json
 Tool: mcp__notion__API-query-data-source
 {
@@ -518,6 +555,7 @@ Tool: mcp__notion__API-query-data-source
 ```
 
 ### Find Enterprise Commitments
+
 ```json
 {
   "filter": {
@@ -544,24 +582,28 @@ Tool: mcp__notion__API-query-data-source
 ## Best Practices
 
 ### Before a Customer Call
+
 1. Run full profile report
 2. Note any outstanding issues (billing, support)
 3. Review recent interactions
 4. Identify talking points (upsell, concerns to address)
 
 ### For Prioritization Decisions
+
 1. Pull health scores for relevant customers
 2. Compare MRR and strategic value
 3. Consider support load and payment health
 4. Factor in enterprise commitments
 
 ### For Churn Analysis
+
 1. Run health reports on at-risk segment
 2. Look for common patterns
 3. Identify leading indicators
 4. Prioritize intervention list
 
 ### Data Freshness
+
 - Lago data: Real-time
 - HubSpot data: Near real-time
 - Metabase (Reservations): Near real-time (Snowflake sync)

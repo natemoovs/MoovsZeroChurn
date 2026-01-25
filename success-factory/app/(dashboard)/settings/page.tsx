@@ -25,6 +25,7 @@ import {
   ListTodo,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ProfilePicture } from "@/components/profile-picture"
 
 interface NotificationPreferences {
   channels: {
@@ -80,12 +81,42 @@ interface IntegrationsStatus {
 }
 
 const ALERT_TYPES = [
-  { id: "at_risk", label: "At-Risk Alerts", description: "When an account drops to red health", icon: AlertTriangle },
-  { id: "health_change", label: "Health Changes", description: "Any health score change", icon: TrendingDown },
-  { id: "renewal_upcoming", label: "Renewal Reminders", description: "30/60/90 day renewal warnings", icon: CalendarClock },
-  { id: "payment_failed", label: "Payment Issues", description: "Failed payments or billing problems", icon: CreditCard },
-  { id: "inactive", label: "Inactivity Alerts", description: "Accounts with no recent activity", icon: Moon },
-  { id: "journey_change", label: "Journey Updates", description: "Customer journey stage changes", icon: TrendingDown },
+  {
+    id: "at_risk",
+    label: "At-Risk Alerts",
+    description: "When an account drops to red health",
+    icon: AlertTriangle,
+  },
+  {
+    id: "health_change",
+    label: "Health Changes",
+    description: "Any health score change",
+    icon: TrendingDown,
+  },
+  {
+    id: "renewal_upcoming",
+    label: "Renewal Reminders",
+    description: "30/60/90 day renewal warnings",
+    icon: CalendarClock,
+  },
+  {
+    id: "payment_failed",
+    label: "Payment Issues",
+    description: "Failed payments or billing problems",
+    icon: CreditCard,
+  },
+  {
+    id: "inactive",
+    label: "Inactivity Alerts",
+    description: "Accounts with no recent activity",
+    icon: Moon,
+  },
+  {
+    id: "journey_change",
+    label: "Journey Updates",
+    description: "Customer journey stage changes",
+    icon: TrendingDown,
+  },
 ] as const
 
 export default function SettingsPage() {
@@ -132,11 +163,21 @@ export default function SettingsPage() {
   useEffect(() => {
     // Fetch integration status and sync status
     Promise.all([
-      fetch("/api/alerts/slack").then((r) => r.json()).catch(() => ({ configured: false })),
-      fetch("/api/alerts/email").then((r) => r.json()).catch(() => ({ configured: false, provider: null })),
-      fetch("/api/settings/notifications").then((r) => r.json()).catch(() => null),
-      fetch("/api/sync/hubspot").then((r) => r.json()).catch(() => null),
-      fetch("/api/integrations/status").then((r) => r.json()).catch(() => null),
+      fetch("/api/alerts/slack")
+        .then((r) => r.json())
+        .catch(() => ({ configured: false })),
+      fetch("/api/alerts/email")
+        .then((r) => r.json())
+        .catch(() => ({ configured: false, provider: null })),
+      fetch("/api/settings/notifications")
+        .then((r) => r.json())
+        .catch(() => null),
+      fetch("/api/sync/hubspot")
+        .then((r) => r.json())
+        .catch(() => null),
+      fetch("/api/integrations/status")
+        .then((r) => r.json())
+        .catch(() => null),
     ]).then(([slack, email, savedPrefs, sync, intStatus]) => {
       setIntegrations({ slack, email })
       if (savedPrefs?.preferences) {
@@ -170,7 +211,11 @@ export default function SettingsPage() {
   }
 
   const handleNotionCleanup = async () => {
-    if (!confirm("This will delete tasks that no longer exist in the configured Notion database. Continue?")) {
+    if (
+      !confirm(
+        "This will delete tasks that no longer exist in the configured Notion database. Continue?"
+      )
+    ) {
       return
     }
     setCleaningUp(true)
@@ -250,10 +295,8 @@ export default function SettingsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-content-primary sm:text-2xl">
-              Settings
-            </h1>
-            <p className="mt-1 text-sm text-content-secondary sm:text-base">
+            <h1 className="text-content-primary text-xl font-bold sm:text-2xl">Settings</h1>
+            <p className="text-content-secondary mt-1 text-sm sm:text-base">
               Configure notifications and preferences
             </p>
           </div>
@@ -264,8 +307,8 @@ export default function SettingsPage() {
               "inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all sm:w-auto",
               saved
                 ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
-                : "bg-success-600 text-white hover:bg-success-700",
-              saving && "opacity-50 cursor-not-allowed"
+                : "bg-success-600 hover:bg-success-700 text-white",
+              saving && "cursor-not-allowed opacity-50"
             )}
           >
             {saving ? (
@@ -279,13 +322,16 @@ export default function SettingsPage() {
           </button>
         </div>
 
+        {/* Profile Picture */}
+        <div className="card-sf p-6">
+          <ProfilePicture />
+        </div>
+
         {/* Notification Channels */}
         <div className="card-sf p-6">
           <div className="mb-4 flex items-center gap-3">
-            <Bell className="h-5 w-5 text-content-tertiary" />
-            <h2 className="text-lg font-semibold text-content-primary">
-              Notification Channels
-            </h2>
+            <Bell className="text-content-tertiary h-5 w-5" />
+            <h2 className="text-content-primary text-lg font-semibold">Notification Channels</h2>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -304,8 +350,8 @@ export default function SettingsPage() {
                     <MessageSquare className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-content-primary">Slack</h3>
-                    <p className="text-sm text-content-secondary">
+                    <h3 className="text-content-primary font-medium">Slack</h3>
+                    <p className="text-content-secondary text-sm">
                       {integrations?.slack.configured ? "Connected" : "Not configured"}
                     </p>
                   </div>
@@ -316,7 +362,7 @@ export default function SettingsPage() {
                   className={cn(
                     "relative h-6 w-11 rounded-full transition-colors",
                     preferences.channels.slack ? "bg-success-500" : "bg-bg-tertiary",
-                    !integrations?.slack.configured && "opacity-50 cursor-not-allowed"
+                    !integrations?.slack.configured && "cursor-not-allowed opacity-50"
                   )}
                 >
                   <span
@@ -328,7 +374,7 @@ export default function SettingsPage() {
                 </button>
               </div>
               {!integrations?.slack.configured && (
-                <p className="mt-3 text-xs text-warning-600 dark:text-warning-400">
+                <p className="text-warning-600 dark:text-warning-400 mt-3 text-xs">
                   Set SLACK_WEBHOOK_URL to enable
                 </p>
               )}
@@ -345,12 +391,12 @@ export default function SettingsPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-500">
+                  <div className="bg-primary-500 flex h-10 w-10 items-center justify-center rounded-lg">
                     <Mail className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-content-primary">Email</h3>
-                    <p className="text-sm text-content-secondary">
+                    <h3 className="text-content-primary font-medium">Email</h3>
+                    <p className="text-content-secondary text-sm">
                       {integrations?.email.configured
                         ? `Via ${integrations.email.provider}`
                         : "Not configured"}
@@ -363,7 +409,7 @@ export default function SettingsPage() {
                   className={cn(
                     "relative h-6 w-11 rounded-full transition-colors",
                     preferences.channels.email ? "bg-success-500" : "bg-bg-tertiary",
-                    !integrations?.email.configured && "opacity-50 cursor-not-allowed"
+                    !integrations?.email.configured && "cursor-not-allowed opacity-50"
                   )}
                 >
                   <span
@@ -375,7 +421,7 @@ export default function SettingsPage() {
                 </button>
               </div>
               {!integrations?.email.configured && (
-                <p className="mt-3 text-xs text-warning-600 dark:text-warning-400">
+                <p className="text-warning-600 dark:text-warning-400 mt-3 text-xs">
                   Set RESEND_API_KEY to enable
                 </p>
               )}
@@ -386,12 +432,10 @@ export default function SettingsPage() {
         {/* Alert Types */}
         <div className="card-sf p-6">
           <div className="mb-4 flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-content-tertiary" />
-            <h2 className="text-lg font-semibold text-content-primary">
-              Alert Types
-            </h2>
+            <AlertTriangle className="text-content-tertiary h-5 w-5" />
+            <h2 className="text-content-primary text-lg font-semibold">Alert Types</h2>
           </div>
-          <p className="mb-4 text-sm text-content-secondary">
+          <p className="text-content-secondary mb-4 text-sm">
             Choose which alerts you want to receive
           </p>
 
@@ -411,10 +455,15 @@ export default function SettingsPage() {
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={cn("h-5 w-5", enabled ? "text-success-500" : "text-content-tertiary")} />
+                    <Icon
+                      className={cn(
+                        "h-5 w-5",
+                        enabled ? "text-success-500" : "text-content-tertiary"
+                      )}
+                    />
                     <div>
-                      <h3 className="font-medium text-content-primary">{alert.label}</h3>
-                      <p className="text-sm text-content-secondary">{alert.description}</p>
+                      <h3 className="text-content-primary font-medium">{alert.label}</h3>
+                      <p className="text-content-secondary text-sm">{alert.description}</p>
                     </div>
                   </div>
                   <button
@@ -441,10 +490,8 @@ export default function SettingsPage() {
         <div className="card-sf p-6">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CalendarClock className="h-5 w-5 text-content-tertiary" />
-              <h2 className="text-lg font-semibold text-content-primary">
-                Daily Digest
-              </h2>
+              <CalendarClock className="text-content-tertiary h-5 w-5" />
+              <h2 className="text-content-primary text-lg font-semibold">Daily Digest</h2>
             </div>
             <button
               onClick={() =>
@@ -469,12 +516,12 @@ export default function SettingsPage() {
 
           {preferences.digest.enabled && (
             <div className="space-y-4">
-              <p className="text-sm text-content-secondary">
+              <p className="text-content-secondary text-sm">
                 Receive a summary of portfolio health every weekday at 8 AM UTC
               </p>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-content-primary">
+                <label className="text-content-primary mb-2 block text-sm font-medium">
                   Send digest via:
                 </label>
                 <div className="flex gap-3">
@@ -486,14 +533,12 @@ export default function SettingsPage() {
                       preferences.digest.channels.includes("slack")
                         ? "border-success-500 bg-success-50 text-success-700 dark:bg-success-950/30 dark:text-success-400"
                         : "border-border-default text-content-secondary hover:border-border-hover",
-                      !integrations?.slack.configured && "opacity-50 cursor-not-allowed"
+                      !integrations?.slack.configured && "cursor-not-allowed opacity-50"
                     )}
                   >
                     <MessageSquare className="h-4 w-4" />
                     Slack
-                    {preferences.digest.channels.includes("slack") && (
-                      <Check className="h-4 w-4" />
-                    )}
+                    {preferences.digest.channels.includes("slack") && <Check className="h-4 w-4" />}
                   </button>
                   <button
                     onClick={() => toggleDigestChannel("email")}
@@ -503,14 +548,12 @@ export default function SettingsPage() {
                       preferences.digest.channels.includes("email")
                         ? "border-success-500 bg-success-50 text-success-700 dark:bg-success-950/30 dark:text-success-400"
                         : "border-border-default text-content-secondary hover:border-border-hover",
-                      !integrations?.email.configured && "opacity-50 cursor-not-allowed"
+                      !integrations?.email.configured && "cursor-not-allowed opacity-50"
                     )}
                   >
                     <Mail className="h-4 w-4" />
                     Email
-                    {preferences.digest.channels.includes("email") && (
-                      <Check className="h-4 w-4" />
-                    )}
+                    {preferences.digest.channels.includes("email") && <Check className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -522,19 +565,19 @@ export default function SettingsPage() {
         <div className="card-sf p-6">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Plug className="h-5 w-5 text-content-tertiary" />
-              <h2 className="text-lg font-semibold text-content-primary">
-                Integrations
-              </h2>
+              <Plug className="text-content-tertiary h-5 w-5" />
+              <h2 className="text-content-primary text-lg font-semibold">Integrations</h2>
             </div>
             {integrationsStatus && (
-              <span className="text-sm text-content-secondary">
-                {integrationsStatus.summary.configured} of {integrationsStatus.summary.total} configured
+              <span className="text-content-secondary text-sm">
+                {integrationsStatus.summary.configured} of {integrationsStatus.summary.total}{" "}
+                configured
               </span>
             )}
           </div>
-          <p className="mb-4 text-sm text-content-secondary">
-            Connect external services via API keys. Set the environment variables to enable each integration.
+          <p className="text-content-secondary mb-4 text-sm">
+            Connect external services via API keys. Set the environment variables to enable each
+            integration.
           </p>
 
           {integrationsStatus && (
@@ -549,21 +592,17 @@ export default function SettingsPage() {
                       : "border-border-default bg-bg-secondary"
                   )}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-content-primary">
-                      {integration.name}
-                    </h3>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h3 className="text-content-primary font-medium">{integration.name}</h3>
                     {integration.configured ? (
-                      <CheckCircle2 className="h-4 w-4 text-success-500" />
+                      <CheckCircle2 className="text-success-500 h-4 w-4" />
                     ) : (
-                      <XCircle className="h-4 w-4 text-content-tertiary" />
+                      <XCircle className="text-content-tertiary h-4 w-4" />
                     )}
                   </div>
-                  <p className="text-xs text-content-secondary mb-2">
-                    {integration.description}
-                  </p>
+                  <p className="text-content-secondary mb-2 text-xs">{integration.description}</p>
                   {!integration.configured && (
-                    <p className="text-xs text-warning-600 dark:text-warning-400">
+                    <p className="text-warning-600 dark:text-warning-400 text-xs">
                       Set {integration.envVar}
                     </p>
                   )}
@@ -572,7 +611,7 @@ export default function SettingsPage() {
                       href={integration.docsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-success-600 hover:underline dark:text-success-400"
+                      className="text-success-600 dark:text-success-400 inline-flex items-center gap-1 text-xs hover:underline"
                     >
                       Docs <ExternalLink className="h-3 w-3" />
                     </a>
@@ -586,12 +625,10 @@ export default function SettingsPage() {
         {/* Data Sync */}
         <div className="card-sf p-6">
           <div className="mb-4 flex items-center gap-3">
-            <Database className="h-5 w-5 text-content-tertiary" />
-            <h2 className="text-lg font-semibold text-content-primary">
-              HubSpot Data Sync
-            </h2>
+            <Database className="text-content-tertiary h-5 w-5" />
+            <h2 className="text-content-primary text-lg font-semibold">HubSpot Data Sync</h2>
           </div>
-          <p className="mb-4 text-sm text-content-secondary">
+          <p className="text-content-secondary mb-4 text-sm">
             Sync customer data from HubSpot to the local database for faster portfolio loads.
             Automatic sync runs at 5am UTC daily.
           </p>
@@ -599,47 +636,41 @@ export default function SettingsPage() {
           {/* Sync Status */}
           {syncStatus && (
             <div className="mb-4 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-lg border border-border-default bg-bg-secondary p-4">
-                <div className="text-2xl font-bold text-content-primary">
+              <div className="border-border-default bg-bg-secondary rounded-lg border p-4">
+                <div className="text-content-primary text-2xl font-bold">
                   {syncStatus.totalCompanies}
                 </div>
-                <div className="text-sm text-content-secondary">
-                  Companies Synced
-                </div>
+                <div className="text-content-secondary text-sm">Companies Synced</div>
               </div>
 
-              <div className="rounded-lg border border-border-default bg-bg-secondary p-4">
+              <div className="border-border-default bg-bg-secondary rounded-lg border p-4">
                 <div className="flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-success-500" />
-                  <span className="text-lg font-semibold text-content-primary">
+                  <span className="bg-success-500 h-3 w-3 rounded-full" />
+                  <span className="text-content-primary text-lg font-semibold">
                     {syncStatus.healthDistribution.green || 0}
                   </span>
-                  <span className="h-3 w-3 rounded-full bg-warning-500" />
-                  <span className="text-lg font-semibold text-content-primary">
+                  <span className="bg-warning-500 h-3 w-3 rounded-full" />
+                  <span className="text-content-primary text-lg font-semibold">
                     {syncStatus.healthDistribution.yellow || 0}
                   </span>
-                  <span className="h-3 w-3 rounded-full bg-error-500" />
-                  <span className="text-lg font-semibold text-content-primary">
+                  <span className="bg-error-500 h-3 w-3 rounded-full" />
+                  <span className="text-content-primary text-lg font-semibold">
                     {syncStatus.healthDistribution.red || 0}
                   </span>
                 </div>
-                <div className="text-sm text-content-secondary">
-                  Health Distribution
-                </div>
+                <div className="text-content-secondary text-sm">Health Distribution</div>
               </div>
 
-              <div className="rounded-lg border border-border-default bg-bg-secondary p-4">
-                <div className="flex items-center gap-2 text-content-primary">
-                  <Clock className="h-4 w-4 text-content-tertiary" />
+              <div className="border-border-default bg-bg-secondary rounded-lg border p-4">
+                <div className="text-content-primary flex items-center gap-2">
+                  <Clock className="text-content-tertiary h-4 w-4" />
                   <span className="text-sm font-medium">
                     {syncStatus.lastSync?.completedAt
                       ? new Date(syncStatus.lastSync.completedAt).toLocaleString()
                       : "Never"}
                   </span>
                 </div>
-                <div className="text-sm text-content-secondary">
-                  Last Sync
-                </div>
+                <div className="text-content-secondary text-sm">Last Sync</div>
               </div>
             </div>
           )}
@@ -651,7 +682,7 @@ export default function SettingsPage() {
             className={cn(
               "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
               "bg-content-primary text-bg-primary hover:bg-content-secondary",
-              syncing && "opacity-50 cursor-not-allowed"
+              syncing && "cursor-not-allowed opacity-50"
             )}
           >
             <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />
@@ -659,36 +690,36 @@ export default function SettingsPage() {
           </button>
 
           {syncStatus?.lastSync?.status === "failed" && (
-            <p className="mt-3 text-sm text-error-500">
-              Last sync failed. Check logs for details.
-            </p>
+            <p className="text-error-500 mt-3 text-sm">Last sync failed. Check logs for details.</p>
           )}
         </div>
 
         {/* Notion Tasks */}
         <div className="card-sf p-6">
           <div className="mb-4 flex items-center gap-3">
-            <ListTodo className="h-5 w-5 text-content-tertiary" />
-            <h2 className="text-lg font-semibold text-content-primary">
-              Notion Tasks
-            </h2>
+            <ListTodo className="text-content-tertiary h-5 w-5" />
+            <h2 className="text-content-primary text-lg font-semibold">Notion Tasks</h2>
           </div>
-          <p className="mb-4 text-sm text-content-secondary">
-            Manage tasks synced from Notion. Use cleanup to remove orphaned tasks when switching databases.
+          <p className="text-content-secondary mb-4 text-sm">
+            Manage tasks synced from Notion. Use cleanup to remove orphaned tasks when switching
+            databases.
           </p>
 
           {/* Cleanup Result */}
           {cleanupResult && (
-            <div className="mb-4 rounded-lg border border-success-200 bg-success-50 p-4 dark:border-success-900/50 dark:bg-success-950/30">
-              <p className="font-medium text-success-800 dark:text-success-200">
-                Cleanup complete: {cleanupResult.deleted} tasks deleted ({cleanupResult.checked} checked)
+            <div className="border-success-200 bg-success-50 dark:border-success-900/50 dark:bg-success-950/30 mb-4 rounded-lg border p-4">
+              <p className="text-success-800 dark:text-success-200 font-medium">
+                Cleanup complete: {cleanupResult.deleted} tasks deleted ({cleanupResult.checked}{" "}
+                checked)
               </p>
               {cleanupResult.deletedTasks && cleanupResult.deletedTasks.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-sm text-success-700 dark:text-success-300">Deleted tasks:</p>
-                  <ul className="mt-1 list-inside list-disc text-sm text-success-600 dark:text-success-400">
+                  <p className="text-success-700 dark:text-success-300 text-sm">Deleted tasks:</p>
+                  <ul className="text-success-600 dark:text-success-400 mt-1 list-inside list-disc text-sm">
                     {cleanupResult.deletedTasks.slice(0, 5).map((title, i) => (
-                      <li key={i} className="truncate">{title}</li>
+                      <li key={i} className="truncate">
+                        {title}
+                      </li>
                     ))}
                     {cleanupResult.deletedTasks.length > 5 && (
                       <li>...and {cleanupResult.deletedTasks.length - 5} more</li>
@@ -705,9 +736,9 @@ export default function SettingsPage() {
             disabled={cleaningUp}
             className={cn(
               "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
-              "border border-error-200 bg-error-50 text-error-700 hover:bg-error-100",
+              "border-error-200 bg-error-50 text-error-700 hover:bg-error-100 border",
               "dark:border-error-900/50 dark:bg-error-950/30 dark:text-error-400 dark:hover:bg-error-950/50",
-              cleaningUp && "opacity-50 cursor-not-allowed"
+              cleaningUp && "cursor-not-allowed opacity-50"
             )}
           >
             {cleaningUp ? (
@@ -717,7 +748,7 @@ export default function SettingsPage() {
             )}
             {cleaningUp ? "Cleaning up..." : "Cleanup Orphaned Tasks"}
           </button>
-          <p className="mt-2 text-xs text-content-secondary">
+          <p className="text-content-secondary mt-2 text-xs">
             Removes tasks that exist locally but not in the configured Notion database
           </p>
         </div>

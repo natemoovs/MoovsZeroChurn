@@ -25,21 +25,21 @@ import {
 
 export interface SkillDataRequirements {
   hubspot?: {
-    company?: boolean      // fetch company by domain/name from form input
-    contacts?: boolean     // fetch contacts for that company
-    deals?: boolean        // fetch deals
-    activity?: boolean     // recent activity
+    company?: boolean // fetch company by domain/name from form input
+    contacts?: boolean // fetch contacts for that company
+    deals?: boolean // fetch deals
+    activity?: boolean // recent activity
   }
   stripe?: {
-    customer?: boolean     // fetch by email
+    customer?: boolean // fetch by email
     subscriptions?: boolean
     invoices?: boolean
   }
   notion?: {
-    databases?: string[]   // database IDs to query
+    databases?: string[] // database IDs to query
   }
-  batch?: boolean          // if true, fetch all companies in segment (portfolio view)
-  useTools?: boolean       // if true, use dynamic tool calling (like MCP) instead of pre-gathering
+  batch?: boolean // if true, fetch all companies in segment (portfolio view)
+  useTools?: boolean // if true, use dynamic tool calling (like MCP) instead of pre-gathering
 }
 
 export interface GatheredContext {
@@ -220,7 +220,9 @@ async function gatherNotionContext(
       const queryResult = await notion.queryDatabase(dbId, { pageSize: 50 })
       result.databases![dbId] = queryResult.results
     } catch (error) {
-      errors.push(`Notion database ${dbId}: ${error instanceof Error ? error.message : "Unknown error"}`)
+      errors.push(
+        `Notion database ${dbId}: ${error instanceof Error ? error.message : "Unknown error"}`
+      )
     }
   }
 
@@ -288,9 +290,9 @@ function formatHubSpotSection(data: NonNullable<GatheredContext["hubspot"]>): st
     lines.push("")
     lines.push("### Contacts")
     for (const contact of data.contacts) {
-      const name = [contact.properties.firstname, contact.properties.lastname]
-        .filter(Boolean)
-        .join(" ") || "Unknown"
+      const name =
+        [contact.properties.firstname, contact.properties.lastname].filter(Boolean).join(" ") ||
+        "Unknown"
       const title = contact.properties.jobtitle ? ` (${contact.properties.jobtitle})` : ""
       const email = contact.properties.email ? ` - ${contact.properties.email}` : ""
       lines.push(`- ${name}${title}${email}`)
@@ -369,7 +371,8 @@ function formatStripeSection(data: NonNullable<GatheredContext["stripe"]>): stri
     lines.push("")
     lines.push(`### Customer: ${data.customer.name || data.customer.email || "Unknown"}`)
     if (data.customer.email) lines.push(`- Email: ${data.customer.email}`)
-    if (data.customer.balance !== 0) lines.push(`- Balance: $${(data.customer.balance / 100).toFixed(2)}`)
+    if (data.customer.balance !== 0)
+      lines.push(`- Balance: $${(data.customer.balance / 100).toFixed(2)}`)
     if (data.customer.delinquent) lines.push(`- **Delinquent: Yes**`)
     lines.push(`- Created: ${formatTimestamp(data.customer.created)}`)
   }
@@ -379,16 +382,20 @@ function formatStripeSection(data: NonNullable<GatheredContext["stripe"]>): stri
     lines.push("### Subscriptions")
     for (const sub of data.subscriptions) {
       const items = sub.items.data
-      const planInfo = items.map((item) => {
-        const price = item.price
-        const amount = price.unit_amount ? `$${(price.unit_amount / 100).toFixed(2)}` : "Custom"
-        const interval = price.recurring?.interval || "one-time"
-        return `${price.nickname || "Plan"} (${amount}/${interval})`
-      }).join(", ")
+      const planInfo = items
+        .map((item) => {
+          const price = item.price
+          const amount = price.unit_amount ? `$${(price.unit_amount / 100).toFixed(2)}` : "Custom"
+          const interval = price.recurring?.interval || "one-time"
+          return `${price.nickname || "Plan"} (${amount}/${interval})`
+        })
+        .join(", ")
 
       lines.push(`- ${planInfo}`)
       lines.push(`  - Status: ${sub.status}`)
-      lines.push(`  - Current Period: ${formatTimestamp(sub.current_period_start)} to ${formatTimestamp(sub.current_period_end)}`)
+      lines.push(
+        `  - Current Period: ${formatTimestamp(sub.current_period_start)} to ${formatTimestamp(sub.current_period_end)}`
+      )
       if (sub.cancel_at_period_end) {
         lines.push(`  - **Cancels at period end**`)
       }
@@ -570,9 +577,7 @@ export interface CompanyHealthSummary {
  * Gather health summaries for multiple companies
  * Used for portfolio/segment views
  */
-export async function gatherBatchContext(
-  companyIds: string[]
-): Promise<CompanyHealthSummary[]> {
+export async function gatherBatchContext(companyIds: string[]): Promise<CompanyHealthSummary[]> {
   const summaries: CompanyHealthSummary[] = []
 
   for (const companyId of companyIds) {
@@ -607,7 +612,13 @@ export async function gatherBatchContext(
       }
 
       // Calculate health metrics
-      const summary = calculateHealthSummary(company, contacts, stripeCustomer, subscriptions, invoices)
+      const summary = calculateHealthSummary(
+        company,
+        contacts,
+        stripeCustomer,
+        subscriptions,
+        invoices
+      )
       summaries.push(summary)
     } catch (error) {
       console.error(`Error gathering context for company ${companyId}:`, error)
@@ -639,13 +650,14 @@ function calculateHealthSummary(
     const activeSub = subscriptions.find((s) => s.status === "active")
     if (activeSub) {
       plan = activeSub.items.data[0]?.price?.nickname || "Active Plan"
-      mrr = activeSub.items.data.reduce((sum, item) => {
-        const amount = item.price?.unit_amount || 0
-        const interval = item.price?.recurring?.interval
-        // Normalize to monthly
-        if (interval === "year") return sum + amount / 12
-        return sum + amount
-      }, 0) / 100
+      mrr =
+        activeSub.items.data.reduce((sum, item) => {
+          const amount = item.price?.unit_amount || 0
+          const interval = item.price?.recurring?.interval
+          // Normalize to monthly
+          if (interval === "year") return sum + amount / 12
+          return sum + amount
+        }, 0) / 100
 
       positiveSignals.push("Active subscription")
     }
@@ -666,7 +678,9 @@ function calculateHealthSummary(
 
   // Check invoice payment history
   if (invoices.length > 0) {
-    const failedInvoices = invoices.filter((i) => i.status === "uncollectible" || i.status === "open")
+    const failedInvoices = invoices.filter(
+      (i) => i.status === "uncollectible" || i.status === "open"
+    )
     if (failedInvoices.length >= 2) {
       riskSignals.push(`${failedInvoices.length} unpaid invoices`)
       paymentStatus = "at_risk"
@@ -698,7 +712,12 @@ function calculateHealthSummary(
 
   if (riskSignals.length === 0 && positiveSignals.length >= 2) {
     healthScore = "green"
-  } else if (riskSignals.length >= 2 || riskSignals.some((r) => r.includes("past due") || r.includes("delinquent") || r.includes("Cancellation"))) {
+  } else if (
+    riskSignals.length >= 2 ||
+    riskSignals.some(
+      (r) => r.includes("past due") || r.includes("delinquent") || r.includes("Cancellation")
+    )
+  ) {
     healthScore = "red"
   } else if (riskSignals.length > 0 || positiveSignals.length < 2) {
     healthScore = "yellow"
@@ -755,11 +774,21 @@ export function formatBatchContextAsMarkdown(summaries: CompanyHealthSummary[]):
   lines.push("|---------|--------|-----|------|---------|-------|")
 
   for (const summary of summaries) {
-    const healthIcon = summary.healthScore === "green" ? "🟢" : summary.healthScore === "yellow" ? "🟡" : summary.healthScore === "red" ? "🔴" : "⚪"
+    const healthIcon =
+      summary.healthScore === "green"
+        ? "🟢"
+        : summary.healthScore === "yellow"
+          ? "🟡"
+          : summary.healthScore === "red"
+            ? "🔴"
+            : "⚪"
     const mrr = summary.mrr ? `$${summary.mrr.toLocaleString()}` : "—"
-    const risks = summary.riskSignals.length > 0 ? summary.riskSignals.slice(0, 2).join("; ") : "None"
+    const risks =
+      summary.riskSignals.length > 0 ? summary.riskSignals.slice(0, 2).join("; ") : "None"
 
-    lines.push(`| ${summary.companyName} | ${healthIcon} | ${mrr} | ${summary.plan || "—"} | ${summary.paymentStatus} | ${risks} |`)
+    lines.push(
+      `| ${summary.companyName} | ${healthIcon} | ${mrr} | ${summary.plan || "—"} | ${summary.paymentStatus} | ${risks} |`
+    )
   }
 
   // At-risk accounts detail

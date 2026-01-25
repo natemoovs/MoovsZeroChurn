@@ -89,18 +89,12 @@ export async function POST(request: NextRequest) {
     const { preferences } = body as { preferences: NotificationPreferences }
 
     if (!preferences) {
-      return NextResponse.json(
-        { error: "Preferences required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Preferences required" }, { status: 400 })
     }
 
     // Validate structure
     if (!preferences.channels || !preferences.alerts || !preferences.digest) {
-      return NextResponse.json(
-        { error: "Invalid preferences structure" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Invalid preferences structure" }, { status: 400 })
     }
 
     const user = await getCurrentUser()
@@ -142,9 +136,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, preferences })
   } catch (error) {
     console.error("Failed to save preferences:", error)
-    return NextResponse.json(
-      { error: "Failed to save preferences" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to save preferences" }, { status: 500 })
   }
 }

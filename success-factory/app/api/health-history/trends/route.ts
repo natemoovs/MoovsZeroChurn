@@ -106,7 +106,9 @@ export async function GET() {
         }
       }
 
-      let green = 0, yellow = 0, red = 0
+      let green = 0,
+        yellow = 0,
+        red = 0
       for (const s of latestByCompany.values()) {
         if (s.healthScore === "green") green++
         else if (s.healthScore === "yellow") yellow++

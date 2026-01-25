@@ -116,9 +116,7 @@ async function generateFallbackActivities(companyId: string | null, limit: numbe
   }
 
   // Sort by date
-  activities.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  )
+  activities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   return activities.slice(0, limit)
 }

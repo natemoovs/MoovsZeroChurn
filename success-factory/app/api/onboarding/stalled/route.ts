@@ -154,8 +154,8 @@ export async function GET(request: NextRequest) {
           account.overdueMilestones.length >= 3
             ? "critical"
             : account.overdueMilestones.length >= 2
-            ? "high"
-            : "medium",
+              ? "high"
+              : "medium",
         ownerId: company?.ownerId || undefined,
         ownerEmail: company?.ownerEmail || undefined,
         ownerName: company?.ownerName || undefined,
@@ -193,9 +193,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Failed to get stalled onboardings:", error)
-    return NextResponse.json(
-      { error: "Failed to get stalled onboardings" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to get stalled onboardings" }, { status: 500 })
   }
 }

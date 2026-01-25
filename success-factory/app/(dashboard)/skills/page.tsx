@@ -25,8 +25,8 @@ const skillIcons: Record<string, React.ComponentType<{ className?: string }>> = 
   "churn-risk": AlertTriangle,
   "renewal-prep": FileText,
   "success-story": TrendingUp,
-  "bug": Bug,
-  "feedback": MessageCircle,
+  bug: Bug,
+  feedback: MessageCircle,
 }
 
 // Map skill slugs to colors
@@ -59,11 +59,11 @@ const skillColors: Record<string, { bg: string; icon: string }> = {
     bg: "bg-success-100 dark:bg-success-950",
     icon: "text-success-600 dark:text-success-400",
   },
-  "bug": {
+  bug: {
     bg: "bg-warning-100 dark:bg-warning-950",
     icon: "text-warning-600 dark:text-warning-400",
   },
-  "feedback": {
+  feedback: {
     bg: "bg-accent-100 dark:bg-accent-950",
     icon: "text-accent-600 dark:text-accent-400",
   },
@@ -84,9 +84,7 @@ export default function SkillsPage() {
   const portfolioSkills = skills.filter((s) =>
     ["portfolio-health", "pipeline-health"].includes(s.slug)
   )
-  const captureSkills = skills.filter((s) =>
-    ["bug", "feedback"].includes(s.slug)
-  )
+  const captureSkills = skills.filter((s) => ["bug", "feedback"].includes(s.slug))
   const otherSkills = skills.filter(
     (s) => !accountSkills.includes(s) && !portfolioSkills.includes(s) && !captureSkills.includes(s)
   )
@@ -96,10 +94,8 @@ export default function SkillsPage() {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-content-primary">
-            Skills
-          </h1>
-          <p className="mt-1 text-content-secondary">
+          <h1 className="text-content-primary text-2xl font-bold">Skills</h1>
+          <p className="text-content-secondary mt-1">
             AI-powered tools to help you manage customer success
           </p>
         </div>
@@ -108,10 +104,8 @@ export default function SkillsPage() {
         {accountSkills.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-content-tertiary" />
-              <h2 className="text-lg font-semibold text-content-primary">
-                Account Skills
-              </h2>
+              <Users className="text-content-tertiary h-5 w-5" />
+              <h2 className="text-content-primary text-lg font-semibold">Account Skills</h2>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {accountSkills.map((skill) => {
@@ -122,21 +116,17 @@ export default function SkillsPage() {
                   <Link
                     key={skill.slug}
                     href={`/skills/${skill.slug}`}
-                    className="card-sf group flex items-start gap-4 p-5 shadow-sm transition-all hover:border-border-hover hover:shadow-md"
+                    className="card-sf group hover:border-border-hover flex items-start gap-4 p-5 shadow-sm transition-all hover:shadow-md"
                   >
                     <div className={`rounded-lg p-3 ${colors.bg}`}>
                       <Icon className={`h-6 w-6 ${colors.icon}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-content-primary">
-                          {skill.name}
-                        </h3>
-                        <ChevronRight className="h-5 w-5 text-content-tertiary transition-transform group-hover:translate-x-0.5 group-hover:text-content-secondary" />
+                        <h3 className="text-content-primary font-semibold">{skill.name}</h3>
+                        <ChevronRight className="text-content-tertiary group-hover:text-content-secondary h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                       </div>
-                      <p className="mt-1 text-sm text-content-secondary">
-                        {skill.description}
-                      </p>
+                      <p className="text-content-secondary mt-1 text-sm">{skill.description}</p>
                     </div>
                   </Link>
                 )
@@ -149,10 +139,8 @@ export default function SkillsPage() {
         {portfolioSkills.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-content-tertiary" />
-              <h2 className="text-lg font-semibold text-content-primary">
-                Portfolio Skills
-              </h2>
+              <BarChart3 className="text-content-tertiary h-5 w-5" />
+              <h2 className="text-content-primary text-lg font-semibold">Portfolio Skills</h2>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {portfolioSkills.map((skill) => {
@@ -163,21 +151,17 @@ export default function SkillsPage() {
                   <Link
                     key={skill.slug}
                     href={`/skills/${skill.slug}`}
-                    className="card-sf group flex items-start gap-4 p-5 shadow-sm transition-all hover:border-border-hover hover:shadow-md"
+                    className="card-sf group hover:border-border-hover flex items-start gap-4 p-5 shadow-sm transition-all hover:shadow-md"
                   >
                     <div className={`rounded-lg p-3 ${colors.bg}`}>
                       <Icon className={`h-6 w-6 ${colors.icon}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-content-primary">
-                          {skill.name}
-                        </h3>
-                        <ChevronRight className="h-5 w-5 text-content-tertiary transition-transform group-hover:translate-x-0.5 group-hover:text-content-secondary" />
+                        <h3 className="text-content-primary font-semibold">{skill.name}</h3>
+                        <ChevronRight className="text-content-tertiary group-hover:text-content-secondary h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                       </div>
-                      <p className="mt-1 text-sm text-content-secondary">
-                        {skill.description}
-                      </p>
+                      <p className="text-content-secondary mt-1 text-sm">{skill.description}</p>
                     </div>
                   </Link>
                 )
@@ -190,12 +174,10 @@ export default function SkillsPage() {
         {captureSkills.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-content-tertiary" />
-              <h2 className="text-lg font-semibold text-content-primary">
-                Capture Skills
-              </h2>
+              <ClipboardList className="text-content-tertiary h-5 w-5" />
+              <h2 className="text-content-primary text-lg font-semibold">Capture Skills</h2>
             </div>
-            <p className="text-sm text-content-secondary">
+            <p className="text-content-secondary text-sm">
               Log bugs and feedback from customer interactions
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -207,21 +189,17 @@ export default function SkillsPage() {
                   <Link
                     key={skill.slug}
                     href={`/skills/${skill.slug}`}
-                    className="card-sf group flex items-start gap-4 p-5 shadow-sm transition-all hover:border-border-hover hover:shadow-md"
+                    className="card-sf group hover:border-border-hover flex items-start gap-4 p-5 shadow-sm transition-all hover:shadow-md"
                   >
                     <div className={`rounded-lg p-3 ${colors.bg}`}>
                       <Icon className={`h-6 w-6 ${colors.icon}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-content-primary">
-                          {skill.name}
-                        </h3>
-                        <ChevronRight className="h-5 w-5 text-content-tertiary transition-transform group-hover:translate-x-0.5 group-hover:text-content-secondary" />
+                        <h3 className="text-content-primary font-semibold">{skill.name}</h3>
+                        <ChevronRight className="text-content-tertiary group-hover:text-content-secondary h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                       </div>
-                      <p className="mt-1 text-sm text-content-secondary">
-                        {skill.description}
-                      </p>
+                      <p className="text-content-secondary mt-1 text-sm">{skill.description}</p>
                     </div>
                   </Link>
                 )
@@ -234,10 +212,8 @@ export default function SkillsPage() {
         {otherSkills.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-content-tertiary" />
-              <h2 className="text-lg font-semibold text-content-primary">
-                Other Skills
-              </h2>
+              <Sparkles className="text-content-tertiary h-5 w-5" />
+              <h2 className="text-content-primary text-lg font-semibold">Other Skills</h2>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {otherSkills.map((skill) => {
@@ -248,21 +224,17 @@ export default function SkillsPage() {
                   <Link
                     key={skill.slug}
                     href={`/skills/${skill.slug}`}
-                    className="card-sf group flex items-start gap-4 p-5 shadow-sm transition-all hover:border-border-hover hover:shadow-md"
+                    className="card-sf group hover:border-border-hover flex items-start gap-4 p-5 shadow-sm transition-all hover:shadow-md"
                   >
                     <div className={`rounded-lg p-3 ${colors.bg}`}>
                       <Icon className={`h-6 w-6 ${colors.icon}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-content-primary">
-                          {skill.name}
-                        </h3>
-                        <ChevronRight className="h-5 w-5 text-content-tertiary transition-transform group-hover:translate-x-0.5 group-hover:text-content-secondary" />
+                        <h3 className="text-content-primary font-semibold">{skill.name}</h3>
+                        <ChevronRight className="text-content-tertiary group-hover:text-content-secondary h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                       </div>
-                      <p className="mt-1 text-sm text-content-secondary">
-                        {skill.description}
-                      </p>
+                      <p className="text-content-secondary mt-1 text-sm">{skill.description}</p>
                     </div>
                   </Link>
                 )
@@ -273,13 +245,11 @@ export default function SkillsPage() {
 
         {skills.length === 0 && (
           <div className="card-sf p-12 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-bg-secondary">
-              <Sparkles className="h-6 w-6 text-content-tertiary" />
+            <div className="bg-bg-secondary mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <Sparkles className="text-content-tertiary h-6 w-6" />
             </div>
-            <h3 className="text-lg font-medium text-content-primary">
-              No skills found
-            </h3>
-            <p className="mt-1 text-content-secondary">
+            <h3 className="text-content-primary text-lg font-medium">No skills found</h3>
+            <p className="text-content-secondary mt-1">
               Add skills to /factory/skills/ to get started
             </p>
           </div>

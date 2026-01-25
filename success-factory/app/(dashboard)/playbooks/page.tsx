@@ -7,7 +7,6 @@ import {
   Pause,
   Plus,
   Trash2,
-  ChevronRight,
   Zap,
   CheckSquare,
   AlertTriangle,
@@ -79,9 +78,7 @@ export default function PlaybooksPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !isActive }),
       })
-      setPlaybooks((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, isActive: !isActive } : p))
-      )
+      setPlaybooks((prev) => prev.map((p) => (p.id === id ? { ...p, isActive: !isActive } : p)))
     } catch (error) {
       console.error("Failed to toggle playbook:", error)
     }
@@ -119,16 +116,14 @@ export default function PlaybooksPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-content-primary sm:text-2xl">
-              Playbooks
-            </h1>
-            <p className="mt-1 text-sm text-content-secondary sm:text-base">
+            <h1 className="text-content-primary text-xl font-bold sm:text-2xl">Playbooks</h1>
+            <p className="text-content-secondary mt-1 text-sm sm:text-base">
               Automated workflows triggered by customer events
             </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 sm:w-auto"
+            className="bg-success-600 hover:bg-success-700 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             New Playbook
@@ -138,18 +133,16 @@ export default function PlaybooksPage() {
         {/* Playbooks Grid */}
         {playbooks.length === 0 ? (
           <div className="card-sf p-12 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/30">
-              <Zap className="h-6 w-6 text-success-600 dark:text-success-400" />
+            <div className="bg-success-100 dark:bg-success-900/30 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <Zap className="text-success-600 dark:text-success-400 h-6 w-6" />
             </div>
-            <h3 className="text-lg font-medium text-content-primary">
-              No playbooks yet
-            </h3>
-            <p className="mt-1 text-content-secondary">
+            <h3 className="text-content-primary text-lg font-medium">No playbooks yet</h3>
+            <p className="text-content-secondary mt-1">
               Create your first playbook to automate CSM workflows
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700"
+              className="bg-success-600 hover:bg-success-700 mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
             >
               <Plus className="h-4 w-4" />
               Create Playbook
@@ -165,7 +158,7 @@ export default function PlaybooksPage() {
                 <div
                   key={playbook.id}
                   className={cn(
-                    "rounded-xl border bg-bg-elevated p-5 transition-all",
+                    "bg-bg-elevated rounded-xl border p-5 transition-all",
                     playbook.isActive
                       ? "border-success-200 dark:border-success-900"
                       : "border-border-default opacity-60"
@@ -185,10 +178,8 @@ export default function PlaybooksPage() {
                         <TriggerIcon className="h-5 w-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-content-primary">
-                          {playbook.name}
-                        </h3>
-                        <p className="text-sm text-content-secondary">
+                        <h3 className="text-content-primary font-semibold">{playbook.name}</h3>
+                        <p className="text-content-secondary text-sm">
                           {triggerInfo?.label || playbook.trigger}
                         </p>
                       </div>
@@ -212,7 +203,7 @@ export default function PlaybooksPage() {
                       </button>
                       <button
                         onClick={() => deletePlaybook(playbook.id)}
-                        className="rounded-lg p-2 text-content-tertiary transition-colors hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-900/20"
+                        className="text-content-tertiary hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-900/20 rounded-lg p-2 transition-colors"
                         title="Delete playbook"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -222,32 +213,31 @@ export default function PlaybooksPage() {
 
                   {/* Description */}
                   {playbook.description && (
-                    <p className="mb-4 text-sm text-content-secondary">
-                      {playbook.description}
-                    </p>
+                    <p className="text-content-secondary mb-4 text-sm">{playbook.description}</p>
                   )}
 
                   {/* Actions */}
                   <div className="mb-4 space-y-2">
-                    <p className="text-xs font-medium uppercase tracking-wider text-content-secondary">
+                    <p className="text-content-secondary text-xs font-medium tracking-wider uppercase">
                       Actions
                     </p>
                     {playbook.actions.map((action, i) => (
                       <div
                         key={i}
-                        className="flex items-center gap-2 rounded-lg bg-bg-secondary p-2 text-sm"
+                        className="bg-bg-secondary flex items-center gap-2 rounded-lg p-2 text-sm"
                       >
-                        <CheckSquare className="h-4 w-4 text-content-tertiary" />
-                        <span className="text-content-primary">
-                          Create task: {action.title}
-                        </span>
+                        <CheckSquare className="text-content-tertiary h-4 w-4" />
+                        <span className="text-content-primary">Create task: {action.title}</span>
                         {action.priority && (
                           <span
                             className={cn(
                               "rounded px-1.5 py-0.5 text-xs font-medium",
-                              action.priority === "urgent" && "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
-                              action.priority === "high" && "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
-                              action.priority === "medium" && "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+                              action.priority === "urgent" &&
+                                "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
+                              action.priority === "high" &&
+                                "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+                              action.priority === "medium" &&
+                                "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
                               action.priority === "low" && "bg-bg-secondary text-content-secondary"
                             )}
                           >
@@ -259,8 +249,8 @@ export default function PlaybooksPage() {
                   </div>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between border-t border-border-default pt-4">
-                    <span className="text-sm text-content-secondary">
+                  <div className="border-border-default flex items-center justify-between border-t pt-4">
+                    <span className="text-content-secondary text-sm">
                       {playbook.taskCount} tasks created
                     </span>
                     <span
@@ -348,15 +338,13 @@ function CreatePlaybookModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-xl bg-bg-elevated p-4 sm:max-w-lg sm:rounded-xl sm:p-6">
-        <h2 className="mb-4 text-xl font-semibold text-content-primary">
-          Create Playbook
-        </h2>
+      <div className="bg-bg-elevated max-h-[90vh] w-full overflow-y-auto rounded-t-xl p-4 sm:max-w-lg sm:rounded-xl sm:p-6">
+        <h2 className="text-content-primary mb-4 text-xl font-semibold">Create Playbook</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-content-primary">
+            <label className="text-content-primary mb-1 block text-sm font-medium">
               Playbook Name
             </label>
             <input
@@ -364,14 +352,14 @@ function CreatePlaybookModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., At-Risk Customer Outreach"
-              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+              className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
               required
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-content-primary">
+            <label className="text-content-primary mb-1 block text-sm font-medium">
               Description (optional)
             </label>
             <textarea
@@ -379,19 +367,17 @@ function CreatePlaybookModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What does this playbook do?"
               rows={2}
-              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+              className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
             />
           </div>
 
           {/* Trigger */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-content-primary">
-              Trigger
-            </label>
+            <label className="text-content-primary mb-1 block text-sm font-medium">Trigger</label>
             <select
               value={trigger}
               onChange={(e) => setTrigger(e.target.value)}
-              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+              className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
               required
             >
               <option value="">Select a trigger...</option>
@@ -404,37 +390,31 @@ function CreatePlaybookModal({
           </div>
 
           {/* Action: Create Task */}
-          <div className="rounded-lg border border-border-default p-4">
+          <div className="border-border-default rounded-lg border p-4">
             <div className="mb-3 flex items-center gap-2">
-              <CheckSquare className="h-4 w-4 text-success-600" />
-              <span className="text-sm font-medium text-content-primary">
-                Action: Create Task
-              </span>
+              <CheckSquare className="text-success-600 h-4 w-4" />
+              <span className="text-content-primary text-sm font-medium">Action: Create Task</span>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs text-content-secondary">
-                  Task Title
-                </label>
+                <label className="text-content-secondary mb-1 block text-xs">Task Title</label>
                 <input
                   type="text"
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
                   placeholder="e.g., Schedule check-in call"
-                  className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+                  className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                   required
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs text-content-secondary">
-                  Priority
-                </label>
+                <label className="text-content-secondary mb-1 block text-xs">Priority</label>
                 <select
                   value={taskPriority}
                   onChange={(e) => setTaskPriority(e.target.value as typeof taskPriority)}
-                  className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+                  className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -450,14 +430,14 @@ function CreatePlaybookModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-content-secondary hover:bg-bg-secondary"
+              className="text-content-secondary hover:bg-bg-secondary rounded-lg px-4 py-2 text-sm font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || !name || !trigger || !taskTitle}
-              className="rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
+              className="bg-success-600 hover:bg-success-700 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {saving ? "Creating..." : "Create Playbook"}
             </button>

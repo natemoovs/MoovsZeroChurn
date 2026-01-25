@@ -4,10 +4,10 @@ This guide provides the question framework for extracting actionable bug informa
 
 ## Two Interview Modes
 
-| Mode | When | Questions | Focus |
-|------|------|-----------|-------|
-| **Create** | `/bug` (no ticket exists) | 5-8 questions | Full reconstruction |
-| **Enhance** | `/bug DOOM-XXX` (ticket exists) | 3-5 questions | Fill gaps only |
+| Mode        | When                            | Questions     | Focus               |
+| ----------- | ------------------------------- | ------------- | ------------------- |
+| **Create**  | `/bug` (no ticket exists)       | 5-8 questions | Full reconstruction |
+| **Enhance** | `/bug DOOM-XXX` (ticket exists) | 3-5 questions | Fill gaps only      |
 
 ## Philosophy: Forensic, Not Exploratory
 
@@ -23,6 +23,7 @@ Bug interviews are **forensic** - you're reconstructing exactly what happened. T
 When CSM invokes `/bug`, start with:
 
 > "I'll help you create a bug ticket. First, tell me what the customer reported. Include:
+>
 > - What they said (direct quote if you have it)
 > - When this happened
 > - Any context you have"
@@ -42,9 +43,11 @@ When CSM invokes `/bug DOOM-XXX` or `/bug <url>`:
 > "I've pulled up **DOOM-XXX: [Title]**. Here's what I found:
 >
 > **Has:**
+>
 > - [List what's already documented]
 >
 > **Missing:**
+>
 > - [List what's needed for an engineer to act]
 >
 > Let me ask a few quick questions to fill the gaps..."
@@ -58,12 +61,12 @@ When CSM invokes `/bug DOOM-XXX` or `/bug <url>`:
 
 ### Common Gap Patterns
 
-| What's in Ticket | What's Missing | Question to Ask |
-|------------------|----------------|-----------------|
-| "Customer can't log in" | Specific steps | "What exactly did they try? Username/password? SSO?" |
-| Steps listed | Expected behavior | "What should have happened after step 3?" |
-| Error description | Evidence | "Do you have the operator ID or a screenshot?" |
-| Everything documented | Technical context | (Don't ask - search codebase yourself) |
+| What's in Ticket        | What's Missing    | Question to Ask                                      |
+| ----------------------- | ----------------- | ---------------------------------------------------- |
+| "Customer can't log in" | Specific steps    | "What exactly did they try? Username/password? SSO?" |
+| Steps listed            | Expected behavior | "What should have happened after step 3?"            |
+| Error description       | Evidence          | "Do you have the operator ID or a screenshot?"       |
+| Everything documented   | Technical context | (Don't ask - search codebase yourself)               |
 
 ---
 
@@ -72,22 +75,27 @@ When CSM invokes `/bug DOOM-XXX` or `/bug <url>`:
 Goal: Understand what was reported and when.
 
 ### Question 1.1: The Complaint
+
 > "What exactly did the customer say was wrong?"
 
 **Listen for:**
+
 - Vague complaints ("it's not working") → Need to drill down
 - Specific complaints ("when I click save, nothing happens") → Good starting point
 - Feature requests disguised as bugs ("why can't I do X?") → Redirect to /problem
 
 **Red flags:**
+
 - "They said the whole thing is broken" → Too vague
 - "They want it to work differently" → Feature request, not bug
 - "They've been having issues for months" → Why wasn't this reported earlier?
 
 ### Question 1.2: The Timing
+
 > "When did this happen? Do you have an approximate date/time?"
 
 **Why this matters:**
+
 - Helps find logs if we need to investigate
 - Helps identify if this started after a recent deployment
 - Helps distinguish one-time glitch from persistent bug
@@ -97,41 +105,51 @@ Goal: Understand what was reported and when.
 Goal: Reconstruct the exact steps to reproduce.
 
 ### Question 2.1: The Goal
+
 > "What was the customer trying to do when they encountered this?"
 
 **Listen for:**
+
 - Clear goal: "They were trying to create a reservation"
 - Unclear goal: "They were just using the app" → Need to drill down
 
 ### Question 2.2: The Steps
+
 > "Walk me through what they did, step by step. Start from where they began."
 
 **Listen for:**
+
 - Specific sequence: "They went to Dispatch, clicked on a trip, clicked Edit..."
 - Vague sequence: "They were clicking around" → Need more detail
 
 **Follow-up if needed:**
+
 - "What screen were they on?"
 - "What did they click first?"
 - "What happened after that?"
 
 ### Question 2.3: The Expectation
+
 > "What did they expect to happen when they did that?"
 
 **Listen for:**
+
 - Clear expectation: "They expected the trip to save with the new time"
 - Unclear expectation: "They expected it to work" → Need more detail
 
 ### Question 2.4: The Reality
+
 > "What actually happened instead?"
 
 **Listen for:**
+
 - Error message: Great, we can search for this
 - Nothing happened: Button didn't respond? Page didn't load?
 - Wrong result: What was wrong about it?
 - Unexpected behavior: How was it unexpected?
 
 **Follow-up if needed:**
+
 - "Did they see an error message?"
 - "Did the page reload or stay the same?"
 - "What exactly was wrong about what happened?"
@@ -141,17 +159,21 @@ Goal: Reconstruct the exact steps to reproduce.
 Goal: Get concrete evidence that helps reproduction and investigation.
 
 ### Question 3.1: The Identifiers
+
 > "Do you have the operator ID, trip ID, or any other identifiers?"
 
 **Why this matters:**
+
 - Operator ID → We can look up their account, settings, data
 - Trip ID → We can see the exact reservation state
 - User email → We can check their permissions, recent activity
 
 ### Question 3.2: The Artifacts
+
 > "Is there a screenshot, error message, or screen recording?"
 
 **Listen for:**
+
 - Screenshot: Ideal - shows exactly what happened
 - Error message: Can search codebase for this
 - Recording: Best - shows the full sequence
@@ -162,17 +184,21 @@ Goal: Get concrete evidence that helps reproduction and investigation.
 Goal: Understand environment and scope.
 
 ### Question 4.1: The Environment (ask if not already clear)
+
 > "What browser/device were they using? And what's their role (admin, dispatcher, driver)?"
 
 **Why this matters:**
+
 - Some bugs are browser-specific
 - Some bugs are role-specific (permissions, visibility)
 - Mobile vs desktop behavior differences
 
 ### Question 4.2: The Scope (ask if pattern suspected)
+
 > "Has anyone else reported this, or is it just this one customer?"
 
 **Why this matters:**
+
 - One customer: Might be their specific data or setup
 - Multiple customers: Likely a real platform bug
 - Pattern: Higher priority
@@ -180,6 +206,7 @@ Goal: Understand environment and scope.
 ## Classification Signals
 
 ### Signals it's a REAL BUG:
+
 - Clear steps to reproduce
 - Unexpected behavior vs documented/designed behavior
 - Error messages in the UI
@@ -187,6 +214,7 @@ Goal: Understand environment and scope.
 - Codebase research confirms it shouldn't work that way
 
 ### Signals it's USER ERROR:
+
 - Customer trying to do something the feature doesn't support
 - Missing required fields or inputs
 - Permissions issue (they don't have access)
@@ -194,12 +222,14 @@ Goal: Understand environment and scope.
 - Codebase research confirms it's working as designed
 
 ### Signals it's a FEATURE REQUEST:
+
 - "They want it to work differently"
 - "They wish they could do X"
 - "Other software lets them do this"
 - The current behavior is intentional, just not what customer wants
 
 ### Signals it CANNOT BE REPRODUCED:
+
 - Steps are too vague to follow
 - Can't get operator ID or evidence
 - CSM says "they couldn't reproduce it either"
@@ -210,6 +240,7 @@ Goal: Understand environment and scope.
 **Target: 5-8 questions**
 
 If you've asked 8 questions and still don't have enough to reproduce:
+
 - Either the bug report is too vague
 - Or it's not actually a bug
 

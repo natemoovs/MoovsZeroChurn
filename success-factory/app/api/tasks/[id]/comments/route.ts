@@ -6,10 +6,7 @@ import { notion } from "@/lib/integrations"
  * GET /api/tasks/[id]/comments
  * Get comments for a task from Notion
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -50,10 +47,7 @@ export async function GET(
     return NextResponse.json({ comments: formattedComments })
   } catch (error) {
     console.error("Failed to fetch comments:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch comments" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch comments" }, { status: 500 })
   }
 }
 
@@ -61,10 +55,7 @@ export async function GET(
  * POST /api/tasks/[id]/comments
  * Add a comment to a task in Notion
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -72,10 +63,7 @@ export async function POST(
     const { text } = body
 
     if (!text || typeof text !== "string" || text.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Comment text is required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Comment text is required" }, { status: 400 })
     }
 
     // Get the task to find its Notion page ID
@@ -117,9 +105,6 @@ export async function POST(
     })
   } catch (error) {
     console.error("Failed to add comment:", error)
-    return NextResponse.json(
-      { error: "Failed to add comment" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to add comment" }, { status: 500 })
   }
 }

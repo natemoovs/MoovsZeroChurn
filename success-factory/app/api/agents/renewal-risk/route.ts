@@ -87,7 +87,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    console.log(`[Renewal Risk Agent] Found ${renewalAccounts.length} accounts with upcoming renewals`)
+    console.log(
+      `[Renewal Risk Agent] Found ${renewalAccounts.length} accounts with upcoming renewals`
+    )
 
     // Fetch enrichment data
     const [metabaseData, stripeCustomers] = await Promise.all([
@@ -142,7 +144,7 @@ export async function POST(request: NextRequest) {
 
     // Generate playbooks for high-risk accounts (risk score >= 60)
     const anthropic = getAnthropicClient(apiKey)
-    const highRiskAccounts = analyses.filter(a => a.riskScore >= 60)
+    const highRiskAccounts = analyses.filter((a) => a.riskScore >= 60)
     const tasksCreated: string[] = []
 
     for (const analysis of highRiskAccounts) {
@@ -159,7 +161,9 @@ export async function POST(request: NextRequest) {
         })
 
         if (existingTask) {
-          console.log(`[Renewal Risk Agent] Skipping ${analysis.account.name} - already has recent task`)
+          console.log(
+            `[Renewal Risk Agent] Skipping ${analysis.account.name} - already has recent task`
+          )
           continue
         }
 
@@ -187,7 +191,9 @@ export async function POST(request: NextRequest) {
         })
 
         tasksCreated.push(task.id)
-        console.log(`[Renewal Risk Agent] Created task for ${analysis.account.name} (risk: ${analysis.riskScore})`)
+        console.log(
+          `[Renewal Risk Agent] Created task for ${analysis.account.name} (risk: ${analysis.riskScore})`
+        )
       } catch (err) {
         console.error(`[Renewal Risk Agent] Error processing ${analysis.account.name}:`, err)
       }
@@ -210,12 +216,12 @@ export async function POST(request: NextRequest) {
         ),
       },
       riskDistribution: {
-        critical: analyses.filter(a => a.riskScore >= 80).length,
-        high: analyses.filter(a => a.riskScore >= 60 && a.riskScore < 80).length,
-        medium: analyses.filter(a => a.riskScore >= 40 && a.riskScore < 60).length,
-        low: analyses.filter(a => a.riskScore < 40).length,
+        critical: analyses.filter((a) => a.riskScore >= 80).length,
+        high: analyses.filter((a) => a.riskScore >= 60 && a.riskScore < 80).length,
+        medium: analyses.filter((a) => a.riskScore >= 40 && a.riskScore < 60).length,
+        low: analyses.filter((a) => a.riskScore < 40).length,
       },
-      topRisks: analyses.slice(0, 10).map(a => ({
+      topRisks: analyses.slice(0, 10).map((a) => ({
         name: a.account.name,
         renewalDate: a.account.renewalDate,
         daysUntilRenewal: a.account.daysUntilRenewal,
@@ -227,7 +233,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[Renewal Risk Agent] Error:", error)
     return NextResponse.json(
-      { error: "Renewal risk analysis failed", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Renewal risk analysis failed",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }
@@ -254,7 +263,7 @@ export async function GET() {
     })
 
     return NextResponse.json({
-      recentTasks: recentTasks.map(t => ({
+      recentTasks: recentTasks.map((t) => ({
         id: t.id,
         companyName: t.companyName,
         priority: t.priority,
@@ -264,7 +273,7 @@ export async function GET() {
       })),
       snapshotsToday: recentSnapshots.length,
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to get status" }, { status: 500 })
   }
 }
@@ -277,8 +286,12 @@ async function findUpcomingRenewals(): Promise<RenewalAccount[]> {
   try {
     const companies = await hubspot.searchCompanies("*")
     const now = new Date()
-    const targetStart = new Date(now.getTime() + (DAYS_BEFORE_RENEWAL - WINDOW_DAYS) * 24 * 60 * 60 * 1000)
-    const targetEnd = new Date(now.getTime() + (DAYS_BEFORE_RENEWAL + WINDOW_DAYS) * 24 * 60 * 60 * 1000)
+    const targetStart = new Date(
+      now.getTime() + (DAYS_BEFORE_RENEWAL - WINDOW_DAYS) * 24 * 60 * 60 * 1000
+    )
+    const targetEnd = new Date(
+      now.getTime() + (DAYS_BEFORE_RENEWAL + WINDOW_DAYS) * 24 * 60 * 60 * 1000
+    )
 
     const renewals: RenewalAccount[] = []
 
@@ -290,7 +303,9 @@ async function findUpcomingRenewals(): Promise<RenewalAccount[]> {
         const renewalDate = new Date(renewalDateStr)
 
         if (renewalDate >= targetStart && renewalDate <= targetEnd) {
-          const daysUntil = Math.ceil((renewalDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          const daysUntil = Math.ceil(
+            (renewalDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+          )
 
           renewals.push({
             id: company.id,
@@ -329,7 +344,7 @@ async function fetchMetabaseData(): Promise<MetabaseAccount[]> {
     const result = await metabase.runQuery(METABASE_QUERY_ID)
     const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
 
-    return rows.map(row => ({
+    return rows.map((row) => ({
       companyName: (row.MOOVS_COMPANY_NAME as string) || "",
       totalTrips: (row.ALL_TRIPS_COUNT as number) || 0,
       daysSinceLastLogin: row.DAYS_SINCE_LAST_IDENTIFY as number | null,
@@ -358,8 +373,8 @@ async function fetchStripeData(): Promise<StripeCustomer[]> {
       if (!customer.name) continue
 
       const charges = await stripe.getRecentCharges(customer.id, 10)
-      const failedCharges = charges.filter(c => c.status === "failed").length
-      const lastSuccessful = charges.find(c => c.status === "succeeded")
+      const failedCharges = charges.filter((c) => c.status === "failed").length
+      const lastSuccessful = charges.find((c) => c.status === "succeeded")
 
       let status: "healthy" | "at_risk" | "failed" = "healthy"
       if (failedCharges >= 3) {
@@ -458,10 +473,7 @@ function calculateRiskScore(
   return { riskScore: score, riskFactors, positiveSignals }
 }
 
-async function generatePlaybook(
-  anthropic: Anthropic,
-  analysis: AccountAnalysis
-): Promise<string> {
+async function generatePlaybook(anthropic: Anthropic, analysis: AccountAnalysis): Promise<string> {
   const context = `
 ## Account: ${analysis.account.name}
 - Renewal Date: ${analysis.account.renewalDate} (${analysis.account.daysUntilRenewal} days)
@@ -469,24 +481,28 @@ async function generatePlaybook(
 - Risk Score: ${analysis.riskScore}/100
 
 ### Risk Factors:
-${analysis.riskFactors.map(r => `- ${r}`).join("\n") || "- None identified"}
+${analysis.riskFactors.map((r) => `- ${r}`).join("\n") || "- None identified"}
 
 ### Positive Signals:
-${analysis.positiveSignals.map(s => `- ${s}`).join("\n") || "- None identified"}
+${analysis.positiveSignals.map((s) => `- ${s}`).join("\n") || "- None identified"}
 
 ### Usage Data:
-${analysis.usageData
-  ? `- Total Trips: ${analysis.usageData.totalTrips}
+${
+  analysis.usageData
+    ? `- Total Trips: ${analysis.usageData.totalTrips}
 - Days Since Last Login: ${analysis.usageData.daysSinceLastLogin || "Unknown"}
 - Churn Status: ${analysis.usageData.churnStatus || "N/A"}`
-  : "No usage data available"}
+    : "No usage data available"
+}
 
 ### Payment Health:
-${analysis.paymentHealth
-  ? `- Status: ${analysis.paymentHealth.status}
+${
+  analysis.paymentHealth
+    ? `- Status: ${analysis.paymentHealth.status}
 - Failed Charges: ${analysis.paymentHealth.failedCharges}
 - Last Payment: ${analysis.paymentHealth.lastPaymentDate || "Unknown"}`
-  : "No payment data available"}
+    : "No payment data available"
+}
 `
 
   const message = await createMessage(anthropic, {

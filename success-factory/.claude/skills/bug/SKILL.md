@@ -9,14 +9,15 @@ This skill transforms **raw customer complaints** into **actionable bug tickets*
 
 ## Two Modes
 
-| Mode | Invocation | What It Does |
-|------|------------|--------------|
-| **Create** | `/bug` | Interview CSM, create new bug ticket |
+| Mode        | Invocation                             | What It Does                                       |
+| ----------- | -------------------------------------- | -------------------------------------------------- |
+| **Create**  | `/bug`                                 | Interview CSM, create new bug ticket               |
 | **Enhance** | `/bug DOOM-XXX` or `/bug <notion-url>` | Fetch existing ticket, fill gaps, update in Notion |
 
 ## The Problem We're Solving
 
 Today's bug flow:
+
 ```
 Customer complains to CSM
     ↓
@@ -30,6 +31,7 @@ Engineer may still not be able to reproduce
 ```
 
 With this skill:
+
 ```
 Customer complains to CSM
     ↓
@@ -45,16 +47,19 @@ Engineer picks up ticket and starts fixing immediately
 ## When to Use This Skill
 
 **Use `/bug` (create mode) when:**
+
 - CSM receives a new bug report via Moovs Chat, email, or phone
 - Customer reports something isn't working as expected
 - Support notices a pattern of complaints about the same issue
 
 **Use `/bug DOOM-XXX` (enhance mode) when:**
+
 - A rough bug ticket already exists but lacks detail
 - An AI-generated ticket needs human validation and context
 - A ticket was created quickly and needs to be made actionable
 
 **Don't use this for:**
+
 - Feature requests (use `/problem` instead)
 - Ideas or enhancements (use `/problem` instead)
 - Task clarification for non-bugs (use `/ticket-shaping` instead)
@@ -67,13 +72,13 @@ Engineer picks up ticket and starts fixing immediately
 
 Not every customer complaint is a bug. Before creating a ticket, this skill classifies:
 
-| Classification | What It Is | Action |
-|----------------|-----------|--------|
-| **Bug** | Platform not working as designed | Create bug ticket |
-| **User Error** | Customer using feature incorrectly | Explain correct usage, no ticket |
-| **Feature Request** | Customer wants something new | Redirect to `/problem` |
-| **Duplicate** | Already reported | Link to existing ticket |
-| **Cannot Reproduce** | Can't verify the issue | Ask for more info or close |
+| Classification       | What It Is                         | Action                           |
+| -------------------- | ---------------------------------- | -------------------------------- |
+| **Bug**              | Platform not working as designed   | Create bug ticket                |
+| **User Error**       | Customer using feature incorrectly | Explain correct usage, no ticket |
+| **Feature Request**  | Customer wants something new       | Redirect to `/problem`           |
+| **Duplicate**        | Already reported                   | Link to existing ticket          |
+| **Cannot Reproduce** | Can't verify the issue             | Ask for more info or close       |
 
 **Most "bugs" are user error.** The interview process helps distinguish real bugs from confusion.
 
@@ -133,6 +138,7 @@ When the user invokes `/bug DOOM-XXX` or `/bug <notion-url>`:
 1. **Fetch the ticket** using `mcp__notion__API-retrieve-a-page` and `mcp__notion__API-get-block-children`
 
 2. **Summarize the current state:**
+
    > "I've pulled up **DOOM-XXX: [Title]**. Here's what I found:
    >
    > **Has:** [What's documented]
@@ -148,14 +154,14 @@ When the user invokes `/bug DOOM-XXX` or `/bug <notion-url>`:
 
 ### What to Look For in Existing Tickets
 
-| Check | If Missing |
-|-------|-----------|
-| Steps to reproduce | Ask "What steps did the customer take?" |
-| Expected behavior | Ask "What should have happened?" |
-| Actual behavior | Ask "What actually happened?" |
+| Check                      | If Missing                                   |
+| -------------------------- | -------------------------------------------- |
+| Steps to reproduce         | Ask "What steps did the customer take?"      |
+| Expected behavior          | Ask "What should have happened?"             |
+| Actual behavior            | Ask "What actually happened?"                |
 | Evidence (screenshot, IDs) | Ask "Do you have operator ID or screenshot?" |
-| Environment | Ask "What browser/device/role?" |
-| Technical context | Search codebase and add |
+| Environment                | Ask "What browser/device/role?"              |
+| Technical context          | Search codebase and add                      |
 
 ### Updating Existing Tickets
 
@@ -203,6 +209,7 @@ Use the Notion MCP tools to update:
 ```
 
 **Property updates:**
+
 - Set `Type` to include `Bug` if not already
 - Set `Stage` to `Backlog` if currently `Ingestion` or `Not started`
 - Set `Priority` based on severity assessment
@@ -227,29 +234,32 @@ See [INTERVIEW_GUIDE.md](INTERVIEW_GUIDE.md) for the complete question framework
 
 An engineer needs exactly these things to fix a bug:
 
-| Required | Why |
-|----------|-----|
-| **Steps to reproduce** | Exact sequence of actions |
-| **Expected behavior** | What should have happened |
-| **Actual behavior** | What actually happened |
-| **Evidence** | Screenshot, error message, or operator ID |
-| **Environment** | Browser, device, user role |
+| Required               | Why                                       |
+| ---------------------- | ----------------------------------------- |
+| **Steps to reproduce** | Exact sequence of actions                 |
+| **Expected behavior**  | What should have happened                 |
+| **Actual behavior**    | What actually happened                    |
+| **Evidence**           | Screenshot, error message, or operator ID |
+| **Environment**        | Browser, device, user role                |
 
 If the CSM can't provide these after the interview, the ticket shouldn't be created/enhanced.
 
 ### Interview Phases
 
 #### Phase 1: The Report (2 questions) - Skip in enhance mode if present
+
 - What exactly did the customer say? (Direct quote if possible)
 - When did this happen? (Timestamp helps find logs)
 
 #### Phase 2: The Reproduction (3-4 questions)
+
 - What was the customer trying to do? (The goal)
 - What steps did they take? (The sequence)
 - What did they expect to happen?
 - What actually happened instead?
 
 #### Phase 3: The Evidence (2 questions)
+
 - Do you have the operator ID or trip ID?
 - Is there a screenshot, error message, or recording?
 
@@ -257,14 +267,15 @@ If the CSM can't provide these after the interview, the ticket shouldn't be crea
 
 **Before classifying or creating/updating, search the codebase to understand:**
 
-| Repo | Path | What to Look For |
-|------|------|------------------|
-| **server** | `/Users/amirghorbani/Dev/server` | API endpoints, business logic, error handling |
-| **dooms-operator** | `/Users/amirghorbani/Dev/dooms-operator` | UI components, form validation, user flows |
-| **dooms-customer** | `/Users/amirghorbani/Dev/dooms-customer` | Customer-facing features |
-| **dooms-native-driver** | `/Users/amirghorbani/Dev/dooms-native-driver` | Mobile app code |
+| Repo                    | Path                                          | What to Look For                              |
+| ----------------------- | --------------------------------------------- | --------------------------------------------- |
+| **server**              | `/Users/amirghorbani/Dev/server`              | API endpoints, business logic, error handling |
+| **dooms-operator**      | `/Users/amirghorbani/Dev/dooms-operator`      | UI components, form validation, user flows    |
+| **dooms-customer**      | `/Users/amirghorbani/Dev/dooms-customer`      | Customer-facing features                      |
+| **dooms-native-driver** | `/Users/amirghorbani/Dev/dooms-native-driver` | Mobile app code                               |
 
 **Research goals:**
+
 1. Understand the current expected behavior (is it actually a bug or working as designed?)
 2. Find the relevant code paths that would be affected
 3. Identify if there are known edge cases or limitations
@@ -279,17 +290,18 @@ Before creating a new ticket (or if enhancing and suspicious), query existing bu
 ```
 
 If a duplicate exists:
+
 - In create mode: Don't create new ticket, link to existing
 - In enhance mode: Consider merging information, flag as potential duplicate
 
 ## Severity Classification
 
-| Severity | Definition | Examples | Priority |
-|----------|-----------|----------|----------|
-| **Critical** | System down, data loss, security, payments broken | Can't process payments, data corruption | High |
-| **High** | Major feature broken, significant workflow blocked | Can't create reservations, dispatch not working | High |
-| **Medium** | Feature partially broken, workaround exists | Export missing columns, filter not working | Medium |
-| **Low** | Minor issue, cosmetic, edge case | UI alignment, typo, rare edge case | Low |
+| Severity     | Definition                                         | Examples                                        | Priority |
+| ------------ | -------------------------------------------------- | ----------------------------------------------- | -------- |
+| **Critical** | System down, data loss, security, payments broken  | Can't process payments, data corruption         | High     |
+| **High**     | Major feature broken, significant workflow blocked | Can't create reservations, dispatch not working | High     |
+| **Medium**   | Feature partially broken, workaround exists        | Export missing columns, filter not working      | Medium   |
+| **Low**      | Minor issue, cosmetic, edge case                   | UI alignment, typo, rare edge case              | Low      |
 
 **Critical and High bugs should be escalated immediately, not wait for cooldown.**
 
@@ -298,6 +310,7 @@ If a duplicate exists:
 After the interview and research, generate a bug ticket following the template in [BUG_TEMPLATE.md](BUG_TEMPLATE.md).
 
 The ticket includes:
+
 1. **Title** - Clear, searchable description
 2. **Severity** - Critical, High, Medium, Low
 3. **Steps to Reproduce** - Exact sequence

@@ -63,9 +63,7 @@ export function OnboardingProgress({
       })
       if (res.ok) {
         // Refresh status
-        const updated = await fetch(`/api/onboarding/${companyId}`).then((r) =>
-          r.json()
-        )
+        const updated = await fetch(`/api/onboarding/${companyId}`).then((r) => r.json())
         setStatus(updated)
         onComplete?.(milestone)
       }
@@ -78,7 +76,7 @@ export function OnboardingProgress({
   if (loading) {
     return (
       <div className="flex items-center justify-center p-4">
-        <Loader2 className="h-5 w-5 animate-spin text-content-tertiary" />
+        <Loader2 className="text-content-tertiary h-5 w-5 animate-spin" />
       </div>
     )
   }
@@ -106,9 +104,7 @@ export function OnboardingProgress({
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <div className="mb-1 flex items-center justify-between text-sm">
-            <span className="font-medium text-content-secondary">
-              Onboarding
-            </span>
+            <span className="text-content-secondary font-medium">Onboarding</span>
             <span
               className={cn(
                 "rounded-full px-2 py-0.5 text-xs font-medium",
@@ -118,22 +114,22 @@ export function OnboardingProgress({
               {statusLabels[status.status]}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-bg-tertiary">
+          <div className="bg-bg-tertiary h-2 overflow-hidden rounded-full">
             <div
               className={cn(
                 "h-full transition-all",
                 status.status === "complete"
                   ? "bg-success-500"
                   : status.status === "stalled"
-                  ? "bg-error-500"
-                  : status.status === "at_risk"
-                  ? "bg-warning-500"
-                  : "bg-info-500"
+                    ? "bg-error-500"
+                    : status.status === "at_risk"
+                      ? "bg-warning-500"
+                      : "bg-info-500"
               )}
               style={{ width: `${status.progress}%` }}
             />
           </div>
-          <p className="mt-1 text-xs text-content-secondary">
+          <p className="text-content-secondary mt-1 text-xs">
             {status.progress}% complete
             {status.nextMilestone && ` • Next: ${status.nextMilestone.name}`}
           </p>
@@ -147,37 +143,31 @@ export function OnboardingProgress({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-content-primary">
-            Onboarding Progress
-          </h3>
-          <p className="text-sm text-content-secondary">
-            {status.progress}% complete •{" "}
-            {status.milestones.filter((m) => m.completedAt).length} of{" "}
+          <h3 className="text-content-primary font-semibold">Onboarding Progress</h3>
+          <p className="text-content-secondary text-sm">
+            {status.progress}% complete • {status.milestones.filter((m) => m.completedAt).length} of{" "}
             {status.milestones.length} milestones
           </p>
         </div>
         <span
-          className={cn(
-            "rounded-full px-3 py-1 text-sm font-medium",
-            statusColors[status.status]
-          )}
+          className={cn("rounded-full px-3 py-1 text-sm font-medium", statusColors[status.status])}
         >
           {statusLabels[status.status]}
         </span>
       </div>
 
       {/* Progress Bar */}
-      <div className="h-2.5 overflow-hidden rounded-full bg-bg-tertiary">
+      <div className="bg-bg-tertiary h-2.5 overflow-hidden rounded-full">
         <div
           className={cn(
             "h-full transition-all duration-500",
             status.status === "complete"
               ? "bg-success-500"
               : status.status === "stalled"
-              ? "bg-error-500"
-              : status.status === "at_risk"
-              ? "bg-warning-500"
-              : "bg-info-500"
+                ? "bg-error-500"
+                : status.status === "at_risk"
+                  ? "bg-warning-500"
+                  : "bg-info-500"
           )}
           style={{ width: `${status.progress}%` }}
         />
@@ -193,8 +183,8 @@ export function OnboardingProgress({
               milestone.completedAt
                 ? "border-success-200 bg-success-50 dark:border-success-900 dark:bg-success-950/30"
                 : milestone.isOverdue
-                ? "border-error-200 bg-error-50 dark:border-error-900 dark:bg-error-950/30"
-                : "border-border-default bg-bg-elevated"
+                  ? "border-error-200 bg-error-50 dark:border-error-900 dark:bg-error-950/30"
+                  : "border-border-default bg-bg-elevated"
             )}
           >
             {/* Icon */}
@@ -204,8 +194,8 @@ export function OnboardingProgress({
                 milestone.completedAt
                   ? "bg-success-500 text-white"
                   : milestone.isOverdue
-                  ? "bg-error-100 text-error-600 dark:bg-error-900/50 dark:text-error-400"
-                  : "bg-bg-tertiary text-content-tertiary"
+                    ? "bg-error-100 text-error-600 dark:bg-error-900/50 dark:text-error-400"
+                    : "bg-bg-tertiary text-content-tertiary"
               )}
             >
               {completing === milestone.id ? (
@@ -227,13 +217,13 @@ export function OnboardingProgress({
                   milestone.completedAt
                     ? "text-success-700 dark:text-success-400"
                     : milestone.isOverdue
-                    ? "text-error-700 dark:text-error-400"
-                    : "text-content-primary"
+                      ? "text-error-700 dark:text-error-400"
+                      : "text-content-primary"
                 )}
               >
                 {milestone.name}
               </p>
-              <p className="text-sm text-content-secondary">
+              <p className="text-content-secondary text-sm">
                 {milestone.completedAt ? (
                   `Completed ${new Date(milestone.completedAt).toLocaleDateString()}`
                 ) : milestone.isOverdue ? (
@@ -251,7 +241,7 @@ export function OnboardingProgress({
               <button
                 onClick={() => handleComplete(milestone.id)}
                 disabled={completing === milestone.id}
-                className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-success-600 hover:bg-success-100 dark:text-success-400 dark:hover:bg-success-900/30"
+                className="text-success-600 hover:bg-success-100 dark:text-success-400 dark:hover:bg-success-900/30 shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium"
               >
                 Mark Complete
               </button>
@@ -262,8 +252,8 @@ export function OnboardingProgress({
 
       {/* Next Steps */}
       {status.nextMilestone && status.daysToNextDeadline !== null && (
-        <div className="flex items-center gap-2 rounded-lg bg-bg-tertiary p-3 text-sm">
-          <Clock className="h-4 w-4 text-content-secondary" />
+        <div className="bg-bg-tertiary flex items-center gap-2 rounded-lg p-3 text-sm">
+          <Clock className="text-content-secondary h-4 w-4" />
           <span className="text-content-secondary">
             Next: <strong>{status.nextMilestone.name}</strong>
             {status.daysToNextDeadline > 0 ? (

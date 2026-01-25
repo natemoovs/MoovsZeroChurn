@@ -7,7 +7,6 @@ import {
   User,
   FileText,
   AlertTriangle,
-  Calendar,
   X,
   Loader2,
 } from "lucide-react"
@@ -105,25 +104,23 @@ export function AccountHandoff({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl rounded-2xl bg-bg-elevated shadow-xl">
+      <div className="bg-bg-elevated w-full max-w-2xl rounded-2xl shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-default p-6">
+        <div className="border-border-default flex items-center justify-between border-b p-6">
           <div>
-            <h2 className="text-lg font-semibold text-content-primary">
-              Account Handoff
-            </h2>
-            <p className="text-sm text-content-secondary">{companyName}</p>
+            <h2 className="text-content-primary text-lg font-semibold">Account Handoff</h2>
+            <p className="text-content-secondary text-sm">{companyName}</p>
           </div>
           <button
             onClick={onCancel}
-            className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary"
+            className="text-content-tertiary hover:bg-surface-hover hover:text-content-secondary rounded-lg p-2"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Progress */}
-        <div className="border-b border-border-default px-6 py-4">
+        <div className="border-border-default border-b px-6 py-4">
           <div className="flex items-center justify-between">
             {steps.map((s, i) => (
               <div key={s.id} className="flex items-center">
@@ -151,12 +148,10 @@ export function AccountHandoff({
                       <s.icon className="h-4 w-4" />
                     )}
                   </div>
-                  <span className="hidden text-sm font-medium sm:inline">
-                    {s.title}
-                  </span>
+                  <span className="hidden text-sm font-medium sm:inline">{s.title}</span>
                 </div>
                 {i < steps.length - 1 && (
-                  <ArrowRight className="mx-4 h-4 w-4 text-content-tertiary" />
+                  <ArrowRight className="text-content-tertiary mx-4 h-4 w-4" />
                 )}
               </div>
             ))}
@@ -167,19 +162,19 @@ export function AccountHandoff({
         <div className="p-6">
           {step === 1 && (
             <div className="space-y-4">
-              <div className="rounded-lg bg-bg-tertiary p-4">
-                <p className="text-sm text-content-secondary">
-                  <span className="font-medium">Current Owner:</span>{" "}
-                  {currentOwner.name} ({currentOwner.email})
+              <div className="bg-bg-tertiary rounded-lg p-4">
+                <p className="text-content-secondary text-sm">
+                  <span className="font-medium">Current Owner:</span> {currentOwner.name} (
+                  {currentOwner.email})
                 </p>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-content-secondary">
+                <label className="text-content-secondary mb-2 block text-sm font-medium">
                   Transfer to:
                 </label>
                 {loadingUsers ? (
-                  <div className="flex items-center gap-2 text-content-secondary">
+                  <div className="text-content-secondary flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span>Loading team members...</span>
                   </div>
@@ -198,7 +193,7 @@ export function AccountHandoff({
                               : "border-border-default hover:border-border-default"
                           )}
                         >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-success-400 to-accent-600 text-sm font-bold text-white">
+                          <div className="from-success-400 to-accent-600 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white">
                             {user.name
                               .split(" ")
                               .map((n) => n[0])
@@ -206,13 +201,11 @@ export function AccountHandoff({
                               .slice(0, 2)}
                           </div>
                           <div>
-                            <p className="font-medium text-content-primary">
-                              {user.name}
-                            </p>
-                            <p className="text-xs text-content-secondary">{user.email}</p>
+                            <p className="text-content-primary font-medium">{user.name}</p>
+                            <p className="text-content-secondary text-xs">{user.email}</p>
                           </div>
                           {newOwner?.id === user.id && (
-                            <CheckCircle2 className="ml-auto h-5 w-5 text-success-500" />
+                            <CheckCircle2 className="text-success-500 ml-auto h-5 w-5" />
                           )}
                         </button>
                       ))}
@@ -225,7 +218,7 @@ export function AccountHandoff({
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-content-secondary">
+                <label className="text-content-secondary mb-2 block text-sm font-medium">
                   Handoff Notes
                 </label>
                 <textarea
@@ -233,12 +226,12 @@ export function AccountHandoff({
                   onChange={(e) => setHandoffNotes(e.target.value)}
                   rows={5}
                   placeholder="Key context, ongoing issues, relationship notes, upcoming milestones..."
-                  className="w-full rounded-lg border border-border-default bg-bg-elevated p-3 text-sm text-content-primary focus:border-success-500 focus:outline-none focus:ring-1 focus:ring-success-500"
+                  className="border-border-default bg-bg-elevated text-content-primary focus:border-success-500 focus:ring-success-500 w-full rounded-lg border p-3 text-sm focus:ring-1 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-content-secondary">
+                <label className="text-content-secondary mb-2 block text-sm font-medium">
                   Open Items to Address
                 </label>
                 <div className="space-y-2">
@@ -252,12 +245,10 @@ export function AccountHandoff({
                           newItems[i] = e.target.value
                           setOpenItems(newItems)
                         }}
-                        className="flex-1 rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-success-500 focus:outline-none"
+                        className="border-border-default bg-bg-elevated focus:border-success-500 flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none"
                       />
                       <button
-                        onClick={() =>
-                          setOpenItems(openItems.filter((_, j) => j !== i))
-                        }
+                        onClick={() => setOpenItems(openItems.filter((_, j) => j !== i))}
                         className="text-content-tertiary hover:text-error-500"
                       >
                         <X className="h-4 w-4" />
@@ -266,7 +257,7 @@ export function AccountHandoff({
                   ))}
                   <button
                     onClick={() => setOpenItems([...openItems, ""])}
-                    className="text-sm text-success-600 hover:text-success-700"
+                    className="text-success-600 hover:text-success-700 text-sm"
                   >
                     + Add open item
                   </button>
@@ -277,10 +268,8 @@ export function AccountHandoff({
 
           {step === 3 && (
             <div className="space-y-4">
-              <div className="rounded-lg bg-bg-tertiary p-4">
-                <h3 className="mb-3 font-medium text-content-primary">
-                  Handoff Summary
-                </h3>
+              <div className="bg-bg-tertiary rounded-lg p-4">
+                <h3 className="text-content-primary mb-3 font-medium">Handoff Summary</h3>
                 <div className="space-y-2 text-sm">
                   <p>
                     <span className="text-content-secondary">From:</span>{" "}
@@ -290,11 +279,7 @@ export function AccountHandoff({
                     <span className="text-content-secondary">To:</span>{" "}
                     <span className="font-medium">{newOwner?.name}</span>
                   </p>
-                  {handoffNotes && (
-                    <p className="mt-2 text-content-secondary">
-                      {handoffNotes}
-                    </p>
-                  )}
+                  {handoffNotes && <p className="text-content-secondary mt-2">{handoffNotes}</p>}
                 </div>
               </div>
 
@@ -304,9 +289,9 @@ export function AccountHandoff({
                     type="checkbox"
                     checked={transferTasks}
                     onChange={(e) => setTransferTasks(e.target.checked)}
-                    className="h-4 w-4 rounded border-border-default text-success-600 focus:ring-success-500"
+                    className="border-border-default text-success-600 focus:ring-success-500 h-4 w-4 rounded"
                   />
-                  <span className="text-sm text-content-secondary">
+                  <span className="text-content-secondary text-sm">
                     Transfer all open tasks to new owner
                   </span>
                 </label>
@@ -316,20 +301,20 @@ export function AccountHandoff({
                     type="checkbox"
                     checked={notifyStakeholders}
                     onChange={(e) => setNotifyStakeholders(e.target.checked)}
-                    className="h-4 w-4 rounded border-border-default text-success-600 focus:ring-success-500"
+                    className="border-border-default text-success-600 focus:ring-success-500 h-4 w-4 rounded"
                   />
-                  <span className="text-sm text-content-secondary">
+                  <span className="text-content-secondary text-sm">
                     Notify stakeholders of CSM change
                   </span>
                 </label>
               </div>
 
               {notifyStakeholders && (
-                <div className="flex items-start gap-2 rounded-lg bg-warning-50 p-3 dark:bg-warning-900/20">
-                  <AlertTriangle className="h-5 w-5 text-warning-500" />
-                  <p className="text-sm text-warning-800 dark:text-warning-200">
-                    An introduction email will be sent to mapped stakeholders
-                    introducing {newOwner?.name} as their new CSM.
+                <div className="bg-warning-50 dark:bg-warning-900/20 flex items-start gap-2 rounded-lg p-3">
+                  <AlertTriangle className="text-warning-500 h-5 w-5" />
+                  <p className="text-warning-800 dark:text-warning-200 text-sm">
+                    An introduction email will be sent to mapped stakeholders introducing{" "}
+                    {newOwner?.name} as their new CSM.
                   </p>
                 </div>
               )}
@@ -338,10 +323,10 @@ export function AccountHandoff({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-border-default p-6">
+        <div className="border-border-default flex items-center justify-between border-t p-6">
           <button
             onClick={() => (step > 1 ? setStep(step - 1) : onCancel?.())}
-            className="rounded-lg border border-border-default px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
+            className="border-border-default text-content-secondary hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
           >
             {step === 1 ? "Cancel" : "Back"}
           </button>
@@ -350,7 +335,7 @@ export function AccountHandoff({
             <button
               onClick={() => setStep(step + 1)}
               disabled={step === 1 && !newOwner}
-              className="rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
+              className="bg-success-600 hover:bg-success-700 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               Continue
             </button>
@@ -358,7 +343,7 @@ export function AccountHandoff({
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex items-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
+              className="bg-success-600 hover:bg-success-700 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {submitting ? (
                 <>

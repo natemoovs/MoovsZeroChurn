@@ -123,10 +123,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Journey fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch journeys" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch journeys" }, { status: 500 })
   }
 }
 
@@ -222,9 +219,6 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Journey create/update error:", error)
-    return NextResponse.json(
-      { error: "Failed to update journey" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to update journey" }, { status: 500 })
   }
 }

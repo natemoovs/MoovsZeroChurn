@@ -82,10 +82,8 @@ function AccountsContent() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-content-primary">
-            Accounts
-          </h1>
-          <p className="mt-1 text-content-secondary">
+          <h1 className="text-content-primary text-2xl font-bold">Accounts</h1>
+          <p className="text-content-secondary mt-1">
             {accounts.length} total accounts in your portfolio
           </p>
         </div>
@@ -99,23 +97,23 @@ function AccountsContent() {
       {/* Search and Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-tertiary" />
+          <Search className="text-content-tertiary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search accounts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="input-sf h-10 w-full pl-10 pr-4"
+            className="input-sf h-10 w-full pr-4 pl-10"
           />
         </div>
 
-        <div className="flex flex-wrap gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
+        <div className="border-border-default bg-bg-secondary flex flex-wrap gap-1 rounded-lg border p-1">
           {filterButtons.map((btn) => (
             <button
               key={btn.value}
               onClick={() => setFilter(btn.value)}
               className={cn(
-                "flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all-smooth sm:gap-1.5 sm:px-3 sm:text-sm",
+                "transition-all-smooth flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium sm:gap-1.5 sm:px-3 sm:text-sm",
                 filter === btn.value
                   ? "bg-bg-elevated text-content-primary shadow-sm"
                   : "text-content-secondary hover:text-content-primary"
@@ -126,9 +124,7 @@ function AccountsContent() {
                 <span
                   className={cn(
                     "rounded-full px-1.5 py-0.5 text-xs",
-                    filter === btn.value
-                      ? "bg-bg-tertiary"
-                      : "bg-surface-muted"
+                    filter === btn.value ? "bg-bg-tertiary" : "bg-surface-muted"
                   )}
                 >
                   {btn.count}
@@ -148,13 +144,11 @@ function AccountsContent() {
         </div>
       ) : filteredAccounts.length === 0 ? (
         <div className="card-sf p-12 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-bg-tertiary">
-            <Filter className="h-6 w-6 text-content-tertiary" />
+          <div className="bg-bg-tertiary mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+            <Filter className="text-content-tertiary h-6 w-6" />
           </div>
-          <h3 className="text-lg font-medium text-content-primary">
-            No accounts found
-          </h3>
-          <p className="mt-1 text-content-secondary">
+          <h3 className="text-content-primary text-lg font-medium">No accounts found</h3>
+          <p className="text-content-secondary mt-1">
             {searchQuery
               ? "Try adjusting your search query"
               : "No accounts match the selected filter"}
@@ -183,8 +177,8 @@ function AccountsContent() {
 function AccountsLoading() {
   return (
     <div className="space-y-6">
-      <div className="h-8 w-32 shimmer rounded" />
-      <div className="h-12 w-full shimmer rounded-xl" />
+      <div className="shimmer h-8 w-32 rounded" />
+      <div className="shimmer h-12 w-full rounded-xl" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <AccountCardSkeleton key={i} />

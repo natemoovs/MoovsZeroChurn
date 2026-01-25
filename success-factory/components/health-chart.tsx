@@ -67,34 +67,24 @@ export function HealthChart({ green, yellow, red, className }: HealthChartProps)
         </svg>
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-content-primary">
-            {total}
-          </span>
-          <span className="text-xs text-content-secondary">
-            accounts
-          </span>
+          <span className="text-content-primary text-3xl font-bold">{total}</span>
+          <span className="text-content-secondary text-xs">accounts</span>
         </div>
       </div>
 
       {/* Legend */}
       <div className="flex justify-center gap-6">
         <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-success-500" />
-          <span className="text-sm text-content-secondary">
-            {green} Healthy
-          </span>
+          <span className="bg-success-500 h-3 w-3 rounded-full" />
+          <span className="text-content-secondary text-sm">{green} Healthy</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-warning-500" />
-          <span className="text-sm text-content-secondary">
-            {yellow} Monitor
-          </span>
+          <span className="bg-warning-500 h-3 w-3 rounded-full" />
+          <span className="text-content-secondary text-sm">{yellow} Monitor</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-error-500" />
-          <span className="text-sm text-content-secondary">
-            {red} At Risk
-          </span>
+          <span className="bg-error-500 h-3 w-3 rounded-full" />
+          <span className="text-content-secondary text-sm">{red} At Risk</span>
         </div>
       </div>
     </div>
@@ -111,21 +101,12 @@ export function HealthBar({ green, yellow, red }: HealthChartProps) {
 
   return (
     <div className="space-y-2">
-      <div className="flex h-3 w-full overflow-hidden rounded-full bg-bg-tertiary">
-        <div
-          className="bg-success-500 transition-all"
-          style={{ width: `${greenPercent}%` }}
-        />
-        <div
-          className="bg-warning-500 transition-all"
-          style={{ width: `${yellowPercent}%` }}
-        />
-        <div
-          className="bg-error-500 transition-all"
-          style={{ width: `${redPercent}%` }}
-        />
+      <div className="bg-bg-tertiary flex h-3 w-full overflow-hidden rounded-full">
+        <div className="bg-success-500 transition-all" style={{ width: `${greenPercent}%` }} />
+        <div className="bg-warning-500 transition-all" style={{ width: `${yellowPercent}%` }} />
+        <div className="bg-error-500 transition-all" style={{ width: `${redPercent}%` }} />
       </div>
-      <div className="flex flex-wrap justify-between gap-1 text-xs text-content-secondary">
+      <div className="text-content-secondary flex flex-wrap justify-between gap-1 text-xs">
         <span>{green} healthy</span>
         <span>{yellow} monitor</span>
         <span>{red} at risk</span>

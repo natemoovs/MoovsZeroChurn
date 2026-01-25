@@ -16,11 +16,11 @@ knowledge/
 
 ## How Skills Use This Knowledge
 
-| Knowledge File | Used By |
-|----------------|---------|
-| `voice-guidelines.md` | blog-post, email-sequence, release-notes, landing-page |
-| `icp-definitions.md` | customer-research, email-sequence, blog-post, shaping |
-| `platform-overview.md` | shaping, blog-post, landing-page, customer-research |
+| Knowledge File         | Used By                                                |
+| ---------------------- | ------------------------------------------------------ |
+| `voice-guidelines.md`  | blog-post, email-sequence, release-notes, landing-page |
+| `icp-definitions.md`   | customer-research, email-sequence, blog-post, shaping  |
+| `platform-overview.md` | shaping, blog-post, landing-page, customer-research    |
 
 ## Adding Knowledge
 

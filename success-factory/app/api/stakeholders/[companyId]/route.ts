@@ -30,9 +30,7 @@ export async function GET(
 
     // Calculate relationship health
     const champion = stakeholders.find((s) => s.role === "champion" && s.isActive)
-    const decisionMaker = stakeholders.find(
-      (s) => s.role === "decision_maker" && s.isActive
-    )
+    const decisionMaker = stakeholders.find((s) => s.role === "decision_maker" && s.isActive)
     const activeCount = stakeholders.filter((s) => s.isActive).length
     const negativeCount = stakeholders.filter(
       (s) => s.sentiment === "negative" && s.isActive
@@ -74,7 +72,9 @@ export async function GET(
       alerts.push("Single-threaded relationship - expand contacts")
     }
     const recentlyLeft = stakeholders.filter(
-      (s) => s.leftCompanyAt && new Date(s.leftCompanyAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      (s) =>
+        s.leftCompanyAt &&
+        new Date(s.leftCompanyAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     )
     if (recentlyLeft.length > 0) {
       alerts.push(`${recentlyLeft.length} contact(s) left in last 30 days`)
@@ -101,10 +101,7 @@ export async function GET(
     })
   } catch (error) {
     console.error("Failed to get stakeholders:", error)
-    return NextResponse.json(
-      { error: "Failed to get stakeholders" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to get stakeholders" }, { status: 500 })
   }
 }
 
@@ -119,14 +116,10 @@ export async function POST(
   try {
     const { companyId } = await params
     const body = await request.json()
-    const { name, email, phone, title, role, sentiment, influence, engagement, notes } =
-      body
+    const { name, email, phone, title, role, sentiment, influence, engagement, notes } = body
 
     if (!name || !role) {
-      return NextResponse.json(
-        { error: "name and role are required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "name and role are required" }, { status: 400 })
     }
 
     // Validate role
@@ -184,9 +177,6 @@ export async function POST(
     return NextResponse.json({ success: true, stakeholder })
   } catch (error) {
     console.error("Failed to add stakeholder:", error)
-    return NextResponse.json(
-      { error: "Failed to add stakeholder" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to add stakeholder" }, { status: 500 })
   }
 }

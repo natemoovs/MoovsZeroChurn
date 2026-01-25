@@ -17,10 +17,7 @@ function mapPriorityToNotion(priority: string): string {
  * Get a specific task
  * GET /api/tasks/[id]
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -44,10 +41,7 @@ export async function GET(
     return NextResponse.json(task)
   } catch (error) {
     console.error("Task fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch task" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch task" }, { status: 500 })
   }
 }
 
@@ -55,10 +49,7 @@ export async function GET(
  * Update a task
  * PATCH /api/tasks/[id]
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -124,17 +115,24 @@ export async function PATCH(
     })
 
     // Sync changes to Notion if task has a notionPageId
-    const taskMetadata = task.metadata as { notionPageId?: string; notionAssigneeId?: string } | null
+    const taskMetadata = task.metadata as {
+      notionPageId?: string
+      notionAssigneeId?: string
+    } | null
     if (taskMetadata?.notionPageId && process.env.NOTION_API_KEY) {
       try {
         const notionUpdate: Record<string, NotionPropertyInput> = {}
 
         // Sync status change
         if (status !== undefined) {
-          const notionStatus = status === "completed" ? "Done"
-            : status === "in_progress" ? "In Progress"
-            : status === "cancelled" ? "Cancelled"
-            : "To Do"
+          const notionStatus =
+            status === "completed"
+              ? "Done"
+              : status === "in_progress"
+                ? "In Progress"
+                : status === "cancelled"
+                  ? "Cancelled"
+                  : "To Do"
           notionUpdate["Status"] = { status: { name: notionStatus } }
         }
 
@@ -173,10 +171,7 @@ export async function PATCH(
     return NextResponse.json(task)
   } catch (error) {
     console.error("Task update error:", error)
-    return NextResponse.json(
-      { error: "Failed to update task" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to update task" }, { status: 500 })
   }
 }
 
@@ -198,9 +193,6 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Task delete error:", error)
-    return NextResponse.json(
-      { error: "Failed to delete task" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to delete task" }, { status: 500 })
   }
 }

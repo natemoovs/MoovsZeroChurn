@@ -42,22 +42,43 @@ interface EngagementMetrics {
 const FEATURES_BY_TIER: Record<string, string[]> = {
   free: ["Basic Booking", "Trip History", "Profile Management"],
   smb: [
-    "Basic Booking", "Trip History", "Profile Management",
-    "Team Management", "Basic Reporting", "Email Notifications",
+    "Basic Booking",
+    "Trip History",
+    "Profile Management",
+    "Team Management",
+    "Basic Reporting",
+    "Email Notifications",
   ],
   mid_market: [
-    "Basic Booking", "Trip History", "Profile Management",
-    "Team Management", "Basic Reporting", "Email Notifications",
-    "Advanced Reporting", "API Access", "Custom Integrations",
-    "Priority Support", "Bulk Operations",
+    "Basic Booking",
+    "Trip History",
+    "Profile Management",
+    "Team Management",
+    "Basic Reporting",
+    "Email Notifications",
+    "Advanced Reporting",
+    "API Access",
+    "Custom Integrations",
+    "Priority Support",
+    "Bulk Operations",
   ],
   enterprise: [
-    "Basic Booking", "Trip History", "Profile Management",
-    "Team Management", "Basic Reporting", "Email Notifications",
-    "Advanced Reporting", "API Access", "Custom Integrations",
-    "Priority Support", "Bulk Operations",
-    "SSO", "White Label", "Dedicated Account Manager",
-    "Custom SLA", "Advanced Analytics",
+    "Basic Booking",
+    "Trip History",
+    "Profile Management",
+    "Team Management",
+    "Basic Reporting",
+    "Email Notifications",
+    "Advanced Reporting",
+    "API Access",
+    "Custom Integrations",
+    "Priority Support",
+    "Bulk Operations",
+    "SSO",
+    "White Label",
+    "Dedicated Account Manager",
+    "Custom SLA",
+    "Advanced Analytics",
   ],
 }
 
@@ -80,15 +101,17 @@ function calculateEngagement(company: {
   // Simulate feature usage based on activity level
   const totalTrips = company.totalTrips || 0
   const daysSinceLogin = company.daysSinceLastLogin ?? 30
-  const tenure = Math.max(1, Math.floor(
-    (Date.now() - new Date(company.hubspotCreatedAt || company.createdAt).getTime()) /
-    (1000 * 60 * 60 * 24 * 30)
-  ))
+  const tenure = Math.max(
+    1,
+    Math.floor(
+      (Date.now() - new Date(company.hubspotCreatedAt || company.createdAt).getTime()) /
+        (1000 * 60 * 60 * 24 * 30)
+    )
+  )
 
   // Calculate login frequency
-  const avgDaysPerWeek = daysSinceLogin <= 7 ? 3 :
-    daysSinceLogin <= 14 ? 1.5 :
-    daysSinceLogin <= 30 ? 0.5 : 0.1
+  const avgDaysPerWeek =
+    daysSinceLogin <= 7 ? 3 : daysSinceLogin <= 14 ? 1.5 : daysSinceLogin <= 30 ? 0.5 : 0.1
 
   // Simulate session metrics based on trip activity
   const avgSessionDuration = Math.min(45, 5 + (totalTrips / tenure) * 2)
@@ -96,11 +119,9 @@ function calculateEngagement(company: {
   const totalSessions = Math.floor(tenure * avgDaysPerWeek * 4)
 
   // Calculate feature adoption based on activity
-  const activityLevel = totalTrips > 100 ? "high" :
-    totalTrips > 20 ? "medium" : "low"
+  const activityLevel = totalTrips > 100 ? "high" : totalTrips > 20 ? "medium" : "low"
 
-  const baseAdoptionRate = activityLevel === "high" ? 0.8 :
-    activityLevel === "medium" ? 0.5 : 0.3
+  const baseAdoptionRate = activityLevel === "high" ? 0.8 : activityLevel === "medium" ? 0.5 : 0.3
 
   // Generate feature usage
   const featureUsage: FeatureUsage[] = []
@@ -121,7 +142,8 @@ function calculateEngagement(company: {
         category: isCore ? "Core" : "Advanced",
         usageCount: Math.floor(Math.random() * 50) + 10,
         lastUsed: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-          .toISOString().split("T")[0],
+          .toISOString()
+          .split("T")[0],
         adoptionRate: Math.round((0.5 + Math.random() * 0.5) * 100),
         trend: Math.random() > 0.5 ? "increasing" : Math.random() > 0.3 ? "stable" : "decreasing",
       })
@@ -141,8 +163,11 @@ function calculateEngagement(company: {
 
   // Determine trend
   const engagementTrend: "improving" | "stable" | "declining" =
-    daysSinceLogin <= 7 && totalTrips > tenure * 5 ? "improving" :
-    daysSinceLogin > 30 || totalTrips < tenure * 2 ? "declining" : "stable"
+    daysSinceLogin <= 7 && totalTrips > tenure * 5
+      ? "improving"
+      : daysSinceLogin > 30 || totalTrips < tenure * 2
+        ? "declining"
+        : "stable"
 
   // Risk indicators
   const riskIndicators: string[] = []
@@ -175,8 +200,10 @@ function calculateEngagement(company: {
     overallEngagementScore,
     loginFrequency: {
       avgDaysPerWeek: Math.round(avgDaysPerWeek * 10) / 10,
-      lastLogin: daysSinceLogin <= 0 ? new Date().toISOString().split("T")[0] :
-        new Date(Date.now() - daysSinceLogin * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      lastLogin:
+        daysSinceLogin <= 0
+          ? new Date().toISOString().split("T")[0]
+          : new Date(Date.now() - daysSinceLogin * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       trend: daysSinceLogin <= 7 ? "increasing" : daysSinceLogin <= 21 ? "stable" : "decreasing",
     },
     sessionMetrics: {
@@ -211,9 +238,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const companies = await prisma.hubSpotCompany.findMany({
-      where: companyId
-        ? { hubspotId: companyId }
-        : { mrr: { gt: 0 } },
+      where: companyId ? { hubspotId: companyId } : { mrr: { gt: 0 } },
       orderBy: { mrr: "desc" },
     })
 
@@ -235,8 +260,8 @@ export async function GET(request: NextRequest) {
     const avgAdoption = Math.round(
       metrics.reduce((sum, m) => sum + m.featureAdoption.adoptionRate, 0) / metrics.length
     )
-    const atRiskCount = metrics.filter(m => m.riskIndicators.length >= 2).length
-    const decliningCount = metrics.filter(m => m.engagementTrend === "declining").length
+    const atRiskCount = metrics.filter((m) => m.riskIndicators.length >= 2).length
+    const decliningCount = metrics.filter((m) => m.engagementTrend === "declining").length
 
     return NextResponse.json({
       metrics: companyId ? metrics[0] : metrics,
@@ -247,17 +272,14 @@ export async function GET(request: NextRequest) {
         atRiskCount,
         decliningCount,
         byTrend: {
-          improving: metrics.filter(m => m.engagementTrend === "improving").length,
-          stable: metrics.filter(m => m.engagementTrend === "stable").length,
+          improving: metrics.filter((m) => m.engagementTrend === "improving").length,
+          stable: metrics.filter((m) => m.engagementTrend === "stable").length,
           declining: decliningCount,
         },
       },
     })
   } catch (error) {
     console.error("Failed to calculate engagement:", error)
-    return NextResponse.json(
-      { error: "Failed to calculate engagement" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to calculate engagement" }, { status: 500 })
   }
 }

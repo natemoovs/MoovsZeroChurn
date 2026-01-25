@@ -26,20 +26,22 @@ We speak as someone who deeply understands ground transportation operations AND 
 
 ### With Existing Customers vs. Prospects
 
-| Context | Prospect (Sales) | Customer (CSM) |
-|---------|------------------|----------------|
-| Relationship | Proving value | Delivering value |
-| Knowledge | Learning their business | Know their history |
-| Tone | Enthusiastic, aspirational | Practical, partnership |
-| Focus | What Moovs could do | What Moovs is doing |
-| Proof | Case studies, features | Their own data, wins |
+| Context      | Prospect (Sales)           | Customer (CSM)         |
+| ------------ | -------------------------- | ---------------------- |
+| Relationship | Proving value              | Delivering value       |
+| Knowledge    | Learning their business    | Know their history     |
+| Tone         | Enthusiastic, aspirational | Practical, partnership |
+| Focus        | What Moovs could do        | What Moovs is doing    |
+| Proof        | Case studies, features     | Their own data, wins   |
 
 ### Example Comparison
 
 **Sales email:**
+
 > "Moovs helps operators like you save 10+ hours per week on dispatch. Let's schedule a demo to show you how."
 
 **CSM email:**
+
 > "Looking at your account, you've cut dispatch time from 4 hours to 45 minutes since onboarding. Nice work. Let's talk about doing the same for your billing workflow."
 
 ---
@@ -113,44 +115,52 @@ We speak as someone who deeply understands ground transportation operations AND 
 ### Celebrating Wins
 
 **Good:**
+
 - "You hit 500 bookings this month — first time since launch!"
 - "Your drivers are accepting trips 40% faster than last quarter."
 - "That corporate account you landed is already your #3 by revenue."
 
 **Avoid:**
+
 - "Congratulations on your continued platform engagement."
 - "Your KPIs show positive directional indicators."
 
 ### Addressing Problems
 
 **Good:**
+
 - "I noticed payment failures spiked last week. Let's fix that."
 - "Usage dropped 30% — is everything okay with the team?"
 - "You mentioned frustration with quoting. Show me what's happening."
 
 **Avoid:**
+
 - "Our monitoring systems detected an anomaly in your account metrics."
 - "Are you experiencing any challenges with our platform?"
 
 ### Suggesting Upsells/Expansions
 
 **Good:**
+
 - "You're manually importing manifests weekly. AI Import could save you 2 hours per batch."
 - "With 25 vehicles now, the AI Scheduler would prevent the double-bookings you mentioned."
 - "Your corporate clients are asking for reports — Insights gives you that with one click."
 
 **Avoid:**
+
 - "I'd like to discuss upgrading your subscription tier."
 - "Our premium features could enhance your operational efficiency."
 
 ### Handling Churn Risk
 
 **Good:**
+
 - "I saw you're evaluating other options. What's driving that? Let's talk."
 - "You've been quieter lately. Is Moovs still solving the problems you came for?"
 - "If there's something we could do differently, I want to know."
 
 **Avoid:**
+
 - "We value your business and would hate to see you go."
 - "Our retention team would like to discuss your concerns."
 
@@ -192,6 +202,7 @@ We speak as someone who deeply understands ground transportation operations AND 
 ### Check-in Email
 
 **Bad:**
+
 > Subject: Monthly Success Check-in
 >
 > Dear [Customer],
@@ -201,6 +212,7 @@ We speak as someone who deeply understands ground transportation operations AND 
 > Best regards
 
 **Good:**
+
 > Subject: Quick sync on Q1 — 15 min?
 >
 > Hey [Name],
@@ -212,6 +224,7 @@ We speak as someone who deeply understands ground transportation operations AND 
 ### Risk Outreach
 
 **Bad:**
+
 > Subject: We Value Your Partnership
 >
 > Dear [Customer],
@@ -219,6 +232,7 @@ We speak as someone who deeply understands ground transportation operations AND 
 > Our records indicate that your platform engagement has decreased over the past 30 days. We value your partnership and would like to schedule a call to discuss how we can better serve your needs.
 
 **Good:**
+
 > Subject: Everything okay?
 >
 > Hey [Name],
@@ -233,16 +247,16 @@ We speak as someone who deeply understands ground transportation operations AND 
 
 Use operator language, not SaaS jargon:
 
-| Say This | Not This |
-|----------|----------|
+| Say This                | Not This                  |
+| ----------------------- | ------------------------- |
 | Trip, ride, reservation | Journey, booking instance |
-| Passenger, rider | End user, customer |
-| Driver | Resource, asset |
-| Dispatch | Operations management |
-| Farm out | Outsource, subcontract |
-| Fleet | Vehicle assets |
-| Corporate account | Enterprise client |
-| Busy season | High-volume period |
+| Passenger, rider        | End user, customer        |
+| Driver                  | Resource, asset           |
+| Dispatch                | Operations management     |
+| Farm out                | Outsource, subcontract    |
+| Fleet                   | Vehicle assets            |
+| Corporate account       | Enterprise client         |
+| Busy season             | High-volume period        |
 
 ---
 
@@ -256,4 +270,4 @@ Use operator language, not SaaS jargon:
 
 ---
 
-*Same Moovs voice. Customer Success lens.*
+_Same Moovs voice. Customer Success lens._

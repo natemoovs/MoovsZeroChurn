@@ -7,6 +7,7 @@ This guide provides the question framework for conducting deep shaping interview
 ### What Makes a Good Shaping Question
 
 Good shaping questions:
+
 - **Uncover hidden assumptions** - "You mentioned X, but what if Y isn't true?"
 - **Reveal edge cases** - "What happens when this goes wrong?"
 - **Challenge scope** - "Do we really need this for v1?"
@@ -14,6 +15,7 @@ Good shaping questions:
 - **Surface user behavior** - "How do you know customers do this?"
 
 Bad shaping questions:
+
 - "What features do you want?" (accepts solutions, not problems)
 - "Is this important?" (of course they'll say yes)
 - "Do you need X or Y?" (binary choice limits discovery)
@@ -21,6 +23,7 @@ Bad shaping questions:
 ### The Shaping Mindset
 
 You are NOT a requirements gatherer. You are a skeptical investigator trying to:
+
 1. Find the SMALLEST solution that solves the REAL problem
 2. Identify everything that could blow up the timeline
 3. Understand what we can cut when time runs short

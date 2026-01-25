@@ -66,13 +66,17 @@ export function classifySegment(mrr: number | null): CustomerSegment {
  * - Mid-Market: Pro (pro-monthly, pro-annual, pro-legacy)
  * - Enterprise: Elite (vip-monthly)
  */
-export function classifySegmentByPlanOrMrr(plan: string | null, mrr: number | null): CustomerSegment {
+export function classifySegmentByPlanOrMrr(
+  plan: string | null,
+  mrr: number | null
+): CustomerSegment {
   if (plan) {
     const planLower = plan.toLowerCase()
 
     // Exact Lago plan code matching
     if (planLower === "standard-monthly" || planLower === "standard-annual") return "smb"
-    if (planLower === "pro-monthly" || planLower === "pro-annual" || planLower === "pro-legacy") return "mid_market"
+    if (planLower === "pro-monthly" || planLower === "pro-annual" || planLower === "pro-legacy")
+      return "mid_market"
     if (planLower === "vip-monthly") return "enterprise"
 
     // Fuzzy matching for variations
@@ -216,7 +220,12 @@ export function getSegmentProfile(segment: CustomerSegment): SegmentProfile {
         engagementExpectations: {
           minMonthlyTrips: 300,
           expectedLoginFrequency: "daily",
-          criticalFeatures: ["ai_dispatch", "affiliate_network", "api_integrations", "enterprise_reporting"],
+          criticalFeatures: [
+            "ai_dispatch",
+            "affiliate_network",
+            "api_integrations",
+            "enterprise_reporting",
+          ],
         },
         salesMotion: "High-touch enterprise",
         budgetRange: { min: 2500, max: 8000 },
@@ -248,10 +257,7 @@ export function getSegmentProfile(segment: CustomerSegment): SegmentProfile {
           "Created first trips",
           "Engaged with support/resources",
         ],
-        expansionOpportunities: [
-          "Convert to paid (SMB) plan",
-          "Demonstrate value through usage",
-        ],
+        expansionOpportunities: ["Convert to paid (SMB) plan", "Demonstrate value through usage"],
         engagementExpectations: {
           minMonthlyTrips: 1,
           expectedLoginFrequency: "monthly",
@@ -291,7 +297,7 @@ export function getSegmentRecommendations(
   riskSignals: string[],
   healthScore: number
 ): string[] {
-  const profile = getSegmentProfile(segment)
+  const _profile = getSegmentProfile(segment) // Available for future threshold-based recommendations
   const recommendations: string[] = []
 
   // Check for segment-specific churn indicators
@@ -398,7 +404,9 @@ export function calculateSegmentAdjustedScore(
 
     if (expectedFrequency === "daily" && daysSinceLastLogin > 7) {
       adjustedScore -= 10
-      adjustments.push(`Enterprise/Mid-Market should login daily, last login ${daysSinceLastLogin} days ago`)
+      adjustments.push(
+        `Enterprise/Mid-Market should login daily, last login ${daysSinceLastLogin} days ago`
+      )
     } else if (expectedFrequency === "weekly" && daysSinceLastLogin > 21) {
       adjustedScore -= 10
       adjustments.push(`SMB should login weekly, last login ${daysSinceLastLogin} days ago`)
@@ -472,7 +480,7 @@ export function checkExpansionPotential(
     if (totalTrips && totalTrips > 250) {
       signals.push("Trip volume at Enterprise level")
     }
-    if (growthRate && growthRate > 0.10) {
+    if (growthRate && growthRate > 0.1) {
       signals.push("Consistent growth trajectory")
     }
     return {

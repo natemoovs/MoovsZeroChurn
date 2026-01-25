@@ -78,7 +78,13 @@ export function HealthBadge({ score, size = "md", showLabel = true }: HealthBadg
   )
 }
 
-export function HealthDot({ score, size = "md" }: { score: HealthScore; size?: "sm" | "md" | "lg" }) {
+export function HealthDot({
+  score,
+  size = "md",
+}: {
+  score: HealthScore
+  size?: "sm" | "md" | "lg"
+}) {
   const config = healthConfig[score]
   const dotSizes = { sm: "h-2 w-2", md: "h-3 w-3", lg: "h-4 w-4" }
 

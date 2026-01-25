@@ -16,11 +16,11 @@ Quarterly Business Reviews demonstrate value, identify risks, and open expansion
 
 ## QBR Frequency by Segment
 
-| Segment | QBR Frequency | Format | Attendees |
-|---------|---------------|--------|-----------|
-| **SMB** | Bi-annual | Email + optional call | Owner |
-| **Mid-Market** | Quarterly | 30-min call | Champion + 1 |
-| **Enterprise** | Quarterly | 60-min meeting | Champion + Exec |
+| Segment        | QBR Frequency | Format                | Attendees       |
+| -------------- | ------------- | --------------------- | --------------- |
+| **SMB**        | Bi-annual     | Email + optional call | Owner           |
+| **Mid-Market** | Quarterly     | 30-min call           | Champion + 1    |
+| **Enterprise** | Quarterly     | 60-min meeting        | Champion + Exec |
 
 ---
 
@@ -29,6 +29,7 @@ Quarterly Business Reviews demonstrate value, identify risks, and open expansion
 ### Pre-Meeting Prep (Do This First)
 
 **Data to pull:**
+
 - Usage metrics (logins, trips, features)
 - Revenue through Moovs
 - Feature adoption %
@@ -36,6 +37,7 @@ Quarterly Business Reviews demonstrate value, identify risks, and open expansion
 - Health score trend
 
 **Prepare:**
+
 - 3 wins to celebrate
 - 1-2 risks to address
 - 1 expansion suggestion
@@ -44,31 +46,37 @@ Quarterly Business Reviews demonstrate value, identify risks, and open expansion
 ### Meeting Agenda (60 min)
 
 **1. Business Check-in (5 min)**
+
 - How's business overall?
 - Any big changes coming?
 - What's top of mind?
 
 **2. Value Delivered (15 min)**
+
 - Key metrics this quarter
 - Wins to celebrate
 - Comparison to last quarter/year
 
 **3. Health Review (10 min)**
+
 - Adoption metrics
 - Feature utilization
 - Any concerns or friction
 
 **4. Strategic Discussion (15 min)**
+
 - Their goals for next quarter
 - How Moovs can support
 - Expansion opportunities
 
 **5. Risks & Concerns (10 min)**
+
 - Any issues to address
 - Feature requests
 - Competitive landscape
 
 **6. Next Steps (5 min)**
+
 - Action items
 - Next touchpoint
 - Any asks
@@ -163,12 +171,14 @@ Next QBR: [Date]
 ### Celebrating Wins
 
 **Do:**
+
 - Lead with their biggest success
 - Quantify impact when possible
 - Connect to their original goals
 - Let them share the credit
 
 **Say:**
+
 - "Your dispatch time went from 3 hours to 45 minutes — that's 2+ hours back every day."
 - "You processed $180K through Moovs this quarter. That's a lot of trips running smoothly."
 - "Driver app adoption hit 92%. Your team really embraced it."
@@ -176,12 +186,14 @@ Next QBR: [Date]
 ### Addressing Risks
 
 **Do:**
+
 - Acknowledge proactively
 - Own any issues
 - Have a plan or workaround
 - Follow up after meeting
 
 **Say:**
+
 - "I know you mentioned frustration with [X]. Here's what we're doing about it..."
 - "Usage dipped in February — was there something going on?"
 - "I saw a few support tickets. Are those resolved, or is there still friction?"
@@ -189,12 +201,14 @@ Next QBR: [Date]
 ### Planting Expansion Seeds
 
 **Do:**
+
 - Connect to their goals
 - Use data to show need
 - Don't hard-sell
 - Let them come to the conclusion
 
 **Say:**
+
 - "You mentioned wanting to cut dispatch time further. AI Scheduler is how operators at your scale do that."
 - "With those airline manifests taking 4 hours a week, AI Import would give you that time back."
 - "As you grow to 25 vehicles, the scheduler becomes a game-changer."
@@ -231,14 +245,14 @@ Questions? Reply or book a quick call: [calendly link]
 
 Watch for these during the meeting:
 
-| Signal | What It Means | Response |
-|--------|---------------|----------|
-| Distracted, rushing | Not prioritizing relationship | Shorten, follow up |
-| "We're evaluating options" | Active churn risk | Save protocol |
-| Champion defensive | Something's wrong | Dig deeper |
-| No exec attendance (Enterprise) | Lost executive sponsorship | Relationship rebuild |
-| Feature requests ignored | Feeling unheard | Product escalation |
-| No goals for next quarter | Disengaged | Understand why |
+| Signal                          | What It Means                 | Response             |
+| ------------------------------- | ----------------------------- | -------------------- |
+| Distracted, rushing             | Not prioritizing relationship | Shorten, follow up   |
+| "We're evaluating options"      | Active churn risk             | Save protocol        |
+| Champion defensive              | Something's wrong             | Dig deeper           |
+| No exec attendance (Enterprise) | Lost executive sponsorship    | Relationship rebuild |
+| Feature requests ignored        | Feeling unheard               | Product escalation   |
+| No goals for next quarter       | Disengaged                    | Understand why       |
 
 ---
 
@@ -299,4 +313,4 @@ Slides attached. Let me know if anything needs clarification.
 
 ---
 
-*Good QBRs make renewals easy. Great QBRs create advocates.*
+_Good QBRs make renewals easy. Great QBRs create advocates._

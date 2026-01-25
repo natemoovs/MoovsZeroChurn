@@ -5,20 +5,14 @@ import { prisma } from "@/lib/db"
  * POST /api/campaigns/[id]/enroll
  * Enroll companies in a campaign
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await request.json()
     const { companyIds } = body
 
     if (!companyIds?.length) {
-      return NextResponse.json(
-        { error: "companyIds required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "companyIds required" }, { status: 400 })
     }
 
     // Verify campaign exists and is active
@@ -32,10 +26,7 @@ export async function POST(
     }
 
     if (campaign.status !== "active" && campaign.status !== "draft") {
-      return NextResponse.json(
-        { error: "Campaign is not accepting enrollments" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Campaign is not accepting enrollments" }, { status: 400 })
     }
 
     // Get companies
@@ -59,8 +50,8 @@ export async function POST(
     const nextStepDue = firstStep
       ? new Date(
           Date.now() +
-            (firstStep.delayDays * 24 * 60 * 60 * 1000) +
-            (firstStep.delayHours * 60 * 60 * 1000)
+            firstStep.delayDays * 24 * 60 * 60 * 1000 +
+            firstStep.delayHours * 60 * 60 * 1000
         )
       : null
 

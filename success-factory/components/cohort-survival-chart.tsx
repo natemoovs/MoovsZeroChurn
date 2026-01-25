@@ -18,10 +18,7 @@ interface CohortSurvivalChartProps {
   className?: string
 }
 
-export function CohortSurvivalChart({
-  cohorts,
-  className,
-}: CohortSurvivalChartProps) {
+export function CohortSurvivalChart({ cohorts, className }: CohortSurvivalChartProps) {
   // Generate survival curve data - simulates retention over time periods
   const survivalData = useMemo(() => {
     if (cohorts.length === 0) return []
@@ -61,7 +58,6 @@ export function CohortSurvivalChart({
 
   const maxPeriods = 12
   const chartHeight = 280
-  const chartWidth = "100%"
   const leftPadding = 48
   const rightPadding = 16
   const topPadding = 20
@@ -71,24 +67,17 @@ export function CohortSurvivalChart({
     <div className={cn("card-sf p-6", className)}>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-content-primary">
-            Cohort Survival Curves
-          </h3>
-          <p className="text-sm text-content-secondary">
-            Retention trajectory by signup cohort
-          </p>
+          <h3 className="text-content-primary text-lg font-semibold">Cohort Survival Curves</h3>
+          <p className="text-content-secondary text-sm">Retention trajectory by signup cohort</p>
         </div>
       </div>
 
       {/* Chart */}
       <div className="relative" style={{ height: chartHeight }}>
         {/* Y-axis labels */}
-        <div className="absolute left-0 top-0 flex h-full flex-col justify-between pb-8 pt-4">
+        <div className="absolute top-0 left-0 flex h-full flex-col justify-between pt-4 pb-8">
           {[100, 75, 50, 25, 0].map((val) => (
-            <span
-              key={val}
-              className="text-xs text-content-tertiary"
-            >
+            <span key={val} className="text-content-tertiary text-xs">
               {val}%
             </span>
           ))}
@@ -107,7 +96,7 @@ export function CohortSurvivalChart({
           {[0, 25, 50, 75, 100].map((val) => (
             <div
               key={val}
-              className="absolute h-px w-full bg-bg-tertiary"
+              className="bg-bg-tertiary absolute h-px w-full"
               style={{ top: `${100 - val}%` }}
             />
           ))}
@@ -159,10 +148,7 @@ export function CohortSurvivalChart({
           }}
         >
           {[0, 3, 6, 9, 12].map((month) => (
-            <span
-              key={month}
-              className="text-xs text-content-tertiary"
-            >
+            <span key={month} className="text-content-tertiary text-xs">
               {month === 0 ? "Start" : `M${month}`}
             </span>
           ))}
@@ -174,24 +160,17 @@ export function CohortSurvivalChart({
         {survivalData.map((cohort) => (
           <div
             key={cohort.cohort}
-            className="flex items-center gap-2 rounded-lg border border-border-default bg-bg-tertiary px-3 py-1.5"
+            className="border-border-default bg-bg-tertiary flex items-center gap-2 rounded-lg border px-3 py-1.5"
           >
-            <span
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: cohort.color }}
-            />
-            <span className="text-sm font-medium text-content-secondary">
-              {cohort.cohort}
-            </span>
-            <span className="text-xs text-content-secondary">
-              ({cohort.retention}%)
-            </span>
+            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: cohort.color }} />
+            <span className="text-content-secondary text-sm font-medium">{cohort.cohort}</span>
+            <span className="text-content-secondary text-xs">({cohort.retention}%)</span>
           </div>
         ))}
       </div>
 
       {/* Info */}
-      <p className="mt-4 text-xs text-content-tertiary">
+      <p className="text-content-tertiary mt-4 text-xs">
         Curves show projected retention over 12 months based on current cohort performance
       </p>
     </div>

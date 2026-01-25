@@ -98,7 +98,9 @@ export async function POST(request: NextRequest) {
         })
 
         if (existingTask) {
-          console.log(`[Win-Back Agent] Skipping ${candidate.churnRecord.companyName} - has recent task`)
+          console.log(
+            `[Win-Back Agent] Skipping ${candidate.churnRecord.companyName} - has recent task`
+          )
           continue
         }
 
@@ -147,15 +149,20 @@ export async function POST(request: NextRequest) {
         })
         churnRecordsUpdated.push(candidate.churnRecord.id)
 
-        console.log(`[Win-Back Agent] Created task for ${candidate.churnRecord.companyName} (${candidate.milestone}d)`)
+        console.log(
+          `[Win-Back Agent] Created task for ${candidate.churnRecord.companyName} (${candidate.milestone}d)`
+        )
       } catch (err) {
-        console.error(`[Win-Back Agent] Error processing ${candidate.churnRecord.companyName}:`, err)
+        console.error(
+          `[Win-Back Agent] Error processing ${candidate.churnRecord.companyName}:`,
+          err
+        )
       }
     }
 
     // Calculate potential MRR recovery
     const potentialMrr = candidates
-      .filter(c => c.churnRecord.lostMrr)
+      .filter((c) => c.churnRecord.lostMrr)
       .reduce((sum, c) => sum + (c.churnRecord.lostMrr || 0), 0)
 
     console.log(`[Win-Back Agent] Complete:
@@ -170,12 +177,12 @@ export async function POST(request: NextRequest) {
         tasksCreated: tasksCreated.length,
         potentialMrrRecovery: potentialMrr,
         byMilestone: {
-          day30: candidates.filter(c => c.milestone === 30).length,
-          day60: candidates.filter(c => c.milestone === 60).length,
-          day90: candidates.filter(c => c.milestone === 90).length,
+          day30: candidates.filter((c) => c.milestone === 30).length,
+          day60: candidates.filter((c) => c.milestone === 60).length,
+          day90: candidates.filter((c) => c.milestone === 90).length,
         },
       },
-      candidates: candidates.slice(0, 15).map(c => ({
+      candidates: candidates.slice(0, 15).map((c) => ({
         companyName: c.churnRecord.companyName,
         daysSinceChurn: c.daysSinceChurn,
         milestone: c.milestone,
@@ -188,7 +195,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[Win-Back Agent] Error:", error)
     return NextResponse.json(
-      { error: "Win-back agent failed", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Win-back agent failed",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }
@@ -234,7 +244,7 @@ export async function GET() {
         winBackRate: allChurnRecords > 0 ? Math.round((wonBack / allChurnRecords) * 100) : 0,
         mrrRecovered,
       },
-      recentTasks: recentTasks.map(t => ({
+      recentTasks: recentTasks.map((t) => ({
         id: t.id,
         companyName: t.companyName,
         status: t.status,
@@ -242,7 +252,7 @@ export async function GET() {
         milestone: (t.metadata as Record<string, unknown>)?.milestone,
       })),
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to get status" }, { status: 500 })
   }
 }
@@ -290,12 +300,14 @@ async function findWinBackCandidates(): Promise<WinBackCandidate[]> {
 }
 
 function getTaskTitle(candidate: WinBackCandidate): string {
-  const emoji = candidate.outreachType === "final" ? "🔔" : candidate.outreachType === "follow_up" ? "📞" : "👋"
-  const label = candidate.outreachType === "final"
-    ? "Final Win-Back"
-    : candidate.outreachType === "follow_up"
-    ? "Win-Back Follow-Up"
-    : "Win-Back Outreach"
+  const emoji =
+    candidate.outreachType === "final" ? "🔔" : candidate.outreachType === "follow_up" ? "📞" : "👋"
+  const label =
+    candidate.outreachType === "final"
+      ? "Final Win-Back"
+      : candidate.outreachType === "follow_up"
+        ? "Win-Back Follow-Up"
+        : "Win-Back Outreach"
 
   return `${emoji} ${label}: ${candidate.churnRecord.companyName} (${candidate.milestone}d)`
 }

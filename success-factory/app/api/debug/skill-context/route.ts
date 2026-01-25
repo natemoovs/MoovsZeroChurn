@@ -25,9 +25,10 @@ export async function GET(request: NextRequest) {
   }
 
   // Determine the base URL (same logic as skill generation)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
-    || "http://localhost:3000"
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    "http://localhost:3000"
 
   debug.baseUrl = baseUrl
 
@@ -64,11 +65,13 @@ export async function GET(request: NextRequest) {
         configured: data.configured,
         sync: data.sync,
         // Include first 3 company names as sample
-        sampleCompanies: data.summaries?.slice(0, 3).map((s: { companyName: string; healthScore: string; mrr: number }) => ({
-          name: s.companyName,
-          health: s.healthScore,
-          mrr: s.mrr,
-        })),
+        sampleCompanies: data.summaries
+          ?.slice(0, 3)
+          .map((s: { companyName: string; healthScore: string; mrr: number }) => ({
+            name: s.companyName,
+            health: s.healthScore,
+            mrr: s.mrr,
+          })),
       }
     }
   } catch (error) {

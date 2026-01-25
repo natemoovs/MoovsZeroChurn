@@ -149,7 +149,9 @@ export async function POST(request: NextRequest) {
         })
 
         if (existingTask) {
-          console.log(`[Payment Recovery Agent] Skipping ${action.customer.customerName} - already has recent task`)
+          console.log(
+            `[Payment Recovery Agent] Skipping ${action.customer.customerName} - already has recent task`
+          )
           continue
         }
 
@@ -183,9 +185,14 @@ export async function POST(request: NextRequest) {
         })
 
         tasksCreated.push(task.id)
-        console.log(`[Payment Recovery Agent] Created task for ${action.customer.customerName} (${action.escalationLevel})`)
+        console.log(
+          `[Payment Recovery Agent] Created task for ${action.customer.customerName} (${action.escalationLevel})`
+        )
       } catch (err) {
-        console.error(`[Payment Recovery Agent] Error creating task for ${action.customer.customerName}:`, err)
+        console.error(
+          `[Payment Recovery Agent] Error creating task for ${action.customer.customerName}:`,
+          err
+        )
       }
     }
 
@@ -204,13 +211,13 @@ export async function POST(request: NextRequest) {
         tasksCreated: tasksCreated.length,
         totalRevenueAtRisk: totalAtRisk / 100, // Convert from cents
         escalationBreakdown: {
-          critical: recoveryActions.filter(a => a.escalationLevel === "critical").length,
-          high: recoveryActions.filter(a => a.escalationLevel === "high").length,
-          medium: recoveryActions.filter(a => a.escalationLevel === "medium").length,
-          low: recoveryActions.filter(a => a.escalationLevel === "low").length,
+          critical: recoveryActions.filter((a) => a.escalationLevel === "critical").length,
+          high: recoveryActions.filter((a) => a.escalationLevel === "high").length,
+          medium: recoveryActions.filter((a) => a.escalationLevel === "medium").length,
+          low: recoveryActions.filter((a) => a.escalationLevel === "low").length,
         },
       },
-      recoveryActions: recoveryActions.slice(0, 20).map(a => ({
+      recoveryActions: recoveryActions.slice(0, 20).map((a) => ({
         customerName: a.customer.customerName,
         amount: a.customer.amount / 100,
         attemptCount: a.customer.attemptCount,
@@ -221,7 +228,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[Payment Recovery Agent] Error:", error)
     return NextResponse.json(
-      { error: "Payment recovery agent failed", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Payment recovery agent failed",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }
@@ -265,7 +275,7 @@ export async function GET() {
     })
 
     return NextResponse.json({
-      recentTasks: recentTasks.map(t => ({
+      recentTasks: recentTasks.map((t) => ({
         id: t.id,
         companyName: t.companyName,
         priority: t.priority,
@@ -280,7 +290,7 @@ export async function GET() {
         recoveryRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
       },
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to get status" }, { status: 500 })
   }
 }
@@ -296,17 +306,17 @@ async function findFailedPayments(): Promise<FailedPayment[]> {
       if (!customer.id) continue
 
       const charges = await stripe.getRecentCharges(customer.id, 20)
-      const failedCharges = charges.filter(c => c.status === "failed")
+      const failedCharges = charges.filter((c) => c.status === "failed")
 
       // Count total failures in last 30 days
-      const recentFailures = failedCharges.filter(c => {
+      const recentFailures = failedCharges.filter((c) => {
         const chargeDate = new Date(c.created * 1000)
         const daysAgo = (Date.now() - chargeDate.getTime()) / (1000 * 60 * 60 * 24)
         return daysAgo <= 30
       })
 
       // Get most recent failure from last 7 days
-      const recentFailure = failedCharges.find(c => {
+      const recentFailure = failedCharges.find((c) => {
         const chargeDate = new Date(c.created * 1000)
         const daysAgo = (Date.now() - chargeDate.getTime()) / (1000 * 60 * 60 * 24)
         return daysAgo <= 7
@@ -334,7 +344,10 @@ async function findFailedPayments(): Promise<FailedPayment[]> {
   }
 }
 
-function getEscalationLevel(attemptCount: number, amount: number): "low" | "medium" | "high" | "critical" {
+function getEscalationLevel(
+  attemptCount: number,
+  amount: number
+): "low" | "medium" | "high" | "critical" {
   // Amount in cents
   const amountDollars = amount / 100
 
@@ -401,7 +414,8 @@ function escalationLevelToPriority(level: "low" | "medium" | "high" | "critical"
 
 function getTaskTitle(action: RecoveryAction): string {
   const amount = (action.customer.amount / 100).toFixed(0)
-  const emoji = action.escalationLevel === "critical" ? "🚨" : action.escalationLevel === "high" ? "⚠️" : "💳"
+  const emoji =
+    action.escalationLevel === "critical" ? "🚨" : action.escalationLevel === "high" ? "⚠️" : "💳"
 
   return `${emoji} Payment Failed: ${action.customer.customerName} ($${amount})`
 }

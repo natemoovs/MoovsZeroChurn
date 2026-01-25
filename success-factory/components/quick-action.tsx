@@ -30,19 +30,15 @@ export function QuickAction({
   return (
     <Link
       href={href}
-      className="group flex items-center justify-between rounded-lg border border-border-default bg-bg-elevated p-4 transition-all hover:border-success-200 hover:bg-success-50/50 hover:shadow-sm dark:hover:border-success-900 dark:hover:bg-success-950/20"
+      className="group border-border-default bg-bg-elevated hover:border-success-200 hover:bg-success-50/50 dark:hover:border-success-900 dark:hover:bg-success-950/20 flex items-center justify-between rounded-lg border p-4 transition-all hover:shadow-sm"
     >
       <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-bg-tertiary p-2 transition-colors group-hover:bg-success-100 dark:group-hover:bg-success-950">
-          <Icon className="h-5 w-5 text-content-secondary transition-colors group-hover:text-success-600 dark:group-hover:text-success-400" />
+        <div className="bg-bg-tertiary group-hover:bg-success-100 dark:group-hover:bg-success-950 rounded-lg p-2 transition-colors">
+          <Icon className="text-content-secondary group-hover:text-success-600 dark:group-hover:text-success-400 h-5 w-5 transition-colors" />
         </div>
         <div>
-          <p className="font-medium text-content-primary">{label}</p>
-          {description && (
-            <p className="text-sm text-content-secondary">
-              {description}
-            </p>
-          )}
+          <p className="text-content-primary font-medium">{label}</p>
+          {description && <p className="text-content-secondary text-sm">{description}</p>}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -56,7 +52,7 @@ export function QuickAction({
             {badge}
           </span>
         )}
-        <ChevronRight className="h-4 w-4 text-content-tertiary transition-transform group-hover:translate-x-0.5" />
+        <ChevronRight className="text-content-tertiary h-4 w-4 transition-transform group-hover:translate-x-0.5" />
       </div>
     </Link>
   )

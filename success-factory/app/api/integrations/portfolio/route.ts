@@ -59,7 +59,8 @@ export async function GET(request: NextRequest) {
       mrr: company.mrr,
       plan: company.plan,
       paymentStatus: getPaymentStatus(company.subscriptionStatus),
-      lastActivity: company.lastLoginAt?.toISOString() || company.hubspotUpdatedAt?.toISOString() || null,
+      lastActivity:
+        company.lastLoginAt?.toISOString() || company.hubspotUpdatedAt?.toISOString() || null,
       contactCount: company.primaryContactEmail ? 1 : 0,
       riskSignals: company.riskSignals,
       positiveSignals: company.positiveSignals,
@@ -120,10 +121,7 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
           ],
         },
         {
-          OR: [
-            { mrr: null },
-            { mrr: { lte: 0 } },
-          ],
+          OR: [{ mrr: null }, { mrr: { lte: 0 } }],
         },
       ],
     },
@@ -217,7 +215,9 @@ function buildSegmentFilter(segment: string): Record<string, unknown> {
   }
 }
 
-function getPaymentStatus(subscriptionStatus: string | null): "current" | "overdue" | "at_risk" | "unknown" {
+function getPaymentStatus(
+  subscriptionStatus: string | null
+): "current" | "overdue" | "at_risk" | "unknown" {
   if (!subscriptionStatus) return "unknown"
 
   const status = subscriptionStatus.toLowerCase()
@@ -233,7 +233,11 @@ function getSegmentFromPlan(plan: string | null): string {
   const planLower = plan.toLowerCase()
 
   // Enterprise = VIP/Elite plans
-  if (planLower.includes("vip") || planLower.includes("elite") || planLower.includes("enterprise")) {
+  if (
+    planLower.includes("vip") ||
+    planLower.includes("elite") ||
+    planLower.includes("enterprise")
+  ) {
     return "Enterprise"
   }
   // Mid-Market = Pro plans

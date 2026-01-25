@@ -74,15 +74,15 @@ Use concrete numbers, real scenarios, and specific features.
 
 Use the words our customers use. Ground transportation has its own vocabulary.
 
-| Say This | Not This |
-|----------|----------|
-| Trip, ride, reservation | Journey, booking, order |
-| Passenger, rider | Customer, client, user |
-| Operator | Business owner, entrepreneur |
-| Driver | Chauffeur (unless luxury context) |
-| Vehicle, car, van, bus | Asset, unit, fleet member |
-| Dispatch | Operations management |
-| Farm out | Outsource, subcontract |
+| Say This                | Not This                          |
+| ----------------------- | --------------------------------- |
+| Trip, ride, reservation | Journey, booking, order           |
+| Passenger, rider        | Customer, client, user            |
+| Operator                | Business owner, entrepreneur      |
+| Driver                  | Chauffeur (unless luxury context) |
+| Vehicle, car, van, bus  | Asset, unit, fleet member         |
+| Dispatch                | Operations management             |
+| Farm out                | Outsource, subcontract            |
 
 ### 4. Confident, Not Arrogant
 
@@ -120,21 +120,25 @@ We're proud of what we've built, but we don't trash competitors or oversell.
 ## Writing for Different Contexts
 
 ### Blog Posts
+
 - Educational tone - teach operators something useful
 - Can be longer form, include examples and stories
 - Always connect back to how Moovs helps (but don't make it an ad)
 
 ### Emails
+
 - Get to the point fast - operators are busy
 - One clear call to action
 - Personal when appropriate (use their name, reference their business type)
 
 ### Release Notes
+
 - Lead with the benefit, then explain the feature
 - Include "how to use it" if not obvious
 - Be honest about limitations or known issues
 
 ### Landing Pages
+
 - Headline = specific benefit for specific ICP
 - Show the product (screenshots, videos)
 - Social proof from similar operators
@@ -144,19 +148,23 @@ We're proud of what we've built, but we don't trash competitors or oversell.
 ## Examples
 
 ### Good: Feature Announcement
+
 > **New: Flight tracking for airport pickups**
 >
 > Moovs now monitors your passengers' flights automatically. When a flight is delayed, we adjust the pickup time and notify the driver. No more waiting at the curb wondering if the plane landed.
 
 ### Bad: Feature Announcement
+
 > **Introducing Our Revolutionary Flight Tracking Solution**
 >
 > We're excited to announce a game-changing new feature that leverages real-time flight data to seamlessly optimize your airport pickup operations.
 
 ### Good: Email Subject Line
+
 > Your May billing summary is ready
 
 ### Bad: Email Subject Line
+
 > Unlock insights into your business performance!
 
 ---
@@ -166,6 +174,7 @@ We're proud of what we've built, but we don't trash competitors or oversell.
 Use these when you need to back up claims with real data.
 
 ### Scale & Trust
+
 - 1,000+ transportation businesses trust Moovs
 - Operators managing 3 to 500+ vehicles
 - 4.9-star rating across review platforms
@@ -174,6 +183,7 @@ Use these when you need to back up claims with real data.
 - GetApp Category Leader 2025
 
 ### Real Customer Results
+
 - "Went from 3-5 trips per day to 10-15 on average" (Josue P.)
 - "Save hours a day now" (Tom D., Chauffeur Owner)
 - "10 hours saved per week" (Rainbow Road Transport)

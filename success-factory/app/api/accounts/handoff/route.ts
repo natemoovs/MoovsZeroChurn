@@ -19,10 +19,7 @@ export async function POST(request: NextRequest) {
     } = body
 
     if (!companyId || !newOwnerEmail) {
-      return NextResponse.json(
-        { error: "companyId and newOwnerEmail required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "companyId and newOwnerEmail required" }, { status: 400 })
     }
 
     // Get company

@@ -15,121 +15,139 @@ import type Anthropic from "@anthropic-ai/sdk"
 export const skillTools: Anthropic.Tool[] = [
   {
     name: "get_portfolio_summary",
-    description: "Get a summary of all accounts in the portfolio with health scores, MRR, and risk signals. Use this first to get an overview before drilling into specific accounts.",
+    description:
+      "Get a summary of all accounts in the portfolio with health scores, MRR, and risk signals. Use this first to get an overview before drilling into specific accounts.",
     input_schema: {
       type: "object" as const,
       properties: {
         segment: {
           type: "string",
-          description: "Filter by segment: 'all', 'enterprise', 'mid-market', 'smb', 'at-risk', 'healthy', 'churned'",
-          enum: ["all", "enterprise", "mid-market", "smb", "at-risk", "healthy", "warning", "churned"]
-        }
+          description:
+            "Filter by segment: 'all', 'enterprise', 'mid-market', 'smb', 'at-risk', 'healthy', 'churned'",
+          enum: [
+            "all",
+            "enterprise",
+            "mid-market",
+            "smb",
+            "at-risk",
+            "healthy",
+            "warning",
+            "churned",
+          ],
+        },
       },
-      required: []
-    }
+      required: [],
+    },
   },
   {
     name: "search_hubspot_companies",
-    description: "Search for companies in HubSpot by name, domain, or other criteria. Returns up to 20 matching companies with basic info.",
+    description:
+      "Search for companies in HubSpot by name, domain, or other criteria. Returns up to 20 matching companies with basic info.",
     input_schema: {
       type: "object" as const,
       properties: {
         query: {
           type: "string",
-          description: "Search query - company name, domain, or partial match"
-        }
+          description: "Search query - company name, domain, or partial match",
+        },
       },
-      required: ["query"]
-    }
+      required: ["query"],
+    },
   },
   {
     name: "get_hubspot_company_details",
-    description: "Get detailed information about a specific company including contacts, deals, and recent activity.",
+    description:
+      "Get detailed information about a specific company including contacts, deals, and recent activity.",
     input_schema: {
       type: "object" as const,
       properties: {
         companyId: {
           type: "string",
-          description: "HubSpot company ID"
+          description: "HubSpot company ID",
         },
         includeContacts: {
           type: "boolean",
-          description: "Include associated contacts (default true)"
+          description: "Include associated contacts (default true)",
         },
         includeDeals: {
           type: "boolean",
-          description: "Include associated deals (default true)"
+          description: "Include associated deals (default true)",
         },
         includeActivity: {
           type: "boolean",
-          description: "Include recent activity like notes, emails, calls (default true)"
-        }
+          description: "Include recent activity like notes, emails, calls (default true)",
+        },
       },
-      required: ["companyId"]
-    }
+      required: ["companyId"],
+    },
   },
   {
     name: "query_metabase",
-    description: "Run a Metabase query to get usage data, billing info, or custom analytics. Use card IDs for pre-built queries or write custom SQL.",
+    description:
+      "Run a Metabase query to get usage data, billing info, or custom analytics. Use card IDs for pre-built queries or write custom SQL.",
     input_schema: {
       type: "object" as const,
       properties: {
         cardId: {
           type: "number",
-          description: "Metabase card/question ID to run. Known cards: 1469 (CSM_MOOVS master view), 642 (Reservations), 855 (Stripe charges)"
+          description:
+            "Metabase card/question ID to run. Known cards: 1469 (CSM_MOOVS master view), 642 (Reservations), 855 (Stripe charges)",
         },
         customSql: {
           type: "string",
-          description: "Custom SQL query to run (use instead of cardId). Database is Snowflake."
+          description: "Custom SQL query to run (use instead of cardId). Database is Snowflake.",
         },
         filters: {
           type: "object",
-          description: "Filter parameters for the query (e.g., { operator_id: '123' })"
-        }
+          description: "Filter parameters for the query (e.g., { operator_id: '123' })",
+        },
       },
-      required: []
-    }
+      required: [],
+    },
   },
   {
     name: "search_notion_tickets",
-    description: "Search Notion for support tickets related to a customer. Returns ticket status, priority, and details.",
+    description:
+      "Search Notion for support tickets related to a customer. Returns ticket status, priority, and details.",
     input_schema: {
       type: "object" as const,
       properties: {
         customerName: {
           type: "string",
-          description: "Customer/company name to search for in tickets"
+          description: "Customer/company name to search for in tickets",
         },
         databaseId: {
           type: "string",
-          description: "Specific Notion database ID to search (optional, defaults to Moovs Tickets)"
-        }
+          description:
+            "Specific Notion database ID to search (optional, defaults to Moovs Tickets)",
+        },
       },
-      required: ["customerName"]
-    }
+      required: ["customerName"],
+    },
   },
   {
     name: "get_customer_usage",
-    description: "Get detailed usage metrics for a specific customer - trips, reservations, revenue trends.",
+    description:
+      "Get detailed usage metrics for a specific customer - trips, reservations, revenue trends.",
     input_schema: {
       type: "object" as const,
       properties: {
         operatorId: {
           type: "string",
-          description: "Moovs operator ID (UUID)"
+          description: "Moovs operator ID (UUID)",
         },
         stripeAccountId: {
           type: "string",
-          description: "Stripe connected account ID (acct_...)"
+          description: "Stripe connected account ID (acct_...)",
         },
         days: {
           type: "number",
-          description: "Number of days of history (default 90)"
-        }
+          description: "Number of days of history (default 90)",
+        },
       },
-      required: []
-    }
-  }
+      required: [],
+    },
+  },
 ]
 
 // ============================================================================
@@ -179,7 +197,7 @@ export async function executeTool(
     console.error(`[Tools] Error executing ${toolName}:`, error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     }
   }
 }
@@ -207,9 +225,7 @@ async function executeGetPortfolioSummary(
   return { success: true, data }
 }
 
-async function executeSearchHubSpotCompanies(
-  input: Record<string, unknown>
-): Promise<ToolResult> {
+async function executeSearchHubSpotCompanies(input: Record<string, unknown>): Promise<ToolResult> {
   const query = input.query as string
 
   if (!query) {
@@ -221,15 +237,15 @@ async function executeSearchHubSpotCompanies(
 
   return {
     success: true,
-    data: companies.map(c => ({
+    data: companies.map((c) => ({
       id: c.id,
       name: c.properties.name,
       domain: c.properties.domain,
       industry: c.properties.industry,
       lifecycleStage: c.properties.lifecyclestage,
       annualRevenue: c.properties.annualrevenue,
-      createdAt: c.properties.createdate
-    }))
+      createdAt: c.properties.createdate,
+    })),
   }
 }
 
@@ -253,19 +269,19 @@ async function executeGetHubSpotCompanyDetails(
   const result: Record<string, unknown> = {
     company: {
       id: company.id,
-      ...company.properties
-    }
+      ...company.properties,
+    },
   }
 
   if (includeContacts) {
     try {
       const contacts = await hubspot.getContacts(companyId)
-      result.contacts = contacts.map(c => ({
+      result.contacts = contacts.map((c) => ({
         id: c.id,
         name: `${c.properties.firstname || ""} ${c.properties.lastname || ""}`.trim(),
         email: c.properties.email,
         title: c.properties.jobtitle,
-        phone: c.properties.phone
+        phone: c.properties.phone,
       }))
     } catch {
       result.contacts = []
@@ -276,12 +292,12 @@ async function executeGetHubSpotCompanyDetails(
   if (includeDeals) {
     try {
       const deals = await hubspot.getDeals(companyId)
-      result.deals = deals.map(d => ({
+      result.deals = deals.map((d) => ({
         id: d.id,
         name: d.properties.dealname,
         stage: d.properties.dealstage,
         amount: d.properties.amount,
-        closeDate: d.properties.closedate
+        closeDate: d.properties.closedate,
       }))
     } catch {
       result.deals = []
@@ -297,14 +313,14 @@ async function executeGetHubSpotCompanyDetails(
         emailCount: activity.emails.length,
         callCount: activity.calls.length,
         meetingCount: activity.meetings.length,
-        recentNotes: activity.notes.slice(0, 3).map(n => ({
+        recentNotes: activity.notes.slice(0, 3).map((n) => ({
           date: n.timestamp,
-          preview: n.body?.slice(0, 200)
+          preview: n.body?.slice(0, 200),
         })),
-        recentEmails: activity.emails.slice(0, 3).map(e => ({
+        recentEmails: activity.emails.slice(0, 3).map((e) => ({
           date: e.timestamp,
-          subject: e.subject
-        }))
+          subject: e.subject,
+        })),
       }
     } catch {
       result.recentActivity = null
@@ -315,9 +331,7 @@ async function executeGetHubSpotCompanyDetails(
   return { success: true, data: result }
 }
 
-async function executeQueryMetabase(
-  input: Record<string, unknown>
-): Promise<ToolResult> {
+async function executeQueryMetabase(input: Record<string, unknown>): Promise<ToolResult> {
   const cardId = input.cardId as number | undefined
   const customSql = input.customSql as string | undefined
   const filters = input.filters as Record<string, unknown> | undefined
@@ -346,14 +360,12 @@ async function executeQueryMetabase(
     data: {
       rowCount: rows.length,
       columns: result.data?.cols?.map((c: { name: string }) => c.name) || [],
-      rows: rows.slice(0, 50) // Limit to 50 rows to avoid token overload
-    }
+      rows: rows.slice(0, 50), // Limit to 50 rows to avoid token overload
+    },
   }
 }
 
-async function executeSearchNotionTickets(
-  input: Record<string, unknown>
-): Promise<ToolResult> {
+async function executeSearchNotionTickets(input: Record<string, unknown>): Promise<ToolResult> {
   const customerName = input.customerName as string
   const databaseId = input.databaseId as string | undefined
 
@@ -370,28 +382,28 @@ async function executeSearchNotionTickets(
             { property: "Name", title: { contains: customerName } },
             { property: "Title", title: { contains: customerName } },
             { property: "Customer", rich_text: { contains: customerName } },
-          ]
+          ],
         },
-        pageSize: 20
+        pageSize: 20,
       })
 
       return {
         success: true,
-        data: results.results.map(page => ({
+        data: results.results.map((page) => ({
           id: page.id,
           url: page.url,
           properties: Object.fromEntries(
             Object.entries(page.properties).map(([key, val]) => [
               key,
-              extractNotionPropertyValue(val)
+              extractNotionPropertyValue(val),
             ])
-          )
-        }))
+          ),
+        })),
       }
     } catch (error) {
       return {
         success: false,
-        error: `Database query failed: ${error instanceof Error ? error.message : "Unknown error"}`
+        error: `Database query failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       }
     }
   }
@@ -404,7 +416,7 @@ async function executeSearchNotionTickets(
       success: true,
       data: {
         ticketCount: tickets.length,
-        tickets: tickets.map(ticket => ({
+        tickets: tickets.map((ticket) => ({
           id: ticket.id,
           url: ticket.url,
           title: ticket.title,
@@ -412,24 +424,22 @@ async function executeSearchNotionTickets(
           priority: ticket.priority,
           stage: ticket.stage,
           createdAt: ticket.createdAt,
-          tags: ticket.tags
-        }))
-      }
+          tags: ticket.tags,
+        })),
+      },
     }
   } catch (error) {
     return {
       success: false,
-      error: `Ticket search failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      error: `Ticket search failed: ${error instanceof Error ? error.message : "Unknown error"}`,
     }
   }
 }
 
-async function executeGetCustomerUsage(
-  input: Record<string, unknown>
-): Promise<ToolResult> {
+async function executeGetCustomerUsage(input: Record<string, unknown>): Promise<ToolResult> {
   const operatorId = input.operatorId as string | undefined
   const stripeAccountId = input.stripeAccountId as string | undefined
-  const days = (input.days as number) || 90
+  const _days = (input.days as number) || 90 // Available for future date-range filtering
 
   if (!operatorId && !stripeAccountId) {
     return { success: false, error: "Either operatorId or stripeAccountId is required" }
@@ -470,7 +480,7 @@ async function executeGetCustomerUsage(
   } catch (error) {
     return {
       success: false,
-      error: `Usage query failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      error: `Usage query failed: ${error instanceof Error ? error.message : "Unknown error"}`,
     }
   }
 }
@@ -488,13 +498,13 @@ function extractNotionPropertyValue(prop: unknown): unknown {
   switch (type) {
     case "title":
     case "rich_text":
-      return (p[type] as Array<{ plain_text: string }>)?.map(t => t.plain_text).join("") || ""
+      return (p[type] as Array<{ plain_text: string }>)?.map((t) => t.plain_text).join("") || ""
     case "number":
       return p.number
     case "select":
       return (p.select as { name: string } | null)?.name
     case "multi_select":
-      return (p.multi_select as Array<{ name: string }>)?.map(s => s.name)
+      return (p.multi_select as Array<{ name: string }>)?.map((s) => s.name)
     case "date":
       return (p.date as { start: string } | null)?.start
     case "checkbox":

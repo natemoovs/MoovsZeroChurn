@@ -29,13 +29,13 @@ A 5-email sequence targeting black car and limo operators who are likely still u
 
 ## Timing
 
-| Email | Day | Subject | Goal |
-|-------|-----|---------|------|
-| 1 | 0 | "Question about [Company]" | Open conversation |
-| 2 | 3 | "The spreadsheet problem" | Relate to pain |
-| 3 | 7 | "How [Similar Company] cut admin time in half" | Social proof |
-| 4 | 12 | "15 minutes this week?" | Direct ask |
-| 5 | 18 | "Closing the loop" | Final attempt |
+| Email | Day | Subject                                        | Goal              |
+| ----- | --- | ---------------------------------------------- | ----------------- |
+| 1     | 0   | "Question about [Company]"                     | Open conversation |
+| 2     | 3   | "The spreadsheet problem"                      | Relate to pain    |
+| 3     | 7   | "How [Similar Company] cut admin time in half" | Social proof      |
+| 4     | 12  | "15 minutes this week?"                        | Direct ask        |
+| 5     | 18  | "Closing the loop"                             | Final attempt     |
 
 ## Notes
 

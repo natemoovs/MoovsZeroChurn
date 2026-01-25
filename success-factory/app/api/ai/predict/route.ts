@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS, getErrorResponse } from "@/lib/ai"
+import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS } from "@/lib/ai"
 
 // Playbook action type
 interface PlaybookAction {
@@ -87,10 +87,7 @@ export async function POST(request: NextRequest) {
     const signals = body as CustomerSignals
 
     if (!signals.companyId || !signals.companyName) {
-      return NextResponse.json(
-        { error: "companyId and companyName required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "companyId and companyName required" }, { status: 400 })
     }
 
     // Build context for Claude
@@ -146,10 +143,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("AI prediction error:", error)
-    return NextResponse.json(
-      { error: "Failed to generate prediction" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to generate prediction" }, { status: 500 })
   }
 }
 
@@ -185,10 +179,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("AI predictions fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch predictions" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch predictions" }, { status: 500 })
   }
 }
 
@@ -205,10 +196,10 @@ NPS Score: ${signals.npsScore !== null && signals.npsScore !== undefined ? `${si
 Days Until Renewal: ${signals.renewalDaysAway ?? "Unknown"}
 
 RISK SIGNALS:
-${signals.riskSignals.length > 0 ? signals.riskSignals.map(s => `- ${s}`).join("\n") : "- None detected"}
+${signals.riskSignals.length > 0 ? signals.riskSignals.map((s) => `- ${s}`).join("\n") : "- None detected"}
 
 POSITIVE SIGNALS:
-${signals.positiveSignals.length > 0 ? signals.positiveSignals.map(s => `- ${s}`).join("\n") : "- None detected"}
+${signals.positiveSignals.length > 0 ? signals.positiveSignals.map((s) => `- ${s}`).join("\n") : "- None detected"}
 
 Respond in this exact JSON format:
 {

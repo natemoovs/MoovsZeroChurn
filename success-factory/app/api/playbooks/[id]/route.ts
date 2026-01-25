@@ -5,10 +5,7 @@ import { prisma } from "@/lib/db"
  * Get a single playbook
  * GET /api/playbooks/[id]
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -26,10 +23,7 @@ export async function GET(
     })
 
     if (!playbook) {
-      return NextResponse.json(
-        { error: "Playbook not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Playbook not found" }, { status: 404 })
     }
 
     return NextResponse.json({
@@ -38,10 +32,7 @@ export async function GET(
     })
   } catch (error) {
     console.error("Playbook fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch playbook" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch playbook" }, { status: 500 })
   }
 }
 
@@ -49,10 +40,7 @@ export async function GET(
  * Update a playbook
  * PATCH /api/playbooks/[id]
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -73,10 +61,7 @@ export async function PATCH(
     return NextResponse.json(playbook)
   } catch (error) {
     console.error("Playbook update error:", error)
-    return NextResponse.json(
-      { error: "Failed to update playbook" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to update playbook" }, { status: 500 })
   }
 }
 
@@ -98,9 +83,6 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Playbook delete error:", error)
-    return NextResponse.json(
-      { error: "Failed to delete playbook" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to delete playbook" }, { status: 500 })
   }
 }

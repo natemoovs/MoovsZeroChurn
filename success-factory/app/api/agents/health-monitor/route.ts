@@ -149,14 +149,18 @@ export async function POST(request: NextRequest) {
     // Create tasks for significant declines
     const tasksCreated: string[] = []
     for (const change of healthChanges) {
-      if (change.changeType === "declined" || (change.changeType === "new" && change.currentHealth === "red")) {
+      if (
+        change.changeType === "declined" ||
+        (change.changeType === "new" && change.currentHealth === "red")
+      ) {
         const task = await prisma.task.create({
           data: {
             companyId: change.companyId,
             companyName: change.companyName,
-            title: change.changeType === "new"
-              ? `🚨 New at-risk account: ${change.companyName}`
-              : `⚠️ Health declined: ${change.companyName} (${change.previousHealth}→${change.currentHealth})`,
+            title:
+              change.changeType === "new"
+                ? `🚨 New at-risk account: ${change.companyName}`
+                : `⚠️ Health declined: ${change.companyName} (${change.previousHealth}→${change.currentHealth})`,
             description: buildTaskDescription(change),
             priority: change.currentHealth === "red" ? "high" : "medium",
             status: "pending",
@@ -194,16 +198,19 @@ export async function POST(request: NextRequest) {
         snapshotsSaved: snapshots.length,
         healthChanges: healthChanges.length,
         tasksCreated: tasksCreated.length,
-        declines: healthChanges.filter(c => c.changeType === "declined").length,
-        improvements: healthChanges.filter(c => c.changeType === "improved").length,
-        newAtRisk: healthChanges.filter(c => c.changeType === "new").length,
+        declines: healthChanges.filter((c) => c.changeType === "declined").length,
+        improvements: healthChanges.filter((c) => c.changeType === "improved").length,
+        newAtRisk: healthChanges.filter((c) => c.changeType === "new").length,
       },
       changes: healthChanges.slice(0, 20), // Return top 20 changes
     })
   } catch (error) {
     console.error("[Health Monitor] Error:", error)
     return NextResponse.json(
-      { error: "Health monitor failed", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Health monitor failed",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }
@@ -247,7 +254,7 @@ export async function GET() {
         {} as Record<string, number>
       ),
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to get status" }, { status: 500 })
   }
 }
@@ -270,7 +277,7 @@ async function fetchMetabaseData(): Promise<MetabaseAccount[]> {
     const result = await metabase.runQuery(METABASE_QUERY_ID)
     const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
 
-    return rows.map(row => ({
+    return rows.map((row) => ({
       companyName: (row.MOOVS_COMPANY_NAME as string) || "",
       totalTrips: (row.ALL_TRIPS_COUNT as number) || 0,
       daysSinceLastLogin: row.DAYS_SINCE_LAST_IDENTIFY as number | null,
@@ -309,7 +316,7 @@ function calculateHealth(
   }
 
   let score = "unknown"
-  if (riskSignals.some(r => r.includes("Churned"))) {
+  if (riskSignals.some((r) => r.includes("Churned"))) {
     score = "red"
   } else if (riskSignals.length >= 2) {
     score = "red"

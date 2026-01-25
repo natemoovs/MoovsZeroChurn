@@ -167,10 +167,7 @@ export const dailyHealthCheck = inngest.createFunction(
       })
 
       // Group by company, track latest and previous health status
-      const companyHealth = new Map<
-        string,
-        { latest: string; previous: string; name: string }
-      >()
+      const companyHealth = new Map<string, { latest: string; previous: string; name: string }>()
 
       for (const snapshot of recentSnapshots) {
         const existing = companyHealth.get(snapshot.companyId)
@@ -381,9 +378,7 @@ function extractDate(prop: unknown): string | null {
   return null
 }
 
-function extractPerson(
-  prop: unknown
-): { id: string; name?: string; email?: string } | null {
+function extractPerson(prop: unknown): { id: string; name?: string; email?: string } | null {
   if (!prop || typeof prop !== "object") return null
   const p = prop as {
     type?: string
@@ -411,9 +406,7 @@ function mapNotionStatus(
   return "pending"
 }
 
-function mapNotionPriority(
-  priority: string | null
-): "low" | "medium" | "high" | "urgent" {
+function mapNotionPriority(priority: string | null): "low" | "medium" | "high" | "urgent" {
   if (!priority) return "medium"
   const p = priority.toLowerCase()
   if (p === "urgent" || p === "critical") return "urgent"
@@ -427,9 +420,7 @@ export const weeklyEmailDigest = inngest.createFunction(
   { id: "weekly-email-digest", name: "Send weekly CSM digest" },
   { cron: "0 8 * * 1" }, // Every Monday at 8am
   async ({ step }) => {
-    const recipients = process.env.DIGEST_EMAIL_RECIPIENTS?.split(",").map((e) =>
-      e.trim()
-    )
+    const recipients = process.env.DIGEST_EMAIL_RECIPIENTS?.split(",").map((e) => e.trim())
 
     if (!recipients || recipients.length === 0) {
       return { skipped: true, reason: "No digest recipients configured" }
@@ -481,10 +472,7 @@ export const weeklyEmailDigest = inngest.createFunction(
       })
 
       // Find accounts that dropped in health
-      const companyChanges = new Map<
-        string,
-        { name: string; first: string; last: string }
-      >()
+      const companyChanges = new Map<string, { name: string; first: string; last: string }>()
       for (const snapshot of recentSnapshots) {
         const existing = companyChanges.get(snapshot.companyId)
         if (!existing) {
@@ -564,8 +552,7 @@ export const weeklyEmailDigest = inngest.createFunction(
 
       for (const email of recipients) {
         const firstName = email.split("@")[0].split(".")[0]
-        const recipientName =
-          firstName.charAt(0).toUpperCase() + firstName.slice(1)
+        const recipientName = firstName.charAt(0).toUpperCase() + firstName.slice(1)
 
         const html = buildDigestEmail({
           recipientName,

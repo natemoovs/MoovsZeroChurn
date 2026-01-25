@@ -5,7 +5,13 @@ import { gatherContext } from "@/lib/skills/context"
 import { skillTools, executeTool } from "@/lib/skills/tools"
 import fs from "fs"
 import path from "path"
-import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS, getErrorResponse } from "@/lib/ai"
+import {
+  getAnthropicClient,
+  createMessage,
+  AI_MODEL,
+  TOKEN_LIMITS,
+  getErrorResponse,
+} from "@/lib/ai"
 
 // Maximum tool use iterations to prevent infinite loops
 const MAX_TOOL_ITERATIONS = 15
@@ -58,9 +64,10 @@ async function gatherPortfolioContext(rawSegment: string): Promise<string> {
   console.log(`[Portfolio] Normalized segment: "${rawSegment}" -> "${segment}"`)
 
   // Use NEXT_PUBLIC_APP_URL if set, otherwise try VERCEL_URL, then localhost
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
-    || "http://localhost:3000"
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    "http://localhost:3000"
 
   const portfolioUrl = `${baseUrl}/api/integrations/portfolio?segment=${encodeURIComponent(segment)}`
   console.log(`[Portfolio] Fetching from: ${portfolioUrl}`)
@@ -72,7 +79,9 @@ async function gatherPortfolioContext(rawSegment: string): Promise<string> {
       cache: "no-store",
     })
 
-    console.log(`[Portfolio] Response status: ${response.status}, content-type: ${response.headers.get("content-type")}`)
+    console.log(
+      `[Portfolio] Response status: ${response.status}, content-type: ${response.headers.get("content-type")}`
+    )
 
     // Check if we got HTML instead of JSON (indicates wrong URL or auth redirect)
     const contentType = response.headers.get("content-type") || ""
@@ -118,10 +127,19 @@ ${data.sync ? `- Last sync: ${data.sync.lastSyncAt || "Never"}\n- Records synced
     lines.push("")
 
     // Summary stats
-    const green = data.summaries.filter((s: { healthScore: string }) => s.healthScore === "green").length
-    const yellow = data.summaries.filter((s: { healthScore: string }) => s.healthScore === "yellow").length
-    const red = data.summaries.filter((s: { healthScore: string }) => s.healthScore === "red").length
-    const totalMrr = data.summaries.reduce((sum: number, s: { mrr: number | null }) => sum + (s.mrr || 0), 0)
+    const green = data.summaries.filter(
+      (s: { healthScore: string }) => s.healthScore === "green"
+    ).length
+    const yellow = data.summaries.filter(
+      (s: { healthScore: string }) => s.healthScore === "yellow"
+    ).length
+    const red = data.summaries.filter(
+      (s: { healthScore: string }) => s.healthScore === "red"
+    ).length
+    const totalMrr = data.summaries.reduce(
+      (sum: number, s: { mrr: number | null }) => sum + (s.mrr || 0),
+      0
+    )
 
     lines.push("### Summary")
     lines.push(`- **Total Accounts:** ${data.summaries.length}`)
@@ -136,9 +154,14 @@ ${data.sync ? `- Last sync: ${data.sync.lastSyncAt || "Never"}\n- Records synced
     lines.push("")
 
     for (const summary of data.summaries) {
-      const healthIcon = summary.healthScore === "green" ? "🟢" :
-        summary.healthScore === "yellow" ? "🟡" :
-        summary.healthScore === "red" ? "🔴" : "⚪"
+      const healthIcon =
+        summary.healthScore === "green"
+          ? "🟢"
+          : summary.healthScore === "yellow"
+            ? "🟡"
+            : summary.healthScore === "red"
+              ? "🔴"
+              : "⚪"
 
       lines.push(`#### ${summary.companyName} ${healthIcon}`)
       lines.push(`- **Health:** ${summary.healthScore}`)
@@ -238,9 +261,7 @@ async function generateWithTools(
 ): Promise<string> {
   console.log("[Tools] Starting dynamic generation with tool use")
 
-  const messages: Anthropic.MessageParam[] = [
-    { role: "user", content: userPrompt }
-  ]
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: userPrompt }]
 
   let iterations = 0
 
@@ -261,7 +282,7 @@ async function generateWithTools(
     // Check if we're done (no more tool use)
     if (response.stop_reason === "end_turn") {
       // Extract the final text response
-      const textBlock = response.content.find(block => block.type === "text")
+      const textBlock = response.content.find((block) => block.type === "text")
       if (textBlock && textBlock.type === "text") {
         console.log(`[Tools] Generation complete after ${iterations} iterations`)
         return textBlock.text
@@ -303,7 +324,7 @@ async function generateWithTools(
     } else {
       // Unexpected stop reason
       console.error(`[Tools] Unexpected stop_reason: ${response.stop_reason}`)
-      const textBlock = response.content.find(block => block.type === "text")
+      const textBlock = response.content.find((block) => block.type === "text")
       if (textBlock && textBlock.type === "text") {
         return textBlock.text
       }
@@ -354,13 +375,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const knowledgeBase = useTools ? "" : loadKnowledgeBase(skill.knowledge)
 
     // Determine base URL for tool execution
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
-      || "http://localhost:3000"
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+      "http://localhost:3000"
 
     // Build the user's answers text
     const answersText = skill.questions
-      .map(q => `**${q.question}**\n${answers[q.id] || "Not provided"}`)
+      .map((q) => `**${q.question}**\n${answers[q.id] || "Not provided"}`)
       .join("\n\n")
 
     const tweaksSection = tweaks ? `\n\n## Additional Instructions\n${tweaks}` : ""
@@ -416,7 +438,9 @@ Please use the available tools to gather real customer data, then generate the o
       } catch (error) {
         console.error("Tool-based generation error:", error)
         return NextResponse.json(
-          { error: `Generation failed: ${error instanceof Error ? error.message : "Unknown error"}` },
+          {
+            error: `Generation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          },
           { status: 500 }
         )
       }
@@ -523,9 +547,6 @@ Output only the generated markdown content, nothing else.`
 
     // Handle specific Anthropic errors with centralized error handling
     const { message: errorMessage, status } = getErrorResponse(error)
-    return NextResponse.json(
-      { error: errorMessage },
-      { status }
-    )
+    return NextResponse.json({ error: errorMessage }, { status })
   }
 }

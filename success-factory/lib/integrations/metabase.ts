@@ -153,12 +153,12 @@ export interface MetabaseColumnMetadata {
 
 export interface MetabaseInsight {
   "previous-value"?: number
-  "unit"?: string
-  "offset"?: number
+  unit?: string
+  offset?: number
   "last-change"?: number
   "last-value"?: number
-  "col"?: string
-  "slope"?: number
+  col?: string
+  slope?: number
   "best-fit"?: unknown[]
 }
 
@@ -220,10 +220,7 @@ function getHeaders(): HeadersInit {
   }
 }
 
-async function metabaseFetch<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function metabaseFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   if (!METABASE_URL) {
     throw new Error("METABASE_URL environment variable is not set")
   }
@@ -287,8 +284,7 @@ export async function runCustomQuery(
   // Build template tags from parameters
   if (parameters) {
     Object.entries(parameters).forEach(([key, value]) => {
-      const type = typeof value === "number" ? "number" :
-                   value instanceof Date ? "date" : "text"
+      const type = typeof value === "number" ? "number" : value instanceof Date ? "date" : "text"
       templateTags[key] = {
         id: key,
         name: key,
@@ -305,11 +301,13 @@ export async function runCustomQuery(
       query: sql,
       "template-tags": templateTags,
     },
-    parameters: parameters ? Object.entries(parameters).map(([key, value]) => ({
-      type: "category",
-      target: ["variable", ["template-tag", key]],
-      value,
-    })) : [],
+    parameters: parameters
+      ? Object.entries(parameters).map(([key, value]) => ({
+          type: "category",
+          target: ["variable", ["template-tag", key]],
+          value,
+        }))
+      : [],
   }
 
   return metabaseFetch<MetabaseQueryResult>("/dataset", {
@@ -359,13 +357,11 @@ export async function searchQuestions(query: string): Promise<MetabaseCard[]> {
 /**
  * Convert Metabase row array results to objects with column names as keys
  */
-export function rowsToObjects<T = Record<string, unknown>>(
-  result: MetabaseQueryResult
-): T[] {
+export function rowsToObjects<T = Record<string, unknown>>(result: MetabaseQueryResult): T[] {
   const { cols, rows } = result.data
-  const columnNames = cols.map(col => col.name)
+  const columnNames = cols.map((col) => col.name)
 
-  return rows.map(row => {
+  return rows.map((row) => {
     const obj: Record<string, unknown> = {}
     columnNames.forEach((name, index) => {
       obj[name] = row[index]
@@ -378,7 +374,7 @@ export function rowsToObjects<T = Record<string, unknown>>(
  * Get column names from query result
  */
 export function getColumnNames(result: MetabaseQueryResult): string[] {
-  return result.data.cols.map(col => col.display_name || col.name)
+  return result.data.cols.map((col) => col.display_name || col.name)
 }
 
 /**
@@ -453,9 +449,7 @@ export async function queryCustomers(options?: {
     conditions.push(`("P Plan" = 'free' OR "Lago Plan Code" IS NULL)`)
   }
 
-  const whereClause = conditions.length > 0
-    ? `WHERE ${conditions.join(" AND ")}`
-    : ""
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
 
   const sql = `
     SELECT

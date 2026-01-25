@@ -46,10 +46,7 @@ export async function GET(request: NextRequest) {
         primaryContactName: true,
         primaryContactEmail: true,
       },
-      orderBy: [
-        { contractEndDate: "asc" },
-        { mrr: "desc" },
-      ],
+      orderBy: [{ contractEndDate: "asc" }, { mrr: "desc" }],
       take: 20,
     })
 
@@ -65,15 +62,18 @@ export async function GET(request: NextRequest) {
         title: isRenewal
           ? `Renewal Discussion: ${account.name}`
           : account.healthScore === "red"
-          ? `Health Check: ${account.name}`
-          : `Quarterly Review: ${account.name}`,
+            ? `Health Check: ${account.name}`
+            : `Quarterly Review: ${account.name}`,
         type: isRenewal ? "renewal" : account.healthScore === "red" ? "health_check" : "qbr",
         companyId: account.hubspotId,
         companyName: account.name,
         healthScore: account.healthScore,
         mrr: account.mrr,
         attendees: [
-          { name: account.primaryContactName || "Primary Contact", email: account.primaryContactEmail },
+          {
+            name: account.primaryContactName || "Primary Contact",
+            email: account.primaryContactEmail,
+          },
           { name: account.ownerName || "CSM", email: account.ownerEmail },
         ].filter((a) => a.email),
         scheduledAt: meetingDate.toISOString(),
@@ -126,10 +126,7 @@ export async function POST(request: NextRequest) {
     const { meetings } = body
 
     if (!meetings?.length) {
-      return NextResponse.json(
-        { error: "meetings array required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "meetings array required" }, { status: 400 })
     }
 
     const createdTasks = []
@@ -174,7 +171,8 @@ export async function POST(request: NextRequest) {
 - [ ] Prepare renewal/expansion discussion if applicable`,
           priority: meeting.type === "renewal" ? "high" : "medium",
           status: "pending",
-          ownerEmail: meeting.attendees?.find((a: { email: string }) => a.email?.includes("@"))?.email,
+          ownerEmail: meeting.attendees?.find((a: { email: string }) => a.email?.includes("@"))
+            ?.email,
           dueDate,
           metadata: {
             meetingPrep: true,

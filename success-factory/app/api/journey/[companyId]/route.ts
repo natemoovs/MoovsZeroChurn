@@ -29,9 +29,6 @@ export async function GET(
     return NextResponse.json({ journey })
   } catch (error) {
     console.error("Journey fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch journey" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch journey" }, { status: 500 })
   }
 }

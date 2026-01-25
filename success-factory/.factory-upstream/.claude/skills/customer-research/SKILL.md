@@ -36,10 +36,13 @@ Use this skill when you need to:
 When invoking this skill, specify what type of insight you need:
 
 ### 1. Full Customer Profile
+
 ```
 /customer-research profile <operator_id>
 ```
+
 Complete 360-degree view of an operator:
+
 - Company info and contacts
 - Billing status and plan details
 - Invoice history and payment health
@@ -47,10 +50,13 @@ Complete 360-degree view of an operator:
 - Feature usage (if available)
 
 ### 2. Billing Overview
+
 ```
 /customer-research billing <operator_id>
 ```
+
 Focused billing and subscription analysis:
+
 - Current plan and pricing
 - Billing cycle (monthly/annual)
 - Payment history and health
@@ -58,20 +64,26 @@ Focused billing and subscription analysis:
 - Next bill date
 
 ### 3. Customer Health Score
+
 ```
 /customer-research health <operator_id>
 ```
+
 Risk assessment:
+
 - Payment health
 - Engagement signals
 - Support ticket trends
 - Churn risk indicators
 
 ### 4. Reservations/Usage
+
 ```
 /customer-research reservations <operator_id>
 ```
+
 Reservation and usage analysis:
+
 - Trip volume and trends
 - Revenue by trip type
 - Collection rate
@@ -79,12 +91,15 @@ Reservation and usage analysis:
 - Engagement signals
 
 ### 5. Customer Lookup
+
 ```
 /customer-research lookup <search_term>
 ```
+
 Find a customer by name, email, Stripe account ID, or partial ID.
 
 **Supported search types:**
+
 - **Stripe Account ID:** `acct_1RrBZ3Jj4HjJ3ss6`
 - **Company Name:** `Kanoa Transportation` or partial `kanoa`
 - **Email:** `info@company.com` or domain `@company.com`
@@ -95,6 +110,7 @@ Find a customer by name, email, Stripe account ID, or partial ID.
 This skill integrates with:
 
 ### 1. Lago (Billing)
+
 - Customer billing profile
 - Subscription/plan details
 - Invoice history
@@ -103,6 +119,7 @@ This skill integrates with:
 **Tool:** `mcp__lago__get_customer`, `mcp__lago__list_invoices`
 
 ### 2. HubSpot (CRM)
+
 - Company information
 - Contact details
 - Deal history
@@ -111,6 +128,7 @@ This skill integrates with:
 **Tool:** `mcp__hubspot__hubspot-search-objects`, `mcp__hubspot__hubspot-list-associations`
 
 ### 3. Metabase (Usage/Reservations)
+
 - Reservation volume and trends
 - Revenue and collection metrics
 - Trip type breakdown
@@ -122,6 +140,7 @@ This skill integrates with:
 **Database:** Snowflake (ID: 2)
 
 ### 4. Metabase (Stripe Payments)
+
 - Credit card charge history
 - Failed payments and decline reasons
 - Disputes and refunds
@@ -132,6 +151,7 @@ This skill integrates with:
 **Join:** POSTGRES_SWOOP.OPERATOR on STRIPE_ACCOUNT to filter by OPERATOR_ID
 
 ### 5. Metabase (Customer Lookup - CSM)
+
 - Master customer view combining all data sources
 - Lookup by Stripe account ID, company name, or email
 - Returns operator_id for use in other queries
@@ -143,6 +163,7 @@ This skill integrates with:
 **Database:** Snowflake (ID: 2)
 
 ### 6. Notion (Support/Product)
+
 - Support tickets
 - Feature requests
 - Product commitments
@@ -188,12 +209,14 @@ When invoked, ask:
 > "Which customer would you like to research?
 >
 > Please provide:
+>
 > - **Operator ID** (e.g., `727c899e-f3d6-11ef-b401-0f804c13069e`)
 > - **Stripe Account ID** (e.g., `acct_1RrBZ3Jj4HjJ3ss6`)
 > - **Company name** (I'll look it up)
 > - **Email address** (I'll find them)
 >
 > What type of research do you need?
+>
 > - **Profile** - Full 360-degree view
 > - **Billing** - Payment and subscription focus
 > - **Reservations** - Trip volume and usage analysis
@@ -203,6 +226,7 @@ When invoked, ask:
 ## Report Templates
 
 For detailed output formats and analysis frameworks, see:
+
 - [BILLING_GUIDE.md](BILLING_GUIDE.md) - Lago billing analysis
 - [METABASE_GUIDE.md](METABASE_GUIDE.md) - Reservation/usage analysis
 - [STRIPE_GUIDE.md](STRIPE_GUIDE.md) - Stripe payment/dispute analysis

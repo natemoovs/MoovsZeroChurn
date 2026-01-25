@@ -1,7 +1,34 @@
 #!/bin/sh
 
-# Run color audit on staged files
-cd success-factory && node scripts/audit-colors.js
+cd success-factory
 
-# If the audit passes, continue with the commit
-exit $?
+# Run lint-staged (ESLint + Prettier on staged files only)
+echo "🔍 Running lint-staged..."
+npx lint-staged || {
+  echo "❌ Lint-staged failed. Please fix errors before committing."
+  exit 1
+}
+
+# Run TypeScript type check
+echo "📘 Running TypeScript check..."
+npm run typecheck --silent || {
+  echo "❌ TypeScript check failed. Please fix type errors before committing."
+  exit 1
+}
+
+# Run secrets detection on staged files
+echo "🔐 Checking for secrets..."
+git diff --cached --name-only --diff-filter=ACM | xargs -r npx secretlint 2>/dev/null || {
+  echo "❌ Secrets detected! Please remove sensitive data before committing."
+  exit 1
+}
+
+# Run color audit
+echo "🎨 Running color audit..."
+node scripts/audit-colors.cjs || {
+  echo "❌ Color audit failed. Please use semantic color tokens."
+  exit 1
+}
+
+echo "✅ Pre-commit checks passed!"
+exit 0

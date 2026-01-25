@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { hubspot, metabase, stripe } from "@/lib/integrations"
 import { prisma } from "@/lib/db"
-import type { StripeSubscription, StripeInvoice, StripeCharge } from "@/lib/integrations"
 
 // Metabase query IDs
 const ACCOUNT_DATA_QUERY_ID = 948
@@ -111,10 +110,7 @@ interface InvoiceInfo {
  *
  * Handles both HubSpot IDs (numeric) and synthetic operator IDs (operator-xxx)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   // Check if this is a synthetic operator ID (for operators without HubSpot records)
@@ -128,10 +124,7 @@ export async function GET(
 
     // For synthetic IDs, we MUST have synced data (no HubSpot to fall back to)
     if (isSyntheticId && !syncedCompany) {
-      return NextResponse.json(
-        { error: "Account not found in database" },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Account not found in database" }, { status: 404 })
     }
 
     // Determine the actual HubSpot ID to use for API calls
@@ -178,10 +171,7 @@ export async function GET(
 
     // If no HubSpot data and no synced data, return 404
     if (!company && !syncedCompany) {
-      return NextResponse.json(
-        { error: "Account not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Account not found" }, { status: 404 })
     }
 
     // Determine company name and domain for Metabase/Stripe lookups
@@ -229,7 +219,8 @@ export async function GET(
     const finalMrr = syncedCompany?.mrr ?? metabaseData?.mrr ?? null
     const finalPlan = syncedCompany?.plan ?? metabaseData?.plan ?? null
     const finalTotalTrips = syncedCompany?.totalTrips ?? metabaseData?.totalTrips ?? null
-    const finalDaysSinceLastLogin = syncedCompany?.daysSinceLastLogin ?? metabaseData?.daysSinceLastLogin ?? null
+    const finalDaysSinceLastLogin =
+      syncedCompany?.daysSinceLastLogin ?? metabaseData?.daysSinceLastLogin ?? null
 
     const accountDetail: AccountDetail = {
       // Core info - prefer HubSpot, fall back to synced data
@@ -244,9 +235,14 @@ export async function GET(
       country: company?.properties.country || syncedCompany?.country || null,
       description: company?.properties.description || null,
       // Lifecycle
-      lifecycleStage: company?.properties.lifecyclestage || syncedCompany?.subscriptionStatus || null,
-      customerSince: company?.properties.createdate || syncedCompany?.hubspotCreatedAt?.toISOString() || null,
-      lastModified: company?.properties.hs_lastmodifieddate || syncedCompany?.hubspotUpdatedAt?.toISOString() || null,
+      lifecycleStage:
+        company?.properties.lifecyclestage || syncedCompany?.subscriptionStatus || null,
+      customerSince:
+        company?.properties.createdate || syncedCompany?.hubspotCreatedAt?.toISOString() || null,
+      lastModified:
+        company?.properties.hs_lastmodifieddate ||
+        syncedCompany?.hubspotUpdatedAt?.toISOString() ||
+        null,
       // Health (from synced database for consistency)
       healthScore,
       riskSignals,
@@ -260,27 +256,30 @@ export async function GET(
       daysSinceLastLogin: finalDaysSinceLastLogin,
       churnStatus: metabaseData?.churnStatus || syncedCompany?.subscriptionStatus || null,
       // Contacts - from HubSpot if available, otherwise show primary contact from sync
-      contacts: contacts.length > 0
-        ? contacts.map((c) => ({
-            id: c.id,
-            firstName: c.properties.firstname || null,
-            lastName: c.properties.lastname || null,
-            email: c.properties.email || null,
-            phone: c.properties.phone || null,
-            jobTitle: c.properties.jobtitle || null,
-            lastModified: c.properties.lastmodifieddate || null,
-          }))
-        : syncedCompany?.primaryContactEmail
-          ? [{
-              id: "primary",
-              firstName: null,
-              lastName: null,
-              email: syncedCompany.primaryContactEmail,
-              phone: null,
-              jobTitle: null,
-              lastModified: null,
-            }]
-          : [],
+      contacts:
+        contacts.length > 0
+          ? contacts.map((c) => ({
+              id: c.id,
+              firstName: c.properties.firstname || null,
+              lastName: c.properties.lastname || null,
+              email: c.properties.email || null,
+              phone: c.properties.phone || null,
+              jobTitle: c.properties.jobtitle || null,
+              lastModified: c.properties.lastmodifieddate || null,
+            }))
+          : syncedCompany?.primaryContactEmail
+            ? [
+                {
+                  id: "primary",
+                  firstName: null,
+                  lastName: null,
+                  email: syncedCompany.primaryContactEmail,
+                  phone: null,
+                  jobTitle: null,
+                  lastModified: null,
+                },
+              ]
+            : [],
       // Deals
       deals: deals.map((d) => ({
         id: d.id,
@@ -301,10 +300,7 @@ export async function GET(
     return NextResponse.json(accountDetail)
   } catch (error) {
     console.error("Account detail fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch account details" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch account details" }, { status: 500 })
   }
 }
 
@@ -331,9 +327,7 @@ async function fetchMetabaseDataForCompany(
 
     // Find matching company (case-insensitive)
     const match = rows.find(
-      (row) =>
-        (row.MOOVS_COMPANY_NAME as string)?.toLowerCase() ===
-        companyName.toLowerCase()
+      (row) => (row.MOOVS_COMPANY_NAME as string)?.toLowerCase() === companyName.toLowerCase()
     )
 
     if (!match) return null
@@ -357,9 +351,7 @@ async function fetchMetabaseDataForCompany(
  * Fetch Stripe payment data for a company
  * Attempts to find customer by domain-based email pattern
  */
-async function fetchStripeData(
-  companyDomainEmail: string | null
-): Promise<PaymentHealth | null> {
+async function fetchStripeData(companyDomainEmail: string | null): Promise<PaymentHealth | null> {
   if (!process.env.STRIPE_SECRET_KEY || !companyDomainEmail) {
     return null
   }
@@ -394,9 +386,7 @@ async function fetchStripeData(
       }, 0)
 
     // Check for failed payments
-    const hasFailedPayments = charges.some(
-      (c) => c.status === "failed" || c.refunded
-    )
+    const hasFailedPayments = charges.some((c) => c.status === "failed" || c.refunded)
 
     // Determine payment status
     let paymentStatus: PaymentHealth["paymentStatus"] = "unknown"
@@ -436,12 +426,8 @@ async function fetchStripeData(
         status: i.status,
         amount: i.amount_due / 100,
         currency: i.currency,
-        dueDate: i.due_date
-          ? new Date(i.due_date * 1000).toISOString()
-          : null,
-        paidAt: i.paid
-          ? new Date(i.period_end * 1000).toISOString()
-          : null,
+        dueDate: i.due_date ? new Date(i.due_date * 1000).toISOString() : null,
+        paidAt: i.paid ? new Date(i.period_end * 1000).toISOString() : null,
         invoiceUrl: i.hosted_invoice_url,
       })),
       paymentStatus,
@@ -450,9 +436,7 @@ async function fetchStripeData(
       lastPaymentDate: lastSuccessfulCharge
         ? new Date(lastSuccessfulCharge.created * 1000).toISOString()
         : null,
-      lastPaymentAmount: lastSuccessfulCharge
-        ? lastSuccessfulCharge.amount / 100
-        : null,
+      lastPaymentAmount: lastSuccessfulCharge ? lastSuccessfulCharge.amount / 100 : null,
     }
   } catch (error) {
     console.error("Stripe fetch error:", error)
@@ -512,7 +496,8 @@ function buildTimeline(
       id: `call-${call.id}`,
       type: "call",
       title: `Call - ${call.disposition || "Completed"}`,
-      description: call.duration > 0 ? `Duration: ${Math.round(call.duration / 60)} min` : undefined,
+      description:
+        call.duration > 0 ? `Duration: ${Math.round(call.duration / 60)} min` : undefined,
       timestamp: call.timestamp,
     })
   }
@@ -561,9 +546,7 @@ function buildTimeline(
   }
 
   // Sort by timestamp (newest first)
-  events.sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  )
+  events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
   return events.slice(0, 50) // Limit to 50 events
 }
@@ -672,8 +655,7 @@ function calculateHealth(
       (r) =>
         r.includes("Churned") ||
         r.includes("6+ months") ||
-        (r.includes("No login in") &&
-          parseInt(r.match(/\d+/)?.[0] || "0") > 60)
+        (r.includes("No login in") && parseInt(r.match(/\d+/)?.[0] || "0") > 60)
     )
   ) {
     healthScore = "red"

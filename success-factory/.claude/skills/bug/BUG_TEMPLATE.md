@@ -7,11 +7,13 @@ This template defines the structure for bug tickets created by the `/bug` skill.
 **Format:** `Bug: [Clear, searchable description]`
 
 **Good examples:**
+
 - `Bug: Dispatch page shows no trips for operators with 100+ vehicles`
 - `Bug: Save button on reservation edit doesn't respond after selecting vehicle`
 - `Bug: Driver app crashes when opening trip with no passenger phone`
 
 **Bad examples:**
+
 - `Bug: Not working` (too vague)
 - `Bug: Customer can't do the thing they want to do` (not searchable)
 - `Bug: Issue reported by John Smith` (doesn't describe the bug)
@@ -63,18 +65,22 @@ This template defines the structure for bug tickets created by the `/bug` skill.
 [What codebase research revealed - relevant files, code paths, related code]
 
 **Likely affected files:**
+
 - `[file path 1]` - [what this file does]
 - `[file path 2]` - [what this file does]
 
 **Related code:**
+
 - [Any relevant API endpoints, components, or functions identified]
 
 ## Scope
 
 **This IS about:**
+
 - [Specific aspect of the bug]
 
 **This is NOT about:**
+
 - [Related issues that are separate tickets]
 - [Feature requests mentioned by customer]
 
@@ -136,20 +142,24 @@ Save button shows loading spinner indefinitely. After ~30 seconds, user sees a g
 The reservation creation endpoint likely has a validation issue with more than 3 stops.
 
 **Likely affected files:**
+
 - `server/src/reservations/ReservationMutations.ts` - handles reservation creation
 - `server/src/reservations/validation.ts` - validates reservation input
 - `dooms-operator/src/components/reservations/CreateReservationForm.tsx` - the form component
 
 **Related code:**
+
 - POST `/api/reservations` endpoint
 - `validateStops()` function in validation.ts appears to have a hardcoded limit
 
 ## Scope
 
 **This IS about:**
+
 - Reservations with 4+ stops failing to save
 
 **This is NOT about:**
+
 - Multi-stop pricing (separate feature)
 - Stop reordering UI (works fine)
 - Driver app multi-stop display (separate ticket)
@@ -164,12 +174,12 @@ The reservation creation endpoint likely has a validation issue with more than 3
 
 ## Severity Guidelines
 
-| Severity | Criteria | Examples |
-|----------|----------|----------|
-| **Critical** | System down, data loss, security breach, payments broken | Can't log in at all, payments not processing, data corruption |
-| **High** | Major feature completely broken, no workaround | Can't create reservations, dispatch not loading, driver can't see trips |
-| **Medium** | Feature partially broken, workaround exists | Export missing some columns, filter doesn't work but can scroll |
-| **Low** | Minor issue, cosmetic, rare edge case | Button slightly misaligned, typo in message, affects <1% of users |
+| Severity     | Criteria                                                 | Examples                                                                |
+| ------------ | -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Critical** | System down, data loss, security breach, payments broken | Can't log in at all, payments not processing, data corruption           |
+| **High**     | Major feature completely broken, no workaround           | Can't create reservations, dispatch not loading, driver can't see trips |
+| **Medium**   | Feature partially broken, workaround exists              | Export missing some columns, filter doesn't work but can scroll         |
+| **Low**      | Minor issue, cosmetic, rare edge case                    | Button slightly misaligned, typo in message, affects <1% of users       |
 
 ## Creating the Ticket
 
@@ -186,6 +196,7 @@ python3 scripts/notion/create-ticket.py \
 ```
 
 **Notes:**
+
 - Bugs always get `--type Bug`
 - Bugs enter `--stage "Backlog"` (Bug Gatekeeper will review)
 - Severity maps to priority: Critical/High → High, Medium → Medium, Low → Low

@@ -13,9 +13,11 @@ Use the `mcp__notion__API-query-data-source` tool with filters to fetch relevant
 ## 1. Pipeline Health Analysis
 
 ### Purpose
+
 Understand where work is flowing and where it's stuck.
 
 ### Query Strategy
+
 Fetch all tickets, then group by Stage:
 
 ```
@@ -36,13 +38,13 @@ Stages (in order):
 
 ### Metrics to Calculate
 
-| Metric | Formula | Healthy Range |
-|--------|---------|---------------|
-| **Backlog Size** | Count where Stage = Backlog | < 50 |
-| **In-Flight** | Count where Stage in [Ready for dev, In Development, QA, Code Review] | 5-15 |
-| **Blocked Rate** | Blocked / Total In-Flight | < 10% |
-| **WIP per Engineer** | In Development / # Engineers | 1-2 |
-| **Validation Queue** | Problem Validation + Product Design | Context dependent |
+| Metric               | Formula                                                               | Healthy Range     |
+| -------------------- | --------------------------------------------------------------------- | ----------------- |
+| **Backlog Size**     | Count where Stage = Backlog                                           | < 50              |
+| **In-Flight**        | Count where Stage in [Ready for dev, In Development, QA, Code Review] | 5-15              |
+| **Blocked Rate**     | Blocked / Total In-Flight                                             | < 10%             |
+| **WIP per Engineer** | In Development / # Engineers                                          | 1-2               |
+| **Validation Queue** | Problem Validation + Product Design                                   | Context dependent |
 
 ### Red Flags to Surface
 
@@ -58,21 +60,25 @@ Stages (in order):
 ## Pipeline Health Report - [Date]
 
 ### Summary
+
 - **Total Active Tickets:** X
 - **Flow Efficiency:** X% (items moving vs stuck)
 - **Primary Bottleneck:** [Stage with highest count]
 
 ### Stage Distribution
+
 | Stage | Count | Avg Days in Stage |
-|-------|-------|-------------------|
-| ... | ... | ... |
+| ----- | ----- | ----------------- |
+| ...   | ...   | ...               |
 
 ### Blocked Items (Immediate Attention)
+
 1. [DOOM-XXX] Title - Blocked for X days
    - Reason: [if known]
    - Assigned: [person]
 
 ### Recommendations
+
 1. ...
 2. ...
 ```
@@ -82,6 +88,7 @@ Stages (in order):
 ## 2. Betting Table Prep Analysis
 
 ### Purpose
+
 Prepare the CEO and leadership for the betting table meeting by identifying what's ready to bet on and what's not.
 
 ### Query Strategy
@@ -93,12 +100,12 @@ Prepare the CEO and leadership for the betting table meeting by identifying what
 
 ### Metrics to Calculate
 
-| Metric | Purpose |
-|--------|---------|
-| **Bet-Ready Count** | How many items can we actually bet on? |
-| **Appetite Distribution** | How many small batch vs big batch? |
-| **Priority Mix** | Are we betting on the right things? |
-| **Customer Commitment Items** | Items tagged with specific customers |
+| Metric                        | Purpose                                |
+| ----------------------------- | -------------------------------------- |
+| **Bet-Ready Count**           | How many items can we actually bet on? |
+| **Appetite Distribution**     | How many small batch vs big batch?     |
+| **Priority Mix**              | Are we betting on the right things?    |
+| **Customer Commitment Items** | Items tagged with specific customers   |
 
 ### Decision Framework
 
@@ -118,29 +125,36 @@ For each bet-ready item, assess:
 ### Ready to Bet (X items)
 
 #### Big Batch Candidates (3-week projects)
-| ID | Name | Priority | Customer Impact | Notes |
-|----|------|----------|-----------------|-------|
-| DOOM-XXX | ... | High | 8/10 | Enterprise commitment |
+
+| ID       | Name | Priority | Customer Impact | Notes                 |
+| -------- | ---- | -------- | --------------- | --------------------- |
+| DOOM-XXX | ...  | High     | 8/10            | Enterprise commitment |
 
 #### Small Batch Candidates (3-5 day projects)
-| ID | Name | Priority | Customer Impact | Notes |
-|----|------|----------|-----------------|-------|
-| DOOM-XXX | ... | Medium | 5/10 | Quick win |
+
+| ID       | Name | Priority | Customer Impact | Notes     |
+| -------- | ---- | -------- | --------------- | --------- |
+| DOOM-XXX | ...  | Medium   | 5/10            | Quick win |
 
 ### Not Yet Ready (but should be discussed)
+
 - [DOOM-XXX] High priority, stuck in Problem Validation
 - [DOOM-XXX] Enterprise commitment, needs shaping
 
 ### Blocked (need unblocking before betting)
+
 - [DOOM-XXX] Blocked on: [reason]
 
 ### Recommended Bets for Next Cycle
+
 Based on priority, customer impact, and strategic alignment:
+
 1. [DOOM-XXX] - [Rationale]
 2. [DOOM-XXX] - [Rationale]
 3. [DOOM-XXX] - [Rationale]
 
 ### Items to Explicitly NOT Bet On (and why)
+
 1. [DOOM-XXX] - Not shaped enough
 2. [DOOM-XXX] - Low impact, can wait
 ```
@@ -150,6 +164,7 @@ Based on priority, customer impact, and strategic alignment:
 ## 3. Commitment Tracker Analysis
 
 ### Purpose
+
 Ensure we're honoring commitments to customers, especially enterprise clients.
 
 ### Query Strategy
@@ -160,6 +175,7 @@ Ensure we're honoring commitments to customers, especially enterprise clients.
 4. **Overdue:** Due Date < Today AND Status != Done
 
 ### Key Customers to Track
+
 - DPV
 - Roberts Hawaii
 - Carey Transportation
@@ -168,12 +184,12 @@ Ensure we're honoring commitments to customers, especially enterprise clients.
 
 ### Risk Assessment Framework
 
-| Risk Level | Criteria |
-|------------|----------|
+| Risk Level   | Criteria                            |
+| ------------ | ----------------------------------- |
 | **Critical** | Due in < 7 days, not in development |
-| **High** | Due in < 14 days, still in design |
-| **Medium** | Due in < 30 days, in backlog |
-| **Low** | Due in 30+ days, on track |
+| **High**     | Due in < 14 days, still in design   |
+| **Medium**   | Due in < 30 days, in backlog        |
+| **Low**      | Due in 30+ days, on track           |
 
 ### Output Format
 
@@ -181,24 +197,29 @@ Ensure we're honoring commitments to customers, especially enterprise clients.
 ## Commitment Tracker - [Date]
 
 ### Critical Risk (Action Required)
-| ID | Name | Customer | Due Date | Current Stage | Gap |
-|----|------|----------|----------|---------------|-----|
-| DOOM-XXX | ... | DPV | Jan 15 | Problem Validation | Needs immediate shaping |
+
+| ID       | Name | Customer | Due Date | Current Stage      | Gap                     |
+| -------- | ---- | -------- | -------- | ------------------ | ----------------------- |
+| DOOM-XXX | ...  | DPV      | Jan 15   | Problem Validation | Needs immediate shaping |
 
 ### High Risk
+
 ...
 
 ### On Track
-| ID | Name | Customer | Due Date | Current Stage |
-|----|------|----------|----------|---------------|
-| DOOM-XXX | ... | Roberts | Feb 1 | In Development |
+
+| ID       | Name | Customer | Due Date | Current Stage  |
+| -------- | ---- | -------- | -------- | -------------- |
+| DOOM-XXX | ...  | Roberts  | Feb 1    | In Development |
 
 ### Overdue Items
-| ID | Name | Customer | Due Date | Days Overdue | Status |
-|----|------|----------|----------|--------------|--------|
-| DOOM-XXX | ... | Cornell | Dec 15 | 21 | Stuck in QA |
+
+| ID       | Name | Customer | Due Date | Days Overdue | Status      |
+| -------- | ---- | -------- | -------- | ------------ | ----------- |
+| DOOM-XXX | ...  | Cornell  | Dec 15   | 21           | Stuck in QA |
 
 ### Recommended Actions
+
 1. [DOOM-XXX] - Escalate to Chris immediately
 2. [DOOM-XXX] - Communicate delay to customer
 3. [DOOM-XXX] - Re-scope to hit deadline
@@ -209,6 +230,7 @@ Ensure we're honoring commitments to customers, especially enterprise clients.
 ## 4. Team Workload Analysis
 
 ### Purpose
+
 Understand capacity and prevent burnout or imbalanced workloads.
 
 ### Query Strategy
@@ -219,11 +241,11 @@ Understand capacity and prevent burnout or imbalanced workloads.
 
 ### Healthy Workload Benchmarks
 
-| Role | Max Concurrent Items | Notes |
-|------|---------------------|-------|
-| Engineer | 2-3 | More = context switching |
-| Product | 5-8 | Shaping can be parallel |
-| Support | 10+ | Triage is different |
+| Role     | Max Concurrent Items | Notes                    |
+| -------- | -------------------- | ------------------------ |
+| Engineer | 2-3                  | More = context switching |
+| Product  | 5-8                  | Shaping can be parallel  |
+| Support  | 10+                  | Triage is different      |
 
 ### Output Format
 
@@ -233,25 +255,29 @@ Understand capacity and prevent burnout or imbalanced workloads.
 ### Current Assignments
 
 | Person | In Progress | In Dev | In Design | Bugs | Features |
-|--------|-------------|--------|-----------|------|----------|
-| Chris | 3 | 2 | 1 | 1 | 2 |
-| [Name] | ... | ... | ... | ... | ... |
+| ------ | ----------- | ------ | --------- | ---- | -------- |
+| Chris  | 3           | 2      | 1         | 1    | 2        |
+| [Name] | ...         | ...    | ...       | ...  | ...      |
 
 ### Capacity Alerts
+
 - **Chris:** 3 items in development (at capacity)
 - **[Name]:** 5 items assigned (overloaded)
 
 ### Unassigned High Priority
-| ID | Name | Priority | Stage | Days Unassigned |
-|----|------|----------|-------|-----------------|
-| DOOM-XXX | ... | High | Ready for dev | 5 |
+
+| ID       | Name | Priority | Stage         | Days Unassigned |
+| -------- | ---- | -------- | ------------- | --------------- |
+| DOOM-XXX | ...  | High     | Ready for dev | 5               |
 
 ### Team Distribution by Type
+
 - Bugs: X items (Y%)
 - Features: X items (Y%)
 - Requests: X items (Y%)
 
 ### Recommendations
+
 1. Reassign [DOOM-XXX] to [Person] who has capacity
 2. [Person] is overloaded - need to re-prioritize
 ```
@@ -261,11 +287,13 @@ Understand capacity and prevent burnout or imbalanced workloads.
 ## 5. Strategic Insights Analysis
 
 ### Purpose
+
 High-level health check on product development patterns.
 
 ### Metrics to Calculate
 
 #### Type Distribution
+
 ```
 Total Tickets: X
 - Bugs: X (Y%)
@@ -277,6 +305,7 @@ Total Tickets: X
 **Healthy Benchmark:** Bugs should be < 30% of active work
 
 #### Priority Distribution
+
 ```
 - High: X (Y%)
 - Medium: X (Y%)
@@ -286,6 +315,7 @@ Total Tickets: X
 **Red Flag:** If > 50% is "High priority," nothing is actually high priority
 
 #### Customer Impact Analysis
+
 ```
 Average Customer Impact Score: X/10
 Items with Impact > 7: X
@@ -293,6 +323,7 @@ Items with Impact < 3: X (consider deprioritizing)
 ```
 
 #### Aging Analysis
+
 ```
 Items older than 30 days (not done): X
 Items older than 90 days (not done): X
@@ -300,6 +331,7 @@ Oldest item: [DOOM-XXX] - X days old
 ```
 
 #### Velocity (if tracking completed_at)
+
 ```
 Completed last 7 days: X
 Completed last 30 days: X
@@ -314,24 +346,28 @@ Average days to complete: X
 ### Product Health Score: [Good/Warning/Critical]
 
 ### Key Metrics
-| Metric | Value | Status |
-|--------|-------|--------|
-| Bug Ratio | 25% | Good |
-| High Priority Ratio | 60% | Warning |
-| Avg Customer Impact | 6.2/10 | Good |
-| Blocked Items | 3 | Warning |
+
+| Metric              | Value  | Status  |
+| ------------------- | ------ | ------- |
+| Bug Ratio           | 25%    | Good    |
+| High Priority Ratio | 60%    | Warning |
+| Avg Customer Impact | 6.2/10 | Good    |
+| Blocked Items       | 3      | Warning |
 
 ### Concerning Patterns
+
 1. **Priority Inflation:** 60% of items are "High" - need recalibration
 2. **Aging Backlog:** 15 items older than 90 days - archive or commit
 3. **Bug Accumulation:** 5 new bugs in last week, only 2 fixed
 
 ### Positive Patterns
+
 1. High customer impact items are getting priority
 2. Velocity is consistent at ~8 items/week
 3. Blocked rate is low at 5%
 
 ### Strategic Recommendations
+
 1. Run priority recalibration - too many "High" items
 2. Archive items older than 90 days that aren't enterprise commitments
 3. Dedicate 1 day of cool-down to bug bash
@@ -342,9 +378,11 @@ Average days to complete: X
 ## 6. Executive Summary Analysis
 
 ### Purpose
+
 Give the CEO a 2-minute pulse on product operations.
 
 ### Formula
+
 Combine the top insights from each other report:
 
 1. **One Sentence State:** "Product is [healthy/strained/at risk]"
@@ -361,19 +399,23 @@ Combine the top insights from each other report:
 ### Status: [Healthy / Needs Attention / At Risk]
 
 ### Key Numbers
+
 - **In Flight:** 12 items across 3 engineers
 - **Ready to Bet:** 5 items shaped and waiting
 - **Blocked:** 2 items (both < 2 days, manageable)
 
 ### Top Risk
+
 [DOOM-XXX] Enterprise feature for DPV is due Jan 15 but still in Problem Validation.
 **Action:** Shape this TODAY or communicate delay.
 
 ### Top Opportunity
+
 [DOOM-XXX] Quick fix for billing bug affecting 12 operators.
 2-hour fix that removes a major support burden.
 
 ### This Week's Focus
+
 1. Shape DPV commitment before Friday betting table
 2. Close out 2 items stuck in QA
 3. Archive 10 stale backlog items
@@ -384,26 +426,31 @@ Combine the top insights from each other report:
 ## Query Patterns for Notion
 
 ### Fetch All Active Tickets
+
 ```
 Filter: Status NOT in [Done, Archived, Not doing anymore]
 ```
 
 ### Fetch by Stage
+
 ```
 Filter: Stage contains [specific stage]
 ```
 
 ### Fetch High Priority
+
 ```
 Filter: Priority = High OR Priority Score > 7
 ```
 
 ### Fetch Overdue
+
 ```
 Filter: Due Date < today AND Status NOT in [Done, Archived]
 ```
 
 ### Fetch by Customer Tag
+
 ```
 Filter: Tags contains "Enterprise" OR Tags contains "[CustomerName]"
 ```
@@ -415,6 +462,7 @@ Filter: Tags contains "Enterprise" OR Tags contains "[CustomerName]"
 ### When Numbers Look Bad
 
 Don't panic. Ask:
+
 1. Is this a real problem or a data quality issue?
 2. Is this temporary (end of cycle crunch) or systemic?
 3. What's the root cause?
@@ -423,6 +471,7 @@ Don't panic. Ask:
 ### When Numbers Look Good
 
 Stay skeptical. Ask:
+
 1. Is the data accurate and up to date?
 2. Are we measuring the right things?
 3. What's hiding beneath the good numbers?
@@ -430,6 +479,7 @@ Stay skeptical. Ask:
 ### Always Remember
 
 The goal isn't perfect metrics. The goal is:
+
 - **Visibility** - See what's happening
 - **Predictability** - Know what's coming
 - **Discipline** - Hold the line on process
