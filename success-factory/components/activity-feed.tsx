@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import {
   Activity,
@@ -38,25 +38,26 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function fetchActivities() {
-      setLoading(true)
-      try {
-        const params = new URLSearchParams()
-        if (companyId) params.set("companyId", companyId)
-        params.set("limit", limit.toString())
+  const fetchActivities = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (companyId) params.set("companyId", companyId)
+      params.set("limit", limit.toString())
 
-        const res = await fetch(`/api/activity?${params}`)
-        const data = await res.json()
-        setActivities(data.activities || [])
-      } catch (error) {
-        console.error("Failed to fetch activities:", error)
-      } finally {
-        setLoading(false)
-      }
+      const res = await fetch(`/api/activity?${params}`)
+      const data = await res.json()
+      setActivities(data.activities || [])
+    } catch (error) {
+      console.error("Failed to fetch activities:", error)
+    } finally {
+      setLoading(false)
     }
-    fetchActivities()
   }, [companyId, limit])
+
+  useEffect(() => {
+    fetchActivities()
+  }, [fetchActivities])
 
   const getIcon = (type: ActivityItem["type"]) => {
     switch (type) {
