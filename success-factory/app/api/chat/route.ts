@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import {
   getAnthropicClient,
   AI_MODEL,
@@ -6,10 +6,14 @@ import {
   extractText,
 } from "@/lib/ai"
 import { skillTools, executeTool } from "@/lib/skills/tools"
+import { requireAuth } from "@/lib/auth/api-middleware"
+import { createLogger } from "@/lib/logger"
 import type Anthropic from "@anthropic-ai/sdk"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
+
+const logger = createLogger("chat")
 
 interface ChatMessage {
   role: "user" | "assistant"
@@ -39,6 +43,10 @@ If asked about something you can't help with, politely explain your capabilities
  * POST /api/chat
  */
 export async function POST(request: NextRequest) {
+  // Require authentication
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { messages, stream = true } = (await request.json()) as {
       messages: ChatMessage[]
@@ -65,7 +73,7 @@ export async function POST(request: NextRequest) {
       return nonStreamingResponse(anthropic, anthropicMessages, baseUrl)
     }
   } catch (error) {
-    console.error("[Chat] Error:", error)
+    logger.error(error, { endpoint: "/api/chat" })
     return Response.json(
       { error: error instanceof Error ? error.message : "Chat failed" },
       { status: 500 }

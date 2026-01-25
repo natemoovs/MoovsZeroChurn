@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSession } from "@/lib/auth/client"
+import { useTouchDevice } from "@/hooks/use-touch-device"
 import { TaskComments } from "@/components/task-comments"
 import { TaskDrawer } from "@/components/task-drawer"
 import { TaskDetailModal } from "@/components/task-detail-modal"
@@ -99,11 +100,12 @@ export default function TasksPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [detailModalTask, setDetailModalTask] = useState<Task | null>(null)
   const taskRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const isTouchDevice = useTouchDevice()
 
   // Get current user's email for "My Tasks" filter
   const currentUserEmail = data?.user?.email
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (only active on non-touch devices)
   // j - move down
   useHotkeys("j", () => {
     if (filteredTasks.length === 0) return
@@ -362,12 +364,14 @@ export default function TasksPage() {
             <p className="mt-1 text-content-secondary">
               Manage your CSM action items and playbook tasks
             </p>
-            <p className="mt-1 hidden text-xs text-content-tertiary sm:block dark:text-content-secondary">
-              <kbd className="rounded bg-bg-tertiary px-1">j</kbd>/<kbd className="rounded bg-bg-tertiary px-1">k</kbd> navigate
-              {" "}<kbd className="rounded bg-bg-tertiary px-1">x</kbd> select
-              {" "}<kbd className="rounded bg-bg-tertiary px-1">↵</kbd> complete
-              {" "}<kbd className="rounded bg-bg-tertiary px-1">c</kbd> create
-            </p>
+            {!isTouchDevice && (
+              <p className="mt-1 hidden text-xs text-content-tertiary sm:block dark:text-content-secondary">
+                <kbd className="rounded bg-bg-tertiary px-1">j</kbd>/<kbd className="rounded bg-bg-tertiary px-1">k</kbd> navigate
+                {" "}<kbd className="rounded bg-bg-tertiary px-1">x</kbd> select
+                {" "}<kbd className="rounded bg-bg-tertiary px-1">↵</kbd> complete
+                {" "}<kbd className="rounded bg-bg-tertiary px-1">c</kbd> create
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button

@@ -624,6 +624,8 @@
     0 1px 3px rgba(0, 0, 0, 0.04),
     0 4px 12px rgba(0, 0, 0, 0.03);
   transition: all 0.3s ease;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .card-interactive {
@@ -635,6 +637,8 @@
     0 4px 12px rgba(0, 0, 0, 0.03);
   transition: all 0.3s ease;
   cursor: pointer;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .card-interactive:hover {
@@ -692,6 +696,8 @@
     0 1px 3px rgba(0, 0, 0, 0.04),
     0 4px 12px rgba(0, 0, 0, 0.03);
   transition: all 0.3s ease;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .card-glow:hover {

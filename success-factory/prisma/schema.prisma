@@ -90,10 +90,18 @@ model Task {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // Single-column indexes
   @@index([companyId])
   @@index([ownerId])
   @@index([status])
   @@index([dueDate])
+  @@index([priority])
+
+  // Composite indexes for common query patterns
+  @@index([status, dueDate])            // Task list filtering
+  @@index([companyId, status])          // Company task lookup
+  @@index([ownerEmail, status])         // CSM task lookup
+  @@index([status, priority])           // Priority filtering
 }
 
 // ============================================================================
@@ -310,6 +318,7 @@ model HubSpotCompany {
   healthChanges       HealthChangeLog[]
   campaignEnrollments CampaignEnrollment[]
 
+  // Single-column indexes
   @@index([hubspotId])
   @@index([ownerId])
   @@index([healthScore])
@@ -319,6 +328,15 @@ model HubSpotCompany {
   @@index([contractEndDate])
   @@index([lastSyncedAt])
   @@index([operatorId])
+  @@index([mrr])
+  @@index([createdAt])
+
+  // Composite indexes for common query patterns
+  @@index([healthScore, mrr])              // Dashboard filtering
+  @@index([customerSegment, mrr])          // Segment analysis
+  @@index([createdAt, healthScore])        // Cohort queries
+  @@index([ownerId, healthScore])          // CSM portfolio filtering
+  @@index([subscriptionStatus, mrr])       // Revenue analysis
 }
 
 // ============================================================================

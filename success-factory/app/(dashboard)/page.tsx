@@ -161,7 +161,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="min-w-0 max-w-full space-y-8 overflow-hidden">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-content-primary">
