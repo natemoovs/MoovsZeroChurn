@@ -16,14 +16,14 @@ export const skillTools: Anthropic.Tool[] = [
   {
     name: "get_portfolio_summary",
     description:
-      "Get a summary of all accounts in the portfolio with health scores, MRR, and risk signals. Use this first to get an overview before drilling into specific accounts.",
+      "REQUIRED FOR PORTFOLIO REVIEWS. Get all ACTUAL PAYING CUSTOMERS with health scores, MRR, and risk signals. This data comes from synced billing/usage systems (Metabase/Lago), not HubSpot leads. ALWAYS use this tool first for any portfolio review, segment analysis, or customer health report.",
     input_schema: {
       type: "object" as const,
       properties: {
         segment: {
           type: "string",
           description:
-            "Filter by segment: 'all', 'enterprise', 'mid-market', 'smb', 'at-risk', 'healthy', 'churned'",
+            "Filter by customer segment based on their Lago billing plan: 'enterprise' (VIP/Elite), 'mid-market' (Pro), 'smb' (Standard/Starter), 'at-risk' (red health), 'healthy' (green health), 'all'",
           enum: [
             "all",
             "enterprise",
@@ -42,13 +42,13 @@ export const skillTools: Anthropic.Tool[] = [
   {
     name: "search_hubspot_companies",
     description:
-      "Search for companies in HubSpot by name, domain, or other criteria. Returns up to 20 matching companies with basic info.",
+      "Search for a SPECIFIC company in HubSpot by name or domain. WARNING: This searches HubSpot leads/prospects, NOT paying customers. For portfolio reviews or segment analysis, use get_portfolio_summary instead. Only use this tool when you need to find a specific named company.",
     input_schema: {
       type: "object" as const,
       properties: {
         query: {
           type: "string",
-          description: "Search query - company name, domain, or partial match",
+          description: "Search query - specific company name or domain to find",
         },
       },
       required: ["query"],

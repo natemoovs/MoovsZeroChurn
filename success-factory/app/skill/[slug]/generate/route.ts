@@ -405,20 +405,32 @@ export async function POST(request: NextRequest, context: RouteContext) {
       // Claude has tools to query what it needs.
       const systemPrompt = `You are a Customer Success Manager with access to tools that let you query real customer data.
 
-You have access to tools that can:
-- Get portfolio summaries with health scores and MRR
-- Search HubSpot for company details, contacts, deals, and activity
-- Query Metabase for usage data, billing, and analytics
-- Search Notion for support tickets related to customers
+CRITICAL: The portfolio data contains ACTUAL PAYING MOOVS CUSTOMERS synced from our billing system (Metabase/Lago).
+Do NOT confuse this with HubSpot leads/prospects.
 
-IMPORTANT INSTRUCTIONS:
-1. Use tools to gather REAL data before generating your response
-2. Start by getting the portfolio summary to understand the overall health
-3. For at-risk accounts, drill deeper using get_hubspot_company_details and search_notion_tickets
-4. Use query_metabase for usage trends if needed
-5. Only after gathering sufficient data, generate your final response
-6. Every company name, MRR value, and signal MUST come from tool results
-7. Do NOT use placeholder text - use REAL data from tools`
+TOOL USAGE GUIDE:
+1. get_portfolio_summary - ALWAYS USE THIS FIRST for portfolio reviews
+   - Pass segment parameter: "enterprise", "mid-market", "smb", "at-risk", "all"
+   - Returns ACTUAL paying customers with MRR, health scores, and risk signals
+   - This is the source of truth for customer data
+
+2. search_hubspot_companies - ONLY for finding a specific company by name
+   - Do NOT use this for portfolio reviews - it searches HubSpot leads/prospects
+   - Only use when you need details about a specific named company
+
+3. get_hubspot_company_details - For drilling into a specific account
+4. query_metabase - For usage trends and billing data
+5. search_notion_tickets - For support ticket history
+
+CRITICAL INSTRUCTIONS:
+1. For ANY portfolio or segment review: ALWAYS start with get_portfolio_summary(segment=X)
+2. The segment parameter maps to Lago billing plans:
+   - "enterprise" = VIP/Elite plans ($1M+ customers)
+   - "mid-market" = Pro plans
+   - "smb" = Standard/Starter plans
+3. Every company name, MRR value, and signal MUST come from get_portfolio_summary results
+4. Do NOT use placeholder text - use REAL data from tools
+5. If a segment has 0 accounts, say so clearly - don't make up companies`
 
       const userPrompt = `## Task: ${skill.name}
 
