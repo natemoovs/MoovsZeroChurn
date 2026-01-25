@@ -412,17 +412,8 @@ export default function HelpPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="bg-bg-secondary rounded-lg p-4">
               <div className="flex items-center gap-2">
-                <RefreshCw className="text-primary-500 h-5 w-5" />
-                <span className="text-content-primary font-medium">1. Sync Your Data</span>
-              </div>
-              <p className="text-content-secondary mt-1 text-sm">
-                Go to Settings and run a data sync to pull in your latest customer data from Metabase.
-              </p>
-            </div>
-            <div className="bg-bg-secondary rounded-lg p-4">
-              <div className="flex items-center gap-2">
                 <Search className="text-primary-500 h-5 w-5" />
-                <span className="text-content-primary font-medium">2. Browse Accounts</span>
+                <span className="text-content-primary font-medium">1. Browse Accounts</span>
               </div>
               <p className="text-content-secondary mt-1 text-sm">
                 Visit the Accounts page to see all your customers with health scores and MRR.
@@ -431,7 +422,7 @@ export default function HelpPage() {
             <div className="bg-bg-secondary rounded-lg p-4">
               <div className="flex items-center gap-2">
                 <Filter className="text-primary-500 h-5 w-5" />
-                <span className="text-content-primary font-medium">3. Filter At-Risk</span>
+                <span className="text-content-primary font-medium">2. Filter At-Risk</span>
               </div>
               <p className="text-content-secondary mt-1 text-sm">
                 Use the "At Risk" filter to focus on accounts that need immediate attention.
@@ -440,10 +431,19 @@ export default function HelpPage() {
             <div className="bg-bg-secondary rounded-lg p-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="text-primary-500 h-5 w-5" />
-                <span className="text-content-primary font-medium">4. Use Skills</span>
+                <span className="text-content-primary font-medium">3. Use Skills</span>
               </div>
               <p className="text-content-secondary mt-1 text-sm">
                 Generate portfolio reviews, customer briefs, and more with AI-powered Skills.
+              </p>
+            </div>
+            <div className="bg-bg-secondary rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="text-primary-500 h-5 w-5" />
+                <span className="text-content-primary font-medium">4. Data Sync</span>
+              </div>
+              <p className="text-content-secondary mt-1 text-sm">
+                Data syncs automatically every day. Manual sync available in Settings if needed.
               </p>
             </div>
           </div>
