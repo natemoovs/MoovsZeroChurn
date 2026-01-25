@@ -370,7 +370,7 @@ export function TaskDetailModal({
                         value={companySearchQuery}
                         onChange={(e) => setCompanySearchQuery(e.target.value)}
                         placeholder="Search companies..."
-                        className="border-border-default bg-bg-elevated text-content-primary focus:border-success-500 focus:ring-success-500 w-full rounded-lg border py-2 pr-3 pl-9 text-sm outline-none focus:ring-1"
+                        className="border-border-default bg-bg-elevated text-content-primary focus:border-success-500 focus:ring-success-500 w-full rounded-lg border py-2 pr-3 pl-10 text-sm outline-none focus:ring-1"
                         autoFocus
                       />
                       {searchingCompanies && (
