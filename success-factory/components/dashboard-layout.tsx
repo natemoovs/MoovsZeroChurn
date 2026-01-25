@@ -34,8 +34,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       >
         <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-        <main className="min-w-0 overflow-x-hidden p-4 sm:p-6">
-          {children}
+        <main className="min-w-0 max-w-full overflow-x-hidden p-4 sm:p-6">
+          <div className="min-w-0 max-w-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>

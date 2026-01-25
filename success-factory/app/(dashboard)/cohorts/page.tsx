@@ -376,103 +376,163 @@ export default function CohortsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden card-sf">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px]">
-                <thead>
-                  <tr className="border-b border-border-default bg-bg-secondary">
-                    <th
-                      onClick={() => toggleSort("cohort")}
-                      className="cursor-pointer px-4 py-3 text-left text-sm font-medium text-content-tertiary hover:text-content-primary"
+          <>
+            {/* Mobile Card View */}
+            <div className="space-y-3 sm:hidden">
+              {sortedCohorts.map((cohort) => (
+                <div
+                  key={cohort.cohort}
+                  className="card-sf p-4"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-semibold text-content-primary text-lg">
+                      {cohort.cohort}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-lg font-bold",
+                        getRetentionTextColor(cohort.retentionRate)
+                      )}
                     >
-                      Cohort
-                      <SortIcon field="cohort" />
-                    </th>
-                    <th
-                      onClick={() => toggleSort("companies")}
-                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
-                    >
-                      Companies
-                      <SortIcon field="companies" />
-                    </th>
-                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-content-tertiary sm:table-cell">
-                      Active
-                    </th>
-                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-content-tertiary sm:table-cell">
-                      Churned
-                    </th>
-                    <th
-                      onClick={() => toggleSort("retention")}
-                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
-                    >
-                      Retention
-                      <SortIcon field="retention" />
-                    </th>
-                    <th
-                      onClick={() => toggleSort("mrr")}
-                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
-                    >
-                      Total MRR
-                      <SortIcon field="mrr" />
-                    </th>
-                    <th className="hidden px-4 py-3 text-left text-sm font-medium text-content-tertiary lg:table-cell">
-                      Retention
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-default">
-                  {sortedCohorts.map((cohort) => (
-                    <tr
-                      key={cohort.cohort}
-                      className="transition-colors hover:bg-surface-hover"
-                    >
-                      <td className="whitespace-nowrap px-4 py-3 font-medium text-content-primary">
-                        {cohort.cohort}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-content-secondary">
-                        {cohort.totalCompanies}
-                      </td>
-                      <td className="hidden whitespace-nowrap px-4 py-3 text-right text-success-600 dark:text-success-500 sm:table-cell">
-                        {cohort.activeCompanies}
-                      </td>
-                      <td className="hidden whitespace-nowrap px-4 py-3 text-right text-error-600 dark:text-error-400 sm:table-cell">
-                        {cohort.churnedCompanies}
-                      </td>
-                      <td
+                      {formatPercent(cohort.retentionRate)}
+                    </span>
+                  </div>
+
+                  {/* Retention Progress Bar */}
+                  <div className="mb-3">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-bg-tertiary">
+                      <div
                         className={cn(
-                          "whitespace-nowrap px-4 py-3 text-right font-semibold",
-                          getRetentionTextColor(cohort.retentionRate)
+                          "h-full rounded-full transition-all",
+                          getRetentionColor(cohort.retentionRate)
                         )}
-                      >
-                        {formatPercent(cohort.retentionRate)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-content-primary">
-                        {formatCurrency(cohort.totalMrr)}
-                      </td>
-                      <td className="hidden px-4 py-3 lg:table-cell">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2.5 w-28 overflow-hidden rounded-full bg-bg-tertiary">
-                            <div
-                              className={cn(
-                                "h-full rounded-full transition-all",
-                                getRetentionColor(cohort.retentionRate)
-                              )}
-                              style={{
-                                width: `${cohort.retentionRate}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-xs text-content-tertiary">
-                            {formatPercent(cohort.retentionRate)}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        style={{ width: `${cohort.retentionRate}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-content-secondary">Companies</span>
+                      <span className="font-medium text-content-primary">{cohort.totalCompanies}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-content-secondary">MRR</span>
+                      <span className="font-medium text-content-primary">{formatCurrency(cohort.totalMrr)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-content-secondary">Active</span>
+                      <span className="font-medium text-success-600 dark:text-success-500">{cohort.activeCompanies}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-content-secondary">Churned</span>
+                      <span className="font-medium text-error-600 dark:text-error-400">{cohort.churnedCompanies}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-hidden card-sf">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px]">
+                  <thead>
+                    <tr className="border-b border-border-default bg-bg-secondary">
+                      <th
+                        onClick={() => toggleSort("cohort")}
+                        className="cursor-pointer px-4 py-3 text-left text-sm font-medium text-content-tertiary hover:text-content-primary"
+                      >
+                        Cohort
+                        <SortIcon field="cohort" />
+                      </th>
+                      <th
+                        onClick={() => toggleSort("companies")}
+                        className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
+                      >
+                        Companies
+                        <SortIcon field="companies" />
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-content-tertiary">
+                        Active
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-content-tertiary">
+                        Churned
+                      </th>
+                      <th
+                        onClick={() => toggleSort("retention")}
+                        className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
+                      >
+                        Retention
+                        <SortIcon field="retention" />
+                      </th>
+                      <th
+                        onClick={() => toggleSort("mrr")}
+                        className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
+                      >
+                        Total MRR
+                        <SortIcon field="mrr" />
+                      </th>
+                      <th className="hidden px-4 py-3 text-left text-sm font-medium text-content-tertiary lg:table-cell">
+                        Retention
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-default">
+                    {sortedCohorts.map((cohort) => (
+                      <tr
+                        key={cohort.cohort}
+                        className="transition-colors hover:bg-surface-hover"
+                      >
+                        <td className="whitespace-nowrap px-4 py-3 font-medium text-content-primary">
+                          {cohort.cohort}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-content-secondary">
+                          {cohort.totalCompanies}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-success-600 dark:text-success-500">
+                          {cohort.activeCompanies}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-error-600 dark:text-error-400">
+                          {cohort.churnedCompanies}
+                        </td>
+                        <td
+                          className={cn(
+                            "whitespace-nowrap px-4 py-3 text-right font-semibold",
+                            getRetentionTextColor(cohort.retentionRate)
+                          )}
+                        >
+                          {formatPercent(cohort.retentionRate)}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-content-primary">
+                          {formatCurrency(cohort.totalMrr)}
+                        </td>
+                        <td className="hidden px-4 py-3 lg:table-cell">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2.5 w-28 overflow-hidden rounded-full bg-bg-tertiary">
+                              <div
+                                className={cn(
+                                  "h-full rounded-full transition-all",
+                                  getRetentionColor(cohort.retentionRate)
+                                )}
+                                style={{
+                                  width: `${cohort.retentionRate}%`,
+                                }}
+                              />
+                            </div>
+                            <span className="text-xs text-content-tertiary">
+                              {formatPercent(cohort.retentionRate)}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Segment Breakdown */}

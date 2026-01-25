@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { MessageCircle, X, Send, Loader2, Sparkles, Wrench } from "lucide-react"
 import ReactMarkdown from "react-markdown"
+import { useTouchDevice } from "@/hooks/use-touch-device"
 
 interface Message {
   id: string
@@ -27,6 +28,7 @@ export function AIChat() {
   const [currentTools, setCurrentTools] = useState<string[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const isTouchDevice = useTouchDevice()
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -311,9 +313,11 @@ export function AIChat() {
               )}
             </button>
           </div>
-          <p className="mt-2 text-center text-xs text-content-tertiary hidden sm:block">
-            Press ⌘⇧A to toggle • Esc to close
-          </p>
+          {!isTouchDevice && (
+            <p className="mt-2 text-center text-xs text-content-tertiary hidden sm:block">
+              Press ⌘⇧A to toggle • Esc to close
+            </p>
+          )}
         </div>
       </div>
     </>
