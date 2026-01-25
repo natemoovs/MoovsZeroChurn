@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db"
 import { hubspot, HubSpotCompany, getOwners } from "@/lib/integrations/hubspot"
 import { metabase } from "@/lib/integrations"
 import { isAuthenticated } from "@/lib/auth/server"
+import { detectAndCompleteMilestones } from "@/lib/onboarding/detect-milestones"
 
 // Metabase query ID for CSM_MOOVS master customer view (Card 1469)
 const METABASE_QUERY_ID = 1469
@@ -1040,27 +1041,12 @@ export async function POST(request: NextRequest) {
     let milestonesDetected = 0
     let companiesWithMilestones = 0
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-      const cronSecret = process.env.CRON_SECRET
-
-      if (cronSecret) {
-        const milestoneRes = await fetch(`${baseUrl}/api/onboarding/detect`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${cronSecret}`,
-          },
-        })
-
-        if (milestoneRes.ok) {
-          const milestoneData = await milestoneRes.json()
-          milestonesDetected = milestoneData.milestonesCompleted || 0
-          companiesWithMilestones = milestoneData.companiesUpdated || 0
-          console.log(
-            `  - ${milestonesDetected} onboarding milestones auto-completed for ${companiesWithMilestones} companies`
-          )
-        }
-      }
+      const milestoneResult = await detectAndCompleteMilestones()
+      milestonesDetected = milestoneResult.milestonesCompleted
+      companiesWithMilestones = milestoneResult.companiesUpdated
+      console.log(
+        `  - ${milestonesDetected} onboarding milestones auto-completed for ${companiesWithMilestones} companies`
+      )
     } catch (err) {
       console.error("Milestone detection failed (non-critical):", err)
     }
