@@ -10,7 +10,7 @@ const METABASE_QUERY_ID = 1469
 // Snowflake database ID in Metabase
 const SNOWFLAKE_DB_ID = 2
 
-// Metabase data structure (from CSM_MOOVS card)
+// Metabase data structure (from CSM_MOOVS card 1469)
 interface MetabaseAccountData {
   // Identity
   operatorId: string | null
@@ -18,19 +18,38 @@ interface MetabaseAccountData {
   email: string | null
   hubspotCompanyId: string | null
   stripeAccountId: string | null
+  customDomain: string | null
   // Billing
   mrr: number | null
   plan: string | null // Lago Plan Name (e.g., "Pro (Annual)")
   planCode: string | null // Lago Plan Code (e.g., "pro-annual")
   billingStatus: string | null
+  subscriptionLifetimeDays: number | null // Lago Lifetime Days
+  waterfallEvent: string | null // Lago Waterfall Event
   // Usage
   totalTrips: number
   tripsLast30Days: number
   daysSinceLastActivity: number | null
+  daysSinceLastTrip: number | null // Days Since Last Created Trip
+  lastTripCreatedAt: string | null // R Last Trip Created At
+  // Fleet/Product
+  vehiclesTotal: number | null
+  membersCount: number | null
+  driversCount: number | null
+  setupScore: number | null
   // Status
   churnStatus: string | null
   customerSegment: string | null
   engagementStatus: string | null
+  // Deal Info
+  dealStage: string | null
+  dealPipeline: string | null
+  dealCloseDate: string | null
+  dealAmount: number | null
+  dealOwnerName: string | null
+  // Location
+  latitude: string | null
+  longitude: string | null
 }
 
 // Stripe payment data structure
@@ -93,19 +112,38 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
     email: (row.P_GENERAL_EMAIL as string) || null,
     hubspotCompanyId: (row.HS_C_ID as string) || null,
     stripeAccountId: (row.P_STRIPE_ACCOUNT_ID as string) || null,
+    customDomain: (row.P_CUSTOM_DOMAIN as string) || null,
     // Billing
     mrr: (row.CALCULATED_MRR as number) || null,
     plan: (row.LAGO_PLAN_NAME as string) || null,
     planCode: (row.LAGO_PLAN_CODE as string) || null,
     billingStatus: (row.LAGO_STATUS as string) || (row.LAGO_CUSTOMER_STATUS as string) || null,
+    subscriptionLifetimeDays: (row.LAGO_LIFETIME_DAYS as number) || null,
+    waterfallEvent: (row.LAGO_WATERFALL_EVENT as string) || null,
     // Usage
     totalTrips: (row.R_TOTAL_RESERVATIONS_COUNT as number) || 0,
     tripsLast30Days: (row.R_LAST_30_DAYS_RESERVATIONS_COUNT as number) || 0,
     daysSinceLastActivity: (row.DA_DAYS_SINCE_LAST_ASSIGNMENT as number) || null,
+    daysSinceLastTrip: (row.DAYS_SINCE_LAST_CREATED_TRIP as number) || null,
+    lastTripCreatedAt: (row.R_LAST_TRIP_CREATED_AT as string) || null,
+    // Fleet/Product
+    vehiclesTotal: (row.P_VEHICLES_TOTAL as number) || null,
+    membersCount: (row.P_TOTAL_MEMBERS as number) || null,
+    driversCount: (row.P_DRIVERS_COUNT as number) || null,
+    setupScore: (row.P_SETUP_SCORE as number) || null,
     // Status
     churnStatus: (row.HS_D_CHURN_STATUS as string) || null,
     customerSegment: (row.HS_C_PROPERTY_CUSTOMER_SEGMENT as string) || null,
     engagementStatus: (row.DA_ENGAGEMENT_STATUS as string) || null,
+    // Deal Info
+    dealStage: (row.HS_D_STAGE_NAME as string) || null,
+    dealPipeline: (row.HS_D_PIPELINE_SEGMENT as string) || null,
+    dealCloseDate: (row.HS_D_CLOSE_DATE as string) || null,
+    dealAmount: (row.HS_D_CLOSED_AMOUNT as number) || null,
+    dealOwnerName: (row.HS_D_OWNER_NAME as string) || null,
+    // Location
+    latitude: (row.LATITUDE as string) || null,
+    longitude: (row.LONGITUDE as string) || null,
   }))
 }
 
@@ -747,8 +785,26 @@ export async function POST(request: NextRequest) {
             customerSegment,
             contractEndDate: parseDate(hsProps.contract_end_date || hsProps.renewal_date),
             totalTrips: mbData.totalTrips,
+            tripsLast30Days: mbData.tripsLast30Days,
             lastLoginAt,
-            daysSinceLastLogin: mbData.daysSinceLastActivity,
+            lastTripCreatedAt: parseDate(mbData.lastTripCreatedAt),
+            daysSinceLastLogin: mbData.daysSinceLastTrip ?? mbData.daysSinceLastActivity,
+            daysSinceLastAssignment: mbData.daysSinceLastActivity,
+            engagementStatus: mbData.engagementStatus,
+            // Fleet/Product metrics
+            vehiclesTotal: mbData.vehiclesTotal,
+            membersCount: mbData.membersCount,
+            driversCount: mbData.driversCount,
+            setupScore: mbData.setupScore,
+            subscriptionLifetimeDays: mbData.subscriptionLifetimeDays,
+            // Deal info
+            dealStage: mbData.dealStage,
+            dealPipeline: mbData.dealPipeline,
+            dealCloseDate: parseDate(mbData.dealCloseDate),
+            dealAmount: mbData.dealAmount,
+            // Location
+            latitude: mbData.latitude,
+            longitude: mbData.longitude,
             // Payment health fields
             paymentSuccessRate: stripeData?.successRate ?? null,
             failedPaymentCount: stripeData?.failedCharges ?? null,
@@ -798,8 +854,26 @@ export async function POST(request: NextRequest) {
             customerSegment,
             contractEndDate: parseDate(hsProps.contract_end_date || hsProps.renewal_date),
             totalTrips: mbData.totalTrips,
+            tripsLast30Days: mbData.tripsLast30Days,
             lastLoginAt,
-            daysSinceLastLogin: mbData.daysSinceLastActivity,
+            lastTripCreatedAt: parseDate(mbData.lastTripCreatedAt),
+            daysSinceLastLogin: mbData.daysSinceLastTrip ?? mbData.daysSinceLastActivity,
+            daysSinceLastAssignment: mbData.daysSinceLastActivity,
+            engagementStatus: mbData.engagementStatus,
+            // Fleet/Product metrics
+            vehiclesTotal: mbData.vehiclesTotal,
+            membersCount: mbData.membersCount,
+            driversCount: mbData.driversCount,
+            setupScore: mbData.setupScore,
+            subscriptionLifetimeDays: mbData.subscriptionLifetimeDays,
+            // Deal info
+            dealStage: mbData.dealStage,
+            dealPipeline: mbData.dealPipeline,
+            dealCloseDate: parseDate(mbData.dealCloseDate),
+            dealAmount: mbData.dealAmount,
+            // Location
+            latitude: mbData.latitude,
+            longitude: mbData.longitude,
             // Payment health fields
             paymentSuccessRate: stripeData?.successRate ?? null,
             failedPaymentCount: stripeData?.failedCharges ?? null,

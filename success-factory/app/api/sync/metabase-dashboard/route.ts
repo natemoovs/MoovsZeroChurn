@@ -7,13 +7,15 @@ import { isAuthenticated } from "@/lib/auth/server"
 const PRIVATE_DASHBOARD_ID = 402 // Moovs CSM Dashboard (requires METABASE_API_KEY)
 const PUBLIC_DASHBOARD_TOKEN = "a5f94698-23ff-4785-8448-403523a1c21f" // Public version
 
-// Column mappings from dashboard to our schema
+// Column mappings from dashboard to our schema (Card 1469)
 interface SubscriptionRow {
+  // Lago/Subscription
   "Lago Plan Code"?: string
   "Lago Plan Name"?: string
   "Lago Waterfall Event"?: string
   "Lago Lifetime Days"?: number
   "Lago External Customer ID"?: string
+  // Product
   "P Company Name"?: string
   "P Plan"?: string
   "P General Email"?: string
@@ -23,18 +25,29 @@ interface SubscriptionRow {
   "P Total Members"?: number
   "P Drivers Count"?: number
   "P Setup Score"?: number
+  // HubSpot Company
   "Hs C ID"?: number | string
   "Hs C Property Name"?: string
   "Hs C Property Customer Segment"?: string
+  // HubSpot Deal
   "Hs D Owner Name"?: string
   "Hs D Churn Status"?: string
   "Hs D Stage Name"?: string
+  "Hs D Pipeline Segment"?: string
+  "Hs D Close Date"?: string
+  "Hs D Closed Amount"?: number
+  // Reservations
   "R Total Reservations Count"?: number
   "R Last 30 Days Reservations Count"?: number
+  "R Last Trip Created At"?: string
   "Days Since Last Created Trip"?: number
+  // Engagement
   "Calculated Mrr"?: number
   "Da Days Since Last Assignment"?: number
   "Da Engagement Status"?: string
+  // Location
+  "Latitude"?: string
+  "Longitude"?: string
 }
 
 /**
@@ -325,7 +338,14 @@ export async function POST(request: NextRequest) {
         const companyName = row["P Company Name"] || row["Hs C Property Name"] || "Unknown"
         const domain = row["P Custom Domain"] || row["P General Email"]?.split("@")[1] || null
 
-        // Upsert to database
+        // Parse date helper
+        const parseDate = (dateStr?: string | null): Date | null => {
+          if (!dateStr) return null
+          const date = new Date(dateStr)
+          return isNaN(date.getTime()) ? null : date
+        }
+
+        // Upsert to database with all Card 1469 fields
         await prisma.hubSpotCompany.upsert({
           where: { hubspotId: recordId },
           update: {
@@ -335,19 +355,41 @@ export async function POST(request: NextRequest) {
             plan: row["Lago Plan Name"] || null,
             planCode: row["Lago Plan Code"] || null,
             customerSegment: segment,
+            subscriptionStatus: row["Lago Waterfall Event"] || row["Hs D Churn Status"] || null,
+            subscriptionLifetimeDays: row["Lago Lifetime Days"] || null,
+            // Usage & Engagement
             totalTrips: row["R Total Reservations Count"] || 0,
+            tripsLast30Days: row["R Last 30 Days Reservations Count"] || null,
+            lastTripCreatedAt: parseDate(row["R Last Trip Created At"]),
             daysSinceLastLogin: row["Days Since Last Created Trip"] || null,
+            daysSinceLastAssignment: row["Da Days Since Last Assignment"] || null,
+            engagementStatus: row["Da Engagement Status"] || null,
+            // Fleet/Product
+            vehiclesTotal: row["P Vehicles Total"] || null,
+            membersCount: row["P Total Members"] || null,
+            driversCount: row["P Drivers Count"] || null,
+            setupScore: row["P Setup Score"] || null,
+            // Deal info
+            dealStage: row["Hs D Stage Name"] || null,
+            dealPipeline: row["Hs D Pipeline Segment"] || null,
+            dealCloseDate: parseDate(row["Hs D Close Date"]),
+            dealAmount: row["Hs D Closed Amount"] || null,
+            // Location
+            latitude: row["Latitude"] || null,
+            longitude: row["Longitude"] || null,
+            // CSM
             ownerName: row["Hs D Owner Name"] || csm.name,
             ownerEmail: csm.email,
+            // Health
             healthScore: health.healthScore,
             riskSignals: health.riskSignals,
             positiveSignals: health.positiveSignals,
+            // Identity
             operatorId,
             stripeAccountId: row["P Stripe Account ID"] || null,
             primaryContactEmail: row["P General Email"] || null,
             hasHubSpotRecord: !!hubspotId,
             hubspotRecordId: hubspotId ? String(hubspotId).replace(/\.0+$/, "") : null,
-            subscriptionStatus: row["Lago Waterfall Event"] || row["Hs D Churn Status"] || null,
             lastSyncedAt: new Date(),
           },
           create: {
@@ -358,19 +400,41 @@ export async function POST(request: NextRequest) {
             plan: row["Lago Plan Name"] || null,
             planCode: row["Lago Plan Code"] || null,
             customerSegment: segment,
+            subscriptionStatus: row["Lago Waterfall Event"] || row["Hs D Churn Status"] || null,
+            subscriptionLifetimeDays: row["Lago Lifetime Days"] || null,
+            // Usage & Engagement
             totalTrips: row["R Total Reservations Count"] || 0,
+            tripsLast30Days: row["R Last 30 Days Reservations Count"] || null,
+            lastTripCreatedAt: parseDate(row["R Last Trip Created At"]),
             daysSinceLastLogin: row["Days Since Last Created Trip"] || null,
+            daysSinceLastAssignment: row["Da Days Since Last Assignment"] || null,
+            engagementStatus: row["Da Engagement Status"] || null,
+            // Fleet/Product
+            vehiclesTotal: row["P Vehicles Total"] || null,
+            membersCount: row["P Total Members"] || null,
+            driversCount: row["P Drivers Count"] || null,
+            setupScore: row["P Setup Score"] || null,
+            // Deal info
+            dealStage: row["Hs D Stage Name"] || null,
+            dealPipeline: row["Hs D Pipeline Segment"] || null,
+            dealCloseDate: parseDate(row["Hs D Close Date"]),
+            dealAmount: row["Hs D Closed Amount"] || null,
+            // Location
+            latitude: row["Latitude"] || null,
+            longitude: row["Longitude"] || null,
+            // CSM
             ownerName: row["Hs D Owner Name"] || csm.name,
             ownerEmail: csm.email,
+            // Health
             healthScore: health.healthScore,
             riskSignals: health.riskSignals,
             positiveSignals: health.positiveSignals,
+            // Identity
             operatorId,
             stripeAccountId: row["P Stripe Account ID"] || null,
             primaryContactEmail: row["P General Email"] || null,
             hasHubSpotRecord: !!hubspotId,
             hubspotRecordId: hubspotId ? String(hubspotId).replace(/\.0+$/, "") : null,
-            subscriptionStatus: row["Lago Waterfall Event"] || row["Hs D Churn Status"] || null,
             lastSyncedAt: new Date(),
           },
         })
