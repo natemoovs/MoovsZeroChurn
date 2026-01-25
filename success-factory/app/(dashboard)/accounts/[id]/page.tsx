@@ -435,6 +435,7 @@ export default function AccountDetailPage() {
         {/* Customer Journey Stage */}
         <JourneyStageCard
           journey={journey}
+          account={account}
           companyId={account.id}
           companyName={account.name}
           onUpdate={handleJourneyUpdate}
@@ -948,11 +949,53 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
   )
 }
 
+/**
+ * Infer journey phase from account data when no explicit journey record exists
+ */
+function inferJourneyPhase(account: AccountDetail): string {
+  // Check for churned status first
+  if (account.churnStatus?.toLowerCase().includes("churn")) {
+    return "churned"
+  }
+
+  // Check for at-risk based on health score
+  if (account.healthScore === "red") {
+    return "at_risk"
+  }
+
+  // Use subscription lifetime to determine phase
+  const lifetimeDays = account.subscriptionLifetimeDays ?? 0
+
+  // Also consider engagement - if engaged and 1+ year, likely mature
+  const isEngaged = account.engagementStatus?.toLowerCase().includes("active") ||
+    account.engagementStatus?.toLowerCase().includes("engaged")
+
+  if (lifetimeDays >= 365) {
+    // 1+ year customer - mature or renewal phase
+    return isEngaged ? "maturity" : "renewal"
+  }
+
+  if (lifetimeDays >= 180) {
+    // 6+ months - growth phase
+    return "growth"
+  }
+
+  if (lifetimeDays >= 90) {
+    // 3-6 months - adoption phase
+    return "adoption"
+  }
+
+  // Less than 90 days - still onboarding
+  return "onboarding"
+}
+
 function JourneyStageCard({
   journey,
+  account,
   onUpdate,
 }: {
   journey: CustomerJourney | null
+  account: AccountDetail
   companyId: string
   companyName: string
   onUpdate: (stage: string, reason?: string) => void
@@ -960,7 +1003,8 @@ function JourneyStageCard({
   const [isOpen, setIsOpen] = useState(false)
   const [updating, setUpdating] = useState(false)
 
-  const currentStage = journey?.stage || "onboarding"
+  // Use explicit journey stage if set, otherwise infer from account data
+  const currentStage = journey?.stage || inferJourneyPhase(account)
   const currentStageInfo = JOURNEY_STAGES.find((s) => s.id === currentStage) || JOURNEY_STAGES[0]
 
   const handleStageChange = async (newStage: string) => {
@@ -975,7 +1019,7 @@ function JourneyStageCard({
   }
 
   return (
-    <div className="card-sf p-5">
+    <div className="card-sf overflow-visible p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Route className="text-content-tertiary h-5 w-5" />
@@ -1004,7 +1048,7 @@ function JourneyStageCard({
           </button>
 
           {isOpen && (
-            <div className="border-border-default bg-bg-elevated absolute top-full right-0 z-20 mt-1 w-48 rounded-lg border py-1 shadow-lg">
+            <div className="border-border-default bg-bg-elevated absolute bottom-full right-0 z-50 mb-1 w-48 rounded-lg border py-1 shadow-lg">
               {JOURNEY_STAGES.map((stage) => (
                 <button
                   key={stage.id}
