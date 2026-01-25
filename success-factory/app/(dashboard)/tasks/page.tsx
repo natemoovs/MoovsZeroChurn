@@ -400,31 +400,31 @@ export default function TasksPage() {
               label="Total"
               value={stats.total}
               icon={Circle}
-              color="zinc"
+              variant="default"
             />
             <StatCard
               label="Pending"
               value={stats.pending}
               icon={Clock}
-              color="yellow"
+              variant="warning"
             />
             <StatCard
               label="In Progress"
               value={stats.inProgress}
               icon={PlayCircle}
-              color="blue"
+              variant="info"
             />
             <StatCard
               label="Completed"
               value={stats.completed}
               icon={CheckCircle2}
-              color="green"
+              variant="success"
             />
             <StatCard
               label="Overdue"
               value={stats.overdue}
               icon={AlertTriangle}
-              color="red"
+              variant="error"
             />
           </div>
         )}
@@ -801,26 +801,45 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  color,
+  variant = "default",
 }: {
   label: string
   value: number
   icon: React.ElementType
-  color: "zinc" | "yellow" | "blue" | "green" | "red"
+  variant?: "default" | "warning" | "info" | "success" | "error"
 }) {
-  const colors = {
-    zinc: "text-content-secondary",
-    yellow: "text-warning-500",
-    blue: "text-info-500",
-    green: "text-success-500",
-    red: "text-error-500",
+  const variantStyles = {
+    default: {
+      iconColor: "text-content-secondary",
+      iconBg: "bg-bg-tertiary",
+    },
+    warning: {
+      iconColor: "text-warning-600 dark:text-warning-500",
+      iconBg: "bg-warning-100 dark:bg-warning-50",
+    },
+    info: {
+      iconColor: "text-info-600 dark:text-info-500",
+      iconBg: "bg-info-50 dark:bg-info-50",
+    },
+    success: {
+      iconColor: "text-success-600 dark:text-success-500",
+      iconBg: "bg-success-100 dark:bg-success-50",
+    },
+    error: {
+      iconColor: "text-error-600 dark:text-error-500",
+      iconBg: "bg-error-100 dark:bg-error-50",
+    },
   }
 
+  const styles = variantStyles[variant]
+
   return (
-    <div className="rounded-xl border border-border-default bg-bg-elevated p-4">
+    <div className="card-sf p-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-content-secondary">{label}</span>
-        <Icon className={cn("h-5 w-5", colors[color])} />
+        <span className="text-sm font-medium text-content-secondary">{label}</span>
+        <div className={cn("rounded-lg p-2", styles.iconBg)}>
+          <Icon className={cn("h-5 w-5", styles.iconColor)} />
+        </div>
       </div>
       <p className="mt-2 text-2xl font-bold text-content-primary">
         {value}
