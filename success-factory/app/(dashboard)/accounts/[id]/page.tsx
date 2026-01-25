@@ -33,6 +33,11 @@ import {
   Route,
   ChevronDown,
   Database,
+  Car,
+  UserCheck,
+  Settings,
+  Gauge,
+  Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -121,10 +126,19 @@ interface AccountDetail {
   positiveSignals: string[]
   mrr: number | null
   plan: string | null
+  planCode: string | null
   customerSegment: string | null
   totalTrips: number | null
+  tripsLast30Days: number | null
   daysSinceLastLogin: number | null
   churnStatus: string | null
+  engagementStatus: string | null
+  // Fleet/Product adoption
+  vehiclesTotal: number | null
+  driversCount: number | null
+  membersCount: number | null
+  setupScore: number | null
+  subscriptionLifetimeDays: number | null
   contacts: Array<{
     id: string
     firstName: string | null
@@ -436,15 +450,15 @@ export default function AccountDetailPage() {
           {/* Left Column - Company Info & Contacts */}
           <div className="space-y-6 lg:col-span-1">
             {/* Company Info */}
-            <div className="card-sf p-5">
+            <div className="card-sf p-4 sm:p-5">
               <h2 className="text-content-primary mb-4 font-semibold">Company Info</h2>
               <dl className="space-y-3 text-sm">
                 {account.website && (
                   <div className="flex items-start gap-3">
-                    <Globe className="text-content-tertiary mt-0.5 h-4 w-4" />
-                    <div>
+                    <Globe className="text-content-tertiary mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="min-w-0">
                       <dt className="text-content-secondary">Website</dt>
-                      <dd className="text-content-primary">
+                      <dd className="text-content-primary truncate">
                         <a
                           href={
                             account.website.startsWith("http")
@@ -463,8 +477,8 @@ export default function AccountDetailPage() {
                 )}
                 {account.phone && (
                   <div className="flex items-start gap-3">
-                    <Phone className="text-content-tertiary mt-0.5 h-4 w-4" />
-                    <div>
+                    <Phone className="text-content-tertiary mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="min-w-0">
                       <dt className="text-content-secondary">Phone</dt>
                       <dd className="text-content-primary">{account.phone}</dd>
                     </div>
@@ -472,8 +486,8 @@ export default function AccountDetailPage() {
                 )}
                 {location && (
                   <div className="flex items-start gap-3">
-                    <MapPin className="text-content-tertiary mt-0.5 h-4 w-4" />
-                    <div>
+                    <MapPin className="text-content-tertiary mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="min-w-0">
                       <dt className="text-content-secondary">Location</dt>
                       <dd className="text-content-primary">{location}</dd>
                     </div>
@@ -481,8 +495,8 @@ export default function AccountDetailPage() {
                 )}
                 {account.customerSince && (
                   <div className="flex items-start gap-3">
-                    <Calendar className="text-content-tertiary mt-0.5 h-4 w-4" />
-                    <div>
+                    <Calendar className="text-content-tertiary mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="min-w-0">
                       <dt className="text-content-secondary">Customer Since</dt>
                       <dd className="text-content-primary">
                         {new Date(account.customerSince).toLocaleDateString()}
@@ -492,8 +506,8 @@ export default function AccountDetailPage() {
                 )}
                 {account.lifecycleStage && (
                   <div className="flex items-start gap-3">
-                    <RefreshCw className="text-content-tertiary mt-0.5 h-4 w-4" />
-                    <div>
+                    <RefreshCw className="text-content-tertiary mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="min-w-0">
                       <dt className="text-content-secondary">Lifecycle Stage</dt>
                       <dd className="text-content-primary capitalize">{account.lifecycleStage}</dd>
                     </div>
@@ -506,6 +520,105 @@ export default function AccountDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Usage & Adoption - Card 1469 data */}
+            {(account.vehiclesTotal || account.driversCount || account.setupScore !== null) && (
+              <div className="card-sf p-4 sm:p-5">
+                <h2 className="text-content-primary mb-4 font-semibold">Usage & Adoption</h2>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {account.vehiclesTotal !== null && (
+                    <div className="bg-bg-tertiary rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Car className="text-content-tertiary h-4 w-4" />
+                        <span className="text-content-secondary">Vehicles</span>
+                      </div>
+                      <p className="text-content-primary mt-1 text-lg font-semibold">
+                        {account.vehiclesTotal}
+                      </p>
+                    </div>
+                  )}
+                  {account.driversCount !== null && (
+                    <div className="bg-bg-tertiary rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="text-content-tertiary h-4 w-4" />
+                        <span className="text-content-secondary">Drivers</span>
+                      </div>
+                      <p className="text-content-primary mt-1 text-lg font-semibold">
+                        {account.driversCount}
+                      </p>
+                    </div>
+                  )}
+                  {account.membersCount !== null && (
+                    <div className="bg-bg-tertiary rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Users className="text-content-tertiary h-4 w-4" />
+                        <span className="text-content-secondary">Members</span>
+                      </div>
+                      <p className="text-content-primary mt-1 text-lg font-semibold">
+                        {account.membersCount}
+                      </p>
+                    </div>
+                  )}
+                  {account.setupScore !== null && (
+                    <div className="bg-bg-tertiary rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Settings className="text-content-tertiary h-4 w-4" />
+                        <span className="text-content-secondary">Setup Score</span>
+                      </div>
+                      <p className={cn(
+                        "mt-1 text-lg font-semibold",
+                        account.setupScore >= 70 ? "text-success-600 dark:text-success-500" :
+                        account.setupScore >= 40 ? "text-warning-600 dark:text-warning-500" :
+                        "text-error-600 dark:text-error-500"
+                      )}>
+                        {account.setupScore}%
+                      </p>
+                    </div>
+                  )}
+                  {account.tripsLast30Days !== null && (
+                    <div className="bg-bg-tertiary rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Activity className="text-content-tertiary h-4 w-4" />
+                        <span className="text-content-secondary">Trips (30d)</span>
+                      </div>
+                      <p className="text-content-primary mt-1 text-lg font-semibold">
+                        {account.tripsLast30Days}
+                      </p>
+                    </div>
+                  )}
+                  {account.subscriptionLifetimeDays !== null && (
+                    <div className="bg-bg-tertiary rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Gauge className="text-content-tertiary h-4 w-4" />
+                        <span className="text-content-secondary">Tenure</span>
+                      </div>
+                      <p className="text-content-primary mt-1 text-lg font-semibold">
+                        {account.subscriptionLifetimeDays > 365
+                          ? `${Math.round(account.subscriptionLifetimeDays / 365)}y`
+                          : account.subscriptionLifetimeDays > 30
+                            ? `${Math.round(account.subscriptionLifetimeDays / 30)}mo`
+                            : `${account.subscriptionLifetimeDays}d`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {account.engagementStatus && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-content-secondary text-sm">Engagement:</span>
+                    <span className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      account.engagementStatus.toLowerCase().includes("active")
+                        ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                        : account.engagementStatus.toLowerCase().includes("inactive")
+                          ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                          : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                    )}>
+                      {account.engagementStatus}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Onboarding Progress */}
             <OnboardingProgress companyId={account.id} />

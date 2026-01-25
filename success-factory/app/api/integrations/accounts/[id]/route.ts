@@ -28,11 +28,21 @@ interface AccountDetail {
   // Financials (from Metabase)
   mrr: number | null
   plan: string | null
+  planCode: string | null
   customerSegment: string | null
-  // Usage (from Metabase)
+  // Usage (from Metabase/Card 1469)
   totalTrips: number | null
+  tripsLast30Days: number | null
   daysSinceLastLogin: number | null
   churnStatus: string | null
+  engagementStatus: string | null
+  // Fleet/Product adoption (from Card 1469)
+  vehiclesTotal: number | null
+  driversCount: number | null
+  membersCount: number | null
+  setupScore: number | null
+  // Subscription info
+  subscriptionLifetimeDays: number | null
   // Contacts
   contacts: ContactInfo[]
   // Deals
@@ -250,11 +260,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       // Financials (prefer synced data)
       mrr: finalMrr,
       plan: finalPlan,
-      customerSegment: metabaseData?.customerSegment || null,
-      // Usage (prefer synced data)
+      planCode: syncedCompany?.planCode || null,
+      customerSegment: syncedCompany?.customerSegment || metabaseData?.customerSegment || null,
+      // Usage (prefer synced data from Card 1469)
       totalTrips: finalTotalTrips,
+      tripsLast30Days: syncedCompany?.tripsLast30Days || null,
       daysSinceLastLogin: finalDaysSinceLastLogin,
       churnStatus: metabaseData?.churnStatus || syncedCompany?.subscriptionStatus || null,
+      engagementStatus: syncedCompany?.engagementStatus || null,
+      // Fleet/Product adoption (from Card 1469)
+      vehiclesTotal: syncedCompany?.vehiclesTotal || null,
+      driversCount: syncedCompany?.driversCount || null,
+      membersCount: syncedCompany?.membersCount || null,
+      setupScore: syncedCompany?.setupScore || null,
+      // Subscription info
+      subscriptionLifetimeDays: syncedCompany?.subscriptionLifetimeDays || null,
       // Contacts - from HubSpot if available, otherwise show primary contact from sync
       contacts:
         contacts.length > 0

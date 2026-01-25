@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Check, Circle, AlertTriangle, Clock, Loader2 } from "lucide-react"
+import { Check, Circle, AlertTriangle, Clock, Loader2, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Milestone {
@@ -40,17 +40,45 @@ export function OnboardingProgress({
   const [status, setStatus] = useState<OnboardingStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState<string | null>(null)
+  const [detecting, setDetecting] = useState(false)
+
+  const fetchStatus = async () => {
+    try {
+      const res = await fetch(`/api/onboarding/${companyId}`)
+      const data = await res.json()
+      if (!data.error) {
+        setStatus(data)
+      }
+    } catch (e) {
+      console.error("Failed to fetch onboarding status:", e)
+    }
+  }
+
+  const runDetection = async () => {
+    setDetecting(true)
+    try {
+      // First initialize milestones if needed, then detect
+      await fetch(`/api/onboarding/${companyId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "initialize" }),
+      })
+      // Then run detection
+      await fetch(`/api/onboarding/${companyId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "detect" }),
+      })
+      // Refresh status
+      await fetchStatus()
+    } catch (e) {
+      console.error("Failed to detect milestones:", e)
+    }
+    setDetecting(false)
+  }
 
   useEffect(() => {
-    fetch(`/api/onboarding/${companyId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.error) {
-          setStatus(data)
-        }
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
+    fetchStatus().then(() => setLoading(false))
   }, [companyId])
 
   const handleComplete = async (milestone: string) => {
@@ -141,7 +169,7 @@ export function OnboardingProgress({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-content-primary font-semibold">Onboarding Progress</h3>
           <p className="text-content-secondary text-sm">
@@ -149,11 +177,22 @@ export function OnboardingProgress({
             {status.milestones.length} milestones
           </p>
         </div>
-        <span
-          className={cn("rounded-full px-3 py-1 text-sm font-medium", statusColors[status.status])}
-        >
-          {statusLabels[status.status]}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={runDetection}
+            disabled={detecting}
+            className="text-content-secondary hover:text-content-primary hover:bg-surface-hover flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors"
+            title="Auto-detect completed milestones from data"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", detecting && "animate-spin")} />
+            <span className="hidden sm:inline">Detect</span>
+          </button>
+          <span
+            className={cn("rounded-full px-3 py-1 text-sm font-medium", statusColors[status.status])}
+          >
+            {statusLabels[status.status]}
+          </span>
+        </div>
       </div>
 
       {/* Progress Bar */}
@@ -179,7 +218,7 @@ export function OnboardingProgress({
           <div
             key={milestone.id}
             className={cn(
-              "flex items-center gap-3 rounded-lg border p-3",
+              "rounded-lg border p-3",
               milestone.completedAt
                 ? "border-success-200 bg-success-50 dark:border-success-900 dark:bg-success-950/30"
                 : milestone.isOverdue
@@ -187,65 +226,78 @@ export function OnboardingProgress({
                   : "border-border-default bg-bg-elevated"
             )}
           >
-            {/* Icon */}
-            <div
-              className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-                milestone.completedAt
-                  ? "bg-success-500 text-white"
-                  : milestone.isOverdue
-                    ? "bg-error-100 text-error-600 dark:bg-error-900/50 dark:text-error-400"
-                    : "bg-bg-tertiary text-content-tertiary"
-              )}
-            >
-              {completing === milestone.id ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : milestone.completedAt ? (
-                <Check className="h-4 w-4" />
-              ) : milestone.isOverdue ? (
-                <AlertTriangle className="h-4 w-4" />
-              ) : (
-                <Circle className="h-4 w-4" />
-              )}
-            </div>
-
-            {/* Content */}
-            <div className="min-w-0 flex-1">
-              <p
+            <div className="flex items-start gap-3">
+              {/* Icon */}
+              <div
                 className={cn(
-                  "font-medium",
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
                   milestone.completedAt
-                    ? "text-success-700 dark:text-success-400"
+                    ? "bg-success-500 text-white"
                     : milestone.isOverdue
-                      ? "text-error-700 dark:text-error-400"
-                      : "text-content-primary"
+                      ? "bg-error-100 text-error-600 dark:bg-error-900/50 dark:text-error-400"
+                      : "bg-bg-tertiary text-content-tertiary"
                 )}
               >
-                {milestone.name}
-              </p>
-              <p className="text-content-secondary text-sm">
-                {milestone.completedAt ? (
-                  `Completed ${new Date(milestone.completedAt).toLocaleDateString()}`
+                {completing === milestone.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : milestone.completedAt ? (
+                  <Check className="h-4 w-4" />
                 ) : milestone.isOverdue ? (
-                  <span className="text-error-600 dark:text-error-400">
-                    Overdue (target: {milestone.targetDays} days)
-                  </span>
+                  <AlertTriangle className="h-4 w-4" />
                 ) : (
-                  `Target: ${milestone.targetDays} days`
+                  <Circle className="h-4 w-4" />
                 )}
-              </p>
-            </div>
+              </div>
 
-            {/* Action */}
-            {!milestone.completedAt && (
-              <button
-                onClick={() => handleComplete(milestone.id)}
-                disabled={completing === milestone.id}
-                className="text-success-600 hover:bg-success-100 dark:text-success-400 dark:hover:bg-success-900/30 shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium"
-              >
-                Mark Complete
-              </button>
-            )}
+              {/* Content */}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <p
+                    className={cn(
+                      "font-medium",
+                      milestone.completedAt
+                        ? "text-success-700 dark:text-success-400"
+                        : milestone.isOverdue
+                          ? "text-error-700 dark:text-error-400"
+                          : "text-content-primary"
+                    )}
+                  >
+                    {milestone.name}
+                  </p>
+                  {/* Action - inline on desktop */}
+                  {!milestone.completedAt && (
+                    <button
+                      onClick={() => handleComplete(milestone.id)}
+                      disabled={completing === milestone.id}
+                      className="text-success-600 hover:bg-success-100 dark:text-success-400 dark:hover:bg-success-900/30 hidden shrink-0 rounded-lg px-2 py-1 text-sm font-medium sm:block"
+                    >
+                      Mark Complete
+                    </button>
+                  )}
+                </div>
+                <p className="text-content-secondary text-sm">
+                  {milestone.completedAt ? (
+                    `Completed ${new Date(milestone.completedAt).toLocaleDateString()}`
+                  ) : milestone.isOverdue ? (
+                    <span className="text-error-600 dark:text-error-400">
+                      Overdue (target: {milestone.targetDays} days)
+                    </span>
+                  ) : (
+                    `Target: ${milestone.targetDays} days`
+                  )}
+                </p>
+                {/* Action - stacked on mobile */}
+                {!milestone.completedAt && (
+                  <button
+                    onClick={() => handleComplete(milestone.id)}
+                    disabled={completing === milestone.id}
+                    className="text-success-600 hover:bg-success-100 dark:text-success-400 dark:hover:bg-success-900/30 mt-2 rounded-lg px-2 py-1 text-sm font-medium sm:hidden"
+                  >
+                    Mark Complete
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         ))}
       </div>
