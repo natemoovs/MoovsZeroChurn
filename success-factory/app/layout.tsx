@@ -8,6 +8,14 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "Success Factory",
   description: "AI-powered skills for Customer Success",
+  icons: {
+    icon: [
+      { url: "/icon.jpg", type: "image/jpeg" },
+    ],
+    apple: [
+      { url: "/apple-icon.jpg", type: "image/jpeg" },
+    ],
+  },
 }
 
 export default function RootLayout({
