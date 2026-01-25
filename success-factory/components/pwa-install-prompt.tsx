@@ -53,34 +53,40 @@ export function PWAInstallPrompt() {
     // Don't show if already installed
     if (isStandalone()) return
 
-    // Check if user dismissed recently (within 7 days)
+    // Check if user dismissed recently (within 3 days for mobile, 7 for desktop)
     const dismissedAt = localStorage.getItem("pwa-prompt-dismissed")
+    const device = getDeviceType()
+    const browser = getBrowserType()
+    const dismissDays = device === "desktop" ? 7 : 3
+
     if (dismissedAt) {
       const dismissedDate = new Date(dismissedAt)
       const daysSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24)
-      if (daysSinceDismissed < 7) return
+      if (daysSinceDismissed < dismissDays) return
     }
 
-    setDeviceType(getDeviceType())
-    setBrowserType(getBrowserType())
+    setDeviceType(device)
+    setBrowserType(browser)
 
     // For browsers that support beforeinstallprompt (Chrome, Edge, etc.)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
-      // Show prompt after a short delay
-      setTimeout(() => setShowPrompt(true), 2000)
+      // Show prompt immediately when event fires
+      setShowPrompt(true)
     }
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
 
-    // For iOS Safari and other browsers without beforeinstallprompt
-    const device = getDeviceType()
-    const browser = getBrowserType()
-
-    if (device === "ios" && browser === "safari") {
-      // Show iOS instructions after delay
-      setTimeout(() => setShowPrompt(true), 3000)
+    // For mobile devices, show prompt after delay even without beforeinstallprompt
+    // The beforeinstallprompt may not fire until user engagement criteria is met
+    if (device === "ios" || device === "android") {
+      // Show after 2 seconds on mobile
+      const timer = setTimeout(() => setShowPrompt(true), 2000)
+      return () => {
+        clearTimeout(timer)
+        window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+      }
     }
 
     return () => {
