@@ -140,7 +140,7 @@ export default function LeaderboardPage() {
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="h-20 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800"
+                className="h-20 shimmer rounded-xl"
               />
             ))}
           </div>
@@ -171,12 +171,12 @@ export default function LeaderboardPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <tbody className="divide-y divide-border-default">
                 {data.csms.map((csm, index) => (
                   <tr
                     key={csm.email}
                     className={cn(
-                      "transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+                      "transition-colors hover:bg-surface-hover",
                       index === 0 && "bg-amber-50/50 dark:bg-amber-900/10"
                     )}
                   >
@@ -195,7 +195,7 @@ export default function LeaderboardPage() {
                             <Medal className="h-4 w-4 text-white" />
                           </div>
                         ) : (
-                          <span className="text-lg font-bold text-zinc-400">
+                          <span className="text-lg font-bold text-content-tertiary">
                             {index + 1}
                           </span>
                         )}
@@ -214,13 +214,13 @@ export default function LeaderboardPage() {
                           <p className="font-medium text-content-primary">
                             {csm.name}
                           </p>
-                          <p className="text-xs text-zinc-500">{csm.email}</p>
+                          <p className="text-xs text-content-secondary">{csm.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <Users className="h-4 w-4 text-zinc-400" />
+                        <Users className="h-4 w-4 text-content-tertiary" />
                         <span className="font-medium text-content-primary">
                           {csm.accountCount}
                         </span>
@@ -252,12 +252,12 @@ export default function LeaderboardPage() {
             </table>
           </div>
         ) : (
-          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <Trophy className="mx-auto mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
+          <div className="card-sf p-12 text-center">
+            <Trophy className="mx-auto mb-4 h-12 w-12 text-content-tertiary" />
             <h3 className="text-lg font-semibold text-content-primary">
               No data yet
             </h3>
-            <p className="mt-2 text-zinc-500">
+            <p className="mt-2 text-content-secondary">
               Leaderboard will populate as CSMs complete tasks and save accounts
             </p>
           </div>
@@ -286,7 +286,7 @@ function HighlightCard({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="card-sf p-4">
       <div className="flex items-center gap-3">
         <div
           className={cn(

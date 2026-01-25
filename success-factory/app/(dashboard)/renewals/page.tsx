@@ -328,7 +328,7 @@ function StatCard({
           className={cn(
             "h-5 w-5",
             variant === "success" && "text-success-500",
-            variant === "danger" && "text-red-500",
+            variant === "danger" && "text-error-500",
             variant === "default" && "text-content-tertiary"
           )}
         />
@@ -337,7 +337,7 @@ function StatCard({
         className={cn(
           "mt-2 text-2xl font-bold",
           variant === "success" && "text-success-600 dark:text-success-500",
-          variant === "danger" && "text-red-600 dark:text-red-400",
+          variant === "danger" && "text-error-600 dark:text-error-400",
           variant === "default" && "text-content-primary"
         )}
       >
@@ -364,13 +364,13 @@ function RenewalSection({
   const colors = {
     urgent: "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20",
     upcoming: "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20",
-    future: "border-zinc-200 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-800/50",
+    future: "border-border-default bg-bg-secondary/50 dark:bg-bg-tertiary/50",
   }
 
   const headerColors = {
     urgent: "text-red-700 dark:text-red-400",
     upcoming: "text-amber-700 dark:text-amber-400",
-    future: "text-zinc-700 dark:text-zinc-300",
+    future: "text-content-primary",
   }
 
   return (
@@ -380,7 +380,7 @@ function RenewalSection({
           <h2 className={cn("font-semibold", headerColors[variant])}>{title}</h2>
           <p className="text-sm text-content-secondary">{subtitle}</p>
         </div>
-        <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100">
+        <span className="rounded-full bg-bg-elevated px-3 py-1 text-sm font-medium text-content-primary shadow-sm">
           {renewals.length} {renewals.length === 1 ? "renewal" : "renewals"}
         </span>
       </div>
@@ -406,7 +406,7 @@ function RenewalCard({ renewal }: { renewal: Renewal }) {
   return (
     <Link
       href={`/accounts/${renewal.companyId}`}
-      className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 transition-all hover:border-zinc-300 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      className="flex items-center justify-between rounded-lg border border-border-default bg-bg-elevated p-4 transition-all hover:border-border-muted hover:shadow-sm"
     >
       <div className="flex items-center gap-4">
         <div className="text-center">
@@ -415,7 +415,7 @@ function RenewalCard({ renewal }: { renewal: Renewal }) {
           </p>
           <p className="text-xs text-content-secondary">days</p>
         </div>
-        <div className="h-10 w-px bg-zinc-200 dark:bg-zinc-700" />
+        <div className="h-10 w-px bg-border-default" />
         <div>
           <div className="flex items-center gap-2">
             <p className="font-medium text-content-primary">
@@ -430,7 +430,7 @@ function RenewalCard({ renewal }: { renewal: Renewal }) {
           {renewal.riskSignals.length > 0 && (
             <div className="mt-1 flex items-center gap-1">
               <AlertTriangle className="h-3 w-3 text-red-500" />
-              <span className="text-xs text-red-600 dark:text-red-400">
+              <span className="text-xs text-error-600 dark:text-error-400">
                 {renewal.riskSignals.slice(0, 2).join(", ")}
               </span>
             </div>
@@ -458,34 +458,34 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Expected Revenue */}
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+        <div className="rounded-lg border border-border-default bg-bg-secondary p-4 dark:bg-bg-tertiary/50">
           <p className="text-sm text-content-secondary">Expected Revenue</p>
           <p className="mt-1 text-2xl font-bold text-content-primary">
             ${forecast.expectedRevenue.toLocaleString()}
           </p>
-          <p className="text-xs text-content-tertiary dark:text-zinc-500">If all renewals close</p>
+          <p className="text-xs text-content-tertiary">If all renewals close</p>
         </div>
 
         {/* Likely Revenue */}
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
-          <p className="text-sm text-emerald-700 dark:text-emerald-400">Likely Revenue</p>
+          <p className="text-sm text-success-700 dark:text-success-400">Likely Revenue</p>
           <p className="mt-1 text-2xl font-bold text-success-600 dark:text-success-500">
             ${forecast.likelyRevenue.toLocaleString()}
           </p>
-          <p className="text-xs text-emerald-600/70 dark:text-success-500/70">Based on health scores</p>
+          <p className="text-xs text-success-600/70 dark:text-success-500/70">Based on health scores</p>
         </div>
 
         {/* At Risk Revenue */}
         <div className="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900 dark:bg-red-950/20">
-          <p className="text-sm text-red-700 dark:text-red-400">At Risk</p>
-          <p className="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
+          <p className="text-sm text-error-700 dark:text-error-400">At Risk</p>
+          <p className="mt-1 text-2xl font-bold text-error-600 dark:text-error-400">
             ${forecast.atRiskRevenue.toLocaleString()}
           </p>
-          <p className="text-xs text-red-600/70 dark:text-red-500/70">Yellow/Red accounts</p>
+          <p className="text-xs text-error-600/70 dark:text-error-500/70">Yellow/Red accounts</p>
         </div>
 
         {/* Retention Rate */}
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+        <div className="rounded-lg border border-border-default bg-bg-secondary p-4 dark:bg-bg-tertiary/50">
           <p className="text-sm text-content-secondary">Est. Retention</p>
           <p className={cn(
             "mt-1 text-2xl font-bold",
@@ -495,33 +495,33 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
           )}>
             {forecast.retentionRate.toFixed(1)}%
           </p>
-          <p className="text-xs text-content-tertiary dark:text-zinc-500">Weighted by health</p>
+          <p className="text-xs text-content-tertiary">Weighted by health</p>
         </div>
       </div>
 
       {/* Forecast Bar Visualization */}
       <div className="mt-4">
-        <div className="flex h-4 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+        <div className="flex h-4 overflow-hidden rounded-full bg-bg-tertiary">
           <div
-            className="bg-emerald-500 transition-all"
+            className="bg-success-500 transition-all"
             style={{ width: `${(forecast.likelyRevenue / forecast.expectedRevenue) * 100}%` }}
           />
           <div
-            className="bg-red-400 transition-all"
+            className="bg-error-400 transition-all"
             style={{ width: `${(forecast.atRiskRevenue / forecast.expectedRevenue) * 100}%` }}
           />
         </div>
         <div className="mt-2 flex justify-between text-xs text-content-secondary">
           <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="h-2 w-2 rounded-full bg-success-500" />
             Likely to renew
           </span>
           <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-red-400" />
+            <span className="h-2 w-2 rounded-full bg-error-400" />
             At risk
           </span>
           <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+            <span className="h-2 w-2 rounded-full bg-content-tertiary" />
             Unknown
           </span>
         </div>
@@ -582,8 +582,8 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
   }
 
   const weekHealthColors: Record<string, string> = {
-    empty: "border-zinc-200 dark:border-zinc-700",
-    green: "border-emerald-300 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20",
+    empty: "border-border-default",
+    green: "border-success-300 bg-success-50/50 dark:border-success-800 dark:bg-success-950/20",
     yellow: "border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20",
     red: "border-red-300 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20",
   }
@@ -615,7 +615,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                 </p>
                 <div className="mt-2">
                   {week.renewals.length === 0 ? (
-                    <p className="text-sm text-content-tertiary dark:text-zinc-600">
+                    <p className="text-sm text-content-tertiary">
                       No renewals
                     </p>
                   ) : (
@@ -633,10 +633,10 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                             key={i}
                             className={cn(
                               "h-2 w-2 rounded-full",
-                              r.healthScore === "green" && "bg-emerald-500",
+                              r.healthScore === "green" && "bg-success-500",
                               r.healthScore === "yellow" && "bg-amber-500",
-                              r.healthScore === "red" && "bg-red-500",
-                              r.healthScore === "unknown" && "bg-zinc-400"
+                              r.healthScore === "red" && "bg-error-500",
+                              r.healthScore === "unknown" && "bg-content-tertiary"
                             )}
                             title={r.companyName}
                           />
@@ -657,13 +657,13 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
       </div>
 
       {/* Detailed List with Actions */}
-      <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="border-b border-zinc-200 p-4 dark:border-zinc-800">
+      <div className="card-sf">
+        <div className="border-b border-border-default p-4">
           <h3 className="font-semibold text-content-primary">
             Renewals with Recommended Actions
           </h3>
         </div>
-        <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        <div className="divide-y divide-border-default">
           {renewals.map((renewal) => {
             const actions = getRecommendedActions(renewal)
             return (
@@ -676,16 +676,16 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                     <div
                       className={cn(
                         "mt-1 h-3 w-3 flex-shrink-0 rounded-full",
-                        renewal.healthScore === "green" && "bg-emerald-500",
+                        renewal.healthScore === "green" && "bg-success-500",
                         renewal.healthScore === "yellow" && "bg-amber-500",
-                        renewal.healthScore === "red" && "bg-red-500",
-                        renewal.healthScore === "unknown" && "bg-zinc-400"
+                        renewal.healthScore === "red" && "bg-error-500",
+                        renewal.healthScore === "unknown" && "bg-content-tertiary"
                       )}
                     />
                     <div>
                       <Link
                         href={`/accounts/${renewal.companyId}`}
-                        className="font-medium text-zinc-900 hover:text-emerald-600 dark:text-zinc-100 dark:hover:text-emerald-400"
+                        className="font-medium text-content-primary hover:text-success-600 dark:hover:text-success-400"
                       >
                         {renewal.companyName}
                       </Link>
@@ -702,7 +702,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                       {renewal.riskSignals.length > 0 && (
                         <div className="mt-1 flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3 text-red-500" />
-                          <span className="text-xs text-red-600 dark:text-red-400">
+                          <span className="text-xs text-error-600 dark:text-error-400">
                             {renewal.riskSignals.join(", ")}
                           </span>
                         </div>
@@ -748,11 +748,11 @@ function RenewalsSkeleton() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="h-24 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800"
+            className="h-24 shimmer rounded-xl"
           />
         ))}
       </div>
-      <div className="h-64 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-64 shimmer rounded-xl" />
     </div>
   )
 }

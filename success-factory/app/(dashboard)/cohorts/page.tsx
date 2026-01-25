@@ -359,83 +359,83 @@ export default function CohortsPage() {
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="h-16 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800"
+                className="h-16 shimmer rounded-xl"
               />
             ))}
           </div>
         ) : cohorts.length === 0 ? (
-          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-              <BarChart3 className="h-6 w-6 text-zinc-400" />
+          <div className="card-sf p-12 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-bg-tertiary">
+              <BarChart3 className="h-6 w-6 text-content-tertiary" />
             </div>
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-lg font-medium text-content-primary">
               No cohort data
             </h3>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-zinc-500 dark:text-content-tertiary">
               Click &quot;Sync Data&quot; to generate cohort analysis
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="overflow-hidden card-sf">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px]">
                 <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-800/50">
+                  <tr className="border-b border-border-default bg-bg-secondary">
                     <th
                       onClick={() => toggleSort("cohort")}
-                      className="cursor-pointer px-4 py-3 text-left text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      className="cursor-pointer px-4 py-3 text-left text-sm font-medium text-zinc-500 hover:text-content-primary"
                     >
                       Cohort
                       <SortIcon field="cohort" />
                     </th>
                     <th
                       onClick={() => toggleSort("companies")}
-                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-content-primary"
                     >
                       Companies
                       <SortIcon field="companies" />
                     </th>
-                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-zinc-400 sm:table-cell">
+                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-content-tertiary sm:table-cell">
                       Active
                     </th>
-                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-zinc-400 sm:table-cell">
+                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-content-tertiary sm:table-cell">
                       Churned
                     </th>
                     <th
                       onClick={() => toggleSort("retention")}
-                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-content-primary"
                     >
                       Retention
                       <SortIcon field="retention" />
                     </th>
                     <th
                       onClick={() => toggleSort("mrr")}
-                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-content-primary"
                     >
                       Total MRR
                       <SortIcon field="mrr" />
                     </th>
-                    <th className="hidden px-4 py-3 text-left text-sm font-medium text-zinc-500 dark:text-zinc-400 lg:table-cell">
+                    <th className="hidden px-4 py-3 text-left text-sm font-medium text-zinc-500 dark:text-content-tertiary lg:table-cell">
                       Retention
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-border-default">
                   {sortedCohorts.map((cohort) => (
                     <tr
                       key={cohort.cohort}
-                      className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                      className="transition-colors hover:bg-surface-hover"
                     >
-                      <td className="whitespace-nowrap px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-content-primary">
                         {cohort.cohort}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
+                      <td className="whitespace-nowrap px-4 py-3 text-right text-zinc-600 dark:text-content-tertiary">
                         {cohort.totalCompanies}
                       </td>
                       <td className="hidden whitespace-nowrap px-4 py-3 text-right text-success-600 dark:text-success-500 sm:table-cell">
                         {cohort.activeCompanies}
                       </td>
-                      <td className="hidden whitespace-nowrap px-4 py-3 text-right text-red-600 dark:text-red-400 sm:table-cell">
+                      <td className="hidden whitespace-nowrap px-4 py-3 text-right text-error-600 dark:text-error-400 sm:table-cell">
                         {cohort.churnedCompanies}
                       </td>
                       <td
@@ -446,12 +446,12 @@ export default function CohortsPage() {
                       >
                         {formatPercent(cohort.retentionRate)}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-100">
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-content-primary">
                         {formatCurrency(cohort.totalMrr)}
                       </td>
                       <td className="hidden px-4 py-3 lg:table-cell">
                         <div className="flex items-center gap-2">
-                          <div className="h-2.5 w-28 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                          <div className="h-2.5 w-28 overflow-hidden rounded-full bg-bg-tertiary">
                             <div
                               className={cn(
                                 "h-full rounded-full transition-all",
@@ -462,7 +462,7 @@ export default function CohortsPage() {
                               }}
                             />
                           </div>
-                          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                          <span className="text-xs text-content-tertiary">
                             {formatPercent(cohort.retentionRate)}
                           </span>
                         </div>
@@ -477,10 +477,10 @@ export default function CohortsPage() {
 
         {/* Segment Breakdown */}
         {cohorts.length > 0 && Object.keys(cohorts[0]?.segments || {}).length > 0 && (
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="card-sf p-4 sm:p-6">
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                <h3 className="text-lg font-semibold text-content-primary">
                   Segment Distribution by Cohort
                 </h3>
                 <p className="text-sm text-content-secondary">
@@ -494,7 +494,7 @@ export default function CohortsPage() {
                     const colors = [
                       "bg-blue-500",
                       "bg-purple-500",
-                      "bg-emerald-500",
+                      "bg-success-500",
                       "bg-amber-500",
                       "bg-red-500",
                     ]
@@ -506,7 +506,7 @@ export default function CohortsPage() {
                             colors[idx % colors.length]
                           )}
                         />
-                        <span className="text-xs text-zinc-600 dark:text-zinc-400 sm:text-sm">
+                        <span className="text-xs text-zinc-600 dark:text-content-tertiary sm:text-sm">
                           {segment || "Unknown"}
                         </span>
                       </div>
@@ -518,14 +518,14 @@ export default function CohortsPage() {
               {sortedCohorts.slice(0, 6).map((cohort) => (
                 <div key={cohort.cohort} className="group">
                   <div className="mb-1.5 flex items-center justify-between text-sm">
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                    <span className="font-medium text-content-primary">
                       {cohort.cohort}
                     </span>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400 sm:text-sm">
+                    <span className="text-xs text-zinc-500 dark:text-content-tertiary sm:text-sm">
                       {cohort.totalCompanies} companies
                     </span>
                   </div>
-                  <div className="flex h-5 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800 sm:h-6">
+                  <div className="flex h-5 overflow-hidden rounded-lg bg-bg-tertiary sm:h-6">
                     {Object.entries(cohort.segments).map(
                       ([segment, count], idx) => {
                         const percent =
@@ -535,7 +535,7 @@ export default function CohortsPage() {
                         const colors = [
                           "bg-blue-500 hover:bg-blue-600",
                           "bg-purple-500 hover:bg-purple-600",
-                          "bg-emerald-500 hover:bg-emerald-600",
+                          "bg-success-500 hover:bg-success-600",
                           "bg-amber-500 hover:bg-amber-600",
                           "bg-red-500 hover:bg-red-600",
                         ]

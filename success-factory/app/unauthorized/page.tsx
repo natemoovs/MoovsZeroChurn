@@ -12,25 +12,25 @@ export default function UnauthorizedPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-bg-secondary p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl text-red-600 dark:text-red-400">
+          <CardTitle className="text-xl text-error-600 dark:text-error-400">
             Access Restricted
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-zinc-600 dark:text-zinc-400 text-center">
+          <p className="text-content-secondary text-center">
             Success Factory is only available to users with authorized email
             addresses.
           </p>
-          <p className="text-zinc-600 dark:text-zinc-400 text-center">
+          <p className="text-content-secondary text-center">
             Allowed domains:{" "}
             <span className="font-semibold">
               {ALLOWED_EMAIL_DOMAINS.map((d) => `@${d}`).join(", ")}
             </span>
           </p>
-          <p className="text-sm text-zinc-500 dark:text-zinc-500 text-center">
+          <p className="text-sm text-content-tertiary text-center">
             If you believe you should have access, please contact your
             administrator.
           </p>

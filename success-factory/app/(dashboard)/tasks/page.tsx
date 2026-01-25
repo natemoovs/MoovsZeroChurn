@@ -340,7 +340,7 @@ export default function TasksPage() {
     urgent: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
     high: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
     medium: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    low: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    low: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-content-tertiary",
   }
 
   const statusIcons = {
@@ -356,13 +356,13 @@ export default function TasksPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-2xl font-bold text-content-primary">
               Tasks
             </h1>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               Manage your CSM action items and playbook tasks
             </p>
-            <p className="mt-1 hidden text-xs text-zinc-400 sm:block dark:text-zinc-500">
+            <p className="mt-1 hidden text-xs text-content-tertiary sm:block dark:text-content-secondary">
               <kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">j</kbd>/<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">k</kbd> navigate
               {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">x</kbd> select
               {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">↵</kbd> complete
@@ -381,7 +381,7 @@ export default function TasksPage() {
             </button>
             <button
               onClick={() => setShowNewTask(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700"
             >
               <Plus className="h-4 w-4" />
               New Task
@@ -429,7 +429,7 @@ export default function TasksPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Search */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-tertiary" />
             <input
               type="text"
               placeholder="Search tasks..."
@@ -442,7 +442,7 @@ export default function TasksPage() {
           <div className="flex flex-wrap items-center gap-3">
             {/* Assignee Filter */}
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-zinc-400" />
+              <Users className="h-4 w-4 text-content-tertiary" />
               <select
                 value={assigneeFilter}
                 onChange={(e) => setAssigneeFilter(e.target.value)}
@@ -460,7 +460,7 @@ export default function TasksPage() {
 
             {/* Status Filter */}
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-zinc-400" />
+              <Filter className="h-4 w-4 text-content-tertiary" />
               <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
                 {(["all", "pending", "in_progress", "completed"] as const).map((f) => (
                   <button
@@ -470,7 +470,7 @@ export default function TasksPage() {
                       "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                       filter === f
                         ? "bg-white text-zinc-900 shadow dark:bg-zinc-700 dark:text-zinc-100"
-                        : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                        : "text-zinc-600 hover:text-zinc-900 dark:text-content-tertiary dark:hover:text-zinc-100"
                     )}
                   >
                     {f === "in_progress" ? "In Progress" : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -487,7 +487,7 @@ export default function TasksPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedTasks(new Set())}
-                className="rounded p-1 text-zinc-500 hover:bg-white hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="rounded p-1 text-content-secondary hover:bg-white hover:text-zinc-700 dark:text-content-tertiary dark:hover:bg-zinc-800"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -496,7 +496,7 @@ export default function TasksPage() {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">Reassign to:</span>
+              <span className="text-sm text-zinc-600 dark:text-content-tertiary">Reassign to:</span>
               <select
                 onChange={(e) => {
                   if (e.target.value) {
@@ -529,11 +529,11 @@ export default function TasksPage() {
           <TaskListSkeleton />
         ) : filteredTasks.length === 0 ? (
           <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-content-tertiary" />
+            <h3 className="text-lg font-semibold text-content-primary">
               No tasks found
             </h3>
-            <p className="mt-2 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-2 text-content-secondary">
               {searchQuery
                 ? "No tasks match your search"
                 : assigneeFilter === "mine"
@@ -550,15 +550,15 @@ export default function TasksPage() {
               <div className="flex items-center gap-3 px-4 py-2">
                 <button
                   onClick={selectAllTasks}
-                  className="flex-shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  className="flex-shrink-0 text-content-tertiary hover:text-zinc-600 dark:hover:text-zinc-300"
                 >
                   {selectedTasks.size === filteredTasks.length && filteredTasks.length > 0 ? (
-                    <CheckSquare className="h-5 w-5 text-emerald-500" />
+                    <CheckSquare className="h-5 w-5 text-success-500" />
                   ) : (
                     <Square className="h-5 w-5" />
                   )}
                 </button>
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                <span className="text-sm text-content-secondary">
                   {selectedTasks.size === filteredTasks.length && filteredTasks.length > 0
                     ? "Deselect all"
                     : "Select all"}
@@ -649,14 +649,14 @@ export default function TasksPage() {
                             className={cn(
                               "text-left font-medium hover:underline",
                               task.status === "completed"
-                                ? "text-zinc-500 line-through dark:text-zinc-400"
-                                : "text-zinc-900 dark:text-zinc-100"
+                                ? "text-content-secondary line-through dark:text-content-tertiary"
+                                : "text-content-primary"
                             )}
                           >
                             {task.title}
                           </button>
                           {task.description && (
-                            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                            <p className="mt-1 text-sm text-content-secondary line-clamp-2">
                               {task.description}
                             </p>
                           )}
@@ -674,7 +674,7 @@ export default function TasksPage() {
                       </div>
 
                       {/* Meta */}
-                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-content-secondary">
                         <Link
                           href={`/accounts/${task.companyId}`}
                           className="flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400"
@@ -707,7 +707,7 @@ export default function TasksPage() {
                                 updateTaskAssignee(task.id, e.target.value)
                               }
                             }}
-                            className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-zinc-500 focus:ring-1 focus:ring-emerald-500 dark:text-zinc-400"
+                            className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-content-secondary focus:ring-1 focus:ring-emerald-500 dark:text-content-tertiary"
                           >
                             <option value="">
                               {getAssigneeDisplayName(task)}
@@ -805,20 +805,20 @@ function StatCard({
   color: "zinc" | "yellow" | "blue" | "green" | "red"
 }) {
   const colors = {
-    zinc: "text-zinc-500",
+    zinc: "text-content-secondary",
     yellow: "text-yellow-500",
     blue: "text-blue-500",
-    green: "text-emerald-500",
+    green: "text-success-500",
     red: "text-red-500",
   }
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">{label}</span>
+        <span className="text-sm text-content-secondary">{label}</span>
         <Icon className={cn("h-5 w-5", colors[color])} />
       </div>
-      <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <p className="mt-2 text-2xl font-bold text-content-primary">
         {value}
       </p>
     </div>
@@ -867,13 +867,13 @@ function NewTaskModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900">
-        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-4 text-lg font-semibold text-content-primary">
           New Task
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Company ID *
             </label>
             <input
@@ -889,7 +889,7 @@ function NewTaskModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Company Name *
             </label>
             <input
@@ -905,7 +905,7 @@ function NewTaskModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Task Title *
             </label>
             <input
@@ -921,7 +921,7 @@ function NewTaskModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Description
             </label>
             <textarea
@@ -937,7 +937,7 @@ function NewTaskModal({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1 block text-sm font-medium text-content-primary">
                 Priority
               </label>
               <select
@@ -955,7 +955,7 @@ function NewTaskModal({
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1 block text-sm font-medium text-content-primary">
                 Due Date
               </label>
               <input
@@ -980,7 +980,7 @@ function NewTaskModal({
             <button
               type="submit"
               disabled={saving || !formData.companyId || !formData.title}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
             >
               {saving ? "Creating..." : "Create Task"}
             </button>
@@ -997,7 +997,7 @@ function TaskListSkeleton() {
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="h-24 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800"
+          className="h-24 shimmer rounded-xl"
         />
       ))}
     </div>

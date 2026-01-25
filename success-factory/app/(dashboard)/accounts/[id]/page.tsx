@@ -268,7 +268,7 @@ export default function AccountDetailPage() {
         {/* Back button */}
         <Link
           href="/accounts"
-          className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:text-content-tertiary dark:hover:text-zinc-100"
+          className="inline-flex items-center gap-2 text-sm text-content-secondary hover:text-content-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to accounts
@@ -309,7 +309,7 @@ export default function AccountDetailPage() {
               )}
               <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-content-secondary">
                 {account.plan && (
-                  <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 font-medium dark:bg-zinc-800">
+                  <span className="rounded-full bg-bg-tertiary px-2.5 py-0.5 font-medium">
                     {account.plan}
                   </span>
                 )}
@@ -335,7 +335,7 @@ export default function AccountDetailPage() {
                 href={account.website.startsWith("http") ? account.website : `https://${account.website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="inline-flex items-center gap-2 rounded-lg border border-border-default bg-bg-elevated px-4 py-2 text-sm font-medium text-content-primary hover:bg-surface-hover"
               >
                 <ExternalLink className="h-4 w-4" />
                 Website
@@ -551,7 +551,7 @@ export default function AccountDetailPage() {
                       key={contact.id}
                       className="flex items-start gap-3 rounded-lg border border-border-default p-3"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-sm font-medium text-zinc-600 dark:bg-zinc-800 dark:text-content-tertiary">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-tertiary text-sm font-medium text-content-secondary">
                         {(contact.firstName?.[0] || "") +
                           (contact.lastName?.[0] || "") || "?"}
                       </div>
@@ -625,7 +625,7 @@ export default function AccountDetailPage() {
               <div className="space-y-2">
                 <Link
                   href={`/skills/customer-health?company=${encodeURIComponent(account.name)}`}
-                  className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
+                  className="flex items-center gap-3 rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
                 >
                   <MessageSquare className="h-5 w-5 text-content-tertiary" />
                   <span className="text-sm font-medium text-content-primary">
@@ -634,7 +634,7 @@ export default function AccountDetailPage() {
                 </Link>
                 <Link
                   href={`/skills/renewal-prep?company=${encodeURIComponent(account.name)}`}
-                  className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
+                  className="flex items-center gap-3 rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
                 >
                   <FileText className="h-5 w-5 text-content-tertiary" />
                   <span className="text-sm font-medium text-content-primary">
@@ -643,7 +643,7 @@ export default function AccountDetailPage() {
                 </Link>
                 <Link
                   href={`/skills/churn-risk?company=${encodeURIComponent(account.name)}`}
-                  className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
+                  className="flex items-center gap-3 rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
                 >
                   <AlertTriangle className="h-5 w-5 text-content-tertiary" />
                   <span className="text-sm font-medium text-content-primary">
@@ -684,7 +684,7 @@ function MetricCard({
   variant?: "default" | "success" | "danger"
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="card-sf p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm text-content-secondary">{label}</span>
         <Icon
@@ -736,7 +736,7 @@ function TimelineItem({
     call: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
     meeting: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
     deal: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
-    health_change: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-content-tertiary",
+    health_change: "bg-bg-tertiary text-content-secondary",
   }
 
   const Icon = icons[event.type]
@@ -797,7 +797,7 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
     ? "bg-emerald-100 dark:bg-emerald-900/30"
     : trend === "declining"
     ? "bg-red-100 dark:bg-red-900/30"
-    : "bg-bg-tertiary"
+    : "bg-surface-muted"
 
   return (
     <div className="card-sf p-5">
@@ -822,7 +822,7 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
               green: "bg-success-500",
               yellow: "bg-yellow-500",
               red: "bg-error-500",
-              unknown: "bg-zinc-300 dark:bg-zinc-600",
+              unknown: "bg-content-tertiary",
             }
             const heights = {
               green: "100%",
@@ -881,7 +881,7 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
       {/* Recent Changes */}
       {changes.length > 0 && (
         <div className="border-t border-border-default pt-4">
-          <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <h3 className="mb-2 text-sm font-medium text-content-primary">
             Recent Changes
           </h3>
           <div className="space-y-2">
@@ -899,14 +899,14 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
                       "inline-block h-2 w-2 rounded-full",
                       change.from === "green" ? "bg-success-500" :
                       change.from === "yellow" ? "bg-yellow-500" :
-                      change.from === "red" ? "bg-error-500" : "bg-zinc-400"
+                      change.from === "red" ? "bg-error-500" : "bg-content-tertiary"
                     )} />
                     <span className="text-content-secondary">→</span>
                     <span className={cn(
                       "inline-block h-2 w-2 rounded-full",
                       change.to === "green" ? "bg-success-500" :
                       change.to === "yellow" ? "bg-yellow-500" :
-                      change.to === "red" ? "bg-error-500" : "bg-zinc-400"
+                      change.to === "red" ? "bg-error-500" : "bg-content-tertiary"
                     )} />
                     <span className={isDowngrade ? "text-error-600 dark:text-error-500" : "text-success-600 dark:text-success-500"}>
                       {change.from} → {change.to}
@@ -970,7 +970,7 @@ function JourneyStageCard({
             disabled={updating}
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              "border border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700",
+              "border border-border-default bg-bg-elevated hover:bg-surface-hover",
               updating && "opacity-50 cursor-not-allowed"
             )}
           >
@@ -986,8 +986,8 @@ function JourneyStageCard({
                   key={stage.id}
                   onClick={() => handleStageChange(stage.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700",
-                    stage.id === currentStage && "bg-zinc-50 dark:bg-zinc-700"
+                    "flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-surface-hover",
+                    stage.id === currentStage && "bg-surface-hover"
                   )}
                 >
                   <span className={cn("h-2.5 w-2.5 rounded-full", stage.color)} />
@@ -1018,11 +1018,11 @@ function JourneyStageCard({
                     "h-2 flex-1 rounded-full transition-all",
                     isPast || isActive
                       ? isChurned
-                        ? "bg-zinc-400"
+                        ? "bg-content-tertiary"
                         : isAtRisk
                         ? "bg-red-400"
                         : stage.color
-                      : "bg-zinc-200 dark:bg-zinc-700"
+                      : "bg-surface-muted"
                   )}
                 />
                 {i < JOURNEY_STAGES.length - 2 && (
@@ -1042,7 +1042,7 @@ function JourneyStageCard({
       {/* Journey History */}
       {journey?.history && journey.history.length > 0 && (
         <div className="mt-4 border-t border-border-default pt-4">
-          <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <h3 className="mb-2 text-sm font-medium text-content-primary">
             Recent Changes
           </h3>
           <div className="space-y-2">
@@ -1059,7 +1059,7 @@ function JourneyStageCard({
                       </>
                     )}
                     <span className={cn("h-2 w-2 rounded-full", toStage?.color || "bg-zinc-400")} />
-                    <span className="text-zinc-700 dark:text-zinc-300">
+                    <span className="text-content-primary">
                       {fromStage ? `${fromStage.label} → ` : ""}{toStage?.label}
                     </span>
                   </div>
@@ -1079,25 +1079,25 @@ function JourneyStageCard({
 function AccountDetailSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="h-5 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-5 w-24 shimmer rounded" />
       <div className="flex items-start gap-4">
-        <div className="h-16 w-16 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-16 w-16 shimmer rounded-xl" />
         <div className="space-y-2">
-          <div className="h-8 w-48 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-          <div className="h-5 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+          <div className="h-8 w-48 shimmer rounded" />
+          <div className="h-5 w-32 shimmer rounded" />
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="h-24 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800"
+            className="h-24 shimmer rounded-xl"
           />
         ))}
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="h-64 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-96 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800 lg:col-span-2" />
+        <div className="h-64 shimmer rounded-xl" />
+        <div className="h-96 shimmer rounded-xl lg:col-span-2" />
       </div>
     </div>
   )

@@ -31,7 +31,7 @@ export default function RootLayout({
             <Toaster
               position="bottom-right"
               toastOptions={{
-                className: "dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-800",
+                className: "dark:bg-bg-elevated dark:text-content-primary dark:border-border-default",
               }}
             />
           </ThemeProvider>

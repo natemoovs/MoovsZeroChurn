@@ -144,7 +144,7 @@ export default function EngagementPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className="h-10 rounded-lg border border-border-default bg-bg-elevated px-3 text-sm"
           >
             {sortOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -230,8 +230,8 @@ export default function EngagementPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Account List */}
           <div className="lg:col-span-1">
-            <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="border-b border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="card-sf">
+              <div className="border-b border-border-default p-4">
                 <h2 className="font-semibold text-content-primary">
                   Accounts
                 </h2>
@@ -242,18 +242,18 @@ export default function EngagementPage() {
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className="h-16 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                        className="h-16 shimmer rounded-lg"
                       />
                     ))}
                   </div>
                 ) : (
-                  <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <div className="divide-y divide-border-default">
                     {metrics.map((m) => (
                       <button
                         key={m.companyId}
                         onClick={() => setSelectedAccount(m)}
                         className={cn(
-                          "flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+                          "flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-surface-hover",
                           selectedAccount?.companyId === m.companyId &&
                             "bg-teal-50 dark:bg-teal-950/30"
                         )}
@@ -285,7 +285,7 @@ export default function EngagementPage() {
                           >
                             {m.overallEngagementScore}
                           </div>
-                          <ChevronRight className="h-4 w-4 text-zinc-400" />
+                          <ChevronRight className="h-4 w-4 text-content-tertiary" />
                         </div>
                       </button>
                     ))}
@@ -305,7 +305,7 @@ export default function EngagementPage() {
                     <div>
                       <Link
                         href={`/accounts/${selectedAccount.companyId}`}
-                        className="text-xl font-bold text-zinc-900 hover:text-teal-600 dark:text-zinc-100 dark:hover:text-teal-400"
+                        className="text-xl font-bold text-content-primary hover:text-teal-600 dark:hover:text-teal-400"
                       >
                         {selectedAccount.companyName}
                       </Link>
@@ -333,7 +333,7 @@ export default function EngagementPage() {
 
                   {/* Score bar */}
                   <div className="mt-4">
-                    <div className="flex h-3 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                    <div className="flex h-3 overflow-hidden rounded-full bg-bg-tertiary">
                       <div
                         className={cn(
                           "transition-all",
@@ -349,7 +349,7 @@ export default function EngagementPage() {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="card-sf p-4">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-zinc-400" />
+                      <Clock className="h-4 w-4 text-content-tertiary" />
                       <span className="text-sm text-content-secondary">
                         Login Frequency
                       </span>
@@ -357,7 +357,7 @@ export default function EngagementPage() {
                     <p className="mt-2 text-2xl font-bold text-content-primary">
                       {selectedAccount.loginFrequency.avgDaysPerWeek} days/wk
                     </p>
-                    <div className="mt-1 flex items-center gap-1 text-sm text-zinc-500">
+                    <div className="mt-1 flex items-center gap-1 text-sm text-content-secondary">
                       {getTrendIcon(selectedAccount.loginFrequency.trend)}
                       <span>Last: {selectedAccount.loginFrequency.lastLogin}</span>
                     </div>
@@ -365,7 +365,7 @@ export default function EngagementPage() {
 
                   <div className="card-sf p-4">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-zinc-400" />
+                      <Clock className="h-4 w-4 text-content-tertiary" />
                       <span className="text-sm text-content-secondary">
                         Avg Session
                       </span>
@@ -373,14 +373,14 @@ export default function EngagementPage() {
                     <p className="mt-2 text-2xl font-bold text-content-primary">
                       {selectedAccount.sessionMetrics.avgSessionDuration} min
                     </p>
-                    <p className="mt-1 text-sm text-zinc-500">
+                    <p className="mt-1 text-sm text-content-secondary">
                       {selectedAccount.sessionMetrics.totalSessions} total sessions
                     </p>
                   </div>
 
                   <div className="card-sf p-4">
                     <div className="flex items-center gap-2">
-                      <MousePointer className="h-4 w-4 text-zinc-400" />
+                      <MousePointer className="h-4 w-4 text-content-tertiary" />
                       <span className="text-sm text-content-secondary">
                         Actions/Session
                       </span>
@@ -405,7 +405,7 @@ export default function EngagementPage() {
                     </span>
                   </div>
 
-                  <div className="mb-4 flex h-3 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                  <div className="mb-4 flex h-3 overflow-hidden rounded-full bg-bg-tertiary">
                     <div
                       className={getScoreBgColor(selectedAccount.featureAdoption.adoptionRate)}
                       style={{ width: `${selectedAccount.featureAdoption.adoptionRate}%` }}
@@ -443,7 +443,7 @@ export default function EngagementPage() {
 
                     {/* Unused Features */}
                     <div>
-                      <h4 className="mb-2 flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                      <h4 className="mb-2 flex items-center gap-2 text-sm font-medium text-content-secondary">
                         <XCircle className="h-4 w-4" />
                         Unused Features
                       </h4>
@@ -451,13 +451,13 @@ export default function EngagementPage() {
                         {selectedAccount.featureAdoption.unusedFeatures.slice(0, 4).map((f, i) => (
                           <div
                             key={i}
-                            className="rounded-lg bg-zinc-100 px-3 py-2 text-sm text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                            className="rounded-lg bg-bg-tertiary px-3 py-2 text-sm text-content-secondary"
                           >
                             {f}
                           </div>
                         ))}
                         {selectedAccount.featureAdoption.unusedFeatures.length === 0 && (
-                          <p className="text-sm text-zinc-500">All features adopted!</p>
+                          <p className="text-sm text-content-secondary">All features adopted!</p>
                         )}
                       </div>
                     </div>
@@ -508,9 +508,9 @@ export default function EngagementPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex h-96 items-center justify-center rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex h-96 items-center justify-center card-sf">
                 <div className="text-center">
-                  <Activity className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
+                  <Activity className="mx-auto h-12 w-12 text-content-tertiary" />
                   <p className="mt-4 text-content-secondary">
                     Select an account to view engagement details
                   </p>
