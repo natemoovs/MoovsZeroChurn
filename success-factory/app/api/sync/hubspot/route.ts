@@ -743,7 +743,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse dates safely
-    const parseDate = (dateStr?: string): Date | null => {
+    const parseDate = (dateStr?: string | null): Date | null => {
       if (!dateStr) return null
       const date = new Date(dateStr)
       return isNaN(date.getTime()) ? null : date
