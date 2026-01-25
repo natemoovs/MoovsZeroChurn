@@ -779,6 +779,8 @@ export async function POST(request: NextRequest) {
     let stripeMatches = 0
     let noHubspotRecord = 0
     let skippedChurned = 0
+    let firstError: string | null = null
+    let firstErrorCompany: string | null = null
 
     // CSM Assignment based on MRR
     const CSM_ASSIGNMENTS = {
@@ -1059,6 +1061,11 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.error(`Failed to sync operator ${mbData.companyName}:`, err)
         failed++
+        // Capture first error for debugging
+        if (!firstError) {
+          firstError = err instanceof Error ? err.message : String(err)
+          firstErrorCompany = mbData.companyName
+        }
       }
     }
 
@@ -1139,6 +1146,7 @@ export async function POST(request: NextRequest) {
           synced,
           skippedChurned,
           failed,
+          firstError: firstError ? `${firstErrorCompany}: ${firstError}` : null,
         },
         metabaseColumns: {
           original: metabaseDebugInfo.originalColumns.slice(0, 10), // First 10 columns
