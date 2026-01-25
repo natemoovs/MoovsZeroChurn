@@ -9,6 +9,8 @@ interface Company {
   name: string
   domain: string | null
   industry: string | null
+  mrr?: number | null
+  healthScore?: string | null
 }
 
 interface CompanySelectProps {
@@ -20,7 +22,7 @@ interface CompanySelectProps {
 export function CompanySelect({
   value,
   onChange,
-  placeholder = "Search companies...",
+  placeholder = "Search customers...",
 }: CompanySelectProps) {
   const [query, setQuery] = useState(value)
   const [companies, setCompanies] = useState<Company[]>([])
@@ -28,13 +30,8 @@ export function CompanySelect({
   const [showDropdown, setShowDropdown] = useState(false)
   const [isConfigured, setIsConfigured] = useState<boolean | null>(null)
 
-  // Debounced search
-  const searchCompanies = useCallback(async (searchQuery: string) => {
-    if (!searchQuery || searchQuery.length < 2) {
-      setCompanies([])
-      return
-    }
-
+  // Fetch companies (with or without query)
+  const fetchCompanies = useCallback(async (searchQuery: string) => {
     setIsLoading(true)
     try {
       const response = await fetch(
@@ -44,35 +41,29 @@ export function CompanySelect({
       setIsConfigured(data.configured)
       setCompanies(data.companies || [])
     } catch (error) {
-      console.error("Error searching companies:", error)
+      console.error("Error fetching companies:", error)
       setCompanies([])
     } finally {
       setIsLoading(false)
     }
   }, [])
 
-  // Check if HubSpot is configured on mount
+  // Load initial companies on mount
   useEffect(() => {
-    fetch("/api/integrations/hubspot/companies?q=")
-      .then((res) => res.json())
-      .then((data) => setIsConfigured(data.configured))
-      .catch(() => setIsConfigured(false))
-  }, [])
+    fetchCompanies("")
+  }, [fetchCompanies])
 
-  // Debounce the search
+  // Debounced search when query changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (query && query !== value) {
-        searchCompanies(query)
-      }
+      fetchCompanies(query)
     }, 300)
     return () => clearTimeout(timer)
-  }, [query, value, searchCompanies])
+  }, [query, fetchCompanies])
 
   const handleSelect = (company: Company) => {
-    const displayValue = company.domain ? `${company.name} (${company.domain})` : company.name
-    setQuery(displayValue)
-    onChange(displayValue)
+    setQuery(company.name)
+    onChange(company.name)
     setShowDropdown(false)
   }
 
@@ -84,9 +75,7 @@ export function CompanySelect({
   }
 
   const handleFocus = () => {
-    if (companies.length > 0 || (query && query.length >= 2)) {
-      setShowDropdown(true)
-    }
+    setShowDropdown(true)
   }
 
   const handleBlur = () => {
@@ -94,7 +83,17 @@ export function CompanySelect({
     setTimeout(() => setShowDropdown(false), 200)
   }
 
-  // If HubSpot isn't configured, just show a regular input
+  const getHealthBadge = (score: string | null | undefined) => {
+    if (!score) return null
+    const colors: Record<string, string> = {
+      green: "bg-success-500",
+      yellow: "bg-warning-500",
+      red: "bg-error-500",
+    }
+    return <span className={`h-2 w-2 rounded-full ${colors[score] || "bg-gray-400"}`} />
+  }
+
+  // If config check failed, just show a regular input
   if (isConfigured === false) {
     return (
       <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
@@ -108,10 +107,10 @@ export function CompanySelect({
         onChange={handleInputChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        placeholder={isConfigured ? "Type to search HubSpot..." : placeholder}
+        placeholder={placeholder}
       />
 
-      {showDropdown && query.length >= 2 && (
+      {showDropdown && (
         <div className="border-border-default bg-bg-elevated absolute z-50 mt-1 w-full rounded-md border shadow-lg">
           {isLoading ? (
             <div className="text-content-secondary px-4 py-3 text-sm">Searching...</div>
@@ -123,18 +122,30 @@ export function CompanySelect({
                   className="hover:bg-surface-hover cursor-pointer px-4 py-2"
                   onClick={() => handleSelect(company)}
                 >
-                  <div className="text-content-primary font-medium">{company.name}</div>
-                  {(company.domain || company.industry) && (
-                    <div className="text-content-secondary text-sm">
-                      {[company.domain, company.industry].filter(Boolean).join(" · ")}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {getHealthBadge(company.healthScore)}
+                      <span className="text-content-primary font-medium">{company.name}</span>
                     </div>
+                    {company.mrr && company.mrr > 0 && (
+                      <span className="text-content-tertiary text-xs">
+                        ${company.mrr.toLocaleString()}/mo
+                      </span>
+                    )}
+                  </div>
+                  {company.domain && (
+                    <div className="text-content-secondary ml-4 text-sm">{company.domain}</div>
                   )}
                 </li>
               ))}
             </ul>
+          ) : query.length >= 2 ? (
+            <div className="text-content-secondary px-4 py-3 text-sm">
+              No customers found. You can type the name manually.
+            </div>
           ) : (
             <div className="text-content-secondary px-4 py-3 text-sm">
-              No companies found. Type more to search or enter manually.
+              Type to search customers...
             </div>
           )}
         </div>
