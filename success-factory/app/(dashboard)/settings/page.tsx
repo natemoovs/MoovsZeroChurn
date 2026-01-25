@@ -150,6 +150,7 @@ export default function SettingsPage() {
     deletedTasks?: string[]
   } | null>(null)
   const [syncDebug, setSyncDebug] = useState<{
+    stats?: { totalFromMetabase: number; synced: number; skippedChurned: number; failed: number }
     metabaseColumns?: { original: string[]; normalized: string[]; missing: string[] }
     sampleFromMetabase?: Record<string, unknown> | null
     sampleFromDatabase?: Record<string, unknown> | null
@@ -729,6 +730,15 @@ export default function SettingsPage() {
           {syncDebug && (
             <div className="mt-4 space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
               <h4 className="font-medium text-blue-900 dark:text-blue-100">Sync Debug Info</h4>
+
+              {syncDebug.stats && (
+                <div className="text-sm grid grid-cols-2 gap-2">
+                  <div><span className="font-medium">From Metabase:</span> {syncDebug.stats.totalFromMetabase}</div>
+                  <div><span className="font-medium">Synced:</span> {syncDebug.stats.synced}</div>
+                  <div><span className="font-medium">Skipped (churned):</span> {syncDebug.stats.skippedChurned}</div>
+                  <div><span className="font-medium">Failed:</span> {syncDebug.stats.failed}</div>
+                </div>
+              )}
 
               {syncDebug.metabaseColumns?.missing && syncDebug.metabaseColumns.missing.length > 0 && (
                 <div className="text-sm">
