@@ -568,15 +568,53 @@ function PropertyCard({
   value: string
   color?: string
 }) {
+  // Map color to semantic token
+  const colorStyles = {
+    red: "text-error-600 dark:text-error-400",
+    orange: "text-warning-600 dark:text-warning-400",
+    yellow: "text-warning-500 dark:text-warning-400",
+    green: "text-success-600 dark:text-success-400",
+    blue: "text-info-600 dark:text-info-400",
+    purple: "text-primary-600 dark:text-primary-400",
+    pink: "text-primary-500 dark:text-primary-400",
+    default: "text-content-primary",
+  }
+
+  const iconBgStyles = {
+    red: "bg-error-100 dark:bg-error-900/30",
+    orange: "bg-warning-100 dark:bg-warning-900/30",
+    yellow: "bg-warning-100 dark:bg-warning-900/30",
+    green: "bg-success-100 dark:bg-success-900/30",
+    blue: "bg-info-100 dark:bg-info-900/30",
+    purple: "bg-primary-100 dark:bg-primary-900/30",
+    pink: "bg-primary-100 dark:bg-primary-900/30",
+    default: "bg-bg-tertiary",
+  }
+
+  const iconColorStyles = {
+    red: "text-error-600 dark:text-error-400",
+    orange: "text-warning-600 dark:text-warning-400",
+    yellow: "text-warning-500 dark:text-warning-400",
+    green: "text-success-600 dark:text-success-400",
+    blue: "text-info-600 dark:text-info-400",
+    purple: "text-primary-600 dark:text-primary-400",
+    pink: "text-primary-500 dark:text-primary-400",
+    default: "text-content-secondary",
+  }
+
+  const colorKey = (color?.toLowerCase() || "default") as keyof typeof colorStyles
+  const textColor = colorStyles[colorKey] || colorStyles.default
+  const iconBg = iconBgStyles[colorKey] || iconBgStyles.default
+  const iconColor = iconColorStyles[colorKey] || iconColorStyles.default
+
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border-default p-3">
-      <Icon className="h-4 w-4 text-content-tertiary" />
+    <div className="flex items-center gap-3 rounded-xl border border-border-default bg-bg-elevated p-3 transition-colors hover:bg-surface-hover">
+      <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", iconBg)}>
+        <Icon className={cn("h-4 w-4", iconColor)} />
+      </div>
       <div>
-        <p className="text-xs text-content-secondary">{label}</p>
-        <p className={cn(
-          "text-sm font-medium text-content-primary",
-          color && `text-${color}-600`
-        )}>
+        <p className="text-xs font-medium text-content-tertiary">{label}</p>
+        <p className={cn("text-sm font-semibold", textColor)}>
           {value || "—"}
         </p>
       </div>

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Run color audit on staged files
+cd success-factory && node scripts/audit-colors.js
+
+# If the audit passes, continue with the commit
+exit $?
