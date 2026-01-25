@@ -256,9 +256,30 @@ model HubSpotCompany {
   contractEndDate     DateTime? // Renewal date
 
   // Usage & Engagement
-  totalTrips          Int?     // Usage metric
+  totalTrips          Int?     // Usage metric (R Total Reservations Count)
+  tripsLast30Days     Int?     // R Last 30 Days Reservations Count
   lastLoginAt         DateTime? // Last activity
-  daysSinceLastLogin  Int?     // Computed for convenience
+  lastTripCreatedAt   DateTime? // R Last Trip Created At
+  daysSinceLastLogin  Int?     // Days Since Last Created Trip
+  daysSinceLastAssignment Int? // Da Days Since Last Assignment (CSM activity)
+  engagementStatus    String?  // Da Engagement Status
+
+  // Fleet & Product Usage (from Moovs Product data)
+  vehiclesTotal       Int?     // P Vehicles Total
+  membersCount        Int?     // P Total Members
+  driversCount        Int?     // P Drivers Count
+  setupScore          Int?     // P Setup Score (0-100 onboarding completion)
+  subscriptionLifetimeDays Int? // Lago Lifetime Days
+
+  // Deal Info (from HubSpot Deals)
+  dealStage           String?  // Hs D Stage Name
+  dealPipeline        String?  // Hs D Pipeline Segment
+  dealCloseDate       DateTime? // Hs D Close Date
+  dealAmount          Float?   // Hs D Closed Amount
+
+  // Location
+  latitude            String?
+  longitude           String?
 
   // Payment Health (from Stripe via Metabase)
   paymentSuccessRate  Float?   // 0-100% payment success rate

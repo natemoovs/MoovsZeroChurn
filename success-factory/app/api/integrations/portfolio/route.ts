@@ -31,6 +31,18 @@ interface CompanyHealthSummary {
   customerSegment?: string | null
   ownerId?: string | null
   ownerName?: string | null
+  // New engagement & fleet metrics
+  tripsLast30Days?: number | null
+  daysSinceLastLogin?: number | null
+  engagementStatus?: string | null
+  vehiclesTotal?: number | null
+  membersCount?: number | null
+  driversCount?: number | null
+  setupScore?: number | null
+  subscriptionLifetimeDays?: number | null
+  // Deal intelligence
+  dealStage?: string | null
+  dealAmount?: number | null
 }
 
 export async function GET(request: NextRequest) {
@@ -69,6 +81,18 @@ export async function GET(request: NextRequest) {
       customerSegment: getSegmentFromPlan(company.plan),
       ownerId: company.ownerId,
       ownerName: company.ownerName,
+      // New engagement & fleet metrics
+      tripsLast30Days: company.tripsLast30Days,
+      daysSinceLastLogin: company.daysSinceLastLogin,
+      engagementStatus: company.engagementStatus,
+      vehiclesTotal: company.vehiclesTotal,
+      membersCount: company.membersCount,
+      driversCount: company.driversCount,
+      setupScore: company.setupScore,
+      subscriptionLifetimeDays: company.subscriptionLifetimeDays,
+      // Deal intelligence
+      dealStage: company.dealStage,
+      dealAmount: company.dealAmount,
     }))
 
     // Sort by health score (red first, then yellow, then green)

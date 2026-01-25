@@ -78,4 +78,7 @@ export type Events = {
   "cron/weekly-digest": {
     data: Record<string, never>
   }
+  "cron/health-snapshot": {
+    data: Record<string, never>
+  }
 }

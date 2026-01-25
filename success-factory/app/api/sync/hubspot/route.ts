@@ -10,7 +10,7 @@ const METABASE_QUERY_ID = 1469
 // Snowflake database ID in Metabase
 const SNOWFLAKE_DB_ID = 2
 
-// Metabase data structure (from CSM_MOOVS card)
+// Metabase data structure (from CSM_MOOVS card 1469)
 interface MetabaseAccountData {
   // Identity
   operatorId: string | null
@@ -18,19 +18,38 @@ interface MetabaseAccountData {
   email: string | null
   hubspotCompanyId: string | null
   stripeAccountId: string | null
+  customDomain: string | null
   // Billing
   mrr: number | null
   plan: string | null // Lago Plan Name (e.g., "Pro (Annual)")
   planCode: string | null // Lago Plan Code (e.g., "pro-annual")
   billingStatus: string | null
+  subscriptionLifetimeDays: number | null // Lago Lifetime Days
+  waterfallEvent: string | null // Lago Waterfall Event
   // Usage
   totalTrips: number
   tripsLast30Days: number
   daysSinceLastActivity: number | null
+  daysSinceLastTrip: number | null // Days Since Last Created Trip
+  lastTripCreatedAt: string | null // R Last Trip Created At
+  // Fleet/Product
+  vehiclesTotal: number | null
+  membersCount: number | null
+  driversCount: number | null
+  setupScore: number | null
   // Status
   churnStatus: string | null
   customerSegment: string | null
   engagementStatus: string | null
+  // Deal Info
+  dealStage: string | null
+  dealPipeline: string | null
+  dealCloseDate: string | null
+  dealAmount: number | null
+  dealOwnerName: string | null
+  // Location
+  latitude: string | null
+  longitude: string | null
 }
 
 // Stripe payment data structure
@@ -93,19 +112,38 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
     email: (row.P_GENERAL_EMAIL as string) || null,
     hubspotCompanyId: (row.HS_C_ID as string) || null,
     stripeAccountId: (row.P_STRIPE_ACCOUNT_ID as string) || null,
+    customDomain: (row.P_CUSTOM_DOMAIN as string) || null,
     // Billing
     mrr: (row.CALCULATED_MRR as number) || null,
     plan: (row.LAGO_PLAN_NAME as string) || null,
     planCode: (row.LAGO_PLAN_CODE as string) || null,
     billingStatus: (row.LAGO_STATUS as string) || (row.LAGO_CUSTOMER_STATUS as string) || null,
+    subscriptionLifetimeDays: (row.LAGO_LIFETIME_DAYS as number) || null,
+    waterfallEvent: (row.LAGO_WATERFALL_EVENT as string) || null,
     // Usage
     totalTrips: (row.R_TOTAL_RESERVATIONS_COUNT as number) || 0,
     tripsLast30Days: (row.R_LAST_30_DAYS_RESERVATIONS_COUNT as number) || 0,
     daysSinceLastActivity: (row.DA_DAYS_SINCE_LAST_ASSIGNMENT as number) || null,
+    daysSinceLastTrip: (row.DAYS_SINCE_LAST_CREATED_TRIP as number) || null,
+    lastTripCreatedAt: (row.R_LAST_TRIP_CREATED_AT as string) || null,
+    // Fleet/Product
+    vehiclesTotal: (row.P_VEHICLES_TOTAL as number) || null,
+    membersCount: (row.P_TOTAL_MEMBERS as number) || null,
+    driversCount: (row.P_DRIVERS_COUNT as number) || null,
+    setupScore: (row.P_SETUP_SCORE as number) || null,
     // Status
     churnStatus: (row.HS_D_CHURN_STATUS as string) || null,
     customerSegment: (row.HS_C_PROPERTY_CUSTOMER_SEGMENT as string) || null,
     engagementStatus: (row.DA_ENGAGEMENT_STATUS as string) || null,
+    // Deal Info
+    dealStage: (row.HS_D_STAGE_NAME as string) || null,
+    dealPipeline: (row.HS_D_PIPELINE_SEGMENT as string) || null,
+    dealCloseDate: (row.HS_D_CLOSE_DATE as string) || null,
+    dealAmount: (row.HS_D_CLOSED_AMOUNT as number) || null,
+    dealOwnerName: (row.HS_D_OWNER_NAME as string) || null,
+    // Location
+    latitude: (row.LATITUDE as string) || null,
+    longitude: (row.LONGITUDE as string) || null,
   }))
 }
 
@@ -377,6 +415,36 @@ function calculateWeightedHealthScore(
       }
     }
 
+    // Fleet/Product adoption signals - indicates platform stickiness
+    const hasFleet = (mbData.vehiclesTotal ?? 0) > 0
+    const hasTeam = (mbData.membersCount ?? 0) > 1 || (mbData.driversCount ?? 0) > 0
+
+    if (hasFleet && hasTeam && !isChurned) {
+      // Well-adopted platform
+      engagementScore += 5
+      if ((mbData.vehiclesTotal ?? 0) >= 10) {
+        positiveSignals.push(`${mbData.vehiclesTotal} vehicles`)
+      }
+      if ((mbData.driversCount ?? 0) >= 5) {
+        positiveSignals.push(`${mbData.driversCount} drivers`)
+      }
+    } else if (!hasFleet && !hasTeam && mbData.totalTrips > 0) {
+      // Using product but no fleet setup - adoption risk
+      engagementScore -= 5
+      riskSignals.push("Limited platform adoption")
+    }
+
+    // Setup score - onboarding completion
+    if (mbData.setupScore !== null && mbData.setupScore !== undefined) {
+      if (mbData.setupScore < 30) {
+        engagementScore -= 10
+        riskSignals.push(`Low setup completion (${mbData.setupScore}%)`)
+      } else if (mbData.setupScore >= 80 && !isChurned) {
+        engagementScore += 5
+        positiveSignals.push("Fully onboarded")
+      }
+    }
+
     // Churn status - this is definitive
     if (isChurned) {
       engagementScore -= 30
@@ -446,6 +514,51 @@ function calculateWeightedHealthScore(
           riskSignals.push("Free + no usage")
         }
       }
+    }
+
+    // Subscription tenure - longer relationships are stickier
+    if (mbData.subscriptionLifetimeDays !== null && mbData.subscriptionLifetimeDays !== undefined) {
+      if (mbData.subscriptionLifetimeDays >= 365 && !isChurned) {
+        growthScore += 10
+        positiveSignals.push("1+ year customer")
+      } else if (mbData.subscriptionLifetimeDays >= 180 && !isChurned) {
+        growthScore += 5
+      } else if (mbData.subscriptionLifetimeDays < 90 && mbData.engagementStatus?.toLowerCase().includes("inactive")) {
+        // New customer going inactive early - high risk
+        growthScore -= 15
+        riskSignals.push("Early churn risk (new + inactive)")
+      }
+    }
+
+    // Deal intelligence - expansion potential vs churn risk
+    if (mbData.dealStage) {
+      const stageLower = mbData.dealStage.toLowerCase()
+      if (stageLower.includes("expansion") || stageLower.includes("upsell")) {
+        growthScore += 15
+        if (!isChurned) {
+          positiveSignals.push("Expansion opportunity")
+        }
+      } else if (stageLower.includes("churn") || stageLower.includes("cancel")) {
+        growthScore -= 20
+        riskSignals.push(`Deal stage: ${mbData.dealStage}`)
+      } else if (stageLower.includes("renewal")) {
+        // Renewal stage - depends on other signals
+        if (mbData.engagementStatus?.toLowerCase().includes("active")) {
+          growthScore += 5
+        }
+      }
+    }
+
+    // Large deal amount indicates strategic account
+    if (mbData.dealAmount && mbData.dealAmount >= 5000 && !isChurned) {
+      growthScore += 10
+      positiveSignals.push(`$${Math.round(mbData.dealAmount / 1000)}k deal`)
+    }
+
+    // Fleet size as growth indicator
+    if ((mbData.vehiclesTotal ?? 0) >= 20 && !isChurned) {
+      growthScore += 5
+      positiveSignals.push("Large fleet")
     }
   }
 
@@ -630,7 +743,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse dates safely
-    const parseDate = (dateStr?: string): Date | null => {
+    const parseDate = (dateStr?: string | null): Date | null => {
       if (!dateStr) return null
       const date = new Date(dateStr)
       return isNaN(date.getTime()) ? null : date
@@ -747,8 +860,26 @@ export async function POST(request: NextRequest) {
             customerSegment,
             contractEndDate: parseDate(hsProps.contract_end_date || hsProps.renewal_date),
             totalTrips: mbData.totalTrips,
+            tripsLast30Days: mbData.tripsLast30Days,
             lastLoginAt,
-            daysSinceLastLogin: mbData.daysSinceLastActivity,
+            lastTripCreatedAt: parseDate(mbData.lastTripCreatedAt),
+            daysSinceLastLogin: mbData.daysSinceLastTrip ?? mbData.daysSinceLastActivity,
+            daysSinceLastAssignment: mbData.daysSinceLastActivity,
+            engagementStatus: mbData.engagementStatus,
+            // Fleet/Product metrics
+            vehiclesTotal: mbData.vehiclesTotal,
+            membersCount: mbData.membersCount,
+            driversCount: mbData.driversCount,
+            setupScore: mbData.setupScore,
+            subscriptionLifetimeDays: mbData.subscriptionLifetimeDays,
+            // Deal info
+            dealStage: mbData.dealStage,
+            dealPipeline: mbData.dealPipeline,
+            dealCloseDate: parseDate(mbData.dealCloseDate),
+            dealAmount: mbData.dealAmount,
+            // Location
+            latitude: mbData.latitude,
+            longitude: mbData.longitude,
             // Payment health fields
             paymentSuccessRate: stripeData?.successRate ?? null,
             failedPaymentCount: stripeData?.failedCharges ?? null,
@@ -798,8 +929,26 @@ export async function POST(request: NextRequest) {
             customerSegment,
             contractEndDate: parseDate(hsProps.contract_end_date || hsProps.renewal_date),
             totalTrips: mbData.totalTrips,
+            tripsLast30Days: mbData.tripsLast30Days,
             lastLoginAt,
-            daysSinceLastLogin: mbData.daysSinceLastActivity,
+            lastTripCreatedAt: parseDate(mbData.lastTripCreatedAt),
+            daysSinceLastLogin: mbData.daysSinceLastTrip ?? mbData.daysSinceLastActivity,
+            daysSinceLastAssignment: mbData.daysSinceLastActivity,
+            engagementStatus: mbData.engagementStatus,
+            // Fleet/Product metrics
+            vehiclesTotal: mbData.vehiclesTotal,
+            membersCount: mbData.membersCount,
+            driversCount: mbData.driversCount,
+            setupScore: mbData.setupScore,
+            subscriptionLifetimeDays: mbData.subscriptionLifetimeDays,
+            // Deal info
+            dealStage: mbData.dealStage,
+            dealPipeline: mbData.dealPipeline,
+            dealCloseDate: parseDate(mbData.dealCloseDate),
+            dealAmount: mbData.dealAmount,
+            // Location
+            latitude: mbData.latitude,
+            longitude: mbData.longitude,
             // Payment health fields
             paymentSuccessRate: stripeData?.successRate ?? null,
             failedPaymentCount: stripeData?.failedCharges ?? null,
@@ -887,6 +1036,35 @@ export async function POST(request: NextRequest) {
     console.log(`  - ${hubspotMatches} with HubSpot data, ${noHubspotRecord} without HubSpot`)
     console.log(`  - ${stripeMatches} with Stripe payment data`)
 
+    // Auto-detect onboarding milestones from synced data
+    let milestonesDetected = 0
+    let companiesWithMilestones = 0
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      const cronSecret = process.env.CRON_SECRET
+
+      if (cronSecret) {
+        const milestoneRes = await fetch(`${baseUrl}/api/onboarding/detect`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${cronSecret}`,
+          },
+        })
+
+        if (milestoneRes.ok) {
+          const milestoneData = await milestoneRes.json()
+          milestonesDetected = milestoneData.milestonesCompleted || 0
+          companiesWithMilestones = milestoneData.companiesUpdated || 0
+          console.log(
+            `  - ${milestonesDetected} onboarding milestones auto-completed for ${companiesWithMilestones} companies`
+          )
+        }
+      }
+    } catch (err) {
+      console.error("Milestone detection failed (non-critical):", err)
+    }
+
     return NextResponse.json({
       success: true,
       totalOperators: metabaseOperators.length,
@@ -896,6 +1074,8 @@ export async function POST(request: NextRequest) {
       hubspotMatches,
       noHubspotRecord,
       stripeMatches,
+      milestonesDetected,
+      companiesWithMilestones,
     })
   } catch (error) {
     console.error("Sync failed:", error)

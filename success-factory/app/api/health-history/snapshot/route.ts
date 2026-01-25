@@ -70,6 +70,11 @@ interface PortfolioSummary {
   positiveSignals: string[]
   totalTrips?: number
   daysSinceLastLogin?: number | null
+  // New fields from enhanced portfolio API
+  tripsLast30Days?: number | null
+  engagementStatus?: string | null
+  vehiclesTotal?: number | null
+  setupScore?: number | null
 }
 
 /**
@@ -200,6 +205,29 @@ export async function POST(request: NextRequest) {
       // Low usage trigger
       if (summary.totalTrips !== undefined && summary.totalTrips < 5) {
         await executePlaybooks("low_usage", {
+          companyId: summary.companyId,
+          companyName: summary.companyName,
+          mrr: summary.mrr,
+        })
+      }
+
+      // Usage drop trigger - customer was active but stopped
+      if (
+        summary.totalTrips &&
+        summary.totalTrips > 20 &&
+        summary.tripsLast30Days !== undefined &&
+        summary.tripsLast30Days === 0
+      ) {
+        await executePlaybooks("usage_stopped", {
+          companyId: summary.companyId,
+          companyName: summary.companyName,
+          mrr: summary.mrr,
+        })
+      }
+
+      // Low setup completion - onboarding risk
+      if (summary.setupScore != null && summary.setupScore < 30 && summary.mrr && summary.mrr > 0) {
+        await executePlaybooks("low_setup_score", {
           companyId: summary.companyId,
           companyName: summary.companyName,
           mrr: summary.mrr,
