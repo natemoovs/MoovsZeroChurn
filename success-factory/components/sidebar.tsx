@@ -21,12 +21,14 @@ import {
   PieChart,
   Brain,
   Activity,
+  LayoutGrid,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/accounts", icon: Users, label: "Accounts" },
+  { href: "/matrix", icon: LayoutGrid, label: "Moovs Matrix" },
   { href: "/predictions", icon: Brain, label: "Predictions" },
   { href: "/benchmarks", icon: Activity, label: "Benchmarks" },
   { href: "/engagement", icon: Zap, label: "Engagement" },
