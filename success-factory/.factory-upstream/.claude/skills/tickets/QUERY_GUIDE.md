@@ -28,6 +28,7 @@ This guide provides the exact query patterns for filtering the Moovs Tickets dat
 Status is a `status` property type.
 
 ### Single Status
+
 ```json
 {
   "filter": {
@@ -40,6 +41,7 @@ Status is a `status` property type.
 ```
 
 ### Exclude Status
+
 ```json
 {
   "filter": {
@@ -52,6 +54,7 @@ Status is a `status` property type.
 ```
 
 ### Status Values
+
 - `Not doing anymore`
 - `Accepted`
 - `Ingestion`
@@ -66,6 +69,7 @@ Status is a `status` property type.
 Stage is a `multi_select` property type.
 
 ### Contains Stage
+
 ```json
 {
   "filter": {
@@ -78,6 +82,7 @@ Stage is a `multi_select` property type.
 ```
 
 ### Does Not Contain Stage
+
 ```json
 {
   "filter": {
@@ -90,6 +95,7 @@ Stage is a `multi_select` property type.
 ```
 
 ### Stage Values
+
 - `Not started`
 - `Backlog`
 - `Problem Validation`
@@ -110,6 +116,7 @@ Stage is a `multi_select` property type.
 Priority is a `select` property type.
 
 ### Equals Priority
+
 ```json
 {
   "filter": {
@@ -122,6 +129,7 @@ Priority is a `select` property type.
 ```
 
 ### Priority Values
+
 - `Low`
 - `Medium`
 - `High`
@@ -133,6 +141,7 @@ Priority is a `select` property type.
 Type is a `multi_select` property type.
 
 ### Contains Type
+
 ```json
 {
   "filter": {
@@ -145,6 +154,7 @@ Type is a `multi_select` property type.
 ```
 
 ### Type Values
+
 - `Bug`
 - `Feature`
 - `Request`
@@ -158,6 +168,7 @@ Type is a `multi_select` property type.
 Tags is a `multi_select` property type.
 
 ### Contains Tag
+
 ```json
 {
   "filter": {
@@ -170,6 +181,7 @@ Tags is a `multi_select` property type.
 ```
 
 ### Common Tags
+
 - `Enterprise`
 - `Shuttle`
 - Customer names (DPV, Roberts Hawaii, Carey, Cornell, etc.)
@@ -181,6 +193,7 @@ Tags is a `multi_select` property type.
 Due Date is a `date` property type.
 
 ### Has Due Date
+
 ```json
 {
   "filter": {
@@ -193,6 +206,7 @@ Due Date is a `date` property type.
 ```
 
 ### Overdue (Before Today)
+
 ```json
 {
   "filter": {
@@ -205,6 +219,7 @@ Due Date is a `date` property type.
 ```
 
 ### Due This Week
+
 ```json
 {
   "filter": {
@@ -217,6 +232,7 @@ Due Date is a `date` property type.
 ```
 
 ### Due in Next 7 Days
+
 ```json
 {
   "filter": {
@@ -229,6 +245,7 @@ Due Date is a `date` property type.
 ```
 
 ### Due Date Range
+
 ```json
 {
   "filter": {
@@ -257,6 +274,7 @@ Due Date is a `date` property type.
 Assigned To is a `people` property type.
 
 ### Is Not Empty (Assigned)
+
 ```json
 {
   "filter": {
@@ -269,6 +287,7 @@ Assigned To is a `people` property type.
 ```
 
 ### Is Empty (Unassigned)
+
 ```json
 {
   "filter": {
@@ -281,6 +300,7 @@ Assigned To is a `people` property type.
 ```
 
 ### Contains Specific Person
+
 ```json
 {
   "filter": {
@@ -301,6 +321,7 @@ Note: You'll need the Notion user ID. Use `mcp__notion__API-get-users` to list u
 Priority Score, Customer Impact Score, and Level of Effort Score are `number` properties.
 
 ### Score Greater Than
+
 ```json
 {
   "filter": {
@@ -313,6 +334,7 @@ Priority Score, Customer Impact Score, and Level of Effort Score are `number` pr
 ```
 
 ### Score Range
+
 ```json
 {
   "filter": {
@@ -341,6 +363,7 @@ Priority Score, Customer Impact Score, and Level of Effort Score are `number` pr
 Name is a `title` property type.
 
 ### Contains Text
+
 ```json
 {
   "filter": {
@@ -353,6 +376,7 @@ Name is a `title` property type.
 ```
 
 ### Starts With
+
 ```json
 {
   "filter": {
@@ -371,6 +395,7 @@ Name is a `title` property type.
 Use `and` to combine multiple conditions (all must match).
 
 ### High Priority Bugs in Development
+
 ```json
 {
   "filter": {
@@ -399,6 +424,7 @@ Use `and` to combine multiple conditions (all must match).
 ```
 
 ### Unassigned High Priority Items
+
 ```json
 {
   "filter": {
@@ -433,6 +459,7 @@ Use `and` to combine multiple conditions (all must match).
 Use `or` to combine conditions (any can match).
 
 ### Blocked OR Overdue
+
 ```json
 {
   "filter": {
@@ -455,6 +482,7 @@ Use `or` to combine conditions (any can match).
 ```
 
 ### Multiple Stages
+
 ```json
 {
   "filter": {
@@ -487,6 +515,7 @@ Use `or` to combine conditions (any can match).
 ## Sorting
 
 ### Sort by Priority Score (Descending)
+
 ```json
 {
   "sorts": [
@@ -499,6 +528,7 @@ Use `or` to combine conditions (any can match).
 ```
 
 ### Sort by Due Date (Ascending)
+
 ```json
 {
   "sorts": [
@@ -511,6 +541,7 @@ Use `or` to combine conditions (any can match).
 ```
 
 ### Multi-Sort (Priority then Due Date)
+
 ```json
 {
   "sorts": [
@@ -531,6 +562,7 @@ Use `or` to combine conditions (any can match).
 ## Common Query Recipes
 
 ### All Active Tickets (Not Done/Archived)
+
 ```json
 {
   "data_source_id": "13b8aeaa-3759-80f8-8d7c-dd2f627d2578",
@@ -567,6 +599,7 @@ Use `or` to combine conditions (any can match).
 ```
 
 ### Ready to Bet (Shaped and Ready)
+
 ```json
 {
   "data_source_id": "13b8aeaa-3759-80f8-8d7c-dd2f627d2578",
@@ -596,6 +629,7 @@ Use `or` to combine conditions (any can match).
 ```
 
 ### Enterprise Commitments at Risk
+
 ```json
 {
   "data_source_id": "13b8aeaa-3759-80f8-8d7c-dd2f627d2578",
@@ -631,6 +665,7 @@ Use `or` to combine conditions (any can match).
 ```
 
 ### Blocked Items
+
 ```json
 {
   "data_source_id": "13b8aeaa-3759-80f8-8d7c-dd2f627d2578",
@@ -650,6 +685,7 @@ Use `or` to combine conditions (any can match).
 ```
 
 ### Customer-Specific Tickets
+
 ```json
 {
   "data_source_id": "13b8aeaa-3759-80f8-8d7c-dd2f627d2578",
@@ -673,6 +709,7 @@ Use `or` to combine conditions (any can match).
 ```
 
 ### Recent High-Impact Items
+
 ```json
 {
   "data_source_id": "13b8aeaa-3759-80f8-8d7c-dd2f627d2578",
@@ -724,6 +761,7 @@ The response includes `next_cursor` if more results exist.
 When querying, these are the most useful properties to retrieve:
 
 **Essential:**
+
 - Name (title)
 - ID (unique_id)
 - Status
@@ -733,6 +771,7 @@ When querying, these are the most useful properties to retrieve:
 - Due Date
 
 **For Analysis:**
+
 - Priority Score
 - Customer Impact Score
 - Level of Effort Score
@@ -741,5 +780,6 @@ When querying, these are the most useful properties to retrieve:
 - Team
 
 **For Details:**
+
 - Summary
 - Description

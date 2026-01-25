@@ -80,11 +80,8 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await notion.queryDatabase(CSM_DATABASE_ID, {
-      filter: filters.length > 0
-        ? filters.length === 1
-          ? filters[0]
-          : { and: filters }
-        : undefined,
+      filter:
+        filters.length > 0 ? (filters.length === 1 ? filters[0] : { and: filters }) : undefined,
       sorts: [
         { property: "Due Date", direction: "ascending" },
         { property: "Priority", direction: "ascending" },
@@ -132,20 +129,14 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   if (!process.env.NOTION_API_KEY || !CSM_DATABASE_ID) {
-    return NextResponse.json(
-      { error: "Notion not configured" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Notion not configured" }, { status: 500 })
   }
 
   try {
     const body: CreateTaskInput = await request.json()
 
     if (!body.title || !body.companyName) {
-      return NextResponse.json(
-        { error: "title and companyName are required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "title and companyName are required" }, { status: 400 })
     }
 
     const properties: Record<string, unknown> = {
@@ -197,10 +188,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Notion task create error:", error)
-    return NextResponse.json(
-      { error: "Failed to create task in Notion" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to create task in Notion" }, { status: 500 })
   }
 }
 

@@ -7,17 +7,19 @@ Small, owner-operated transportation businesses generating $50K-$250K in annual 
 ## Quick Reference
 
 ### Key Stats
-| Attribute | Value |
-|-----------|-------|
-| Revenue | $50K-$250K |
-| Fleet | 1-5 vehicles |
-| Monthly Rides | 10-99 |
-| Drivers | 1-9 |
-| Budget | $150-$250/mo |
-| Sales Cycle | 30 days |
-| Free Plan Usage | 44.7% |
+
+| Attribute       | Value        |
+| --------------- | ------------ |
+| Revenue         | $50K-$250K   |
+| Fleet           | 1-5 vehicles |
+| Monthly Rides   | 10-99        |
+| Drivers         | 1-9          |
+| Budget          | $150-$250/mo |
+| Sales Cycle     | 30 days      |
+| Free Plan Usage | 44.7%        |
 
 ### Top 5 Pain Points
+
 1. **Everything is manual** - Owner drowning in dispatch, quoting, billing
 2. **Looking unprofessional** - No online booking, losing to competitors
 3. **Can't grow** - Hit capacity ceiling, turning down business
@@ -25,6 +27,7 @@ Small, owner-operated transportation businesses generating $50K-$250K in annual 
 5. **Customer chaos** - Can't track repeat customers or preferences
 
 ### Messaging Do's
+
 - Lead with affordability and free plan
 - Emphasize simplicity and ease of use
 - Show quick wins (online booking, automated confirmations)
@@ -32,6 +35,7 @@ Small, owner-operated transportation businesses generating $50K-$250K in annual 
 - Position as growth enabler ("grow from 1 to 10 vehicles")
 
 ### Messaging Don'ts
+
 - Use complex enterprise language
 - Lead with advanced features they don't need
 - Assume they're tech-savvy
@@ -39,9 +43,11 @@ Small, owner-operated transportation businesses generating $50K-$250K in annual 
 - Ignore price sensitivity
 
 ### Primary CTA
+
 "Start Free Today - No Credit Card Required"
 
 ### Proof Points to Use
+
 - Time saved per week (hours back in owner's day)
 - Growth stories (1 vehicle → 5 vehicles)
 - Professional transformation (before/after)
@@ -56,6 +62,7 @@ Small, owner-operated transportation businesses generating $50K-$250K in annual 
 SMB Black Car operators are small, owner-operated transportation businesses generating $50K-$250K in annual revenue, typically running fleets of 1-5 vehicles where the owner is deeply involved in day-to-day operations. These are typically sole proprietors or very small teams focused on delivering reliable service while building their business.
 
 **Revenue Profile:**
+
 - Annual Revenue: $50K-$250K (primary indicator)
 - Fleet Size: Typically 1-5 vehicles (but revenue matters more)
 - Business Stage: Building foundation, seeking growth
@@ -64,6 +71,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 **Key Principle:** Revenue is the primary segmentation indicator. An operator with 8 vehicles generating $150K is SMB. An operator with 3 luxury vehicles generating $400K is Mid-Market.
 
 **Service Types:**
+
 - Primarily black car services (sedans, SUVs) - 75%
 - Limousine and specialty vehicles - 20%
 - Airport transfers and local transportation
@@ -79,6 +87,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Company Size & Scale
 
 **Revenue (Primary Indicator):**
+
 - Minimum: $50K annually (part-time or starting out)
 - Sweet Spot: $125K annually
 - Maximum: $250K annually
@@ -86,12 +95,14 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 - Rule: If revenue conflicts with fleet size, revenue determines segment
 
 **Fleet Size (Supporting Indicator):**
+
 - Minimum: 1 vehicle (owner-driver)
 - Sweet Spot: 3 vehicles
 - Maximum: 5 vehicles
 - Note: Some operators may have 6-8 vehicles but <$250K revenue → Still SMB
 
 **Staff Structure:**
+
 - Owner: Handles everything - dispatch, sales, operations, admin
 - Drivers: Up to 9 employed or contracted drivers (often 2-5)
 - Support: No dedicated staff - owner wears all hats
@@ -100,12 +111,14 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Business Lifecycle Stage
 
 **Typical Stages:**
+
 - Stage 1: Solo owner-driver (1 vehicle)
 - Stage 2: Owner + 1-2 other drivers (2-3 vehicles)
 - Stage 3: Growing team (3-5 vehicles, up to 10 drivers)
 - Aspiration: Eventually become Mid-Market (6-10+ vehicles)
 
 **Years in Business:**
+
 - New: 0-2 years (just starting out)
 - Established: 3-5 years (proven model)
 - Mature: 5+ years (stable small business)
@@ -118,6 +131,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 - Expansion: Not typically thinking about multiple locations yet
 
 **Market Position:**
+
 - Building local reputation (word-of-mouth critical)
 - Often competes on price and personal service
 - Not the luxury/premium tier (more accessible)
@@ -125,11 +139,11 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 
 ### Moovs Product Usage (Current Customers)
 
-| Plan | % of SMB |
-|------|----------|
-| Free | 44.7% |
-| Standard | 22.4% |
-| Pro | 27.2% |
+| Plan     | % of SMB |
+| -------- | -------- |
+| Free     | 44.7%    |
+| Standard | 22.4%    |
+| Pro      | 27.2%    |
 
 **Key Insight:** Almost half use free plan. Many start free and upgrade as they grow. Price sensitivity is real but not absolute.
 
@@ -140,18 +154,21 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Current Technology Stack
 
 **Dispatch & Operations:**
+
 - Common tools: Spreadsheets, Google Calendar, pen and paper
 - Legacy software: May use very basic dispatch software
 - Problem: No unified system - cobbled together free tools
 - Gap: Everything is manual and disconnected
 
 **Booking & Customer-Facing:**
+
 - Phone as primary booking method
 - Email for quotes and confirmations
 - Basic website or Facebook page (if any online presence)
 - No online booking capability (typically)
 
 **Operations & Management:**
+
 - Manual driver assignment (phone calls, texts)
 - Calendar-based scheduling
 - No fleet tracking or GPS
@@ -160,6 +177,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Technology Needs & Readiness
 
 **Must-Have Capabilities:**
+
 1. Simple dispatch (easy to learn and use)
 2. Look professional to customers (basic online booking, confirmations)
 3. Affordable pricing (budget constraints)
@@ -167,6 +185,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 5. Minimal setup complexity (DIY-friendly)
 
 **Technology Posture:**
+
 - Adoption Readiness: Low to medium (need simplicity)
 - Tech Sophistication: Basic (not technical users)
 - Implementation Preference: Self-serve with support resources
@@ -249,12 +268,14 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Buying Committee
 
 **Primary Decision Maker:**
+
 - Role: Owner (sole decision maker)
 - Concerns: Affordability, ease of use, time savings
 - Authority: Complete authority (no approval needed)
 - Mindset: "Will this make my life easier without breaking the bank?"
 
 **Key Influencers:**
+
 - Other Drivers: If they have employees, drivers' opinions matter
 - Spouse/Family: For very small operators, family may weigh in
 - Peer Operators: Recommendations from other small operator friends
@@ -264,6 +285,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Typical Buying Triggers
 
 **Operational Triggers:**
+
 - Owner is completely overwhelmed and burnt out
 - Lost a customer due to looking unprofessional
 - Embarrassing mistake (double-booking, missed trip)
@@ -271,12 +293,14 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 - Driver quit due to poor communication
 
 **Growth Triggers:**
+
 - Business is growing and owner can't keep up
 - Want to take on more business but lack capacity
 - Trying to transition from part-time to full-time
 - Looking to hire first employee driver
 
 **Competitive Triggers:**
+
 - Competitor has professional website and online booking
 - Losing customers who say "I booked with [competitor] because I could book online"
 - Seeing other small operators using better tools
@@ -318,12 +342,14 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 **Cycle Length:** 30 days (4 weeks) - can be faster
 
 **Typical Timeline:**
+
 - Week 1: Discovery (saw ad, heard about Moovs, researching)
 - Week 2: Sign up for free trial or free plan, test it out
 - Week 3: Decision to upgrade to paid plan (if convinced)
 - Week 4: Implementation and setup (self-guided)
 
 **Sales Motion:** PLG (Product-Led Growth) with support
+
 - Primarily self-serve (sign up online, try it out)
 - Support available when needed (chat, email, videos)
 - Low-touch sales assist if they have questions
@@ -332,11 +358,13 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Budget Authority & Deal Size
 
 **Budget Range:**
+
 - Annual Software Budget: $1,800-$3,000 ($150-$250/month)
 - Sweet Spot: $200/month (Standard plan range)
 - Free Plan Usage: ~45% start with free plan
 
 **ROI Calculation They Care About:**
+
 - Time saved per week (hours × $20-40/hour equivalent)
 - Additional trips they can handle (revenue opportunity)
 - Customers they won't lose (retention value)
@@ -347,6 +375,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ## Disqualifiers (DO NOT PURSUE)
 
 **Hard Disqualifiers:**
+
 - Not actually operating (just thinking about starting)
 - Only doing farm-in/affiliate work (no direct customers)
 - Part-time hobby operation with no growth intent
@@ -356,6 +385,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 - Revenue above $250K (Mid-Market segment)
 
 **Edge Cases - When to Qualify as SMB:**
+
 - 8 vehicles, $180K revenue → SMB (revenue determines segment)
 - 3 luxury vehicles, $400K revenue → Mid-Market (revenue trumps fleet)
 - 20 vehicles, $200K revenue → SMB (low revenue = budget constraints)
@@ -398,6 +428,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 **Primary:** "Look professional, save time, and grow your black car business with simple, affordable dispatch and booking tools built for small operators."
 
 **Key Messages:**
+
 - "Professional tools without the enterprise price tag"
 - "Set up in minutes, not days"
 - "Look like a big company, even if you're just getting started"
@@ -407,26 +438,31 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Language That Resonates
 
 **Affordability & Value:**
+
 - "Start free, upgrade as you grow"
 - "Affordable for small operators"
 - "Pay for itself in the first month"
 
 **Simplicity & Ease:**
+
 - "Set up in under 30 minutes"
 - "No tech skills required"
 - "Manage everything from your phone"
 
 **Professionalism:**
+
 - "Look as professional as the big operators"
 - "Online booking your customers expect"
 - "Automated confirmations and reminders"
 
 **Growth & Scaling:**
+
 - "Built for operators who want to grow"
 - "Scale from 1 to 10+ vehicles"
 - "Free up time to get more customers"
 
 **Time Savings:**
+
 - "Save 10-15 hours per week"
 - "Stop doing everything manually"
 - "Automate the busy work"
@@ -446,6 +482,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Primary Approach
 
 **Product-Led Growth (PLG) with Support:**
+
 - Self-service signup (try it yourself)
 - Free plan as entry point (remove price objection)
 - Guided onboarding (videos, tutorials, email series)
@@ -453,6 +490,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 - Goal: Let the product sell itself
 
 **Customer Journey:**
+
 1. Discovery: Find Moovs through Google, ad, referral, content
 2. Signup: Create free account (no credit card, no commitment)
 3. Activation: Guided onboarding (setup in 30 min)
@@ -463,6 +501,7 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Marketing Channels
 
 **Digital (Primary):**
+
 - Google Ads (search: "dispatch software for small limo company")
 - Facebook/Instagram (visual ads showing before/after)
 - YouTube (tutorial videos, how-to content)
@@ -470,10 +509,12 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 - SEO (rank for "dispatch software for owner-operators")
 
 **Community:**
+
 - Facebook groups for transportation operators
 - Online forums and communities
 
 **Referrals:**
+
 - Current SMB customers (strongest channel)
 - Peer-to-peer recommendations
 - Incentive program for referrals
@@ -481,18 +522,23 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 ### Typical Objections & Responses
 
 **"I can't afford any software right now."**
+
 > "Start with our free plan - no credit card required. You can upgrade when your business grows. Many operators start free and upgrade within a few months."
 
 **"I'm not technical enough to set this up."**
+
 > "Our average operator sets up Moovs in under 30 minutes, and you don't need any tech skills. We have video guides for every step."
 
 **"I'm just one vehicle/person. I don't need software."**
+
 > "That's exactly when you need it most - so you can grow. Every operator with 5+ vehicles started where you are. The ones who grew used tools like this."
 
 **"I'll just use spreadsheets and Google Calendar."**
+
 > "You can, but then you won't have online booking, automated confirmations, or customer management. That's how you lose business to competitors who look more professional."
 
 **"What if I outgrow this?"**
+
 > "Moovs scales from 1 vehicle to 50+ vehicles. You won't need to switch platforms as you grow."
 
 ---
@@ -501,29 +547,29 @@ SMB Black Car operators are small, owner-operated transportation businesses gene
 
 ### SMB vs. Mid-Market
 
-| Attribute | SMB | Mid-Market |
-|-----------|-----|------------|
-| Revenue | $50K-$250K | $250K-$1M |
-| Structure | Owner-operator | Owner + managers |
-| Pain | "Need basics to look professional" | "Outgrowing current tools" |
-| Budget | $150-$250/month | $250-$500/month |
-| Sales Motion | PLG/self-serve | Sales-assisted |
-| Cycle | 30 days | 45 days |
-| Values | Simplicity, affordability | Growth, efficiency |
+| Attribute    | SMB                                | Mid-Market                 |
+| ------------ | ---------------------------------- | -------------------------- |
+| Revenue      | $50K-$250K                         | $250K-$1M                  |
+| Structure    | Owner-operator                     | Owner + managers           |
+| Pain         | "Need basics to look professional" | "Outgrowing current tools" |
+| Budget       | $150-$250/month                    | $250-$500/month            |
+| Sales Motion | PLG/self-serve                     | Sales-assisted             |
+| Cycle        | 30 days                            | 45 days                    |
+| Values       | Simplicity, affordability          | Growth, efficiency         |
 
 ### SMB vs. Enterprise
 
-| Attribute | SMB | Enterprise |
-|-----------|-----|------------|
-| Revenue | $50K-$250K | $1M+ |
-| Structure | Owner-operator | Full management team |
-| Pain | "Everything is manual" | "Need to consolidate systems" |
-| Budget | $150-$250/month | Enterprise pricing |
-| Sales Motion | PLG/self-serve | High-touch Enterprise |
-| Cycle | 30 days | 3-6 months |
-| Tech Needs | Basic, simple | Advanced, integrated |
+| Attribute    | SMB                    | Enterprise                    |
+| ------------ | ---------------------- | ----------------------------- |
+| Revenue      | $50K-$250K             | $1M+                          |
+| Structure    | Owner-operator         | Full management team          |
+| Pain         | "Everything is manual" | "Need to consolidate systems" |
+| Budget       | $150-$250/month        | Enterprise pricing            |
+| Sales Motion | PLG/self-serve         | High-touch Enterprise         |
+| Cycle        | 30 days                | 3-6 months                    |
+| Tech Needs   | Basic, simple          | Advanced, integrated          |
 
 ---
 
-*Last Updated: January 2026*
-*Maintained By: GTM Leadership*
+_Last Updated: January 2026_
+_Maintained By: GTM Leadership_

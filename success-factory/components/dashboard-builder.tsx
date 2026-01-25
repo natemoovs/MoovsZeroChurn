@@ -149,16 +149,11 @@ export function DashboardBuilder({
     setWidgets((prev) => {
       const existing = prev.find((w) => w.id === widgetId)
       if (existing) {
-        return prev.map((w) =>
-          w.id === widgetId ? { ...w, enabled: !w.enabled } : w
-        )
+        return prev.map((w) => (w.id === widgetId ? { ...w, enabled: !w.enabled } : w))
       } else {
         const template = AVAILABLE_WIDGETS.find((w) => w.id === widgetId)
         if (template) {
-          return [
-            ...prev,
-            { ...template, enabled: true, order: prev.length },
-          ]
+          return [...prev, { ...template, enabled: true, order: prev.length }]
         }
       }
       return prev
@@ -199,25 +194,21 @@ export function DashboardBuilder({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative flex h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-bg-elevated shadow-2xl">
+      <div className="bg-bg-elevated relative flex h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-default p-4">
+        <div className="border-border-default flex items-center justify-between border-b p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100 dark:bg-success-900/30">
-              <LayoutGrid className="h-5 w-5 text-success-600 dark:text-success-400" />
+            <div className="bg-success-100 dark:bg-success-900/30 flex h-10 w-10 items-center justify-center rounded-lg">
+              <LayoutGrid className="text-success-600 dark:text-success-400 h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-content-primary">
-                Customize Dashboard
-              </h2>
-              <p className="text-sm text-content-secondary">
-                Add, remove, and reorder widgets
-              </p>
+              <h2 className="text-content-primary text-lg font-semibold">Customize Dashboard</h2>
+              <p className="text-content-secondary text-sm">Add, remove, and reorder widgets</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary"
+            className="text-content-tertiary hover:bg-surface-hover hover:text-content-secondary rounded-lg p-2"
           >
             <X className="h-5 w-5" />
           </button>
@@ -226,8 +217,8 @@ export function DashboardBuilder({
         {/* Content */}
         <div className="flex flex-1 overflow-hidden">
           {/* Active widgets */}
-          <div className="flex-1 overflow-y-auto border-r border-border-default p-4">
-            <h3 className="mb-3 text-sm font-medium text-content-secondary">
+          <div className="border-border-default flex-1 overflow-y-auto border-r p-4">
+            <h3 className="text-content-secondary mb-3 text-sm font-medium">
               Active Widgets ({enabledWidgets.length})
             </h3>
             <div className="space-y-2">
@@ -235,11 +226,11 @@ export function DashboardBuilder({
                 <div
                   key={widget.id}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg border border-border-default bg-bg-elevated p-3 transition-all",
+                    "border-border-default bg-bg-elevated flex items-center gap-3 rounded-lg border p-3 transition-all",
                     draggedWidget === widget.id && "opacity-50"
                   )}
                 >
-                  <div className="cursor-grab text-content-tertiary">
+                  <div className="text-content-tertiary cursor-grab">
                     <GripVertical className="h-4 w-4" />
                   </div>
                   <div
@@ -251,33 +242,51 @@ export function DashboardBuilder({
                     <widget.icon className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-content-primary">
-                      {widget.name}
-                    </p>
-                    <p className="text-xs text-content-secondary">{widget.size} widget</p>
+                    <p className="text-content-primary text-sm font-medium">{widget.name}</p>
+                    <p className="text-content-secondary text-xs">{widget.size} widget</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => moveWidget(widget.id, "up")}
                       disabled={idx === 0}
-                      className="rounded p-1 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary disabled:opacity-30"
+                      className="text-content-tertiary hover:bg-surface-hover hover:text-content-secondary rounded p-1 disabled:opacity-30"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 15l7-7 7 7"
+                        />
                       </svg>
                     </button>
                     <button
                       onClick={() => moveWidget(widget.id, "down")}
                       disabled={idx === enabledWidgets.length - 1}
-                      className="rounded p-1 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary disabled:opacity-30"
+                      className="text-content-tertiary hover:bg-surface-hover hover:text-content-secondary rounded p-1 disabled:opacity-30"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </button>
                     <button
                       onClick={() => toggleWidget(widget.id)}
-                      className="rounded p-1 text-content-tertiary hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-900/30"
+                      className="text-content-tertiary hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-900/30 rounded p-1"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -285,26 +294,20 @@ export function DashboardBuilder({
                 </div>
               ))}
               {enabledWidgets.length === 0 && (
-                <div className="rounded-lg border-2 border-dashed border-border-default p-8 text-center">
-                  <LayoutGrid className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
-                  <p className="text-sm text-content-secondary">
-                    Add widgets from the right panel
-                  </p>
+                <div className="border-border-default rounded-lg border-2 border-dashed p-8 text-center">
+                  <LayoutGrid className="text-content-tertiary mx-auto mb-2 h-8 w-8" />
+                  <p className="text-content-secondary text-sm">Add widgets from the right panel</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Available widgets */}
-          <div className="w-80 overflow-y-auto bg-bg-secondary p-4">
-            <h3 className="mb-3 text-sm font-medium text-content-secondary">
-              Available Widgets
-            </h3>
+          <div className="bg-bg-secondary w-80 overflow-y-auto p-4">
+            <h3 className="text-content-secondary mb-3 text-sm font-medium">Available Widgets</h3>
             <div className="space-y-2">
               {AVAILABLE_WIDGETS.map((widget) => {
-                const isEnabled = widgets.find(
-                  (w) => w.id === widget.id && w.enabled
-                )
+                const isEnabled = widgets.find((w) => w.id === widget.id && w.enabled)
                 return (
                   <button
                     key={widget.id}
@@ -328,15 +331,13 @@ export function DashboardBuilder({
                       <widget.icon className="h-4 w-4" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-content-primary">
-                        {widget.name}
-                      </p>
-                      <p className="text-xs text-content-secondary">{widget.description}</p>
+                      <p className="text-content-primary text-sm font-medium">{widget.name}</p>
+                      <p className="text-content-secondary text-xs">{widget.description}</p>
                     </div>
                     {isEnabled ? (
-                      <Check className="h-4 w-4 text-success-600" />
+                      <Check className="text-success-600 h-4 w-4" />
                     ) : (
-                      <Plus className="h-4 w-4 text-content-tertiary" />
+                      <Plus className="text-content-tertiary h-4 w-4" />
                     )}
                   </button>
                 )
@@ -346,16 +347,16 @@ export function DashboardBuilder({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-border-default p-4">
+        <div className="border-border-default flex items-center justify-between border-t p-4">
           <button
             onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
+            className="text-content-secondary hover:bg-surface-hover rounded-lg px-4 py-2 text-sm font-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700"
+            className="bg-success-600 hover:bg-success-700 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
           >
             <Check className="h-4 w-4" />
             Save Layout

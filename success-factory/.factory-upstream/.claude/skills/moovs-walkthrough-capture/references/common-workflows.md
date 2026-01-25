@@ -4,15 +4,15 @@ Pre-defined workflow definitions for common user journeys in the Moovs operator 
 
 ## Quick Reference
 
-| Workflow | Description | Steps |
-|----------|-------------|-------|
-| `new-trip` | Create a new trip from dispatch | 5 |
-| `new-reservation` | Create a reservation | 6 |
-| `new-quote` | Create and send a quote | 6 |
-| `assign-driver` | Assign driver to trip | 4 |
-| `add-vehicle` | Add a new vehicle | 5 |
-| `add-contact` | Add a new contact | 4 |
-| `view-dispatch` | View dispatch dashboard | 3 |
+| Workflow          | Description                     | Steps |
+| ----------------- | ------------------------------- | ----- |
+| `new-trip`        | Create a new trip from dispatch | 5     |
+| `new-reservation` | Create a reservation            | 6     |
+| `new-quote`       | Create and send a quote         | 6     |
+| `assign-driver`   | Assign driver to trip           | 4     |
+| `add-vehicle`     | Add a new vehicle               | 5     |
+| `add-contact`     | Add a new contact               | 4     |
+| `view-dispatch`   | View dispatch dashboard         | 3     |
 
 ---
 
@@ -361,7 +361,7 @@ To create a custom workflow, follow this structure:
 ```yaml
 workflow:
   name: "Descriptive Workflow Name"
-  environment: staging  # staging | production | local | custom URL
+  environment: staging # staging | production | local | custom URL
   viewport:
     width: 1280
     height: 800
@@ -385,25 +385,25 @@ workflow:
       label: "Fill Input"
 
 gif_settings:
-  frame_duration: 2000      # ms per frame
-  max_width: 800            # output width
-  annotations: true         # show step labels
-  quality: high             # low | medium | high
+  frame_duration: 2000 # ms per frame
+  max_width: 800 # output width
+  annotations: true # show step labels
+  quality: high # low | medium | high
   loop: true
 ```
 
 ### Available Actions
 
-| Action | Required Fields | Optional Fields |
-|--------|----------------|-----------------|
-| `navigate` | `url` | - |
-| `click` | `selector` | `wait_for` |
-| `fill` | `selector`, `value` | - |
-| `select` | `selector`, `value` | - |
-| `wait` | `duration` (ms) | - |
-| `scroll` | `selector` | - |
-| `hover` | `selector` | - |
-| `press` | `key` | - |
+| Action     | Required Fields     | Optional Fields |
+| ---------- | ------------------- | --------------- |
+| `navigate` | `url`               | -               |
+| `click`    | `selector`          | `wait_for`      |
+| `fill`     | `selector`, `value` | -               |
+| `select`   | `selector`, `value` | -               |
+| `wait`     | `duration` (ms)     | -               |
+| `scroll`   | `selector`          | -               |
+| `hover`    | `selector`          | -               |
+| `press`    | `key`               | -               |
 
 ### Selector Tips
 

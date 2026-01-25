@@ -20,7 +20,15 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100)
 
   // Validate sortBy to prevent accessing unintended fields
-  const ALLOWED_SORT_FIELDS = ["name", "mrr", "healthScore", "createdAt", "hubspotCreatedAt", "daysSinceLastLogin", "totalTrips"]
+  const ALLOWED_SORT_FIELDS = [
+    "name",
+    "mrr",
+    "healthScore",
+    "createdAt",
+    "hubspotCreatedAt",
+    "daysSinceLastLogin",
+    "totalTrips",
+  ]
   const rawSortBy = searchParams.get("sortBy") || "name"
   const sortBy = ALLOWED_SORT_FIELDS.includes(rawSortBy) ? rawSortBy : "name"
   const sortOrder = searchParams.get("sortOrder") === "desc" ? "desc" : "asc"
@@ -84,10 +92,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Failed to fetch companies:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch companies" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch companies" }, { status: 500 })
   }
 }
 
@@ -139,18 +144,23 @@ export async function POST(request: NextRequest) {
       company,
       journey,
       nps: recentNps
-        ? { score: recentNps.score, category: recentNps.category, respondedAt: recentNps.respondedAt }
+        ? {
+            score: recentNps.score,
+            category: recentNps.category,
+            respondedAt: recentNps.respondedAt,
+          }
         : null,
       aiPrediction: prediction
-        ? { riskScore: prediction.riskScore, riskLevel: prediction.riskLevel, reasoning: prediction.reasoning }
+        ? {
+            riskScore: prediction.riskScore,
+            riskLevel: prediction.riskLevel,
+            reasoning: prediction.reasoning,
+          }
         : null,
       pendingTasks,
     })
   } catch (error) {
     console.error("Failed to fetch company:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch company" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch company" }, { status: 500 })
   }
 }

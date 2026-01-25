@@ -138,10 +138,7 @@ function getHeaders(): HeadersInit {
   }
 }
 
-async function lagoFetch<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function lagoFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${LAGO_API_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -174,9 +171,7 @@ export async function getCustomer(operatorId: string): Promise<LagoCustomer | nu
   }
 
   try {
-    const result = await lagoFetch<{ customer: LagoCustomer }>(
-      `/customers/${operatorId}`
-    )
+    const result = await lagoFetch<{ customer: LagoCustomer }>(`/customers/${operatorId}`)
     return result.customer
   } catch (err) {
     console.log(`Failed to get Lago customer ${operatorId}:`, err)
@@ -187,7 +182,10 @@ export async function getCustomer(operatorId: string): Promise<LagoCustomer | nu
 /**
  * List all customers with pagination
  */
-export async function listCustomers(page = 1, perPage = 100): Promise<{
+export async function listCustomers(
+  page = 1,
+  perPage = 100
+): Promise<{
   customers: LagoCustomer[]
   meta: { current_page: number; total_pages: number; total_count: number }
 }> {
@@ -248,9 +246,7 @@ export async function getInvoice(invoiceId: string): Promise<LagoInvoice | null>
   }
 
   try {
-    const result = await lagoFetch<{ invoice: LagoInvoice }>(
-      `/invoices/${invoiceId}`
-    )
+    const result = await lagoFetch<{ invoice: LagoInvoice }>(`/invoices/${invoiceId}`)
     return result.invoice
   } catch (err) {
     console.log(`Failed to get Lago invoice ${invoiceId}:`, err)
@@ -261,9 +257,7 @@ export async function getInvoice(invoiceId: string): Promise<LagoInvoice | null>
 /**
  * Get subscriptions for a customer
  */
-export async function getSubscriptions(
-  operatorId: string
-): Promise<LagoSubscription[]> {
+export async function getSubscriptions(operatorId: string): Promise<LagoSubscription[]> {
   if (!LAGO_API_KEY) {
     return []
   }
@@ -359,23 +353,11 @@ export async function getBillingHealth(operatorId: string): Promise<BillingHealt
 
     // Calculate totals
     const finalizedInvoices = invoices.filter((i) => i.status === "finalized")
-    const totalInvoiced = finalizedInvoices.reduce(
-      (sum, i) => sum + i.total_amount_cents,
-      0
-    )
-    const paidInvoices = finalizedInvoices.filter(
-      (i) => i.payment_status === "succeeded"
-    )
-    const totalPaid = paidInvoices.reduce(
-      (sum, i) => sum + i.total_amount_cents,
-      0
-    )
-    const pendingInvoices = finalizedInvoices.filter(
-      (i) => i.payment_status === "pending"
-    )
-    const failedInvoices = finalizedInvoices.filter(
-      (i) => i.payment_status === "failed"
-    )
+    const totalInvoiced = finalizedInvoices.reduce((sum, i) => sum + i.total_amount_cents, 0)
+    const paidInvoices = finalizedInvoices.filter((i) => i.payment_status === "succeeded")
+    const totalPaid = paidInvoices.reduce((sum, i) => sum + i.total_amount_cents, 0)
+    const pendingInvoices = finalizedInvoices.filter((i) => i.payment_status === "pending")
+    const failedInvoices = finalizedInvoices.filter((i) => i.payment_status === "failed")
 
     // Calculate overdue
     const now = new Date()
@@ -389,8 +371,7 @@ export async function getBillingHealth(operatorId: string): Promise<BillingHealt
     for (const invoice of overdueInvoices) {
       if (invoice.payment_due_date) {
         const daysOverdue = Math.floor(
-          (now.getTime() - new Date(invoice.payment_due_date).getTime()) /
-            (1000 * 60 * 60 * 24)
+          (now.getTime() - new Date(invoice.payment_due_date).getTime()) / (1000 * 60 * 60 * 24)
         )
         if (oldestOverdueDays === null || daysOverdue > oldestOverdueDays) {
           oldestOverdueDays = daysOverdue

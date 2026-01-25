@@ -29,10 +29,7 @@ export async function GET() {
     })
   } catch (error) {
     console.error("Pattern fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch patterns" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch patterns" }, { status: 500 })
   }
 }
 
@@ -43,10 +40,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY not configured" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 })
   }
 
   try {
@@ -98,7 +92,8 @@ export async function POST(request: NextRequest) {
 
       // Health at churn
       if (record.healthScoreAtChurn) {
-        healthAtChurn[record.healthScoreAtChurn] = (healthAtChurn[record.healthScoreAtChurn] || 0) + 1
+        healthAtChurn[record.healthScoreAtChurn] =
+          (healthAtChurn[record.healthScoreAtChurn] || 0) + 1
       }
     }
 
@@ -113,34 +108,48 @@ export async function POST(request: NextRequest) {
 ### Churn Reasons Breakdown:
 ${Object.entries(reasonCounts)
   .sort((a, b) => b[1] - a[1])
-  .map(([reason, count]) => `- ${CHURN_REASONS[reason as keyof typeof CHURN_REASONS] || reason}: ${count} (${((count / records.length) * 100).toFixed(0)}%)`)
+  .map(
+    ([reason, count]) =>
+      `- ${CHURN_REASONS[reason as keyof typeof CHURN_REASONS] || reason}: ${count} (${((count / records.length) * 100).toFixed(0)}%)`
+  )
   .join("\n")}
 
 ### Health Score at Churn:
-${Object.entries(healthAtChurn)
-  .map(([score, count]) => `- ${score}: ${count}`)
-  .join("\n") || "No health data captured"}
+${
+  Object.entries(healthAtChurn)
+    .map(([score, count]) => `- ${score}: ${count}`)
+    .join("\n") || "No health data captured"
+}
 
 ### Top Feature Gaps Mentioned:
-${Object.entries(featureGapCounts)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 10)
-  .map(([feature, count]) => `- ${feature}: ${count}`)
-  .join("\n") || "No feature gaps captured"}
+${
+  Object.entries(featureGapCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([feature, count]) => `- ${feature}: ${count}`)
+    .join("\n") || "No feature gaps captured"
+}
 
 ### Competitors Mentioned:
-${Object.entries(competitorCounts)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 5)
-  .map(([comp, count]) => `- ${comp}: ${count}`)
-  .join("\n") || "No competitors captured"}
+${
+  Object.entries(competitorCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([comp, count]) => `- ${comp}: ${count}`)
+    .join("\n") || "No competitors captured"
+}
 
 ### Sample Churn Details:
-${records.slice(0, 5).map(r => `
+${records
+  .slice(0, 5)
+  .map(
+    (r) => `
 - **${r.companyName}** (${r.churnDate.toISOString().split("T")[0]}): ${CHURN_REASONS[r.primaryReason as keyof typeof CHURN_REASONS] || r.primaryReason}
   ${r.reasonDetails ? `"${r.reasonDetails.substring(0, 100)}..."` : ""}
   Lost MRR: $${r.lostMrr || 0}, Trips: ${r.totalTrips || "N/A"}, Days inactive: ${r.daysSinceLastLogin || "N/A"}
-`).join("")}
+`
+  )
+  .join("")}
 `
 
     // Generate patterns with Claude
@@ -184,9 +193,7 @@ Only output the JSON array, no other text.`,
       ],
     })
 
-    const responseText = message.content[0].type === "text"
-      ? message.content[0].text
-      : ""
+    const responseText = message.content[0].type === "text" ? message.content[0].text : ""
 
     // Parse Claude's response
     let patterns: Array<{
@@ -239,9 +246,6 @@ Only output the JSON array, no other text.`,
     })
   } catch (error) {
     console.error("Pattern generation error:", error)
-    return NextResponse.json(
-      { error: "Failed to generate patterns" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to generate patterns" }, { status: 500 })
   }
 }

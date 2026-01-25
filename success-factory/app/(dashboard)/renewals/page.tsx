@@ -60,16 +60,23 @@ type ViewMode = "list" | "calendar"
 // Calculate renewal likelihood based on health score
 function getRenewalLikelihood(health: string): number {
   switch (health) {
-    case "green": return 0.95
-    case "yellow": return 0.70
-    case "red": return 0.30
-    default: return 0.50
+    case "green":
+      return 0.95
+    case "yellow":
+      return 0.7
+    case "red":
+      return 0.3
+    default:
+      return 0.5
   }
 }
 
 // Get recommended actions based on health and days until renewal
-function getRecommendedActions(renewal: Renewal): { icon: React.ElementType; label: string; priority: "high" | "medium" | "low" }[] {
-  const actions: { icon: React.ElementType; label: string; priority: "high" | "medium" | "low" }[] = []
+function getRecommendedActions(
+  renewal: Renewal
+): { icon: React.ElementType; label: string; priority: "high" | "medium" | "low" }[] {
+  const actions: { icon: React.ElementType; label: string; priority: "high" | "medium" | "low" }[] =
+    []
 
   if (renewal.healthScore === "red") {
     actions.push({ icon: Phone, label: "Schedule urgent call", priority: "high" })
@@ -85,7 +92,7 @@ function getRecommendedActions(renewal: Renewal): { icon: React.ElementType; lab
     actions.push({ icon: MessageSquare, label: "Renewal discussion", priority: "medium" })
   }
 
-  if (renewal.riskSignals.some(s => s.includes("Inactive") || s.includes("No trips"))) {
+  if (renewal.riskSignals.some((s) => s.includes("Inactive") || s.includes("No trips"))) {
     actions.push({ icon: Sparkles, label: "Re-engagement campaign", priority: "high" })
   }
 
@@ -140,7 +147,9 @@ export default function RenewalsPage() {
       }
     }
     fetchData()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [timeRange])
 
   return (
@@ -149,18 +158,14 @@ export default function RenewalsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-content-primary">
-              Renewals
-            </h1>
-            <p className="mt-1 text-content-secondary">
-              Track upcoming contract renewals
-            </p>
+            <h1 className="text-content-primary text-2xl font-bold">Renewals</h1>
+            <p className="text-content-secondary mt-1">Track upcoming contract renewals</p>
           </div>
 
           {/* Controls */}
           <div className="flex flex-wrap gap-2">
             {/* View Mode Toggle */}
-            <div className="flex gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
+            <div className="border-border-default bg-bg-secondary flex gap-1 rounded-lg border p-1">
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
@@ -186,7 +191,7 @@ export default function RenewalsPage() {
             </div>
 
             {/* Time Range Filter */}
-            <div className="flex gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
+            <div className="border-border-default bg-bg-secondary flex gap-1 rounded-lg border p-1">
               {[30, 60, 90].map((days) => (
                 <button
                   key={days}
@@ -209,13 +214,9 @@ export default function RenewalsPage() {
           <RenewalsSkeleton />
         ) : !data?.configured ? (
           <div className="card-sf p-12 text-center">
-            <Calendar className="mx-auto mb-4 h-12 w-12 text-content-tertiary" />
-            <h3 className="text-lg font-medium text-content-primary">
-              HubSpot not configured
-            </h3>
-            <p className="mt-1 text-content-secondary">
-              Connect HubSpot to track renewals
-            </p>
+            <Calendar className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+            <h3 className="text-content-primary text-lg font-medium">HubSpot not configured</h3>
+            <p className="text-content-secondary mt-1">Connect HubSpot to track renewals</p>
           </div>
         ) : (
           <>
@@ -257,11 +258,11 @@ export default function RenewalsPage() {
             {/* Renewals View */}
             {data.renewals.length === 0 ? (
               <div className="card-sf p-12 text-center">
-                <Calendar className="mx-auto mb-4 h-12 w-12 text-content-tertiary" />
-                <h3 className="text-lg font-medium text-content-primary">
+                <Calendar className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">
                   No renewals in the next {timeRange} days
                 </h3>
-                <p className="mt-1 text-content-secondary">
+                <p className="text-content-secondary mt-1">
                   Check back later or extend the time range
                 </p>
               </div>
@@ -323,7 +324,7 @@ function StatCard({
   return (
     <div className="card-sf p-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-content-secondary">{label}</span>
+        <span className="text-content-secondary text-sm">{label}</span>
         <Icon
           className={cn(
             "h-5 w-5",
@@ -343,9 +344,7 @@ function StatCard({
       >
         {value}
       </p>
-      {subtext && (
-        <p className="mt-1 text-sm text-content-secondary">{subtext}</p>
-      )}
+      {subtext && <p className="text-content-secondary mt-1 text-sm">{subtext}</p>}
     </div>
   )
 }
@@ -378,9 +377,9 @@ function RenewalSection({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className={cn("font-semibold", headerColors[variant])}>{title}</h2>
-          <p className="text-sm text-content-secondary">{subtitle}</p>
+          <p className="text-content-secondary text-sm">{subtitle}</p>
         </div>
-        <span className="rounded-full bg-bg-elevated px-3 py-1 text-sm font-medium text-content-primary shadow-sm">
+        <span className="bg-bg-elevated text-content-primary rounded-full px-3 py-1 text-sm font-medium shadow-sm">
           {renewals.length} {renewals.length === 1 ? "renewal" : "renewals"}
         </span>
       </div>
@@ -406,38 +405,34 @@ function RenewalCard({ renewal }: { renewal: Renewal }) {
   return (
     <Link
       href={`/accounts/${renewal.companyId}`}
-      className="flex items-center justify-between rounded-lg border border-border-default bg-bg-elevated p-4 transition-all hover:border-border-muted hover:shadow-sm"
+      className="border-border-default bg-bg-elevated hover:border-border-muted flex items-center justify-between rounded-lg border p-4 transition-all hover:shadow-sm"
     >
       <div className="flex items-center gap-4">
         <div className="text-center">
-          <p className="text-2xl font-bold text-content-primary">
-            {renewal.daysUntilRenewal}
-          </p>
-          <p className="text-xs text-content-secondary">days</p>
+          <p className="text-content-primary text-2xl font-bold">{renewal.daysUntilRenewal}</p>
+          <p className="text-content-secondary text-xs">days</p>
         </div>
-        <div className="h-10 w-px bg-border-default" />
+        <div className="bg-border-default h-10 w-px" />
         <div>
           <div className="flex items-center gap-2">
-            <p className="font-medium text-content-primary">
-              {renewal.companyName}
-            </p>
+            <p className="text-content-primary font-medium">{renewal.companyName}</p>
             <HealthBadge score={renewal.healthScore} size="sm" />
           </div>
-          <p className="text-sm text-content-secondary">
+          <p className="text-content-secondary text-sm">
             {formatDate(renewal.renewalDate)}
             {renewal.amount && ` · $${renewal.amount.toLocaleString()}`}
           </p>
           {renewal.riskSignals.length > 0 && (
             <div className="mt-1 flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3 text-error-500" />
-              <span className="text-xs text-error-600 dark:text-error-400">
+              <AlertTriangle className="text-error-500 h-3 w-3" />
+              <span className="text-error-600 dark:text-error-400 text-xs">
                 {renewal.riskSignals.slice(0, 2).join(", ")}
               </span>
             </div>
           )}
         </div>
       </div>
-      <ChevronRight className="h-5 w-5 text-content-tertiary" />
+      <ChevronRight className="text-content-tertiary h-5 w-5" />
     </Link>
   )
 }
@@ -448,60 +443,64 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
   return (
     <div className="card-sf p-5">
       <div className="mb-4">
-        <h2 className="font-semibold text-content-primary">
-          Revenue Forecast ({timeRange} days)
-        </h2>
-        <p className="text-sm text-content-secondary">
+        <h2 className="text-content-primary font-semibold">Revenue Forecast ({timeRange} days)</h2>
+        <p className="text-content-secondary text-sm">
           Projected renewal outcomes based on health scores
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Expected Revenue */}
-        <div className="rounded-lg border border-border-default bg-bg-secondary p-4 dark:bg-bg-tertiary/50">
-          <p className="text-sm text-content-secondary">Expected Revenue</p>
-          <p className="mt-1 text-2xl font-bold text-content-primary">
+        <div className="border-border-default bg-bg-secondary dark:bg-bg-tertiary/50 rounded-lg border p-4">
+          <p className="text-content-secondary text-sm">Expected Revenue</p>
+          <p className="text-content-primary mt-1 text-2xl font-bold">
             ${forecast.expectedRevenue.toLocaleString()}
           </p>
-          <p className="text-xs text-content-tertiary">If all renewals close</p>
+          <p className="text-content-tertiary text-xs">If all renewals close</p>
         </div>
 
         {/* Likely Revenue */}
-        <div className="rounded-lg border border-success-200 bg-success-50/50 p-4 dark:border-success-900 dark:bg-success-950/20">
-          <p className="text-sm text-success-700 dark:text-success-400">Likely Revenue</p>
-          <p className="mt-1 text-2xl font-bold text-success-600 dark:text-success-500">
+        <div className="border-success-200 bg-success-50/50 dark:border-success-900 dark:bg-success-950/20 rounded-lg border p-4">
+          <p className="text-success-700 dark:text-success-400 text-sm">Likely Revenue</p>
+          <p className="text-success-600 dark:text-success-500 mt-1 text-2xl font-bold">
             ${forecast.likelyRevenue.toLocaleString()}
           </p>
-          <p className="text-xs text-success-600/70 dark:text-success-500/70">Based on health scores</p>
+          <p className="text-success-600/70 dark:text-success-500/70 text-xs">
+            Based on health scores
+          </p>
         </div>
 
         {/* At Risk Revenue */}
-        <div className="rounded-lg border border-error-200 bg-error-50/50 p-4 dark:border-error-900 dark:bg-error-950/20">
-          <p className="text-sm text-error-700 dark:text-error-400">At Risk</p>
-          <p className="mt-1 text-2xl font-bold text-error-600 dark:text-error-400">
+        <div className="border-error-200 bg-error-50/50 dark:border-error-900 dark:bg-error-950/20 rounded-lg border p-4">
+          <p className="text-error-700 dark:text-error-400 text-sm">At Risk</p>
+          <p className="text-error-600 dark:text-error-400 mt-1 text-2xl font-bold">
             ${forecast.atRiskRevenue.toLocaleString()}
           </p>
-          <p className="text-xs text-error-600/70 dark:text-error-500/70">Yellow/Red accounts</p>
+          <p className="text-error-600/70 dark:text-error-500/70 text-xs">Yellow/Red accounts</p>
         </div>
 
         {/* Retention Rate */}
-        <div className="rounded-lg border border-border-default bg-bg-secondary p-4 dark:bg-bg-tertiary/50">
-          <p className="text-sm text-content-secondary">Est. Retention</p>
-          <p className={cn(
-            "mt-1 text-2xl font-bold",
-            forecast.retentionRate >= 90 ? "text-success-600 dark:text-success-500" :
-            forecast.retentionRate >= 70 ? "text-warning-600 dark:text-warning-400" :
-            "text-error-600 dark:text-error-400"
-          )}>
+        <div className="border-border-default bg-bg-secondary dark:bg-bg-tertiary/50 rounded-lg border p-4">
+          <p className="text-content-secondary text-sm">Est. Retention</p>
+          <p
+            className={cn(
+              "mt-1 text-2xl font-bold",
+              forecast.retentionRate >= 90
+                ? "text-success-600 dark:text-success-500"
+                : forecast.retentionRate >= 70
+                  ? "text-warning-600 dark:text-warning-400"
+                  : "text-error-600 dark:text-error-400"
+            )}
+          >
             {forecast.retentionRate.toFixed(1)}%
           </p>
-          <p className="text-xs text-content-tertiary">Weighted by health</p>
+          <p className="text-content-tertiary text-xs">Weighted by health</p>
         </div>
       </div>
 
       {/* Forecast Bar Visualization */}
       <div className="mt-4">
-        <div className="flex h-4 overflow-hidden rounded-full bg-bg-tertiary">
+        <div className="bg-bg-tertiary flex h-4 overflow-hidden rounded-full">
           <div
             className="bg-success-500 transition-all"
             style={{ width: `${(forecast.likelyRevenue / forecast.expectedRevenue) * 100}%` }}
@@ -511,17 +510,17 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
             style={{ width: `${(forecast.atRiskRevenue / forecast.expectedRevenue) * 100}%` }}
           />
         </div>
-        <div className="mt-2 flex justify-between text-xs text-content-secondary">
+        <div className="text-content-secondary mt-2 flex justify-between text-xs">
           <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-success-500" />
+            <span className="bg-success-500 h-2 w-2 rounded-full" />
             Likely to renew
           </span>
           <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-error-400" />
+            <span className="bg-error-400 h-2 w-2 rounded-full" />
             At risk
           </span>
           <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-content-tertiary" />
+            <span className="bg-content-tertiary h-2 w-2 rounded-full" />
             Unknown
           </span>
         </div>
@@ -556,8 +555,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
 
   // Remove duplicate weeks
   const uniqueWeeks = weeks.filter(
-    (week, idx, arr) =>
-      arr.findIndex((w) => w.start.getTime() === week.start.getTime()) === idx
+    (week, idx, arr) => arr.findIndex((w) => w.start.getTime() === week.start.getTime()) === idx
   )
 
   const formatWeek = (start: Date, end: Date) => {
@@ -591,40 +589,29 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
   return (
     <div className="space-y-4">
       <div className="card-sf p-4">
-        <h3 className="mb-4 font-semibold text-content-primary">
-          Renewal Calendar
-        </h3>
+        <h3 className="text-content-primary mb-4 font-semibold">Renewal Calendar</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {uniqueWeeks.slice(0, 8).map((week, idx) => {
             const health = getWeekHealth(week.renewals)
-            const totalValue = week.renewals.reduce(
-              (sum, r) => sum + (r.amount || r.mrr || 0),
-              0
-            )
+            const totalValue = week.renewals.reduce((sum, r) => sum + (r.amount || r.mrr || 0), 0)
 
             return (
               <div
                 key={idx}
-                className={cn(
-                  "rounded-lg border p-3 transition-all",
-                  weekHealthColors[health]
-                )}
+                className={cn("rounded-lg border p-3 transition-all", weekHealthColors[health])}
               >
-                <p className="text-xs font-medium text-content-secondary">
+                <p className="text-content-secondary text-xs font-medium">
                   {formatWeek(week.start, week.end)}
                 </p>
                 <div className="mt-2">
                   {week.renewals.length === 0 ? (
-                    <p className="text-sm text-content-tertiary">
-                      No renewals
-                    </p>
+                    <p className="text-content-tertiary text-sm">No renewals</p>
                   ) : (
                     <>
-                      <p className="text-lg font-bold text-content-primary">
-                        {week.renewals.length}{" "}
-                        {week.renewals.length === 1 ? "renewal" : "renewals"}
+                      <p className="text-content-primary text-lg font-bold">
+                        {week.renewals.length} {week.renewals.length === 1 ? "renewal" : "renewals"}
                       </p>
-                      <p className="text-sm text-content-secondary">
+                      <p className="text-content-secondary text-sm">
                         ${totalValue.toLocaleString()}
                       </p>
                       <div className="mt-2 flex gap-1">
@@ -642,7 +629,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                           />
                         ))}
                         {week.renewals.length > 3 && (
-                          <span className="text-xs text-content-tertiary">
+                          <span className="text-content-tertiary text-xs">
                             +{week.renewals.length - 3}
                           </span>
                         )}
@@ -658,19 +645,14 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
 
       {/* Detailed List with Actions */}
       <div className="card-sf">
-        <div className="border-b border-border-default p-4">
-          <h3 className="font-semibold text-content-primary">
-            Renewals with Recommended Actions
-          </h3>
+        <div className="border-border-default border-b p-4">
+          <h3 className="text-content-primary font-semibold">Renewals with Recommended Actions</h3>
         </div>
-        <div className="divide-y divide-border-default">
+        <div className="divide-border-default divide-y">
           {renewals.map((renewal) => {
             const actions = getRecommendedActions(renewal)
             return (
-              <div
-                key={`${renewal.companyId}-${renewal.dealId}`}
-                className="p-4"
-              >
+              <div key={`${renewal.companyId}-${renewal.dealId}`} className="p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-start gap-3">
                     <div
@@ -685,24 +667,23 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                     <div>
                       <Link
                         href={`/accounts/${renewal.companyId}`}
-                        className="font-medium text-content-primary hover:text-success-600 dark:hover:text-success-400"
+                        className="text-content-primary hover:text-success-600 dark:hover:text-success-400 font-medium"
                       >
                         {renewal.companyName}
                       </Link>
-                      <p className="text-sm text-content-secondary">
-                        {new Date(renewal.renewalDate).toLocaleDateString(
-                          "en-US",
-                          { month: "short", day: "numeric", year: "numeric" }
-                        )}{" "}
+                      <p className="text-content-secondary text-sm">
+                        {new Date(renewal.renewalDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}{" "}
                         ({renewal.daysUntilRenewal} days)
-                        {renewal.amount && (
-                          <> · ${renewal.amount.toLocaleString()}</>
-                        )}
+                        {renewal.amount && <> · ${renewal.amount.toLocaleString()}</>}
                       </p>
                       {renewal.riskSignals.length > 0 && (
                         <div className="mt-1 flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3 text-error-500" />
-                          <span className="text-xs text-error-600 dark:text-error-400">
+                          <AlertTriangle className="text-error-500 h-3 w-3" />
+                          <span className="text-error-600 dark:text-error-400 text-xs">
                             {renewal.riskSignals.join(", ")}
                           </span>
                         </div>
@@ -721,8 +702,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                               "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
                             action.priority === "medium" &&
                               "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
-                            action.priority === "low" &&
-                              "bg-bg-tertiary text-content-secondary"
+                            action.priority === "low" && "bg-bg-tertiary text-content-secondary"
                           )}
                         >
                           <action.icon className="h-3 w-3" />
@@ -746,13 +726,10 @@ function RenewalsSkeleton() {
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="h-24 shimmer rounded-xl"
-          />
+          <div key={i} className="shimmer h-24 rounded-xl" />
         ))}
       </div>
-      <div className="h-64 shimmer rounded-xl" />
+      <div className="shimmer h-64 rounded-xl" />
     </div>
   )
 }

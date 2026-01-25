@@ -52,7 +52,10 @@ export async function GET(request: NextRequest) {
       .slice(0, 10)
 
     if (candidates.length === 0) {
-      return NextResponse.json({ suggestions: [], message: "All priority accounts have recent activity" })
+      return NextResponse.json({
+        suggestions: [],
+        message: "All priority accounts have recent activity",
+      })
     }
 
     // Get stakeholders for context

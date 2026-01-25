@@ -110,10 +110,7 @@ ${
 ${
   healthHistory.length
     ? healthHistory
-        .map(
-          (h) =>
-            `- ${new Date(h.createdAt).toLocaleDateString()}: ${h.healthScore}`
-        )
+        .map((h) => `- ${new Date(h.createdAt).toLocaleDateString()}: ${h.healthScore}`)
         .join("\n")
     : "- No history"
 }

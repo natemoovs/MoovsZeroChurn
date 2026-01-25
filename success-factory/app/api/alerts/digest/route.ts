@@ -29,10 +29,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!SLACK_WEBHOOK_URL) {
-    return NextResponse.json(
-      { error: "Slack webhook not configured" },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: "Slack webhook not configured" }, { status: 400 })
   }
 
   try {
@@ -199,10 +196,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Digest error:", error)
-    return NextResponse.json(
-      { error: "Failed to send digest" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to send digest" }, { status: 500 })
   }
 }
 
@@ -221,7 +215,8 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
         (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
       const portfolioRes = await fetch(`${baseUrl}/api/integrations/portfolio?segment=all`)
       const portfolioData = await portfolioRes.json()
@@ -240,7 +235,11 @@ export async function GET(request: NextRequest) {
       const blocks = [
         {
           type: "header",
-          text: { type: "plain_text", text: ":chart_with_upwards_trend: Daily Portfolio Health Digest", emoji: true },
+          text: {
+            type: "plain_text",
+            text: ":chart_with_upwards_trend: Daily Portfolio Health Digest",
+            emoji: true,
+          },
         },
         {
           type: "section",
@@ -248,21 +247,31 @@ export async function GET(request: NextRequest) {
             { type: "mrkdwn", text: `*Total Accounts:*\n${summaries.length}` },
             { type: "mrkdwn", text: `*Total MRR:*\n$${totalMrr.toLocaleString()}` },
             { type: "mrkdwn", text: `*:red_circle: At Risk:*\n${atRisk.length} accounts` },
-            { type: "mrkdwn", text: `*:large_yellow_circle: Monitor:*\n${monitor.length} accounts` },
+            {
+              type: "mrkdwn",
+              text: `*:large_yellow_circle: Monitor:*\n${monitor.length} accounts`,
+            },
           ],
         },
         { type: "divider" },
         {
           type: "context",
-          elements: [{
-            type: "mrkdwn",
-            text: `:large_green_circle: ${healthy.length} Healthy · :large_yellow_circle: ${monitor.length} Monitor · :red_circle: ${atRisk.length} At Risk`,
-          }],
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `:large_green_circle: ${healthy.length} Healthy · :large_yellow_circle: ${monitor.length} Monitor · :red_circle: ${atRisk.length} At Risk`,
+            },
+          ],
         },
         {
           type: "actions",
           elements: [
-            { type: "button", text: { type: "plain_text", text: "View Dashboard", emoji: true }, url: baseUrl, style: "primary" },
+            {
+              type: "button",
+              text: { type: "plain_text", text: "View Dashboard", emoji: true },
+              url: baseUrl,
+              style: "primary",
+            },
           ],
         },
       ]
@@ -275,7 +284,14 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        stats: { total: summaries.length, atRisk: atRisk.length, monitor: monitor.length, healthy: healthy.length, totalMrr, atRiskMrr },
+        stats: {
+          total: summaries.length,
+          atRisk: atRisk.length,
+          monitor: monitor.length,
+          healthy: healthy.length,
+          totalMrr,
+          atRiskMrr,
+        },
       })
     } catch (error) {
       console.error("Digest cron error:", error)

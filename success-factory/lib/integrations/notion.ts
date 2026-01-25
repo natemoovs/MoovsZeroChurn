@@ -113,17 +113,53 @@ export type NotionPropertyValue =
   | { type: "rich_text"; rich_text: NotionRichText[]; id: string }
   | { type: "number"; number: number | null; id: string }
   | { type: "select"; select: { id: string; name: string; color: string } | null; id: string }
-  | { type: "multi_select"; multi_select: Array<{ id: string; name: string; color: string }>; id: string }
-  | { type: "date"; date: { start: string; end: string | null; time_zone: string | null } | null; id: string }
+  | {
+      type: "multi_select"
+      multi_select: Array<{ id: string; name: string; color: string }>
+      id: string
+    }
+  | {
+      type: "date"
+      date: { start: string; end: string | null; time_zone: string | null } | null
+      id: string
+    }
   | { type: "people"; people: NotionUser[]; id: string }
-  | { type: "files"; files: Array<{ name: string; type: "file" | "external"; file?: { url: string }; external?: { url: string } }>; id: string }
+  | {
+      type: "files"
+      files: Array<{
+        name: string
+        type: "file" | "external"
+        file?: { url: string }
+        external?: { url: string }
+      }>
+      id: string
+    }
   | { type: "checkbox"; checkbox: boolean; id: string }
   | { type: "url"; url: string | null; id: string }
   | { type: "email"; email: string | null; id: string }
   | { type: "phone_number"; phone_number: string | null; id: string }
-  | { type: "formula"; formula: { type: "string" | "number" | "boolean" | "date"; string?: string; number?: number; boolean?: boolean; date?: { start: string } }; id: string }
+  | {
+      type: "formula"
+      formula: {
+        type: "string" | "number" | "boolean" | "date"
+        string?: string
+        number?: number
+        boolean?: boolean
+        date?: { start: string }
+      }
+      id: string
+    }
   | { type: "relation"; relation: Array<{ id: string }>; id: string }
-  | { type: "rollup"; rollup: { type: "number" | "date" | "array"; number?: number; date?: { start: string }; array?: NotionPropertyValue[] }; id: string }
+  | {
+      type: "rollup"
+      rollup: {
+        type: "number" | "date" | "array"
+        number?: number
+        date?: { start: string }
+        array?: NotionPropertyValue[]
+      }
+      id: string
+    }
   | { type: "created_time"; created_time: string; id: string }
   | { type: "created_by"; created_by: NotionUser; id: string }
   | { type: "last_edited_time"; last_edited_time: string; id: string }
@@ -138,10 +174,22 @@ export interface NotionFilter {
   rich_text?: NotionTextFilter
   number?: NotionNumberFilter
   checkbox?: { equals: boolean } | { does_not_equal: boolean }
-  select?: { equals: string } | { does_not_equal: string } | { is_empty: true } | { is_not_empty: true }
-  multi_select?: { contains: string } | { does_not_contain: string } | { is_empty: true } | { is_not_empty: true }
+  select?:
+    | { equals: string }
+    | { does_not_equal: string }
+    | { is_empty: true }
+    | { is_not_empty: true }
+  multi_select?:
+    | { contains: string }
+    | { does_not_contain: string }
+    | { is_empty: true }
+    | { is_not_empty: true }
   date?: NotionDateFilter
-  status?: { equals: string } | { does_not_equal: string } | { is_empty: true } | { is_not_empty: true }
+  status?:
+    | { equals: string }
+    | { does_not_equal: string }
+    | { is_empty: true }
+    | { is_not_empty: true }
 }
 
 export interface NotionTextFilter {
@@ -226,16 +274,13 @@ function getHeaders(): HeadersInit {
     throw new Error("NOTION_API_KEY environment variable is not set")
   }
   return {
-    "Authorization": `Bearer ${NOTION_API_KEY}`,
+    Authorization: `Bearer ${NOTION_API_KEY}`,
     "Content-Type": "application/json",
     "Notion-Version": NOTION_VERSION,
   }
 }
 
-async function notionFetch<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function notionFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -285,13 +330,10 @@ export async function queryDatabase(
     body.page_size = Math.min(options.pageSize, 100)
   }
 
-  return notionFetch<NotionQueryResult>(
-    `/databases/${databaseId}/query`,
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-    }
-  )
+  return notionFetch<NotionQueryResult>(`/databases/${databaseId}/query`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
 }
 
 /**
@@ -377,20 +419,16 @@ export interface NotionCommentList {
  * Get comments on a page
  */
 export async function getComments(pageId: string): Promise<NotionComment[]> {
-  const result = await notionFetch<NotionCommentList>(
-    `/comments?block_id=${pageId}`,
-    { method: "GET" }
-  )
+  const result = await notionFetch<NotionCommentList>(`/comments?block_id=${pageId}`, {
+    method: "GET",
+  })
   return result.results
 }
 
 /**
  * Add a comment to a page
  */
-export async function addComment(
-  pageId: string,
-  text: string
-): Promise<NotionComment> {
+export async function addComment(pageId: string, text: string): Promise<NotionComment> {
   return notionFetch<NotionComment>("/comments", {
     method: "POST",
     body: JSON.stringify({
@@ -406,14 +444,14 @@ export async function addComment(
 
 export function extractTitle(property: NotionPropertyValue): string {
   if (property.type === "title") {
-    return property.title.map(t => t.plain_text).join("")
+    return property.title.map((t) => t.plain_text).join("")
   }
   return ""
 }
 
 export function extractRichText(property: NotionPropertyValue): string {
   if (property.type === "rich_text") {
-    return property.rich_text.map(t => t.plain_text).join("")
+    return property.rich_text.map((t) => t.plain_text).join("")
   }
   return ""
 }
@@ -463,7 +501,7 @@ export interface MoovsTicket {
  */
 export function extractMultiSelect(property: NotionPropertyValue): string[] {
   if (property.type === "multi_select") {
-    return property.multi_select.map(s => s.name)
+    return property.multi_select.map((s) => s.name)
   }
   return []
 }
@@ -497,12 +535,16 @@ export async function queryTickets(options: {
       sorts: [{ timestamp: "created_time", direction: "descending" }],
     })
 
-    return result.results.map(page => {
+    return result.results.map((page) => {
       const props = page.properties
 
       return {
         id: page.id,
-        title: props.Name ? extractTitle(props.Name) : props.Ticket ? extractTitle(props.Ticket) : "",
+        title: props.Name
+          ? extractTitle(props.Name)
+          : props.Ticket
+            ? extractTitle(props.Ticket)
+            : "",
         status: props.Status ? extractStatus(props.Status) : null,
         priority: props.Priority ? extractSelect(props.Priority) : null,
         stage: props.Stage ? extractSelect(props.Stage) : null,

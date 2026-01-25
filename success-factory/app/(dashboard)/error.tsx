@@ -15,16 +15,14 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg-secondary p-6">
-      <div className="max-w-md w-full">
-        <div className="bg-bg-elevated rounded-xl shadow-lg border border-border-default p-8 text-center">
-          <div className="mx-auto w-16 h-16 bg-error-100 dark:bg-error-950 rounded-full flex items-center justify-center mb-4">
-            <AlertTriangle className="h-8 w-8 text-error-600 dark:text-error-400" />
+    <div className="bg-bg-secondary flex min-h-screen items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="bg-bg-elevated border-border-default rounded-xl border p-8 text-center shadow-lg">
+          <div className="bg-error-100 dark:bg-error-950 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+            <AlertTriangle className="text-error-600 dark:text-error-400 h-8 w-8" />
           </div>
 
-          <h2 className="text-xl font-semibold text-content-primary mb-2">
-            Something went wrong
-          </h2>
+          <h2 className="text-content-primary mb-2 text-xl font-semibold">Something went wrong</h2>
 
           <p className="text-content-secondary mb-6">
             {error.message || "An unexpected error occurred while loading the dashboard."}
@@ -33,24 +31,22 @@ export default function Error({
           <div className="space-y-3">
             <button
               onClick={reset}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors font-medium"
+              className="bg-success-600 hover:bg-success-700 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
               Try again
             </button>
 
             <button
-              onClick={() => window.location.href = "/"}
-              className="w-full px-4 py-2.5 text-content-secondary hover:text-content-primary transition-colors"
+              onClick={() => (window.location.href = "/")}
+              className="text-content-secondary hover:text-content-primary w-full px-4 py-2.5 transition-colors"
             >
               Go to home
             </button>
           </div>
 
           {error.digest && (
-            <p className="mt-4 text-xs text-content-tertiary">
-              Error ID: {error.digest}
-            </p>
+            <p className="text-content-tertiary mt-4 text-xs">Error ID: {error.digest}</p>
           )}
         </div>
       </div>

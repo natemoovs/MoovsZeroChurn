@@ -8,23 +8,25 @@ Strategic context for Moovs go-to-market activities. For customer targeting, see
 
 ### Total Addressable Market (TAM)
 
-| Segment | Market Size | Moovs Focus |
-|---------|-------------|-------------|
-| Black Car & Limo | ~15,000 operators in US | Primary |
-| Shuttle & Transit | ~8,000 programs in US | Primary |
-| NEMT | ~12,000 providers in US | Secondary |
-| Charter & Motorcoach | ~4,000 operators in US | Secondary |
+| Segment              | Market Size             | Moovs Focus |
+| -------------------- | ----------------------- | ----------- |
+| Black Car & Limo     | ~15,000 operators in US | Primary     |
+| Shuttle & Transit    | ~8,000 programs in US   | Primary     |
+| NEMT                 | ~12,000 providers in US | Secondary   |
+| Charter & Motorcoach | ~4,000 operators in US  | Secondary   |
 
 ### Revenue Composition Philosophy
 
 Moovs revenue is segmented across two platform categories and multiple tiers:
 
 **Black Car Platform** (private vehicle bookings)
+
 - SMB: $50K-$250K operator revenue
 - Mid-Market: $250K-$1M operator revenue
 - Enterprise: $1M+ operator revenue
 
 **Shuttle Platform** (per-seat/program bookings)
+
 - University programs
 - Corporate programs
 - Third-party operators
@@ -39,11 +41,11 @@ Moovs revenue is segmented across two platform categories and multiple tiers:
 
 Fleet size is a supporting indicator, but **operator revenue is the primary determinant** of segment and sales motion:
 
-| Revenue | Segment | Sales Motion |
-|---------|---------|--------------|
-| $50K-$250K | SMB | PLG / Self-serve |
-| $250K-$1M | Mid-Market | Sales-assisted |
-| $1M+ | Enterprise | High-touch enterprise |
+| Revenue    | Segment    | Sales Motion          |
+| ---------- | ---------- | --------------------- |
+| $50K-$250K | SMB        | PLG / Self-serve      |
+| $250K-$1M  | Mid-Market | Sales-assisted        |
+| $1M+       | Enterprise | High-touch enterprise |
 
 ### Platform Distinction
 
@@ -63,11 +65,13 @@ This distinction drives everything: product fit, messaging, pain points, and sal
 ### Black Car Market
 
 **Legacy Competitors:**
+
 - Limo Anywhere, FASTTRAK, Santa Cruz
 - Outdated interfaces, limited mobile
 - Point solutions, not platforms
 
 **Moovs Advantage:**
+
 - Modern, all-in-one platform
 - AI-powered scheduling
 - Professional customer-facing booking
@@ -76,12 +80,14 @@ This distinction drives everything: product fit, messaging, pain points, and sal
 ### Shuttle Market
 
 **Legacy Competitors:**
+
 - TransLoc, Routematch
 - Limited real-time tracking
 - Poor rider experience
 - Fragmented tools
 
 **Moovs Advantage:**
+
 - Complete shuttle platform
 - Real-time visibility for all stakeholders
 - Multi-client management (for operators)
@@ -97,14 +103,14 @@ Understand the operator's pain before presenting solutions. The same product cap
 
 ### 2. Segment-Appropriate Language
 
-| Segment | Language Style |
-|---------|----------------|
-| SMB | Simple, direct, DIY-friendly |
-| Mid-Market | Growth-focused, efficiency |
+| Segment    | Language Style                          |
+| ---------- | --------------------------------------- |
+| SMB        | Simple, direct, DIY-friendly            |
+| Mid-Market | Growth-focused, efficiency              |
 | Enterprise | Consolidation, reliability, partnership |
-| University | Student experience, safety |
-| Corporate | Retention, ROI, sustainability |
-| Operator | Win contracts, margins, efficiency |
+| University | Student experience, safety              |
+| Corporate  | Retention, ROI, sustainability          |
+| Operator   | Win contracts, margins, efficiency      |
 
 ### 3. Revenue-First Qualification
 
@@ -113,6 +119,7 @@ Always qualify by revenue first, fleet size second. This prevents mis-segmentati
 ### 4. Proof Points by Segment
 
 Use case studies and references from similar operators:
+
 - SMB → other growing small operators
 - Mid-Market → operators who scaled successfully
 - Enterprise → large, complex operations
@@ -135,6 +142,7 @@ Use case studies and references from similar operators:
 ### Segment-Specific Guidelines
 
 Detailed messaging guidance lives in each ICP document:
+
 - [Black Car SMB](../customers/black-car/smb.md)
 - [Black Car Mid-Market](../customers/black-car/mid-market.md)
 - [Black Car Enterprise](../customers/black-car/enterprise.md)
@@ -157,5 +165,5 @@ When creating marketing, sales, or GTM content:
 
 ---
 
-*Last Updated: January 2026*
-*Maintained By: GTM Leadership*
+_Last Updated: January 2026_
+_Maintained By: GTM Leadership_

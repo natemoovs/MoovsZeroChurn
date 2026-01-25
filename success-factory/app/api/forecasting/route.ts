@@ -56,7 +56,8 @@ export async function GET(request: NextRequest) {
         const churnProbability = churnRates[account.healthScore || "unknown"] || 0.05
 
         // Higher risk for accounts with renewal in this month
-        const renewalInMonth = account.contractEndDate &&
+        const renewalInMonth =
+          account.contractEndDate &&
           new Date(account.contractEndDate).getMonth() === monthDate.getMonth() &&
           new Date(account.contractEndDate).getFullYear() === monthDate.getFullYear()
 
@@ -159,7 +160,8 @@ async function calculateHistoricalChurnRates(): Promise<Record<string, number>> 
     green: churns.filter((c) => c.healthScoreAtChurn === "green").length,
     yellow: churns.filter((c) => c.healthScoreAtChurn === "yellow").length,
     red: churns.filter((c) => c.healthScoreAtChurn === "red").length,
-    unknown: churns.filter((c) => !c.healthScoreAtChurn || c.healthScoreAtChurn === "unknown").length,
+    unknown: churns.filter((c) => !c.healthScoreAtChurn || c.healthScoreAtChurn === "unknown")
+      .length,
   }
 
   const totalByHealthMap: Record<string, number> = {}
@@ -171,13 +173,13 @@ async function calculateHistoricalChurnRates(): Promise<Record<string, number>> 
   // Use defaults if not enough data
   return {
     green: totalByHealthMap.green
-      ? Math.min((churnsByHealth.green / totalByHealthMap.green) / 12, 0.02)
+      ? Math.min(churnsByHealth.green / totalByHealthMap.green / 12, 0.02)
       : 0.01, // 1% monthly for healthy
     yellow: totalByHealthMap.yellow
-      ? Math.min((churnsByHealth.yellow / totalByHealthMap.yellow) / 12, 0.1)
+      ? Math.min(churnsByHealth.yellow / totalByHealthMap.yellow / 12, 0.1)
       : 0.05, // 5% monthly for warning
     red: totalByHealthMap.red
-      ? Math.min((churnsByHealth.red / totalByHealthMap.red) / 12, 0.3)
+      ? Math.min(churnsByHealth.red / totalByHealthMap.red / 12, 0.3)
       : 0.15, // 15% monthly for at-risk
     unknown: 0.05, // Default 5%
   }

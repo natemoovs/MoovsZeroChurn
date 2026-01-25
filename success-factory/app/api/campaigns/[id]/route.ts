@@ -5,10 +5,7 @@ import { prisma } from "@/lib/db"
  * GET /api/campaigns/[id]
  * Get a specific campaign with all details
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
@@ -56,10 +53,7 @@ export async function GET(
  * PATCH /api/campaigns/[id]
  * Update campaign status or details
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await request.json()

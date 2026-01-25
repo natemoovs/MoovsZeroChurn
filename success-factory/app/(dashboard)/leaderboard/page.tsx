@@ -76,17 +76,15 @@ export default function LeaderboardPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold text-content-primary">
-              <Trophy className="h-7 w-7 text-warning-500" />
+            <h1 className="text-content-primary flex items-center gap-2 text-2xl font-bold">
+              <Trophy className="text-warning-500 h-7 w-7" />
               CSM Leaderboard
             </h1>
-            <p className="mt-1 text-content-secondary">
-              Track team performance and celebrate wins
-            </p>
+            <p className="text-content-secondary mt-1">Track team performance and celebrate wins</p>
           </div>
 
           {/* Period Toggle */}
-          <div className="flex gap-1 rounded-lg bg-bg-secondary p-1">
+          <div className="bg-bg-secondary flex gap-1 rounded-lg p-1">
             {(["week", "month", "quarter"] as const).map((p) => (
               <button
                 key={p}
@@ -138,64 +136,61 @@ export default function LeaderboardPage() {
         {loading ? (
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="h-20 shimmer rounded-xl"
-              />
+              <div key={i} className="shimmer h-20 rounded-xl" />
             ))}
           </div>
         ) : data?.csms && data.csms.length > 0 ? (
-          <div className="overflow-hidden card-sf">
+          <div className="card-sf overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border-default bg-bg-secondary">
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-content-secondary">
+                <tr className="border-border-default bg-bg-secondary border-b">
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                     Rank
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-content-secondary">
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                     CSM
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-content-secondary">
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-medium tracking-wider uppercase">
                     Accounts
                   </th>
                   {metrics.map((m) => (
                     <th
                       key={m.key}
-                      className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-content-secondary"
+                      className="text-content-secondary px-4 py-3 text-center text-xs font-medium tracking-wider uppercase"
                     >
                       {m.label}
                     </th>
                   ))}
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-content-secondary">
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-medium tracking-wider uppercase">
                     MRR
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-default">
+              <tbody className="divide-border-default divide-y">
                 {data.csms.map((csm, index) => (
                   <tr
                     key={csm.email}
                     className={cn(
-                      "transition-colors hover:bg-surface-hover",
+                      "hover:bg-surface-hover transition-colors",
                       index === 0 && "bg-warning-50/50 dark:bg-warning-900/10"
                     )}
                   >
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-center">
                         {index === 0 ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-warning-400 to-warning-600">
+                          <div className="from-warning-400 to-warning-600 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br">
                             <Trophy className="h-4 w-4 text-white" />
                           </div>
                         ) : index === 1 ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-content-tertiary to-content-secondary">
+                          <div className="from-content-tertiary to-content-secondary flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br">
                             <Medal className="h-4 w-4 text-white" />
                           </div>
                         ) : index === 2 ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-warning-600 to-warning-800">
+                          <div className="from-warning-600 to-warning-800 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br">
                             <Medal className="h-4 w-4 text-white" />
                           </div>
                         ) : (
-                          <span className="text-lg font-bold text-content-tertiary">
+                          <span className="text-content-tertiary text-lg font-bold">
                             {index + 1}
                           </span>
                         )}
@@ -203,7 +198,7 @@ export default function LeaderboardPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-success-400 to-accent-600 text-sm font-bold text-white">
+                        <div className="from-success-400 to-accent-600 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white">
                           {csm.name
                             .split(" ")
                             .map((n) => n[0])
@@ -211,26 +206,22 @@ export default function LeaderboardPage() {
                             .slice(0, 2)}
                         </div>
                         <div>
-                          <p className="font-medium text-content-primary">
-                            {csm.name}
-                          </p>
-                          <p className="text-xs text-content-secondary">{csm.email}</p>
+                          <p className="text-content-primary font-medium">{csm.name}</p>
+                          <p className="text-content-secondary text-xs">{csm.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <Users className="h-4 w-4 text-content-tertiary" />
-                        <span className="font-medium text-content-primary">
-                          {csm.accountCount}
-                        </span>
+                        <Users className="text-content-tertiary h-4 w-4" />
+                        <span className="text-content-primary font-medium">{csm.accountCount}</span>
                       </div>
                     </td>
                     {metrics.map((m) => (
                       <td key={m.key} className="px-4 py-4 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <m.icon className={cn("h-4 w-4", m.color)} />
-                          <span className="font-medium text-content-primary">
+                          <span className="text-content-primary font-medium">
                             {m.key === "expansionRevenue"
                               ? `$${((csm[m.key as keyof CSMStats] as number) / 1000).toFixed(0)}k`
                               : csm[m.key as keyof CSMStats]}
@@ -240,8 +231,8 @@ export default function LeaderboardPage() {
                     ))}
                     <td className="px-4 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <DollarSign className="h-4 w-4 text-success-500" />
-                        <span className="font-bold text-content-primary">
+                        <DollarSign className="text-success-500 h-4 w-4" />
+                        <span className="text-content-primary font-bold">
                           {(csm.totalMrr / 1000).toFixed(0)}k
                         </span>
                       </div>
@@ -253,11 +244,9 @@ export default function LeaderboardPage() {
           </div>
         ) : (
           <div className="card-sf p-12 text-center">
-            <Trophy className="mx-auto mb-4 h-12 w-12 text-content-tertiary" />
-            <h3 className="text-lg font-semibold text-content-primary">
-              No data yet
-            </h3>
-            <p className="mt-2 text-content-secondary">
+            <Trophy className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+            <h3 className="text-content-primary text-lg font-semibold">No data yet</h3>
+            <p className="text-content-secondary mt-2">
               Leaderboard will populate as CSMs complete tasks and save accounts
             </p>
           </div>
@@ -297,8 +286,8 @@ function HighlightCard({
           <Icon className="h-5 w-5 text-white" />
         </div>
         <div>
-          <p className="text-xs text-content-secondary">{label}</p>
-          <p className="font-semibold text-content-primary">{value}</p>
+          <p className="text-content-secondary text-xs">{label}</p>
+          <p className="text-content-primary font-semibold">{value}</p>
         </div>
       </div>
     </div>

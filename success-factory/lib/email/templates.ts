@@ -80,7 +80,9 @@ export function buildDigestEmail(data: DigestData): string {
             </td>
           </tr>
 
-          ${atRiskAccounts.length > 0 ? `
+          ${
+            atRiskAccounts.length > 0
+              ? `
           <!-- At-Risk Accounts -->
           <tr>
             <td style="padding: 0 30px 20px;">
@@ -88,8 +90,10 @@ export function buildDigestEmail(data: DigestData): string {
                 🚨 At-Risk Accounts (${atRiskAccounts.length})
               </h2>
               <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
-                ${atRiskAccounts.map((account, i) => `
-                <tr style="background-color: ${i % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                ${atRiskAccounts
+                  .map(
+                    (account, i) => `
+                <tr style="background-color: ${i % 2 === 0 ? "#ffffff" : "#f9fafb"};">
                   <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
                     <a href="${appUrl}/accounts/${account.id}" style="color: #10b981; text-decoration: none; font-weight: 500;">
                       ${account.name}
@@ -97,20 +101,30 @@ export function buildDigestEmail(data: DigestData): string {
                     <span style="display: inline-block; margin-left: 8px; padding: 2px 8px; background-color: ${healthColors[account.healthScore] || healthColors.unknown}20; color: ${healthColors[account.healthScore] || healthColors.unknown}; border-radius: 10px; font-size: 12px;">
                       ${account.healthScore}
                     </span>
-                    ${account.riskSignals.length > 0 ? `
+                    ${
+                      account.riskSignals.length > 0
+                        ? `
                     <p style="margin: 5px 0 0; color: #6b7280; font-size: 12px;">
                       ${account.riskSignals.slice(0, 2).join(" • ")}
                     </p>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                   </td>
                 </tr>
-                `).join('')}
+                `
+                  )
+                  .join("")}
               </table>
             </td>
           </tr>
-          ` : ''}
+          `
+              : ""
+          }
 
-          ${healthChanges.length > 0 ? `
+          ${
+            healthChanges.length > 0
+              ? `
           <!-- Health Changes -->
           <tr>
             <td style="padding: 0 30px 20px;">
@@ -118,8 +132,10 @@ export function buildDigestEmail(data: DigestData): string {
                 📉 Health Score Changes (${healthChanges.length})
               </h2>
               <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
-                ${healthChanges.map((change, i) => `
-                <tr style="background-color: ${i % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                ${healthChanges
+                  .map(
+                    (change, i) => `
+                <tr style="background-color: ${i % 2 === 0 ? "#ffffff" : "#f9fafb"};">
                   <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
                     <span style="font-weight: 500; color: #374151;">${change.companyName}</span>
                     <span style="margin-left: 8px; color: #6b7280;">
@@ -129,13 +145,19 @@ export function buildDigestEmail(data: DigestData): string {
                     </span>
                   </td>
                 </tr>
-                `).join('')}
+                `
+                  )
+                  .join("")}
               </table>
             </td>
           </tr>
-          ` : ''}
+          `
+              : ""
+          }
 
-          ${overdueTasks.length > 0 ? `
+          ${
+            overdueTasks.length > 0
+              ? `
           <!-- Overdue Tasks -->
           <tr>
             <td style="padding: 0 30px 20px;">
@@ -143,8 +165,10 @@ export function buildDigestEmail(data: DigestData): string {
                 ⏰ Overdue Tasks (${overdueTasks.length})
               </h2>
               <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
-                ${overdueTasks.map((task, i) => `
-                <tr style="background-color: ${i % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                ${overdueTasks
+                  .map(
+                    (task, i) => `
+                <tr style="background-color: ${i % 2 === 0 ? "#ffffff" : "#f9fafb"};">
                   <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
                     <span style="font-weight: 500; color: #374151;">${task.title}</span>
                     <p style="margin: 4px 0 0; color: #6b7280; font-size: 12px;">
@@ -152,13 +176,19 @@ export function buildDigestEmail(data: DigestData): string {
                     </p>
                   </td>
                 </tr>
-                `).join('')}
+                `
+                  )
+                  .join("")}
               </table>
             </td>
           </tr>
-          ` : ''}
+          `
+              : ""
+          }
 
-          ${upcomingRenewals.length > 0 ? `
+          ${
+            upcomingRenewals.length > 0
+              ? `
           <!-- Upcoming Renewals -->
           <tr>
             <td style="padding: 0 30px 20px;">
@@ -166,8 +196,10 @@ export function buildDigestEmail(data: DigestData): string {
                 📅 Upcoming Renewals (${upcomingRenewals.length})
               </h2>
               <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
-                ${upcomingRenewals.map((renewal, i) => `
-                <tr style="background-color: ${i % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                ${upcomingRenewals
+                  .map(
+                    (renewal, i) => `
+                <tr style="background-color: ${i % 2 === 0 ? "#ffffff" : "#f9fafb"};">
                   <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
                     <span style="font-weight: 500; color: #374151;">${renewal.companyName}</span>
                     <p style="margin: 4px 0 0; color: #6b7280; font-size: 12px;">
@@ -175,11 +207,15 @@ export function buildDigestEmail(data: DigestData): string {
                     </p>
                   </td>
                 </tr>
-                `).join('')}
+                `
+                  )
+                  .join("")}
               </table>
             </td>
           </tr>
-          ` : ''}
+          `
+              : ""
+          }
 
           <!-- CTA -->
           <tr>

@@ -17,11 +17,13 @@ Create blog posts that sound human, provide genuine value to transportation oper
 ## Required Knowledge
 
 Before writing, load these knowledge files:
+
 - @knowledge/brand/voice-guidelines.md - Writing style, tone, testimonials, proof points
 - @knowledge/customers/overview.md - ICP segmentation and decision tree
 - @knowledge/product/platform-overview.md - Product capabilities to reference
 
 For segment-specific content, also load the relevant ICP:
+
 - @knowledge/customers/black-car/smb.md, mid-market.md, or enterprise.md
 - @knowledge/customers/shuttle/university.md, corporate.md, or operator.md
 
@@ -30,12 +32,15 @@ For segment-specific content, also load the relevant ICP:
 ## Blog Post Types
 
 ### How-To Guides
+
 Practical advice for transportation operators. Topics: dispatch, driver management, fleet growth, booking, pricing, marketing. Share actionable tips. Position Moovs features as natural solutions without being salesy.
 
 ### SEO Content
+
 Articles targeting keywords operators search for. Lead with value, not product. Answer the searcher's question thoroughly. Weave in Moovs benefits organically.
 
 ### Thought Leadership (Amir Ghorbani)
+
 Industry insights from Moovs' founder (parents owned a limo company 20+ years). Write in first person as Amir. Be direct and confident but not arrogant.
 
 ---
@@ -45,28 +50,35 @@ Industry insights from Moovs' founder (parents owned a limo company 20+ years). 
 Ask these questions to scope the blog post:
 
 ### 1. Topic & Angle
+
 "What topic should this blog post cover? Any specific angle or hook?"
 
-*Examples:*
+_Examples:_
+
 - "How to reduce no-shows" (How-To)
 - "Airport pickup best practices" (SEO)
 - "Why operators are switching from spreadsheets" (Thought Leadership)
 
 ### 2. Blog Type
+
 "What type of post? (How-To Guide, SEO Content, or Thought Leadership from Amir)"
 
 ### 3. Target ICP
+
 "Which segment is this for?"
+
 - Black Car: SMB / Mid-Market / Enterprise
 - Shuttle: University / Corporate / Operator
 - All operators
 
-*This determines terminology, examples, and pain points to reference.*
+_This determines terminology, examples, and pain points to reference._
 
 ### 4. Goal
+
 "What should readers do after reading? (Book a demo, try a feature, just learn)"
 
 ### 5. Product Tie-in
+
 "Should this explicitly mention Moovs features, or be purely educational with a soft CTA?"
 
 ---
@@ -93,22 +105,27 @@ Ask these questions to scope the blog post:
 ## Required Elements
 
 ### Internal Links (2 minimum)
+
 Link naturally to relevant Moovs pages: feature pages (dispatch, booking, driver app), related blog posts, or resources (ROI calculator, demo page).
 
 ### Customer Testimonial (1 required)
+
 Include one real testimonial from @knowledge/brand/voice-guidelines.md that relates to the post topic:
 
 > "Quote from customer review that relates to the post topic."
 > — Customer Name, Business Type (via Capterra/G2)
 
 **Available testimonials from voice-guidelines.md:**
+
 - Josue P. - "Went from 3-5 trips per day to 10-15 on average" (growth)
 - Tom D. - "Save hours a day now" (efficiency)
 - Rob D. - "Was able to buy another vehicle because of Moovs" (growth/revenue)
 - James L. - "98% client retention rate after 6 months" (retention)
 
 ### CTA
+
 End with a natural call to book a demo:
+
 - "Ready to see how this works in practice? Book a demo and we'll walk you through it."
 - "Want to try this for your fleet? Book a demo—we'd love to show you around."
 
@@ -144,9 +161,11 @@ End with a natural call to book a demo:
 ## Example Opening
 
 ❌ **Too corporate**:
+
 > "In today's competitive transportation landscape, leveraging cutting-edge technology solutions is essential for operational excellence."
 
 ✅ **Human and direct**:
+
 > "If you're still juggling spreadsheets, phone calls, and sticky notes to manage your fleet, you know the chaos that creates. There's a better way—and it doesn't require a PhD in software to figure out."
 
 ---
@@ -194,4 +213,5 @@ Before finalizing, verify:
 ## Examples
 
 See `/examples/` folder for reference posts:
+
 - `reducing-no-shows.md` - How-To guide with soft product tie-in

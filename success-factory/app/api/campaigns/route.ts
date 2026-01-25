@@ -58,21 +58,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const {
-      name,
-      description,
-      triggerType,
-      triggerConditions,
-      steps,
-      ownerEmail,
-      ownerName,
-    } = body
+    const { name, description, triggerType, triggerConditions, steps, ownerEmail, ownerName } = body
 
     if (!name || !steps?.length) {
-      return NextResponse.json(
-        { error: "name and steps required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "name and steps required" }, { status: 400 })
     }
 
     // Create campaign with steps in a transaction

@@ -13,10 +13,7 @@ interface PlaybookAction {
 /**
  * Execute playbooks for champion leaving
  */
-async function executeChampionLeftPlaybooks(stakeholder: {
-  companyId: string
-  name: string
-}) {
+async function executeChampionLeftPlaybooks(stakeholder: { companyId: string; name: string }) {
   try {
     // Get company name
     const company = await prisma.hubSpotCompany.findFirst({
@@ -147,10 +144,7 @@ export async function PATCH(
     return NextResponse.json({ success: true, stakeholder: updated })
   } catch (error) {
     console.error("Failed to update stakeholder:", error)
-    return NextResponse.json(
-      { error: "Failed to update stakeholder" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to update stakeholder" }, { status: 500 })
   }
 }
 
@@ -172,9 +166,6 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Failed to delete stakeholder:", error)
-    return NextResponse.json(
-      { error: "Failed to delete stakeholder" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to delete stakeholder" }, { status: 500 })
   }
 }

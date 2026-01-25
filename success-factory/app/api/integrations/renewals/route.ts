@@ -83,9 +83,7 @@ export async function GET(request: NextRequest) {
           if (!deal.properties.closedate) continue
 
           const closeDate = new Date(deal.properties.closedate)
-          const daysUntil = Math.ceil(
-            (closeDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-          )
+          const daysUntil = Math.ceil((closeDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
           // Only include renewals within the specified window
           if (closeDate >= now && closeDate <= maxDate) {
@@ -116,9 +114,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort by renewal date
-    renewals.sort(
-      (a, b) => new Date(a.renewalDate).getTime() - new Date(b.renewalDate).getTime()
-    )
+    renewals.sort((a, b) => new Date(a.renewalDate).getTime() - new Date(b.renewalDate).getTime())
 
     // Group by time window
     const next30 = renewals.filter((r) => r.daysUntilRenewal <= 30)
@@ -153,10 +149,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Renewals fetch error:", error)
-    return NextResponse.json(
-      { renewals: [], error: "Failed to fetch renewals" },
-      { status: 500 }
-    )
+    return NextResponse.json({ renewals: [], error: "Failed to fetch renewals" }, { status: 500 })
   }
 }
 

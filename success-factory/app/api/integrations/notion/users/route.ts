@@ -26,7 +26,7 @@ export async function GET() {
   try {
     const response = await fetch("https://api.notion.com/v1/users", {
       headers: {
-        "Authorization": `Bearer ${NOTION_API_KEY}`,
+        Authorization: `Bearer ${NOTION_API_KEY}`,
         "Notion-Version": "2022-06-28",
       },
     })
@@ -40,18 +40,20 @@ export async function GET() {
     // Filter to only real people (not bots) and format nicely
     const users: NotionUser[] = data.results
       .filter((u: { type: string }) => u.type === "person")
-      .map((u: {
-        id: string
-        name: string
-        avatar_url: string | null
-        person?: { email: string }
-      }) => ({
-        id: u.id,
-        name: u.name,
-        email: u.person?.email || null,
-        avatarUrl: u.avatar_url,
-        type: "person" as const,
-      }))
+      .map(
+        (u: {
+          id: string
+          name: string
+          avatar_url: string | null
+          person?: { email: string }
+        }) => ({
+          id: u.id,
+          name: u.name,
+          email: u.person?.email || null,
+          avatarUrl: u.avatar_url,
+          type: "person" as const,
+        })
+      )
       .sort((a: NotionUser, b: NotionUser) => a.name.localeCompare(b.name))
 
     return NextResponse.json({
@@ -61,9 +63,6 @@ export async function GET() {
     })
   } catch (error) {
     console.error("Notion users fetch error:", error)
-    return NextResponse.json(
-      { users: [], error: "Failed to fetch Notion users" },
-      { status: 500 }
-    )
+    return NextResponse.json({ users: [], error: "Failed to fetch Notion users" }, { status: 500 })
   }
 }

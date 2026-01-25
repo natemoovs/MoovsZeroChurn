@@ -175,10 +175,7 @@ export async function GET() {
       // Stakeholders for champion alerts
       prisma.stakeholder.findMany({
         where: {
-          OR: [
-            { role: "champion" },
-            { leftCompanyAt: { not: null } },
-          ],
+          OR: [{ role: "champion" }, { leftCompanyAt: { not: null } }],
         },
       }),
 
@@ -199,9 +196,7 @@ export async function GET() {
       companyId: company.hubspotId,
       companyName: company.name,
       domain: company.domain,
-      healthScore:
-        (company.healthScore as "green" | "yellow" | "red" | "unknown") ||
-        "unknown",
+      healthScore: (company.healthScore as "green" | "yellow" | "red" | "unknown") || "unknown",
       mrr: company.mrr,
       plan: company.plan,
       riskSignals: company.riskSignals,
@@ -233,9 +228,7 @@ export async function GET() {
       .filter((c) => c.contractEndDate && new Date(c.contractEndDate) <= thirtyDaysFromNow)
       .map((c) => {
         const renewalDate = c.contractEndDate!
-        const daysUntil = Math.ceil(
-          (renewalDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-        )
+        const daysUntil = Math.ceil((renewalDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         return {
           companyId: c.hubspotId,
           companyName: c.name,
@@ -250,10 +243,7 @@ export async function GET() {
       .slice(0, 5)
 
     // Calculate health trends from snapshots
-    const companySnapshots = new Map<
-      string,
-      typeof snapshots
-    >()
+    const companySnapshots = new Map<string, typeof snapshots>()
     for (const s of snapshots) {
       const existing = companySnapshots.get(s.companyId) || []
       existing.push(s)
@@ -268,10 +258,7 @@ export async function GET() {
     }> = []
 
     for (const [, companyData] of companySnapshots) {
-      companyData.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
+      companyData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
       for (let i = 0; i < companyData.length - 1; i++) {
         const current = companyData[i]
@@ -288,9 +275,7 @@ export async function GET() {
       }
     }
 
-    recentChanges.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    )
+    recentChanges.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     // Calculate trend
     const scoreOrder = { green: 3, yellow: 2, red: 1, unknown: 0 }
@@ -298,8 +283,7 @@ export async function GET() {
     let downgrades = 0
 
     for (const change of recentChanges) {
-      const fromScore =
-        scoreOrder[change.from as keyof typeof scoreOrder] || 0
+      const fromScore = scoreOrder[change.from as keyof typeof scoreOrder] || 0
       const toScore = scoreOrder[change.to as keyof typeof scoreOrder] || 0
       if (toScore > fromScore) upgrades++
       if (toScore < fromScore) downgrades++
@@ -311,7 +295,10 @@ export async function GET() {
     else if (recentChanges.length === 0) trend = "unknown"
 
     // Process stalled onboardings
-    const stalledByCompany = new Map<string, { companyId: string; companyName: string; milestones: string[] }>()
+    const stalledByCompany = new Map<
+      string,
+      { companyId: string; companyName: string; milestones: string[] }
+    >()
     for (const m of overdueMilestones) {
       if (!stalledByCompany.has(m.companyId)) {
         stalledByCompany.set(m.companyId, {
@@ -323,20 +310,25 @@ export async function GET() {
       stalledByCompany.get(m.companyId)!.milestones.push(m.milestone)
     }
 
-    const stalledAccounts = Array.from(stalledByCompany.values()).map((s) => {
-      const company = companies.find((c) => c.hubspotId === s.companyId)
-      return {
-        companyId: s.companyId,
-        companyName: s.companyName,
-        overdueMilestones: s.milestones,
-        severity: s.milestones.length >= 3 ? "critical" : s.milestones.length >= 2 ? "high" : "medium",
-        mrr: company?.mrr || 0,
-      }
-    }).sort((a, b) => {
-      const severityOrder = { critical: 0, high: 1, medium: 2 }
-      return (severityOrder[a.severity as keyof typeof severityOrder] || 2) -
-             (severityOrder[b.severity as keyof typeof severityOrder] || 2)
-    })
+    const stalledAccounts = Array.from(stalledByCompany.values())
+      .map((s) => {
+        const company = companies.find((c) => c.hubspotId === s.companyId)
+        return {
+          companyId: s.companyId,
+          companyName: s.companyName,
+          overdueMilestones: s.milestones,
+          severity:
+            s.milestones.length >= 3 ? "critical" : s.milestones.length >= 2 ? "high" : "medium",
+          mrr: company?.mrr || 0,
+        }
+      })
+      .sort((a, b) => {
+        const severityOrder = { critical: 0, high: 1, medium: 2 }
+        return (
+          (severityOrder[a.severity as keyof typeof severityOrder] || 2) -
+          (severityOrder[b.severity as keyof typeof severityOrder] || 2)
+        )
+      })
 
     const stalledOnboardings = {
       count: stalledAccounts.length,
@@ -348,7 +340,8 @@ export async function GET() {
     // Process NPS trends
     const npsWithScores = npsResponses.filter((r) => r.score !== null)
     const recentNPS = npsWithScores.filter(
-      (r) => r.respondedAt && new Date(r.respondedAt) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      (r) =>
+        r.respondedAt && new Date(r.respondedAt) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     )
     const previousNPS = npsWithScores.filter(
       (r) =>
@@ -370,10 +363,10 @@ export async function GET() {
       currentNPS === null || prevNPS === null
         ? "unknown"
         : currentNPS > prevNPS + 5
-        ? "improving"
-        : currentNPS < prevNPS - 5
-        ? "declining"
-        : "stable"
+          ? "improving"
+          : currentNPS < prevNPS - 5
+            ? "declining"
+            : "stable"
 
     const npsTrends = {
       currentNPS,
@@ -412,7 +405,9 @@ export async function GET() {
     }
 
     // Count accounts with no champion (only paid accounts)
-    const paidCompanyIds = new Set(companies.filter((c) => c.mrr && c.mrr > 0).map((c) => c.hubspotId))
+    const paidCompanyIds = new Set(
+      companies.filter((c) => c.mrr && c.mrr > 0).map((c) => c.hubspotId)
+    )
     const noChampion = Array.from(paidCompanyIds).filter((id) => !companyChampions.has(id)).length
     const singleThreaded = Array.from(companyContacts.entries()).filter(
       ([id, count]) => paidCompanyIds.has(id) && count === 1
@@ -474,7 +469,11 @@ export async function GET() {
     return NextResponse.json(
       {
         error: "Failed to fetch dashboard data",
-        portfolio: { summaries: [], total: 0, configured: { hubspot: false, stripe: false, metabase: false } },
+        portfolio: {
+          summaries: [],
+          total: 0,
+          configured: { hubspot: false, stripe: false, metabase: false },
+        },
         tasks: { tasks: [] },
         renewals: { renewals: [] },
         healthTrend: { trend: "unknown", recentChanges: [] },

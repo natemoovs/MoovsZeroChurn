@@ -71,7 +71,9 @@ export async function POST(request: NextRequest) {
 
     if (!Object.keys(CHURN_REASONS).includes(body.primaryReason)) {
       return NextResponse.json(
-        { error: `Invalid primaryReason. Must be one of: ${Object.keys(CHURN_REASONS).join(", ")}` },
+        {
+          error: `Invalid primaryReason. Must be one of: ${Object.keys(CHURN_REASONS).join(", ")}`,
+        },
         { status: 400 }
       )
     }
@@ -141,10 +143,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Churn documentation error:", error)
-    return NextResponse.json(
-      { error: "Failed to document churn" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to document churn" }, { status: 500 })
   }
 }
 
@@ -172,10 +171,10 @@ export async function GET(request: NextRequest) {
     if (startDate || endDate) {
       where.churnDate = {}
       if (startDate) {
-        (where.churnDate as Record<string, Date>).gte = new Date(startDate)
+        ;(where.churnDate as Record<string, Date>).gte = new Date(startDate)
       }
       if (endDate) {
-        (where.churnDate as Record<string, Date>).lte = new Date(endDate)
+        ;(where.churnDate as Record<string, Date>).lte = new Date(endDate)
       }
     }
 
@@ -187,10 +186,13 @@ export async function GET(request: NextRequest) {
 
     // Calculate summary stats
     const totalLostMrr = records.reduce((sum, r) => sum + (r.lostMrr || 0), 0)
-    const reasonBreakdown = records.reduce((acc, r) => {
-      acc[r.primaryReason] = (acc[r.primaryReason] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
+    const reasonBreakdown = records.reduce(
+      (acc, r) => {
+        acc[r.primaryReason] = (acc[r.primaryReason] || 0) + 1
+        return acc
+      },
+      {} as Record<string, number>
+    )
 
     return NextResponse.json({
       records,
@@ -204,9 +206,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Churn list error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch churn records" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch churn records" }, { status: 500 })
   }
 }

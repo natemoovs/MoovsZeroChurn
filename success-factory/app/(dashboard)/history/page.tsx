@@ -59,10 +59,7 @@ export default function HistoryPage() {
   const filteredHistory = history.filter((item) => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
-    return (
-      item.skillName.toLowerCase().includes(query) ||
-      item.result.toLowerCase().includes(query)
-    )
+    return item.skillName.toLowerCase().includes(query) || item.result.toLowerCase().includes(query)
   })
 
   return (
@@ -71,12 +68,8 @@ export default function HistoryPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-content-primary">
-              History
-            </h1>
-            <p className="mt-1 text-content-secondary">
-              Your recent generations (stored locally)
-            </p>
+            <h1 className="text-content-primary text-2xl font-bold">History</h1>
+            <p className="text-content-secondary mt-1">Your recent generations (stored locally)</p>
           </div>
           {history.length > 0 && (
             <Button variant="outline" onClick={handleClearAll}>
@@ -89,13 +82,13 @@ export default function HistoryPage() {
         {/* Search */}
         {history.length > 0 && (
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-tertiary" />
+            <Search className="text-content-tertiary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search history..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border-default bg-bg-primary pl-10 pr-4 text-sm outline-none transition-colors placeholder:text-content-tertiary focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+              className="border-border-default bg-bg-primary placeholder:text-content-tertiary focus:border-success-500 focus:ring-success-500/20 h-10 w-full rounded-lg border pr-4 pl-10 text-sm transition-colors outline-none focus:ring-2"
             />
           </div>
         )}
@@ -103,16 +96,14 @@ export default function HistoryPage() {
         {/* History List */}
         {filteredHistory.length === 0 ? (
           <div className="card-sf p-12 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-bg-secondary">
-              <Clock className="h-6 w-6 text-content-tertiary" />
+            <div className="bg-bg-secondary mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <Clock className="text-content-tertiary h-6 w-6" />
             </div>
-            <h3 className="text-lg font-medium text-content-primary">
+            <h3 className="text-content-primary text-lg font-medium">
               {searchQuery ? "No matching results" : "No history yet"}
             </h3>
-            <p className="mt-1 text-content-secondary">
-              {searchQuery
-                ? "Try a different search term"
-                : "Generate something to see it here"}
+            <p className="text-content-secondary mt-1">
+              {searchQuery ? "Try a different search term" : "Generate something to see it here"}
             </p>
             {!searchQuery && (
               <Link href="/skills">
@@ -123,36 +114,31 @@ export default function HistoryPage() {
         ) : (
           <div className="space-y-3">
             {filteredHistory.map((item) => (
-              <div
-                key={item.id}
-                className="card-sf shadow-sm"
-              >
+              <div key={item.id} className="card-sf shadow-sm">
                 {/* Header */}
                 <div
                   className="flex cursor-pointer items-center justify-between p-4"
                   onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-bg-secondary">
-                      <Clock className="h-5 w-5 text-content-secondary" />
+                    <div className="bg-bg-secondary flex h-10 w-10 items-center justify-center rounded-lg">
+                      <Clock className="text-content-secondary h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-content-primary">
-                        {item.skillName}
-                      </h3>
-                      <p className="text-sm text-content-secondary">
-                        {formatDate(item.createdAt)}
-                      </p>
+                      <h3 className="text-content-primary font-medium">{item.skillName}</h3>
+                      <p className="text-content-secondary text-sm">{formatDate(item.createdAt)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {item.feedback && (
-                      <span className={cn(
-                        "rounded-full p-1",
-                        item.feedback === "up"
-                          ? "bg-success-100 text-success-600 dark:bg-success-950 dark:text-success-400"
-                          : "bg-error-100 text-error-600 dark:bg-error-950 dark:text-error-400"
-                      )}>
+                      <span
+                        className={cn(
+                          "rounded-full p-1",
+                          item.feedback === "up"
+                            ? "bg-success-100 text-success-600 dark:bg-success-950 dark:text-success-400"
+                            : "bg-error-100 text-error-600 dark:bg-error-950 dark:text-error-400"
+                        )}
+                      >
                         {item.feedback === "up" ? (
                           <ThumbsUp className="h-4 w-4" />
                         ) : (
@@ -161,27 +147,23 @@ export default function HistoryPage() {
                       </span>
                     )}
                     {expandedId === item.id ? (
-                      <ChevronUp className="h-5 w-5 text-content-tertiary" />
+                      <ChevronUp className="text-content-tertiary h-5 w-5" />
                     ) : (
-                      <ChevronDown className="h-5 w-5 text-content-tertiary" />
+                      <ChevronDown className="text-content-tertiary h-5 w-5" />
                     )}
                   </div>
                 </div>
 
                 {/* Expanded Content */}
                 {expandedId === item.id && (
-                  <div className="border-t border-border-default p-4">
-                    <div className="mb-4 rounded-lg bg-bg-secondary p-4">
-                      <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm text-content-primary">
+                  <div className="border-border-default border-t p-4">
+                    <div className="bg-bg-secondary mb-4 rounded-lg p-4">
+                      <pre className="text-content-primary max-h-96 overflow-auto text-sm whitespace-pre-wrap">
                         {item.result}
                       </pre>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCopy(item.result)}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => handleCopy(item.result)}>
                         <Copy className="mr-2 h-4 w-4" />
                         Copy
                       </Button>

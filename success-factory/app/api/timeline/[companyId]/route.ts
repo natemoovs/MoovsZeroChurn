@@ -66,20 +66,13 @@ export async function GET(
       eventType: "health_changed",
       title: `Health: ${hc.previousScore || "unknown"} → ${hc.newScore}`,
       description:
-        hc.riskSignals.length > 0
-          ? `Risk signals: ${hc.riskSignals.slice(0, 3).join(", ")}`
-          : null,
+        hc.riskSignals.length > 0 ? `Risk signals: ${hc.riskSignals.slice(0, 3).join(", ")}` : null,
       metadata: {
         previousScore: hc.previousScore,
         newScore: hc.newScore,
         riskSignals: hc.riskSignals,
       },
-      importance:
-        hc.newScore === "red"
-          ? "critical"
-          : hc.newScore === "yellow"
-          ? "high"
-          : "normal",
+      importance: hc.newScore === "red" ? "critical" : hc.newScore === "yellow" ? "high" : "normal",
       occurredAt: hc.changedAt,
       createdAt: hc.changedAt,
     }))
@@ -107,11 +100,7 @@ export async function GET(
         contactEmail: nps.contactEmail,
       },
       importance:
-        nps.category === "detractor"
-          ? "critical"
-          : nps.category === "passive"
-          ? "high"
-          : "normal",
+        nps.category === "detractor" ? "critical" : nps.category === "passive" ? "high" : "normal",
       occurredAt: nps.respondedAt,
       createdAt: nps.respondedAt,
     }))
@@ -146,10 +135,7 @@ export async function GET(
     // Combine and sort all events
     const allEvents = [...events, ...healthEvents, ...npsEvents, ...taskEvents]
       .filter((e) => e.occurredAt !== null)
-      .sort(
-        (a, b) =>
-          new Date(b.occurredAt!).getTime() - new Date(a.occurredAt!).getTime()
-      )
+      .sort((a, b) => new Date(b.occurredAt!).getTime() - new Date(a.occurredAt!).getTime())
       .slice(0, limit)
 
     // Group by date for UI
@@ -176,10 +162,7 @@ export async function GET(
     })
   } catch (error) {
     console.error("Failed to get timeline:", error)
-    return NextResponse.json(
-      { error: "Failed to get timeline" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to get timeline" }, { status: 500 })
   }
 }
 
@@ -197,10 +180,7 @@ export async function POST(
     const { source, eventType, title, description, metadata, importance } = body
 
     if (!source || !eventType || !title) {
-      return NextResponse.json(
-        { error: "source, eventType, and title required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "source, eventType, and title required" }, { status: 400 })
     }
 
     // Get company

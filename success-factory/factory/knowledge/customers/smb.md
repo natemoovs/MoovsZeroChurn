@@ -6,14 +6,14 @@ Owner-operated transportation businesses with $50K-$250K revenue, 1-5 vehicles. 
 
 ## Quick Stats
 
-| Attribute | Value |
-|-----------|-------|
-| Revenue | $50K-$250K |
-| Fleet | 1-5 vehicles |
-| Drivers | 1-9 |
-| Budget | $150-$250/mo |
-| CSM Model | Scaled/Tech-Touch |
-| Free Plan % | 44.7% |
+| Attribute   | Value             |
+| ----------- | ----------------- |
+| Revenue     | $50K-$250K        |
+| Fleet       | 1-5 vehicles      |
+| Drivers     | 1-9               |
+| Budget      | $150-$250/mo      |
+| CSM Model   | Scaled/Tech-Touch |
+| Free Plan % | 44.7%             |
 
 ---
 
@@ -30,13 +30,13 @@ Owner-operated transportation businesses with $50K-$250K revenue, 1-5 vehicles. 
 
 ### Key Success Metrics
 
-| Metric | Healthy | At Risk |
-|--------|---------|---------|
-| Weekly logins | 5+ | <2 |
-| Trips/month | Growing | Flat or declining |
-| Features used | 5+ | <3 |
-| Plan | Standard/Pro | Free (after 6mo) |
-| Payment collection | Through Moovs | Manual |
+| Metric             | Healthy       | At Risk           |
+| ------------------ | ------------- | ----------------- |
+| Weekly logins      | 5+            | <2                |
+| Trips/month        | Growing       | Flat or declining |
+| Features used      | 5+            | <3                |
+| Plan               | Standard/Pro  | Free (after 6mo)  |
+| Payment collection | Through Moovs | Manual            |
 
 ### Success Milestones
 
@@ -51,30 +51,30 @@ Owner-operated transportation businesses with $50K-$250K revenue, 1-5 vehicles. 
 
 ### Early Warning (Intervene Immediately)
 
-| Signal | Why It Matters | Response |
-|--------|----------------|----------|
-| **No login 14+ days** | Lost engagement | Re-engagement email + call |
-| **Setup incomplete** | Never got value | Onboarding assist |
-| **Free plan 6+ months** | Not invested | Value conversation |
-| **Support tickets up** | Frustration building | Proactive fix |
+| Signal                  | Why It Matters       | Response                   |
+| ----------------------- | -------------------- | -------------------------- |
+| **No login 14+ days**   | Lost engagement      | Re-engagement email + call |
+| **Setup incomplete**    | Never got value      | Onboarding assist          |
+| **Free plan 6+ months** | Not invested         | Value conversation         |
+| **Support tickets up**  | Frustration building | Proactive fix              |
 
 ### Yellow Flags (Monitor Closely)
 
-| Signal | Why It Matters | Response |
-|--------|----------------|----------|
-| **Usage plateau** | Growth stalled | Business check-in |
-| **Only dispatch, no booking** | Missing key value | Feature adoption push |
-| **Manual payments** | Not fully onboard | Payments setup assist |
-| **No fleet growth** | Business not growing | Understand why |
+| Signal                        | Why It Matters       | Response              |
+| ----------------------------- | -------------------- | --------------------- |
+| **Usage plateau**             | Growth stalled       | Business check-in     |
+| **Only dispatch, no booking** | Missing key value    | Feature adoption push |
+| **Manual payments**           | Not fully onboard    | Payments setup assist |
+| **No fleet growth**           | Business not growing | Understand why        |
 
 ### Red Flags (Save Call Needed)
 
-| Signal | Why It Matters | Response |
-|--------|----------------|----------|
-| **Competitor mentioned** | Active evaluation | Save conversation |
-| **"Not using it much"** | Lost relevance | Deep-dive call |
-| **Asking for data export** | Planning to leave | Executive escalation |
-| **Stopped responding** | Checked out | Phone call (not email) |
+| Signal                     | Why It Matters    | Response               |
+| -------------------------- | ----------------- | ---------------------- |
+| **Competitor mentioned**   | Active evaluation | Save conversation      |
+| **"Not using it much"**    | Lost relevance    | Deep-dive call         |
+| **Asking for data export** | Planning to leave | Executive escalation   |
+| **Stopped responding**     | Checked out       | Phone call (not email) |
 
 ---
 
@@ -119,22 +119,25 @@ Owner-operated transportation businesses with $50K-$250K revenue, 1-5 vehicles. 
 
 ### When to Suggest Upgrade
 
-| Trigger | From | To | Why Now |
-|---------|------|-----|---------|
-| Adding 4th vehicle | Free | Standard | Need unlimited vehicles |
-| Hiring first employee | Standard | Pro | Need more users |
-| Won corporate account | Pro | Pro + CRM | Need email automation |
-| Opening online booking | Any | Ensure Portal setup | Revenue opportunity |
+| Trigger                | From     | To                  | Why Now                 |
+| ---------------------- | -------- | ------------------- | ----------------------- |
+| Adding 4th vehicle     | Free     | Standard            | Need unlimited vehicles |
+| Hiring first employee  | Standard | Pro                 | Need more users         |
+| Won corporate account  | Pro      | Pro + CRM           | Need email automation   |
+| Opening online booking | Any      | Ensure Portal setup | Revenue opportunity     |
 
 ### Expansion Conversation Starters
 
 **Adding vehicles:**
+
 > "Congrats on the new van! You're at 3 vehicles now — Standard gives you unlimited. Want me to walk through the upgrade?"
 
 **Hiring:**
+
 > "I see you added a dispatcher. Pro gives you 5 users so they can have their own login. Makes training easier too."
 
 **Corporate account:**
+
 > "Landing that corporate contract is huge. They'll expect professional invoicing — let's make sure that's set up."
 
 ### What NOT to Push
@@ -153,26 +156,31 @@ Owner-operated transportation businesses with $50K-$250K revenue, 1-5 vehicles. 
 **Goal:** Get to first value (online booking live, trips flowing)
 
 **Week 1:**
+
 - Welcome email with quick-start video
 - Setup wizard completion check
 - Automated check-in if incomplete
 
 **Week 2:**
+
 - First booking celebration (automated)
 - Feature tip based on their setup
 
 **Week 3-4:**
+
 - Health check: Are they using it?
 - Reach out if engagement low
 
 ### Ongoing (Tech-Touch)
 
 **Monthly:**
+
 - Automated usage digest
 - Feature tip based on gaps
 - Trigger-based outreach for risks
 
 **Quarterly:**
+
 - Business health email (growth, trends)
 - Upgrade suggestion if appropriate
 - NPS survey
@@ -180,10 +188,12 @@ Owner-operated transportation businesses with $50K-$250K revenue, 1-5 vehicles. 
 ### Renewal (Annual)
 
 **60 days out:**
+
 - Usage summary email
 - Renewal reminder
 
 **30 days out:**
+
 - Direct outreach if at-risk
 - Otherwise auto-renew
 
@@ -250,14 +260,14 @@ Owner-operated transportation businesses with $50K-$250K revenue, 1-5 vehicles. 
 
 ## Key Metrics to Track
 
-| Metric | Definition | Target |
-|--------|------------|--------|
-| **Activation rate** | % completing setup in 14 days | >60% |
-| **Weekly active** | Logged in 3+ times/week | >50% |
-| **Feature adoption** | Using 5+ core features | >40% |
-| **Upgrade rate** | Free → Paid in 90 days | >25% |
-| **Net revenue retention** | Revenue retained + expansion | >90% |
+| Metric                    | Definition                    | Target |
+| ------------------------- | ----------------------------- | ------ |
+| **Activation rate**       | % completing setup in 14 days | >60%   |
+| **Weekly active**         | Logged in 3+ times/week       | >50%   |
+| **Feature adoption**      | Using 5+ core features        | >40%   |
+| **Upgrade rate**          | Free → Paid in 90 days        | >25%   |
+| **Net revenue retention** | Revenue retained + expansion  | >90%   |
 
 ---
 
-*For playbooks on specific scenarios, see /csm-playbooks/*
+_For playbooks on specific scenarios, see /csm-playbooks/_

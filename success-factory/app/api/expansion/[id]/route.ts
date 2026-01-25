@@ -5,10 +5,7 @@ import { prisma } from "@/lib/db"
  * GET /api/expansion/[id]
  * Get a single expansion opportunity
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -17,19 +14,13 @@ export async function GET(
     })
 
     if (!opportunity) {
-      return NextResponse.json(
-        { error: "Opportunity not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Opportunity not found" }, { status: 404 })
     }
 
     return NextResponse.json({ opportunity })
   } catch (error) {
     console.error("Failed to fetch opportunity:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch opportunity" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch opportunity" }, { status: 500 })
   }
 }
 
@@ -37,10 +28,7 @@ export async function GET(
  * PATCH /api/expansion/[id]
  * Update an expansion opportunity
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -63,10 +51,7 @@ export async function PATCH(
     })
 
     if (!opportunity) {
-      return NextResponse.json(
-        { error: "Opportunity not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Opportunity not found" }, { status: 404 })
     }
 
     const updateData: Record<string, unknown> = {}
@@ -104,20 +89,20 @@ export async function PATCH(
             status === "won"
               ? "expansion_won"
               : status === "lost"
-              ? "expansion_lost"
-              : "expansion_status_changed",
+                ? "expansion_lost"
+                : "expansion_status_changed",
           title:
             status === "won"
               ? `Expansion won: ${opportunity.title}`
               : status === "lost"
-              ? `Expansion lost: ${opportunity.title}`
-              : `Expansion updated: ${opportunity.title}`,
+                ? `Expansion lost: ${opportunity.title}`
+                : `Expansion updated: ${opportunity.title}`,
           description:
             status === "won"
               ? `Closed expansion opportunity for $${(closedValue || opportunity.potentialValue || 0).toLocaleString()}`
               : status === "lost"
-              ? `Lost expansion opportunity: ${lostReason || "No reason provided"}`
-              : `Status changed to ${status}`,
+                ? `Lost expansion opportunity: ${lostReason || "No reason provided"}`
+                : `Status changed to ${status}`,
           importance: status === "won" ? "high" : "normal",
           occurredAt: new Date(),
           metadata: { opportunityId: id, status, closedValue },
@@ -128,10 +113,7 @@ export async function PATCH(
     return NextResponse.json({ success: true, opportunity: updated })
   } catch (error) {
     console.error("Failed to update opportunity:", error)
-    return NextResponse.json(
-      { error: "Failed to update opportunity" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to update opportunity" }, { status: 500 })
   }
 }
 
@@ -153,9 +135,6 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Failed to delete opportunity:", error)
-    return NextResponse.json(
-      { error: "Failed to delete opportunity" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to delete opportunity" }, { status: 500 })
   }
 }

@@ -12,13 +12,14 @@ breaking_changes: false
 Your airport pickups just got smarter. Moovs now monitors flight status automatically and adjusts pickup times when flights are delayed.
 
 **How it works:**
+
 1. When you create a trip with an airport pickup, add the flight number
 2. Moovs tracks the flight from departure to landing
 3. If the flight is delayed, we update the pickup time and notify the driver
 
 No more drivers waiting at the curb wondering if the plane landed. No more passengers arriving to find their ride left.
 
-*Note: Flight tracking currently supports US domestic flights. International support coming in February.*
+_Note: Flight tracking currently supports US domestic flights. International support coming in February._
 
 ---
 

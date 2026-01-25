@@ -61,7 +61,7 @@ export async function GET() {
     },
   }
 
-  const configuredCount = Object.values(integrations).filter(i => i.configured).length
+  const configuredCount = Object.values(integrations).filter((i) => i.configured).length
   const totalCount = Object.keys(integrations).length
 
   return NextResponse.json({

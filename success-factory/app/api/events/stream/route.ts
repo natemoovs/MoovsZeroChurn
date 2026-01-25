@@ -25,9 +25,7 @@ export async function GET(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       const send = (event: string, data: object) => {
-        controller.enqueue(
-          encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-        )
+        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
       }
 
       // Send initial connection event
@@ -137,9 +135,7 @@ async function getPortfolioStats() {
   })
 
   const now = new Date()
-  const overdueTasks = tasks.filter(
-    (t) => t.dueDate && new Date(t.dueDate) < now
-  ).length
+  const overdueTasks = tasks.filter((t) => t.dueDate && new Date(t.dueDate) < now).length
 
   return {
     totalAccounts: companies.length,

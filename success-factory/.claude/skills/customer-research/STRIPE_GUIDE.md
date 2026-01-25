@@ -14,6 +14,7 @@ Metabase connects to the Moovs Snowflake data warehouse and provides access to S
 - **Table:** MOZART_NEW.MOOVS_PLATFORM_CHARGES
 
 ### Key Identifiers
+
 - **STRIPE_ACCOUNT_ID** = Operator's Stripe Connect account
 - **OPERATOR_NAME** = Operator name (direct field)
 - To filter by **OPERATOR_ID**, join with `POSTGRES_SWOOP.OPERATOR` table
@@ -23,11 +24,13 @@ Metabase connects to the Moovs Snowflake data warehouse and provides access to S
 ## Step 1: Query Charges
 
 ### Tool
+
 ```
 mcp__metabase__execute_query
 ```
 
 ### Parameters
+
 ```json
 {
   "database_id": 2,
@@ -93,6 +96,7 @@ LIMIT 100
 All queries below use direct `STRIPE_ACCOUNT_ID` filtering (preferred). Replace `<stripe_account_id>` with the operator's Stripe Connect account (e.g., `acct_1PPvqLQrDs7oucqB`).
 
 ### Payment Summary (All Time)
+
 ```sql
 SELECT
   COUNT(*) as total_charges,
@@ -107,6 +111,7 @@ WHERE STRIPE_ACCOUNT_ID = '<stripe_account_id>'
 ```
 
 ### Failed Payments Analysis
+
 ```sql
 SELECT
   CREATED_DATE,
@@ -123,6 +128,7 @@ ORDER BY CREATED_DATE DESC
 ```
 
 ### Dispute Analysis
+
 ```sql
 SELECT
   STRIPE_CHARGE_ID,
@@ -140,6 +146,7 @@ ORDER BY DISPUTE_DATE DESC
 ```
 
 ### Monthly Payment Trend
+
 ```sql
 SELECT
   DATE_TRUNC('month', CREATED_DATE) as month,
@@ -157,6 +164,7 @@ LIMIT 12
 ```
 
 ### Risk Score Analysis
+
 ```sql
 SELECT
   OUTCOME_RISK_LEVEL,
@@ -170,6 +178,7 @@ ORDER BY charge_count DESC
 ```
 
 ### Refund Analysis
+
 ```sql
 SELECT
   STRIPE_CHARGE_ID,
@@ -191,31 +200,31 @@ LIMIT 20
 
 ### Payment Health Metrics
 
-| Metric | Calculation | Healthy Range |
-|--------|-------------|---------------|
-| **Success Rate** | Succeeded / Total Charges | > 95% |
-| **Refund Rate** | Refunded $ / Charged $ | < 3% |
-| **Dispute Rate** | Disputed charges / Total | < 0.5% |
-| **Avg Risk Score** | Mean of OUTCOME_RISK_SCORE | < 20 |
+| Metric             | Calculation                | Healthy Range |
+| ------------------ | -------------------------- | ------------- |
+| **Success Rate**   | Succeeded / Total Charges  | > 95%         |
+| **Refund Rate**    | Refunded $ / Charged $     | < 3%          |
+| **Dispute Rate**   | Disputed charges / Total   | < 0.5%        |
+| **Avg Risk Score** | Mean of OUTCOME_RISK_SCORE | < 20          |
 
 ### Volume Metrics
 
-| Metric | Description |
-|--------|-------------|
-| **Total Charges** | Count of all charge attempts |
-| **Total Volume** | Sum of TOTAL_DOLLARS_CHARGED |
-| **Net Revenue** | Charged - Refunded |
+| Metric              | Description                       |
+| ------------------- | --------------------------------- |
+| **Total Charges**   | Count of all charge attempts      |
+| **Total Volume**    | Sum of TOTAL_DOLLARS_CHARGED      |
+| **Net Revenue**     | Charged - Refunded                |
 | **Avg Transaction** | Total Volume / Successful Charges |
 
 ### Risk Indicators
 
-| Indicator | Concern Level |
-|-----------|---------------|
-| Success rate < 90% | High |
-| Multiple disputes | High |
-| Elevated risk scores | Medium |
-| High refund rate | Medium |
-| Failed payment streak | High |
+| Indicator             | Concern Level |
+| --------------------- | ------------- |
+| Success rate < 90%    | High          |
+| Multiple disputes     | High          |
+| Elevated risk scores  | Medium        |
+| High refund rate      | Medium        |
+| Failed payment streak | High          |
 
 ---
 
@@ -232,66 +241,74 @@ LIMIT 20
 ---
 
 ### Payment Summary
-| Metric | Value |
-|--------|-------|
-| **Total Charges** | {count} |
-| **Successful** | {count} ({pct}%) |
-| **Failed** | {count} ({pct}%) |
-| **Success Rate** | {pct}% |
+
+| Metric            | Value            |
+| ----------------- | ---------------- |
+| **Total Charges** | {count}          |
+| **Successful**    | {count} ({pct}%) |
+| **Failed**        | {count} ({pct}%) |
+| **Success Rate**  | {pct}%           |
 
 ---
 
 ### Financial Summary
-| Metric | Value |
-|--------|-------|
-| **Total Charged** | ${amount} |
-| **Total Refunded** | ${amount} |
-| **Net Revenue** | ${amount} |
-| **Refund Rate** | {pct}% |
+
+| Metric              | Value     |
+| ------------------- | --------- |
+| **Total Charged**   | ${amount} |
+| **Total Refunded**  | ${amount} |
+| **Net Revenue**     | ${amount} |
+| **Refund Rate**     | {pct}%    |
 | **Avg Transaction** | ${amount} |
 
 ---
 
 ### Risk Assessment
-| Indicator | Value | Status |
-|-----------|-------|--------|
-| Avg Risk Score | {score} | {status} |
-| High Risk Charges | {count} | {status} |
-| Disputes | {count} | {status} |
-| Dispute Amount | ${amount} | {status} |
+
+| Indicator         | Value     | Status   |
+| ----------------- | --------- | -------- |
+| Avg Risk Score    | {score}   | {status} |
+| High Risk Charges | {count}   | {status} |
+| Disputes          | {count}   | {status} |
+| Dispute Amount    | ${amount} | {status} |
 
 ---
 
 ### Monthly Trend (Last 6 Months)
-| Month | Charges | Success Rate | Volume | Refunds |
-|-------|---------|--------------|--------|---------|
-| {month} | {count} | {pct}% | ${vol} | ${ref} |
-| ... | ... | ... | ... | ... |
+
+| Month   | Charges | Success Rate | Volume | Refunds |
+| ------- | ------- | ------------ | ------ | ------- |
+| {month} | {count} | {pct}%       | ${vol} | ${ref}  |
+| ...     | ...     | ...          | ...    | ...     |
 
 ---
 
 ### Recent Failed Payments
-| Date | Amount | Customer | Reason |
-|------|--------|----------|--------|
-| {date} | ${amt} | {name} | {reason} |
-| ... | ... | ... | ... |
+
+| Date   | Amount | Customer | Reason   |
+| ------ | ------ | -------- | -------- |
+| {date} | ${amt} | {name}   | {reason} |
+| ...    | ...    | ...      | ...      |
 
 ---
 
 ### Active Disputes
-| Date | Amount | Status | Reason |
-|------|--------|--------|--------|
+
+| Date   | Amount | Status   | Reason   |
+| ------ | ------ | -------- | -------- |
 | {date} | ${amt} | {status} | {reason} |
-| ... | ... | ... | ... |
+| ...    | ...    | ...      | ...      |
 
 ---
 
 ### Payment Health Score: [X/100] - [Good/At Risk/Critical]
 
 **Risk Factors:**
+
 - {List any concerns}
 
 **Recommendations:**
+
 1. {Action item}
 2. {Action item}
 ```
@@ -301,40 +318,44 @@ LIMIT 20
 ## Available Fields Reference
 
 ### Core Fields
-| Field | Type | Description |
-|-------|------|-------------|
-| STRIPE_CHARGE_ID | Text | Unique charge identifier |
+
+| Field             | Type | Description                       |
+| ----------------- | ---- | --------------------------------- |
+| STRIPE_CHARGE_ID  | Text | Unique charge identifier          |
 | STRIPE_ACCOUNT_ID | Text | Operator's Stripe Connect account |
-| OPERATOR_NAME | Text | Operator name |
-| STATUS | Text | succeeded / failed |
-| CREATED_DATE | Date | Charge date |
-| CREATED_TIME | Time | Charge time |
+| OPERATOR_NAME     | Text | Operator name                     |
+| STATUS            | Text | succeeded / failed                |
+| CREATED_DATE      | Date | Charge date                       |
+| CREATED_TIME      | Time | Charge time                       |
 
 ### Financial Fields
-| Field | Type | Description |
-|-------|------|-------------|
-| TOTAL_DOLLARS_CHARGED | Number | Amount charged |
+
+| Field                  | Type   | Description     |
+| ---------------------- | ------ | --------------- |
+| TOTAL_DOLLARS_CHARGED  | Number | Amount charged  |
 | TOTAL_DOLLARS_REFUNDED | Number | Amount refunded |
-| BILLING_DETAIL_NAME | Text | Cardholder name |
-| CARD_ID | Text | Card identifier |
+| BILLING_DETAIL_NAME    | Text   | Cardholder name |
+| CARD_ID                | Text   | Card identifier |
 
 ### Outcome Fields
-| Field | Type | Description |
-|-------|------|-------------|
-| OUTCOME_NETWORK_STATUS | Text | Network response |
-| OUTCOME_REASON | Text | Decline reason (if failed) |
-| OUTCOME_SELLER_MESSAGE | Text | Human-readable outcome |
-| OUTCOME_RISK_LEVEL | Text | normal / elevated / highest |
-| OUTCOME_RISK_SCORE | Number | Risk score (0-100) |
+
+| Field                  | Type   | Description                 |
+| ---------------------- | ------ | --------------------------- |
+| OUTCOME_NETWORK_STATUS | Text   | Network response            |
+| OUTCOME_REASON         | Text   | Decline reason (if failed)  |
+| OUTCOME_SELLER_MESSAGE | Text   | Human-readable outcome      |
+| OUTCOME_RISK_LEVEL     | Text   | normal / elevated / highest |
+| OUTCOME_RISK_SCORE     | Number | Risk score (0-100)          |
 
 ### Dispute Fields
-| Field | Type | Description |
-|-------|------|-------------|
-| DISPUTE_ID | Text | Dispute identifier |
-| DISPUTE_STATUS | Text | Dispute status |
-| DISPUTED_AMOUNT | Number | Disputed amount |
-| DISPUTE_REASON | Text | Reason for dispute |
-| DISPUTE_DATE | Date | When disputed |
+
+| Field           | Type   | Description        |
+| --------------- | ------ | ------------------ |
+| DISPUTE_ID      | Text   | Dispute identifier |
+| DISPUTE_STATUS  | Text   | Dispute status     |
+| DISPUTED_AMOUNT | Number | Disputed amount    |
+| DISPUTE_REASON  | Text   | Reason for dispute |
+| DISPUTE_DATE    | Date   | When disputed      |
 
 ---
 
@@ -353,10 +374,12 @@ WHERE OPERATOR_ID = '<operator_id>'
 The `STRIPE_ACCOUNT` value (e.g., `acct_1PPvqLQrDs7oucqB`) can then be used directly in queries.
 
 ### Alternative Sources for Stripe Account ID
+
 - **Lago:** The `external_id` in Lago customer records often contains the operator_id, and billing metadata may reference Stripe
 - **HubSpot:** Company records may have Stripe account in custom properties
 
 ### Join Pattern (When Stripe Account Unknown)
+
 ```sql
 FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES c
 JOIN POSTGRES_SWOOP.OPERATOR o
@@ -406,16 +429,18 @@ If `MOZART_NEW.MOOVS_PLATFORM_CHARGES` returns no data for an operator, use the 
 
 ### Raw Tables Available
 
-| Table | Description |
-|-------|-------------|
-| `STRIPE_MOOVS.CHARGE` | All charge records (~1.5M rows) |
-| `STRIPE_MOOVS.DISPUTE` | Dispute records |
-| `STRIPE_MOOVS.REFUND` | Refund records |
+| Table                  | Description                     |
+| ---------------------- | ------------------------------- |
+| `STRIPE_MOOVS.CHARGE`  | All charge records (~1.5M rows) |
+| `STRIPE_MOOVS.DISPUTE` | Dispute records                 |
+| `STRIPE_MOOVS.REFUND`  | Refund records                  |
 
 ### Key Identifier
+
 - **CONNECTED_ACCOUNT_ID** = Operator's Stripe Connect account (equivalent to STRIPE_ACCOUNT_ID)
 
 ### Payment Summary (Raw Tables)
+
 ```sql
 SELECT
     COUNT(*) as total_charges,
@@ -429,6 +454,7 @@ WHERE CONNECTED_ACCOUNT_ID = '<stripe_account_id>'
 ```
 
 ### Monthly Trend (Raw Tables)
+
 ```sql
 SELECT
     DATE_TRUNC('month', CREATED) as month,
@@ -445,6 +471,7 @@ LIMIT 12
 ```
 
 ### Dispute Check (Raw Tables)
+
 ```sql
 SELECT
     d.ID as dispute_id,
@@ -461,12 +488,12 @@ ORDER BY d.CREATED DESC
 
 ### Key Differences from Model
 
-| Aspect | Model (Card 855) | Raw Tables |
-|--------|------------------|------------|
-| Amount field | `TOTAL_DOLLARS_CHARGED` | `AMOUNT` (in cents, divide by 100) |
-| Account filter | `STRIPE_ACCOUNT_ID` | `CONNECTED_ACCOUNT_ID` |
-| Date field | `CREATED_DATE` | `CREATED` (timestamp) |
-| Data freshness | ETL pipeline dependent | Near real-time Stripe sync |
+| Aspect         | Model (Card 855)        | Raw Tables                         |
+| -------------- | ----------------------- | ---------------------------------- |
+| Amount field   | `TOTAL_DOLLARS_CHARGED` | `AMOUNT` (in cents, divide by 100) |
+| Account filter | `STRIPE_ACCOUNT_ID`     | `CONNECTED_ACCOUNT_ID`             |
+| Date field     | `CREATED_DATE`          | `CREATED` (timestamp)              |
+| Data freshness | ETL pipeline dependent  | Near real-time Stripe sync         |
 
 ### When to Use Raw Tables
 

@@ -103,14 +103,11 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
     return (
       <div className="space-y-3">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className="flex gap-3 animate-pulse"
-          >
-            <div className="h-10 w-10 rounded-full bg-bg-tertiary" />
+          <div key={i} className="flex animate-pulse gap-3">
+            <div className="bg-bg-tertiary h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-3/4 rounded bg-bg-tertiary" />
-              <div className="h-3 w-1/2 rounded bg-bg-tertiary" />
+              <div className="bg-bg-tertiary h-4 w-3/4 rounded" />
+              <div className="bg-bg-tertiary h-3 w-1/2 rounded" />
             </div>
           </div>
         ))}
@@ -121,27 +118,25 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
   return (
     <div className="card-sf">
       {showHeader && (
-        <div className="flex items-center justify-between border-b border-border-default p-4">
+        <div className="border-border-default flex items-center justify-between border-b p-4">
           <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-content-secondary" />
-            <h3 className="font-semibold text-content-primary">
-              Activity Feed
-            </h3>
+            <Activity className="text-content-secondary h-5 w-5" />
+            <h3 className="text-content-primary font-semibold">Activity Feed</h3>
           </div>
           <button
             onClick={fetchActivities}
-            className="rounded-lg p-2 text-content-tertiary transition-colors hover:bg-surface-hover hover:text-content-secondary"
+            className="text-content-tertiary hover:bg-surface-hover hover:text-content-secondary rounded-lg p-2 transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      <div className="divide-y divide-border-default">
+      <div className="divide-border-default divide-y">
         {activities.length === 0 ? (
           <div className="p-8 text-center">
-            <Activity className="mx-auto mb-3 h-8 w-8 text-content-tertiary" />
-            <p className="text-sm text-content-secondary">No recent activity</p>
+            <Activity className="text-content-tertiary mx-auto mb-3 h-8 w-8" />
+            <p className="text-content-secondary text-sm">No recent activity</p>
           </div>
         ) : (
           activities.map((activity) => {
@@ -149,7 +144,7 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
             return (
               <div
                 key={activity.id}
-                className="flex gap-3 p-4 transition-colors hover:bg-surface-hover"
+                className="hover:bg-surface-hover flex gap-3 p-4 transition-colors"
               >
                 <div
                   className={cn(
@@ -160,15 +155,13 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-content-primary">
-                    {activity.title}
-                  </p>
+                  <p className="text-content-primary text-sm">{activity.title}</p>
                   {activity.description && (
-                    <p className="mt-0.5 text-sm text-content-secondary line-clamp-2">
+                    <p className="text-content-secondary mt-0.5 line-clamp-2 text-sm">
                       {activity.description}
                     </p>
                   )}
-                  <div className="mt-1 flex items-center gap-2 text-xs text-content-tertiary">
+                  <div className="text-content-tertiary mt-1 flex items-center gap-2 text-xs">
                     {activity.companyName && (
                       <Link
                         href={`/accounts/${activity.companyId}`}
@@ -177,9 +170,7 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
                         {activity.companyName}
                       </Link>
                     )}
-                    {activity.companyName && activity.userName && (
-                      <span>•</span>
-                    )}
+                    {activity.companyName && activity.userName && <span>•</span>}
                     {activity.userName && <span>{activity.userName}</span>}
                     <span>•</span>
                     <span>

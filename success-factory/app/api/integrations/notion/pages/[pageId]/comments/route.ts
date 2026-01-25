@@ -26,17 +26,22 @@ export async function GET(
 
     if (!res.ok) {
       const error = await res.json()
-      return NextResponse.json({ error: error.message || "Failed to fetch comments" }, { status: res.status })
+      return NextResponse.json(
+        { error: error.message || "Failed to fetch comments" },
+        { status: res.status }
+      )
     }
 
     const data = await res.json()
     const comments = (data.results || []).map((c: Record<string, unknown>) => {
       const richText = c.rich_text as Array<{ plain_text: string }> | undefined
-      const createdBy = c.created_by as { id: string; name?: string; avatar_url?: string } | undefined
+      const createdBy = c.created_by as
+        | { id: string; name?: string; avatar_url?: string }
+        | undefined
 
       return {
         id: c.id,
-        content: richText?.map(t => t.plain_text).join("") || "",
+        content: richText?.map((t) => t.plain_text).join("") || "",
         createdTime: c.created_time,
         createdBy: {
           id: createdBy?.id || "",
@@ -97,7 +102,10 @@ export async function POST(
 
     if (!res.ok) {
       const error = await res.json()
-      return NextResponse.json({ error: error.message || "Failed to post comment" }, { status: res.status })
+      return NextResponse.json(
+        { error: error.message || "Failed to post comment" },
+        { status: res.status }
+      )
     }
 
     const comment = await res.json()

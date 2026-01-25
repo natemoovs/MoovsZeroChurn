@@ -20,6 +20,7 @@ Ask the user these questions ONE AT A TIME. Wait for each response before contin
 ### Question 0: Who's submitting?
 
 **First, check if user is already configured:**
+
 ```bash
 cat ~/.moovs-factory.json 2>/dev/null
 ```
@@ -30,16 +31,21 @@ cat ~/.moovs-factory.json 2>/dev/null
 Store this for the `--submitted-by` parameter when submitting.
 
 ### Question 1: What happened?
+
 Ask: "What went wrong or could have been better? Please describe the issue in detail."
 
 ### Question 2: What were you trying to do?
+
 Ask: "What were you trying to accomplish? What was your goal?"
 
 ### Question 3: What did you expect?
+
 Ask: "What did you expect to happen vs what actually happened?"
 
 ### Question 4: Severity Assessment
+
 Ask using AskUserQuestion tool:
+
 - Question: "How severe is this issue?"
 - Options:
   - **Critical** - Blocked my work entirely, data loss, or security concern
@@ -48,7 +54,9 @@ Ask using AskUserQuestion tool:
   - **Suggestion** - Not a bug, just an idea for improvement
 
 ### Question 5: Reproducibility
+
 Ask using AskUserQuestion tool:
+
 - Question: "Can this issue be reproduced?"
 - Options:
   - **Always** - Happens every time
@@ -57,7 +65,9 @@ Ask using AskUserQuestion tool:
   - **Not Sure** - Haven't tried to reproduce
 
 ### Question 6: Which area?
+
 Ask using AskUserQuestion tool:
+
 - Question: "Which area of Moovs Factory does this relate to?"
 - Options:
   - **Skill** - A specific /skill (problem, shaping, customer-research, etc.)
@@ -68,9 +78,11 @@ Ask using AskUserQuestion tool:
 If they select "Skill", ask which skill specifically.
 
 ### Question 7: Suggestions
+
 Ask: "Do you have any suggestions for how this could be fixed or improved? What would the ideal behavior look like?"
 
 ### Question 8: Anything else?
+
 Ask: "Is there anything else you'd like to add that might help diagnose or fix this issue?"
 
 ## Phase 3: Compile and Submit
@@ -79,9 +91,11 @@ After gathering all information, compile the feedback report:
 
 ```markdown
 ## Session Context (Auto-Captured)
+
 [Include: files touched, tools used, errors seen, skills invoked]
 
 ## User Report
+
 **Submitted By:** [Question 0 response]
 **Issue Description:** [Question 1 response]
 **Goal:** [Question 2 response]
@@ -93,6 +107,7 @@ After gathering all information, compile the feedback report:
 **Additional Notes:** [Question 8 response]
 
 ## Timestamp
+
 [Current date/time]
 ```
 
@@ -111,6 +126,7 @@ python3 scripts/notion/create-feedback.py \
 ## Phase 4: Confirmation
 
 After successful submission, tell the user:
+
 1. Their feedback has been submitted
 2. The feedback ID (from Notion response)
 3. Thank them for helping improve Moovs Factory

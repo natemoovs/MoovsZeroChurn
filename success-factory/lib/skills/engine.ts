@@ -1,13 +1,13 @@
-import fs from 'fs'
-import path from 'path'
-import matter from 'gray-matter'
-import type { Skill, SkillQuestion, SkillFrontmatter } from './types'
+import fs from "fs"
+import path from "path"
+import matter from "gray-matter"
+import type { Skill, SkillQuestion, SkillFrontmatter } from "./types"
 
-const SKILLS_DIR = path.join(process.cwd(), 'factory', 'skills')
+const SKILLS_DIR = path.join(process.cwd(), "factory", "skills")
 
 function parseQuestions(content: string): SkillQuestion[] {
   const questions: SkillQuestion[] = []
-  const lines = content.split('\n')
+  const lines = content.split("\n")
 
   let inQuestionsSection = false
   let currentQuestion: Partial<SkillQuestion> | null = null
@@ -52,8 +52,8 @@ function parseQuestions(content: string): SkillQuestion[] {
     }
 
     // Collect example items (bullet points)
-    if (collectingExamples && currentQuestion?.examples && line.trim().startsWith('-')) {
-      const example = line.trim().replace(/^-\s*/, '')
+    if (collectingExamples && currentQuestion?.examples && line.trim().startsWith("-")) {
+      const example = line.trim().replace(/^-\s*/, "")
       if (example) {
         currentQuestion.examples.push(example)
       }
@@ -70,7 +70,7 @@ function parseQuestions(content: string): SkillQuestion[] {
 
 function parseTemplate(content: string): string {
   const templateMatch = content.match(/^##\s+template\s*\n([\s\S]*?)(?=^##\s|\Z)/im)
-  if (!templateMatch) return ''
+  if (!templateMatch) return ""
 
   // Extract content between ```markdown or ``` blocks, or just the raw content
   const templateSection = templateMatch[1]
@@ -80,20 +80,20 @@ function parseTemplate(content: string): string {
 }
 
 function loadSkill(skillDir: string): Skill | null {
-  const skillPath = path.join(SKILLS_DIR, skillDir, 'SKILL.md')
+  const skillPath = path.join(SKILLS_DIR, skillDir, "SKILL.md")
 
   if (!fs.existsSync(skillPath)) {
     return null
   }
 
-  const fileContent = fs.readFileSync(skillPath, 'utf-8')
+  const fileContent = fs.readFileSync(skillPath, "utf-8")
   const { data, content } = matter(fileContent)
   const frontmatter = data as SkillFrontmatter
 
   return {
     slug: skillDir,
     name: frontmatter.name || skillDir,
-    description: frontmatter.description || '',
+    description: frontmatter.description || "",
     questions: parseQuestions(content),
     outputPath: frontmatter.outputPath || `factory/knowledge/${skillDir}.md`,
     template: parseTemplate(content),
@@ -107,13 +107,12 @@ export function getSkills(): Skill[] {
     return []
   }
 
-  const skillDirs = fs.readdirSync(SKILLS_DIR, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name)
+  const skillDirs = fs
+    .readdirSync(SKILLS_DIR, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory())
+    .map((dirent) => dirent.name)
 
-  return skillDirs
-    .map(dir => loadSkill(dir))
-    .filter((skill): skill is Skill => skill !== null)
+  return skillDirs.map((dir) => loadSkill(dir)).filter((skill): skill is Skill => skill !== null)
 }
 
 export function getSkill(slug: string): Skill | null {

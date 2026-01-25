@@ -75,10 +75,7 @@ ${company.positiveSignals?.length ? company.positiveSignals.map((s) => `- ${s}`)
 ${
   stakeholders.length
     ? stakeholders
-        .map(
-          (s) =>
-            `- ${s.name} (${s.role}): ${s.sentiment} sentiment, ${s.influence} influence`
-        )
+        .map((s) => `- ${s.name} (${s.role}): ${s.sentiment} sentiment, ${s.influence} influence`)
         .join("\n")
     : "- No stakeholders mapped"
 }
@@ -100,10 +97,7 @@ ${
 ${
   churnPatterns.length
     ? churnPatterns
-        .map(
-          (p) =>
-            `- ${p.title}: ${p.description.slice(0, 100)}... (${p.frequency} occurrences)`
-        )
+        .map((p) => `- ${p.title}: ${p.description.slice(0, 100)}... (${p.frequency} occurrences)`)
         .join("\n")
     : "- No patterns identified yet"
 }

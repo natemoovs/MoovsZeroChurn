@@ -18,6 +18,7 @@ You're not exploring the unknown. You're **clarifying the known**. The ticket al
 ### When to Escalate
 
 If you find yourself needing more than 10 questions, **stop**. This ticket might need:
+
 - Full `/shaping` if it's bigger than it seemed
 - `/problem` if the underlying problem isn't understood
 - Split into multiple smaller tickets
@@ -134,19 +135,20 @@ Use when "done" isn't defined.
 
 Before asking questions, identify what's clear vs. unclear:
 
-| Category | What's Clear? | What's Missing? |
-|----------|---------------|-----------------|
-| Problem | | |
-| Solution | | |
-| Scope | | |
-| Design | | |
-| Acceptance | | |
+| Category   | What's Clear? | What's Missing? |
+| ---------- | ------------- | --------------- |
+| Problem    |               |                 |
+| Solution   |               |                 |
+| Scope      |               |                 |
+| Design     |               |                 |
+| Acceptance |               |                 |
 
 ### Step 2: Select Questions
 
 Pick **only the questions needed** to fill the gaps. Don't ask about what's already clear.
 
 Typical interview length:
+
 - Very raw ticket: 8-10 questions
 - Partially clear ticket: 5-7 questions
 - Nearly complete ticket: 2-3 questions
@@ -160,6 +162,7 @@ Never batch questions. Wait for each answer before asking the next.
 Before writing the brief, summarize:
 
 > "Let me make sure I've got this right:
+>
 > - The problem is [X]
 > - We're building [Y]
 > - Explicitly NOT doing [Z]
@@ -198,6 +201,7 @@ For every task, you MUST establish the scope lock:
 If they say "nothing, just do everything," push back:
 
 **Follow up:** "Let me list what I think could be adjacent to this. Tell me if any are included or out:"
+
 - [Adjacent feature 1]
 - [Adjacent feature 2]
 - [Edge case 1]

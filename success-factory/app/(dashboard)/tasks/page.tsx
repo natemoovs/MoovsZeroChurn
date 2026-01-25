@@ -107,44 +107,64 @@ export default function TasksPage() {
 
   // Keyboard shortcuts (only active on non-touch devices)
   // j - move down
-  useHotkeys("j", () => {
-    if (filteredTasks.length === 0) return
-    setFocusedIndex((prev) => {
-      const next = Math.min(prev + 1, filteredTasks.length - 1)
-      taskRefs.current.get(next)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-      return next
-    })
-  }, { preventDefault: true })
+  useHotkeys(
+    "j",
+    () => {
+      if (filteredTasks.length === 0) return
+      setFocusedIndex((prev) => {
+        const next = Math.min(prev + 1, filteredTasks.length - 1)
+        taskRefs.current.get(next)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+        return next
+      })
+    },
+    { preventDefault: true }
+  )
 
   // k - move up
-  useHotkeys("k", () => {
-    if (filteredTasks.length === 0) return
-    setFocusedIndex((prev) => {
-      const next = Math.max(prev - 1, 0)
-      taskRefs.current.get(next)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-      return next
-    })
-  }, { preventDefault: true })
+  useHotkeys(
+    "k",
+    () => {
+      if (filteredTasks.length === 0) return
+      setFocusedIndex((prev) => {
+        const next = Math.max(prev - 1, 0)
+        taskRefs.current.get(next)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+        return next
+      })
+    },
+    { preventDefault: true }
+  )
 
   // Enter - toggle completion of focused task
-  useHotkeys("enter", () => {
-    if (focusedIndex >= 0 && focusedIndex < filteredTasks.length) {
-      const task = filteredTasks[focusedIndex]
-      updateTaskStatus(task.id, task.status === "completed" ? "pending" : "completed")
-    }
-  }, { preventDefault: true })
+  useHotkeys(
+    "enter",
+    () => {
+      if (focusedIndex >= 0 && focusedIndex < filteredTasks.length) {
+        const task = filteredTasks[focusedIndex]
+        updateTaskStatus(task.id, task.status === "completed" ? "pending" : "completed")
+      }
+    },
+    { preventDefault: true }
+  )
 
   // x - toggle selection of focused task
-  useHotkeys("x", () => {
-    if (focusedIndex >= 0 && focusedIndex < filteredTasks.length) {
-      toggleTaskSelection(filteredTasks[focusedIndex].id)
-    }
-  }, { preventDefault: true })
+  useHotkeys(
+    "x",
+    () => {
+      if (focusedIndex >= 0 && focusedIndex < filteredTasks.length) {
+        toggleTaskSelection(filteredTasks[focusedIndex].id)
+      }
+    },
+    { preventDefault: true }
+  )
 
   // c - create new task
-  useHotkeys("c", () => {
-    setShowNewTask(true)
-  }, { preventDefault: true })
+  useHotkeys(
+    "c",
+    () => {
+      setShowNewTask(true)
+    },
+    { preventDefault: true }
+  )
 
   // Escape - clear focus/selection
   useHotkeys("escape", () => {
@@ -358,18 +378,17 @@ export default function TasksPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-content-primary">
-              Tasks
-            </h1>
-            <p className="mt-1 text-content-secondary">
+            <h1 className="text-content-primary text-2xl font-bold">Tasks</h1>
+            <p className="text-content-secondary mt-1">
               Manage your CSM action items and playbook tasks
             </p>
             {!isTouchDevice && (
-              <p className="mt-1 hidden text-xs text-content-tertiary sm:block dark:text-content-secondary">
-                <kbd className="rounded bg-bg-tertiary px-1">j</kbd>/<kbd className="rounded bg-bg-tertiary px-1">k</kbd> navigate
-                {" "}<kbd className="rounded bg-bg-tertiary px-1">x</kbd> select
-                {" "}<kbd className="rounded bg-bg-tertiary px-1">↵</kbd> complete
-                {" "}<kbd className="rounded bg-bg-tertiary px-1">c</kbd> create
+              <p className="text-content-tertiary dark:text-content-secondary mt-1 hidden text-xs sm:block">
+                <kbd className="bg-bg-tertiary rounded px-1">j</kbd>/
+                <kbd className="bg-bg-tertiary rounded px-1">k</kbd> navigate{" "}
+                <kbd className="bg-bg-tertiary rounded px-1">x</kbd> select{" "}
+                <kbd className="bg-bg-tertiary rounded px-1">↵</kbd> complete{" "}
+                <kbd className="bg-bg-tertiary rounded px-1">c</kbd> create
               </p>
             )}
           </div>
@@ -377,7 +396,7 @@ export default function TasksPage() {
             <button
               onClick={syncFromNotion}
               disabled={syncing}
-              className="inline-flex items-center gap-2 rounded-lg border border-border-default px-3 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover disabled:opacity-50"
+              className="border-border-default text-content-secondary hover:bg-surface-hover inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50"
               title="Sync tasks from Notion"
             >
               <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />
@@ -385,7 +404,7 @@ export default function TasksPage() {
             </button>
             <button
               onClick={() => setShowNewTask(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700"
+              className="bg-success-600 hover:bg-success-700 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
             >
               <Plus className="h-4 w-4" />
               New Task
@@ -396,18 +415,8 @@ export default function TasksPage() {
         {/* Stats */}
         {stats && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <StatCard
-              label="Total"
-              value={stats.total}
-              icon={Circle}
-              variant="default"
-            />
-            <StatCard
-              label="Pending"
-              value={stats.pending}
-              icon={Clock}
-              variant="warning"
-            />
+            <StatCard label="Total" value={stats.total} icon={Circle} variant="default" />
+            <StatCard label="Pending" value={stats.pending} icon={Clock} variant="warning" />
             <StatCard
               label="In Progress"
               value={stats.inProgress}
@@ -420,12 +429,7 @@ export default function TasksPage() {
               icon={CheckCircle2}
               variant="success"
             />
-            <StatCard
-              label="Overdue"
-              value={stats.overdue}
-              icon={AlertTriangle}
-              variant="error"
-            />
+            <StatCard label="Overdue" value={stats.overdue} icon={AlertTriangle} variant="error" />
           </div>
         )}
 
@@ -433,24 +437,24 @@ export default function TasksPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Search */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-tertiary" />
+            <Search className="text-content-tertiary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-border-default bg-bg-elevated py-2 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border py-2 pr-3 pl-9 text-sm outline-none focus:ring-1"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Assignee Filter */}
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-content-tertiary" />
+              <Users className="text-content-tertiary h-4 w-4" />
               <select
                 value={assigneeFilter}
                 onChange={(e) => setAssigneeFilter(e.target.value)}
-                className="rounded-lg border border-border-default bg-bg-elevated px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 rounded-lg border px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
               >
                 <option value="mine">My Tasks</option>
                 <option value="all">All Tasks</option>
@@ -464,8 +468,8 @@ export default function TasksPage() {
 
             {/* Status Filter */}
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-content-tertiary" />
-              <div className="flex gap-1 rounded-lg bg-bg-tertiary p-1">
+              <Filter className="text-content-tertiary h-4 w-4" />
+              <div className="bg-bg-tertiary flex gap-1 rounded-lg p-1">
                 {(["all", "pending", "in_progress", "completed"] as const).map((f) => (
                   <button
                     key={f}
@@ -487,20 +491,20 @@ export default function TasksPage() {
 
         {/* Bulk Actions Bar */}
         {selectedTasks.size > 0 && (
-          <div className="flex items-center justify-between rounded-lg bg-success-50 p-3 dark:bg-success-900/20">
+          <div className="bg-success-50 dark:bg-success-900/20 flex items-center justify-between rounded-lg p-3">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedTasks(new Set())}
-                className="rounded p-1 text-content-secondary hover:bg-surface-hover hover:text-content-primary"
+                className="text-content-secondary hover:bg-surface-hover hover:text-content-primary rounded p-1"
               >
                 <X className="h-4 w-4" />
               </button>
-              <span className="text-sm font-medium text-success-700 dark:text-success-400">
+              <span className="text-success-700 dark:text-success-400 text-sm font-medium">
                 {selectedTasks.size} task{selectedTasks.size !== 1 ? "s" : ""} selected
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-content-secondary">Reassign to:</span>
+              <span className="text-content-secondary text-sm">Reassign to:</span>
               <select
                 onChange={(e) => {
                   if (e.target.value) {
@@ -509,7 +513,7 @@ export default function TasksPage() {
                   }
                 }}
                 disabled={bulkAssigning}
-                className="rounded-lg border border-success-200 bg-bg-elevated px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50 dark:border-success-800"
+                className="border-success-200 bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 dark:border-success-800 rounded-lg border px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:opacity-50"
                 defaultValue=""
               >
                 <option value="" disabled>
@@ -521,9 +525,7 @@ export default function TasksPage() {
                   </option>
                 ))}
               </select>
-              {bulkAssigning && (
-                <Loader2 className="h-4 w-4 animate-spin text-success-600" />
-              )}
+              {bulkAssigning && <Loader2 className="text-success-600 h-4 w-4 animate-spin" />}
             </div>
           </div>
         )}
@@ -532,19 +534,17 @@ export default function TasksPage() {
         {loading ? (
           <TaskListSkeleton />
         ) : filteredTasks.length === 0 ? (
-          <div className="rounded-xl border border-border-default bg-bg-elevated p-12 text-center">
-            <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-content-tertiary" />
-            <h3 className="text-lg font-semibold text-content-primary">
-              No tasks found
-            </h3>
-            <p className="mt-2 text-content-secondary">
+          <div className="border-border-default bg-bg-elevated rounded-xl border p-12 text-center">
+            <CheckCircle2 className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+            <h3 className="text-content-primary text-lg font-semibold">No tasks found</h3>
+            <p className="text-content-secondary mt-2">
               {searchQuery
                 ? "No tasks match your search"
                 : assigneeFilter === "mine"
-                ? "No tasks assigned to you"
-                : filter === "all"
-                ? "Create your first task or sync from Notion"
-                : `No ${filter.replace("_", " ")} tasks`}
+                  ? "No tasks assigned to you"
+                  : filter === "all"
+                    ? "Create your first task or sync from Notion"
+                    : `No ${filter.replace("_", " ")} tasks`}
             </p>
           </div>
         ) : (
@@ -554,15 +554,15 @@ export default function TasksPage() {
               <div className="flex items-center gap-3 px-4 py-2">
                 <button
                   onClick={selectAllTasks}
-                  className="flex-shrink-0 text-content-tertiary hover:text-content-secondary"
+                  className="text-content-tertiary hover:text-content-secondary flex-shrink-0"
                 >
                   {selectedTasks.size === filteredTasks.length && filteredTasks.length > 0 ? (
-                    <CheckSquare className="h-5 w-5 text-success-500" />
+                    <CheckSquare className="text-success-500 h-5 w-5" />
                   ) : (
                     <Square className="h-5 w-5" />
                   )}
                 </button>
-                <span className="text-sm text-content-secondary">
+                <span className="text-content-secondary text-sm">
                   {selectedTasks.size === filteredTasks.length && filteredTasks.length > 0
                     ? "Deselect all"
                     : "Select all"}
@@ -572,9 +572,7 @@ export default function TasksPage() {
             {filteredTasks.map((task, index) => {
               const StatusIcon = statusIcons[task.status]
               const isOverdue =
-                task.dueDate &&
-                new Date(task.dueDate) < new Date() &&
-                task.status !== "completed"
+                task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "completed"
 
               const isSelected = selectedTasks.has(task.id)
               const isFocused = focusedIndex === index
@@ -587,27 +585,27 @@ export default function TasksPage() {
                   }}
                   onClick={() => setFocusedIndex(index)}
                   className={cn(
-                    "overflow-hidden rounded-xl border bg-bg-elevated transition-all-smooth",
+                    "bg-bg-elevated transition-all-smooth overflow-hidden rounded-xl border",
                     isFocused
-                      ? "ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-bg-primary glow-sm"
+                      ? "ring-primary-500 dark:ring-offset-bg-primary glow-sm ring-2 ring-offset-2"
                       : "",
                     isSelected
                       ? "border-success-400 bg-success-50 dark:bg-success-50/10"
                       : task.status === "completed"
-                      ? "border-border-default opacity-60"
-                      : isOverdue
-                      ? "border-error-300 dark:border-error-500"
-                      : "border-border-default"
+                        ? "border-border-default opacity-60"
+                        : isOverdue
+                          ? "border-error-300 dark:border-error-500"
+                          : "border-border-default"
                   )}
                 >
                   <div className="flex items-start gap-4 p-4">
                     {/* Selection Checkbox - touch-friendly */}
                     <button
                       onClick={() => toggleTaskSelection(task.id)}
-                      className="flex-shrink-0 text-content-tertiary hover:text-content-primary min-h-[44px] min-w-[44px] flex items-center justify-center -ml-2 transition-colors-smooth"
+                      className="text-content-tertiary hover:text-content-primary transition-colors-smooth -ml-2 flex min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center"
                     >
                       {selectedTasks.has(task.id) ? (
-                        <CheckSquare className="h-5 w-5 text-success-500" />
+                        <CheckSquare className="text-success-500 h-5 w-5" />
                       ) : (
                         <Square className="h-5 w-5" />
                       )}
@@ -621,7 +619,7 @@ export default function TasksPage() {
                           task.status === "completed" ? "pending" : "completed"
                         )
                       }
-                      className="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center -ml-2 transition-colors-smooth"
+                      className="transition-colors-smooth -ml-2 flex min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center"
                     >
                       <StatusIcon
                         className={cn(
@@ -629,8 +627,8 @@ export default function TasksPage() {
                           task.status === "completed"
                             ? "text-success-500"
                             : task.status === "in_progress"
-                            ? "text-primary-500"
-                            : "text-content-tertiary hover:text-content-secondary"
+                              ? "text-primary-500"
+                              : "text-content-tertiary hover:text-content-secondary"
                         )}
                       />
                     </button>
@@ -653,14 +651,14 @@ export default function TasksPage() {
                             className={cn(
                               "text-left font-medium hover:underline",
                               task.status === "completed"
-                                ? "text-content-secondary line-through dark:text-content-tertiary"
+                                ? "text-content-secondary dark:text-content-tertiary line-through"
                                 : "text-content-primary"
                             )}
                           >
                             {task.title}
                           </button>
                           {task.description && (
-                            <p className="mt-1 text-sm text-content-secondary line-clamp-2">
+                            <p className="text-content-secondary mt-1 line-clamp-2 text-sm">
                               {task.description}
                             </p>
                           )}
@@ -678,10 +676,10 @@ export default function TasksPage() {
                       </div>
 
                       {/* Meta */}
-                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-content-secondary">
+                      <div className="text-content-secondary mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                         <Link
                           href={`/accounts/${task.companyId}`}
-                          className="flex items-center gap-1 hover:text-success-600 dark:hover:text-success-400"
+                          className="hover:text-success-600 dark:hover:text-success-400 flex items-center gap-1"
                         >
                           <Building2 className="h-4 w-4" />
                           {task.companyName}
@@ -711,11 +709,9 @@ export default function TasksPage() {
                                 updateTaskAssignee(task.id, e.target.value)
                               }
                             }}
-                            className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-content-secondary focus:ring-1 focus:ring-success-500 dark:text-content-tertiary"
+                            className="text-content-secondary focus:ring-success-500 dark:text-content-tertiary rounded border-0 bg-transparent py-0 pr-6 pl-0 text-sm focus:ring-1"
                           >
-                            <option value="">
-                              {getAssigneeDisplayName(task)}
-                            </option>
+                            <option value="">{getAssigneeDisplayName(task)}</option>
                             {notionUsers.map((user) => (
                               <option key={user.id} value={user.id}>
                                 {user.name}
@@ -725,7 +721,7 @@ export default function TasksPage() {
                         </div>
 
                         {task.playbook && (
-                          <span className="rounded bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
+                          <span className="bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 rounded px-1.5 py-0.5 text-xs font-medium">
                             {task.playbook.name}
                           </span>
                         )}
@@ -734,7 +730,7 @@ export default function TasksPage() {
 
                     {/* Actions - touch-friendly */}
                     <div className="flex-shrink-0">
-                      <button className="rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center text-content-tertiary hover:bg-surface-hover hover:text-content-primary transition-colors-smooth">
+                      <button className="text-content-tertiary hover:bg-surface-hover hover:text-content-primary transition-colors-smooth flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg">
                         <MoreHorizontal className="h-5 w-5" />
                       </button>
                     </div>
@@ -836,25 +832,17 @@ function StatCard({
   return (
     <div className="card-sf p-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-content-secondary">{label}</span>
+        <span className="text-content-secondary text-sm font-medium">{label}</span>
         <div className={cn("rounded-lg p-2", styles.iconBg)}>
           <Icon className={cn("h-5 w-5", styles.iconColor)} />
         </div>
       </div>
-      <p className="mt-2 text-2xl font-bold text-content-primary">
-        {value}
-      </p>
+      <p className="text-content-primary mt-2 text-2xl font-bold">{value}</p>
     </div>
   )
 }
 
-function NewTaskModal({
-  onClose,
-  onCreated,
-}: {
-  onClose: () => void
-  onCreated: () => void
-}) {
+function NewTaskModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [formData, setFormData] = useState({
     companyId: "",
     companyName: "",
@@ -888,87 +876,75 @@ function NewTaskModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
-      <div className="w-full max-w-lg rounded-xl bg-bg-elevated p-6 shadow-xl">
-        <h2 className="mb-4 text-lg font-semibold text-content-primary">
-          New Task
-        </h2>
+    <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center">
+      <div className="bg-bg-elevated w-full max-w-lg rounded-xl p-6 shadow-xl">
+        <h2 className="text-content-primary mb-4 text-lg font-semibold">New Task</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-content-primary">
+            <label className="text-content-primary mb-1 block text-sm font-medium">
               Company ID *
             </label>
             <input
               type="text"
               value={formData.companyId}
-              onChange={(e) =>
-                setFormData({ ...formData, companyId: e.target.value })
-              }
-              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              onChange={(e) => setFormData({ ...formData, companyId: e.target.value })}
+              className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
               placeholder="HubSpot Company ID"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-content-primary">
+            <label className="text-content-primary mb-1 block text-sm font-medium">
               Company Name *
             </label>
             <input
               type="text"
               value={formData.companyName}
-              onChange={(e) =>
-                setFormData({ ...formData, companyName: e.target.value })
-              }
-              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+              className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
               placeholder="Company name"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-content-primary">
+            <label className="text-content-primary mb-1 block text-sm font-medium">
               Task Title *
             </label>
             <input
               type="text"
               value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
               placeholder="What needs to be done?"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-content-primary">
+            <label className="text-content-primary mb-1 block text-sm font-medium">
               Description
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
               placeholder="Additional details..."
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-content-primary">
+              <label className="text-content-primary mb-1 block text-sm font-medium">
                 Priority
               </label>
               <select
                 value={formData.priority}
-                onChange={(e) =>
-                  setFormData({ ...formData, priority: e.target.value })
-                }
-                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -978,16 +954,14 @@ function NewTaskModal({
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-content-primary">
+              <label className="text-content-primary mb-1 block text-sm font-medium">
                 Due Date
               </label>
               <input
                 type="date"
                 value={formData.dueDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, dueDate: e.target.value })
-                }
-                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
               />
             </div>
           </div>
@@ -996,14 +970,14 @@ function NewTaskModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-border-default px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
+              className="border-border-default text-content-secondary hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || !formData.companyId || !formData.title}
-              className="rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
+              className="bg-success-600 hover:bg-success-700 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {saving ? "Creating..." : "Create Task"}
             </button>
@@ -1018,10 +992,7 @@ function TaskListSkeleton() {
   return (
     <div className="space-y-2">
       {[1, 2, 3, 4, 5].map((i) => (
-        <div
-          key={i}
-          className="h-24 shimmer rounded-xl"
-        />
+        <div key={i} className="shimmer h-24 rounded-xl" />
       ))}
     </div>
   )

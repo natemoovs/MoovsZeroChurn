@@ -40,9 +40,7 @@ class AuthErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthErrorBoundary>
-      <NeonAuthUIProvider authClient={authClient}>
-        {children}
-      </NeonAuthUIProvider>
+      <NeonAuthUIProvider authClient={authClient}>{children}</NeonAuthUIProvider>
     </AuthErrorBoundary>
   )
 }

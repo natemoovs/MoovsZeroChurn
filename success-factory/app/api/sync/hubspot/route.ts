@@ -20,8 +20,8 @@ interface MetabaseAccountData {
   stripeAccountId: string | null
   // Billing
   mrr: number | null
-  plan: string | null      // Lago Plan Name (e.g., "Pro (Annual)")
-  planCode: string | null  // Lago Plan Code (e.g., "pro-annual")
+  plan: string | null // Lago Plan Name (e.g., "Pro (Annual)")
+  planCode: string | null // Lago Plan Code (e.g., "pro-annual")
   billingStatus: string | null
   // Usage
   totalTrips: number
@@ -57,7 +57,9 @@ interface OwnerMap {
  * - SMB: standard-monthly, standard-annual
  * - Free: null or unknown plan
  */
-function getSegmentFromPlanCode(planCode: string | null): "enterprise" | "mid_market" | "smb" | "free" {
+function getSegmentFromPlanCode(
+  planCode: string | null
+): "enterprise" | "mid_market" | "smb" | "free" {
   if (!planCode) return "free"
   const code = planCode.toLowerCase()
 
@@ -457,10 +459,7 @@ function calculateWeightedHealthScore(
   // Calculate weighted total (0-100)
   // =========================================================================
   const numericScore = Math.round(
-    paymentScore * 0.40 +
-    engagementScore * 0.25 +
-    supportScore * 0.20 +
-    growthScore * 0.15
+    paymentScore * 0.4 + engagementScore * 0.25 + supportScore * 0.2 + growthScore * 0.15
   )
 
   // Convert to health category
@@ -478,11 +477,11 @@ function calculateWeightedHealthScore(
   }
 
   // Override to red for critical signals
-  if (riskSignals.some(r =>
-    r.includes("Churned") ||
-    r.includes("Critical payment") ||
-    r.includes("dispute")
-  )) {
+  if (
+    riskSignals.some(
+      (r) => r.includes("Churned") || r.includes("Critical payment") || r.includes("dispute")
+    )
+  ) {
     healthScore = "red"
   }
 
@@ -520,7 +519,7 @@ export async function POST(request: NextRequest) {
     process.env.NODE_ENV === "development" ||
     request.headers.get("x-vercel-cron") === "1" ||
     (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
-    userLoggedIn  // Allow logged-in users to trigger sync
+    userLoggedIn // Allow logged-in users to trigger sync
 
   if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -589,7 +588,8 @@ export async function POST(request: NextRequest) {
         }
         // Index by domain
         if (company.properties.domain) {
-          const domain = company.properties.domain.toLowerCase()
+          const domain = company.properties.domain
+            .toLowerCase()
             .replace(/^(https?:\/\/)?(www\.)?/, "")
             .split("/")[0]
           hubspotByDomain.set(domain, company)
@@ -644,12 +644,14 @@ export async function POST(request: NextRequest) {
         const churnStatus = mbData.churnStatus?.toLowerCase() || ""
         const billingStatus = mbData.billingStatus?.toLowerCase() || ""
 
-        const isChurned = churnStatus.includes("churn") ||
-                          churnStatus.includes("cancelled") ||
-                          churnStatus.includes("canceled")
-        const isTerminated = billingStatus.includes("terminated") ||
-                             billingStatus.includes("cancelled") ||
-                             billingStatus.includes("canceled")
+        const isChurned =
+          churnStatus.includes("churn") ||
+          churnStatus.includes("cancelled") ||
+          churnStatus.includes("canceled")
+        const isTerminated =
+          billingStatus.includes("terminated") ||
+          billingStatus.includes("cancelled") ||
+          billingStatus.includes("canceled")
 
         // Skip if churned AND has no MRR (fully dead account)
         // Keep if churned but still has MRR (might be pending cancellation)
@@ -696,14 +698,21 @@ export async function POST(request: NextRequest) {
         // Determine unique ID - use HubSpot ID if available, otherwise synthetic ID
         const hasHubSpotRecord = !!hsCompany
         const actualHubSpotId = hsCompany?.id || null
-        const recordId = hsCompany?.id || `operator-${mbData.operatorId || mbData.companyName.replace(/\s+/g, "-").toLowerCase()}`
+        const recordId =
+          hsCompany?.id ||
+          `operator-${mbData.operatorId || mbData.companyName.replace(/\s+/g, "-").toLowerCase()}`
         const companyName = mbData.companyName || hsCompany?.properties.name || "Unknown"
 
         // Calculate weighted health score
-        const health = calculateWeightedHealthScore(mbData, stripeData, hsCompany || {
-          id: recordId,
-          properties: {},
-        } as HubSpotCompany)
+        const health = calculateWeightedHealthScore(
+          mbData,
+          stripeData,
+          hsCompany ||
+            ({
+              id: recordId,
+              properties: {},
+            } as HubSpotCompany)
+        )
 
         // Get existing company for health change tracking
         const existingCompany = await prisma.hubSpotCompany.findUnique({
@@ -719,9 +728,10 @@ export async function POST(request: NextRequest) {
         const hsProps: Record<string, string | undefined> = hsCompany?.properties || {}
 
         // Calculate lastLoginAt from daysSinceLastActivity
-        const lastLoginAt = mbData.daysSinceLastActivity !== null
-          ? new Date(Date.now() - mbData.daysSinceLastActivity * 24 * 60 * 60 * 1000)
-          : parseDate(hsProps.last_login_date)
+        const lastLoginAt =
+          mbData.daysSinceLastActivity !== null
+            ? new Date(Date.now() - mbData.daysSinceLastActivity * 24 * 60 * 60 * 1000)
+            : parseDate(hsProps.last_login_date)
 
         // Upsert company
         const upsertedCompany = await prisma.hubSpotCompany.upsert({
@@ -730,7 +740,8 @@ export async function POST(request: NextRequest) {
             name: companyName,
             domain: hsProps.domain || mbData.email?.split("@")[1] || null,
             mrr: mbData.mrr,
-            subscriptionStatus: mbData.billingStatus || mbData.churnStatus || hsProps.subscription_status || null,
+            subscriptionStatus:
+              mbData.billingStatus || mbData.churnStatus || hsProps.subscription_status || null,
             plan: mbData.plan || hsProps.plan_name || null,
             planCode: mbData.planCode,
             customerSegment,
@@ -763,7 +774,9 @@ export async function POST(request: NextRequest) {
             city: hsProps.city || null,
             state: hsProps.state || null,
             country: hsProps.country || null,
-            employeeCount: hsProps.numberofemployees ? parseInt(hsProps.numberofemployees, 10) : null,
+            employeeCount: hsProps.numberofemployees
+              ? parseInt(hsProps.numberofemployees, 10)
+              : null,
             operatorId: mbData.operatorId,
             stripeAccountId: mbData.stripeAccountId,
             primaryContactEmail: mbData.email,
@@ -778,7 +791,8 @@ export async function POST(request: NextRequest) {
             name: companyName,
             domain: hsProps.domain || mbData.email?.split("@")[1] || null,
             mrr: mbData.mrr,
-            subscriptionStatus: mbData.billingStatus || mbData.churnStatus || hsProps.subscription_status || null,
+            subscriptionStatus:
+              mbData.billingStatus || mbData.churnStatus || hsProps.subscription_status || null,
             plan: mbData.plan || hsProps.plan_name || null,
             planCode: mbData.planCode,
             customerSegment,
@@ -811,7 +825,9 @@ export async function POST(request: NextRequest) {
             city: hsProps.city || null,
             state: hsProps.state || null,
             country: hsProps.country || null,
-            employeeCount: hsProps.numberofemployees ? parseInt(hsProps.numberofemployees, 10) : null,
+            employeeCount: hsProps.numberofemployees
+              ? parseInt(hsProps.numberofemployees, 10)
+              : null,
             operatorId: mbData.operatorId,
             stripeAccountId: mbData.stripeAccountId,
             primaryContactEmail: mbData.email,
@@ -824,9 +840,10 @@ export async function POST(request: NextRequest) {
         })
 
         // Log health change if it changed
-        const healthChanged = existingCompany &&
+        const healthChanged =
+          existingCompany &&
           (existingCompany.healthScore !== health.healthScore ||
-           Math.abs((existingCompany.numericHealthScore || 0) - health.numericScore) >= 10)
+            Math.abs((existingCompany.numericHealthScore || 0) - health.numericScore) >= 10)
 
         if (healthChanged || !existingCompany) {
           await prisma.healthChangeLog.create({
@@ -864,7 +881,9 @@ export async function POST(request: NextRequest) {
     // NOTE: Churned accounts are kept in DB for historical reference
     // They are filtered out in portfolio views, not deleted
 
-    console.log(`Sync completed: ${synced} synced, ${failed} failed, ${skippedChurned} churned skipped`)
+    console.log(
+      `Sync completed: ${synced} synced, ${failed} failed, ${skippedChurned} churned skipped`
+    )
     console.log(`  - ${hubspotMatches} with HubSpot data, ${noHubspotRecord} without HubSpot`)
     console.log(`  - ${stripeMatches} with Stripe payment data`)
 
@@ -945,9 +964,6 @@ export async function GET() {
     })
   } catch (error) {
     console.error("Failed to get sync status:", error)
-    return NextResponse.json(
-      { error: "Failed to get sync status" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to get sync status" }, { status: 500 })
   }
 }

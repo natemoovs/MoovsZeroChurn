@@ -185,9 +185,11 @@ export async function GET(request: NextRequest) {
     const mediumAccounts = filteredAccounts.filter((a) => a.riskLevel === "medium")
 
     const totalMrrAtRisk = filteredAccounts.reduce((sum, a) => sum + (a.mrr || 0), 0)
-    const avgRiskScore = filteredAccounts.length > 0
-      ? filteredAccounts.reduce((sum, a) => sum + (a.numericScore || 50), 0) / filteredAccounts.length
-      : 0
+    const avgRiskScore =
+      filteredAccounts.length > 0
+        ? filteredAccounts.reduce((sum, a) => sum + (a.numericScore || 50), 0) /
+          filteredAccounts.length
+        : 0
 
     // Count by category
     const byCategory: Record<string, number> = {}
@@ -216,11 +218,13 @@ export async function GET(request: NextRequest) {
       },
       byCategory,
       bySegment,
-      accounts: includeDetails ? filteredAccounts : filteredAccounts.map((a) => ({
-        ...a,
-        // Slim down for non-detailed view
-        recommendations: a.recommendations.slice(0, 1),
-      })),
+      accounts: includeDetails
+        ? filteredAccounts
+        : filteredAccounts.map((a) => ({
+            ...a,
+            // Slim down for non-detailed view
+            recommendations: a.recommendations.slice(0, 1),
+          })),
       insights,
     }
 
@@ -228,7 +232,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Churn risk report error:", error)
     return NextResponse.json(
-      { error: "Failed to generate churn risk report", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Failed to generate churn risk report",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }
@@ -316,11 +323,7 @@ function categorizeRisk(company: {
   }
 
   // Contract risk
-  if (
-    signals.includes("contract") ||
-    signals.includes("renewal") ||
-    signals.includes("cancel")
-  ) {
+  if (signals.includes("contract") || signals.includes("renewal") || signals.includes("cancel")) {
     return "Contract Risk"
   }
 
@@ -418,7 +421,7 @@ function calculatePriority(
   const mrrWeight = Math.min(100, mrr / 10) // Cap at 100 for $1000+ MRR
   const healthWeight = score
 
-  return riskMultiplier[riskLevel] * (100 - mrrWeight) * (100 - healthWeight) / 1000
+  return (riskMultiplier[riskLevel] * (100 - mrrWeight) * (100 - healthWeight)) / 1000
 }
 
 function generatePortfolioInsights(
@@ -477,15 +480,21 @@ function generatePortfolioInsights(
     (a) => a.paymentHealth === "critical" || a.paymentHealth === "at_risk"
   ).length
   if (paymentIssues > 0) {
-    insights.push(`${paymentIssues} account${paymentIssues > 1 ? "s have" : " has"} payment issues requiring follow-up`)
+    insights.push(
+      `${paymentIssues} account${paymentIssues > 1 ? "s have" : " has"} payment issues requiring follow-up`
+    )
   }
 
   // Engagement pattern
   const lowEngagement = accounts.filter(
-    (a) => (a.engagementScore !== null && a.engagementScore < 40) || (a.daysSinceLastLogin !== null && a.daysSinceLastLogin > 60)
+    (a) =>
+      (a.engagementScore !== null && a.engagementScore < 40) ||
+      (a.daysSinceLastLogin !== null && a.daysSinceLastLogin > 60)
   ).length
   if (lowEngagement > 0) {
-    insights.push(`${lowEngagement} account${lowEngagement > 1 ? "s show" : " shows"} significant engagement decline`)
+    insights.push(
+      `${lowEngagement} account${lowEngagement > 1 ? "s show" : " shows"} significant engagement decline`
+    )
   }
 
   // Owner workload

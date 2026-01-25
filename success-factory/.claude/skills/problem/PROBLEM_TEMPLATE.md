@@ -28,6 +28,7 @@ Use this template to generate the `problem.md` file after completing the problem
 **A specific instance of this problem:**
 
 [Write a concrete narrative. Use real names (or role names like "the dispatcher"). Include:
+
 - WHO was involved
 - WHAT they were trying to do
 - WHAT went wrong
@@ -36,6 +37,7 @@ Use this template to generate the `problem.md` file after completing the problem
 This should read like a story, not bullet points.]
 
 **Example format:**
+
 > [Name/Role] was trying to [goal]. They [action taken], but [what went wrong].
 > As a result, [consequence]. This took [time/cost] and left [person] feeling [impact].
 
@@ -90,9 +92,11 @@ This should read like a story, not bullet points.]
 [Capture the exact language used by customers/users. These quotes are gold for understanding the emotional weight of the problem.]
 
 > "[Direct quote from customer/user]"
+>
 > - [Attribution]
 
 > "[Another quote]"
+>
 > - [Attribution]
 
 ---
@@ -139,7 +143,7 @@ This should read like a story, not bullet points.]
 
 ---
 
-*This problem is ready for shaping when we have a clear story, understand who's affected, and can articulate the cost of inaction.*
+_This problem is ready for shaping when we have a clear story, understand who's affected, and can articulate the cost of inaction._
 ```
 
 ---
@@ -147,37 +151,44 @@ This should read like a story, not bullet points.]
 ## Writing Guidelines
 
 ### The Trigger
+
 - Be specific about the source
 - Include date/timeframe if relevant
 - Note if this is a recurring theme or one-off
 
 ### The Story
+
 - **Use narrative form** - "Maria was trying to..." not "Users need to..."
 - **Be concrete** - Specific times, places, numbers
 - **Show consequences** - What happened as a result?
 - **Avoid solutions** - Describe what's broken, not what to build
 
 ### Who's Affected
+
 - Name specific roles, not generic "users"
 - Distinguish primary (experiences directly) from secondary (affected by consequences)
 - Quantify if possible
 
 ### Current Workarounds
+
 - These reveal the true constraint
 - The workaround IS often the seed of the solution
 - Note why the workaround isn't good enough
 
 ### Cost of Inaction
+
 - Make it tangible
 - Time, money, relationships, operations
 - This justifies the appetite later
 
 ### Raw Quotes
+
 - Exact language matters
 - Emotional words reveal priorities
 - These will appear in the shaping doc too
 
 ### Initial Ideas
+
 - Mark clearly as unvalidated
 - Don't overthink - capture what came up
 - These get refined in shaping
@@ -187,21 +198,25 @@ This should read like a story, not bullet points.]
 ## Good vs. Bad Problem Statements
 
 ### Bad: Solution-Disguised-as-Problem
+
 > "We need a dashboard for drivers to see their schedule"
 
 This is a solution. The problem might be: Drivers miss pickups because they don't know their schedule in advance.
 
 ### Good: Pain-Focused Problem
+
 > "Drivers are showing up late to pickups because they find out about jobs at the last minute. Last week, Roberto missed a $400 airport pickup because he didn't check his phone. The dispatcher had to scramble to find a replacement."
 
 This tells us the pain, the consequence, and gives us room to explore solutions.
 
 ### Bad: Abstract Need
+
 > "Customers want more visibility into their bookings"
 
 This is too vague. What kind of visibility? What are they trying to do?
 
 ### Good: Specific Story
+
 > "Jennifer from Carey Transportation called twice last week asking 'where is my driver?' Her clients land at LAX and can't find their pickup. She has to call dispatch, who has to call the driver, who then calls Jennifer back. By the time she has an answer, 15 minutes have passed and her client is furious."
 
 This gives us a specific scenario to design for.

@@ -76,11 +76,7 @@ export async function GET(request: NextRequest) {
     const atRiskAccounts = await prisma.hubSpotCompany.findMany({
       where: {
         ...baseFilter,
-        OR: [
-          { healthScore: "red" },
-          { healthScore: "yellow" },
-          { numericHealthScore: { lt: 60 } },
-        ],
+        OR: [{ healthScore: "red" }, { healthScore: "yellow" }, { numericHealthScore: { lt: 60 } }],
       },
       orderBy: { numericHealthScore: "asc" },
     })
@@ -228,7 +224,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Digest generation error:", error)
     return NextResponse.json(
-      { error: "Failed to generate digest", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Failed to generate digest",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }
@@ -254,7 +253,12 @@ function categorizeSignal(signal: string): string {
   if (lower.includes("payment") || lower.includes("failed") || lower.includes("dispute")) {
     return "Payment Issues"
   }
-  if (lower.includes("usage") || lower.includes("login") || lower.includes("inactive") || lower.includes("decline")) {
+  if (
+    lower.includes("usage") ||
+    lower.includes("login") ||
+    lower.includes("inactive") ||
+    lower.includes("decline")
+  ) {
     return "Low Engagement"
   }
   if (lower.includes("support") || lower.includes("ticket")) {
@@ -280,9 +284,13 @@ function generateDigestRecommendations(
   }
 
   if (declinedCount > improvedCount) {
-    recommendations.push("Health trend is negative - schedule team sync to discuss intervention strategies")
+    recommendations.push(
+      "Health trend is negative - schedule team sync to discuss intervention strategies"
+    )
   } else if (improvedCount > declinedCount) {
-    recommendations.push("Health trend is positive - document what's working for successful recoveries")
+    recommendations.push(
+      "Health trend is positive - document what's working for successful recoveries"
+    )
   }
 
   if (topIssues[0]?.issue === "Payment Issues" && topIssues[0].count > 3) {
@@ -294,7 +302,9 @@ function generateDigestRecommendations(
   }
 
   if (mrrAtRisk > 5000) {
-    recommendations.push(`$${mrrAtRisk.toLocaleString()} MRR at risk - prioritize high-value account recovery`)
+    recommendations.push(
+      `$${mrrAtRisk.toLocaleString()} MRR at risk - prioritize high-value account recovery`
+    )
   }
 
   if (recommendations.length === 0) {
@@ -357,7 +367,10 @@ function formatForEmail(report: DigestReport): {
 
   const criticalList = report.criticalAlerts
     .slice(0, 5)
-    .map((a) => `<li><strong>${a.companyName}</strong> - ${a.newRiskSignals[0] || "Health declined"}</li>`)
+    .map(
+      (a) =>
+        `<li><strong>${a.companyName}</strong> - ${a.newRiskSignals[0] || "Health declined"}</li>`
+    )
     .join("")
 
   const html = `
@@ -389,7 +402,14 @@ Summary:
 - $${report.summary.mrrAtRisk.toLocaleString()} MRR at risk
 - ${report.summary.healthChanges.declined} declined, ${report.summary.healthChanges.improved} improved
 
-${report.criticalAlerts.length > 0 ? `Critical Alerts:\n${report.criticalAlerts.slice(0, 5).map((a) => `- ${a.companyName}: ${a.newRiskSignals[0] || "Health declined"}`).join("\n")}` : ""}
+${
+  report.criticalAlerts.length > 0
+    ? `Critical Alerts:\n${report.criticalAlerts
+        .slice(0, 5)
+        .map((a) => `- ${a.companyName}: ${a.newRiskSignals[0] || "Health declined"}`)
+        .join("\n")}`
+    : ""
+}
 
 Recommendations:
 ${report.recommendations.map((r) => `- ${r}`).join("\n")}

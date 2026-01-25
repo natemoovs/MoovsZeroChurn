@@ -117,10 +117,7 @@ export async function GET(request: NextRequest) {
   const companyName = searchParams.get("name")
 
   if (!hubspotId && !domain && !companyName) {
-    return NextResponse.json(
-      { error: "Provide id, domain, or name parameter" },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: "Provide id, domain, or name parameter" }, { status: 400 })
   }
 
   const configured = getConfiguredIntegrations()
@@ -136,14 +133,16 @@ export async function GET(request: NextRequest) {
         company = await hubspot.getCompany(hubspotId).catch(() => null)
       } else if (domain) {
         const results = await hubspot.searchCompanies(domain).catch(() => [])
-        company = results.find((c) =>
-          c.properties.domain?.toLowerCase() === domain.toLowerCase()
-        ) || results[0] || null
+        company =
+          results.find((c) => c.properties.domain?.toLowerCase() === domain.toLowerCase()) ||
+          results[0] ||
+          null
       } else if (companyName) {
         const results = await hubspot.searchCompanies(companyName).catch(() => [])
-        company = results.find((c) =>
-          c.properties.name?.toLowerCase() === companyName.toLowerCase()
-        ) || results[0] || null
+        company =
+          results.find((c) => c.properties.name?.toLowerCase() === companyName.toLowerCase()) ||
+          results[0] ||
+          null
       }
 
       if (company) {
@@ -155,14 +154,10 @@ export async function GET(request: NextRequest) {
     // Step 2: Fetch data from all sources in parallel
     const [crmData, usageData, billingData, tasksData] = await Promise.all([
       // HubSpot CRM data
-      company && configured.hubspot
-        ? fetchCrmData(company)
-        : Promise.resolve(null),
+      company && configured.hubspot ? fetchCrmData(company) : Promise.resolve(null),
 
       // Metabase usage data
-      configured.metabase && resolvedName
-        ? fetchUsageData(resolvedName)
-        : Promise.resolve(null),
+      configured.metabase && resolvedName ? fetchUsageData(resolvedName) : Promise.resolve(null),
 
       // Stripe billing data
       configured.stripe && resolvedDomain
@@ -170,14 +165,16 @@ export async function GET(request: NextRequest) {
         : Promise.resolve(null),
 
       // Notion tasks
-      configured.notion && resolvedName
-        ? fetchTasksData(resolvedName)
-        : Promise.resolve(null),
+      configured.notion && resolvedName ? fetchTasksData(resolvedName) : Promise.resolve(null),
     ])
 
     // Step 3: Calculate health score
-    const { healthScore, riskLevel, riskSignals, positiveSignals } =
-      calculateOverallHealth(crmData, usageData, billingData, tasksData)
+    const { healthScore, riskLevel, riskSignals, positiveSignals } = calculateOverallHealth(
+      crmData,
+      usageData,
+      billingData,
+      tasksData
+    )
 
     const customer360: Customer360 = {
       id: company?.id || hubspotId || "",
@@ -202,10 +199,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(customer360)
   } catch (error) {
     console.error("Customer 360 fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch customer data" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch customer data" }, { status: 500 })
   }
 }
 
@@ -228,9 +222,7 @@ async function fetchCrmData(
     lastActivity: company.properties.hs_lastmodifieddate || null,
     owner: company.properties.hubspot_owner_id || null,
     contacts: contacts.map((c, i) => ({
-      name: [c.properties.firstname, c.properties.lastname]
-        .filter(Boolean)
-        .join(" ") || "Unknown",
+      name: [c.properties.firstname, c.properties.lastname].filter(Boolean).join(" ") || "Unknown",
       email: c.properties.email || null,
       title: c.properties.jobtitle || null,
       isPrimary: i === 0,
@@ -244,9 +236,7 @@ async function fetchCrmData(
   }
 }
 
-async function fetchUsageData(
-  companyName: string
-): Promise<Customer360["usage"]> {
+async function fetchUsageData(companyName: string): Promise<Customer360["usage"]> {
   if (!process.env.METABASE_URL || !process.env.METABASE_API_KEY) {
     return null
   }
@@ -256,9 +246,7 @@ async function fetchUsageData(
     const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
 
     const match = rows.find(
-      (row) =>
-        (row.MOOVS_COMPANY_NAME as string)?.toLowerCase() ===
-        companyName.toLowerCase()
+      (row) => (row.MOOVS_COMPANY_NAME as string)?.toLowerCase() === companyName.toLowerCase()
     )
 
     if (!match) return null
@@ -276,9 +264,7 @@ async function fetchUsageData(
   }
 }
 
-async function fetchBillingData(
-  domain: string
-): Promise<Customer360["billing"]> {
+async function fetchBillingData(domain: string): Promise<Customer360["billing"]> {
   if (!process.env.STRIPE_SECRET_KEY) {
     return null
   }
@@ -343,9 +329,7 @@ async function fetchBillingData(
   }
 }
 
-async function fetchTasksData(
-  companyName: string
-): Promise<Customer360["tasks"]> {
+async function fetchTasksData(companyName: string): Promise<Customer360["tasks"]> {
   if (!process.env.NOTION_API_KEY || !CSM_DATABASE_ID) {
     return null
   }
@@ -376,9 +360,7 @@ async function fetchTasksData(
     const now = new Date()
     const openStatuses = ["To Do", "In Progress", "Not Started", "Blocked"]
     const openTasks = tasks.filter((t) => openStatuses.includes(t.status))
-    const overdueTasks = openTasks.filter(
-      (t) => t.dueDate && new Date(t.dueDate) < now
-    )
+    const overdueTasks = openTasks.filter((t) => t.dueDate && new Date(t.dueDate) < now)
 
     return {
       total: tasks.length,
@@ -465,10 +447,9 @@ function calculateOverallHealth(
   let healthScore: Customer360["healthScore"] = "unknown"
   let riskLevel: Customer360["riskLevel"] = "low"
 
-  const criticalRisks = riskSignals.filter((r) =>
-    r.includes("Churned") ||
-    r.includes("Payment failed") ||
-    r.includes("Cancellation pending")
+  const criticalRisks = riskSignals.filter(
+    (r) =>
+      r.includes("Churned") || r.includes("Payment failed") || r.includes("Cancellation pending")
   )
 
   if (criticalRisks.length > 0) {

@@ -16,6 +16,7 @@ Metabase Card 1469 (CSM_MOOVS) is the primary lookup table for customer research
 ### Why Use This Table
 
 The CSM_MOOVS table is the **master customer view** that consolidates:
+
 - Lago billing data (subscriptions, MRR, plans)
 - Postgres operator data (Stripe accounts, company info)
 - HubSpot CRM data (contacts, deals)
@@ -27,38 +28,40 @@ This makes it ideal for lookups because you can search by any identifier and ret
 
 ## Key Lookup Fields
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| `P_STRIPE_ACCOUNT_ID` | Operator's Stripe Connect account | `acct_1RrBZ3Jj4HjJ3ss6` |
-| `P_COMPANY_NAME` | Business/company name | `Kanoa Transportation` |
-| `P_GENERAL_EMAIL` | Primary contact email | `info@kanoatransportation.com` |
-| `LAGO_EXTERNAL_CUSTOMER_ID` | **Operator ID** (primary key) | `727c899e-f3d6-11ef-b401-0f804c13069e` |
+| Field                       | Description                       | Example                                |
+| --------------------------- | --------------------------------- | -------------------------------------- |
+| `P_STRIPE_ACCOUNT_ID`       | Operator's Stripe Connect account | `acct_1RrBZ3Jj4HjJ3ss6`                |
+| `P_COMPANY_NAME`            | Business/company name             | `Kanoa Transportation`                 |
+| `P_GENERAL_EMAIL`           | Primary contact email             | `info@kanoatransportation.com`         |
+| `LAGO_EXTERNAL_CUSTOMER_ID` | **Operator ID** (primary key)     | `727c899e-f3d6-11ef-b401-0f804c13069e` |
 
 ### Output Fields
 
 Once you find a customer, retrieve these core fields:
 
-| Field | Description |
-|-------|-------------|
+| Field                       | Description                          |
+| --------------------------- | ------------------------------------ |
 | `LAGO_EXTERNAL_CUSTOMER_ID` | Operator ID for use in other queries |
-| `P_COMPANY_NAME` | Company name |
-| `P_GENERAL_EMAIL` | Contact email |
-| `P_STRIPE_ACCOUNT_ID` | Stripe account ID |
-| `LAGO_PLAN_NAME` | Current subscription plan |
-| `CALCULATED_MRR` | Monthly recurring revenue |
-| `LAGO_CUSTOMER_STATUS` | Billing status |
-| `HS_COMPANY_ID` | HubSpot company ID |
+| `P_COMPANY_NAME`            | Company name                         |
+| `P_GENERAL_EMAIL`           | Contact email                        |
+| `P_STRIPE_ACCOUNT_ID`       | Stripe account ID                    |
+| `LAGO_PLAN_NAME`            | Current subscription plan            |
+| `CALCULATED_MRR`            | Monthly recurring revenue            |
+| `LAGO_CUSTOMER_STATUS`      | Billing status                       |
+| `HS_COMPANY_ID`             | HubSpot company ID                   |
 
 ---
 
 ## Lookup Queries
 
 ### Tool
+
 ```
 mcp__metabase__execute_query
 ```
 
 ### Parameters
+
 ```json
 {
   "database_id": 2,
@@ -86,6 +89,7 @@ WHERE P_STRIPE_ACCOUNT_ID = '<stripe_account_id>'
 ```
 
 **Example:**
+
 ```sql
 SELECT
   LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -105,6 +109,7 @@ WHERE P_STRIPE_ACCOUNT_ID = 'acct_1RrBZ3Jj4HjJ3ss6'
 Use when you have a partial or full company name.
 
 ### Exact Match
+
 ```sql
 SELECT
   LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -118,6 +123,7 @@ WHERE LOWER(P_COMPANY_NAME) = LOWER('<company_name>')
 ```
 
 ### Partial Match (Fuzzy Search)
+
 ```sql
 SELECT
   LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -133,6 +139,7 @@ LIMIT 10
 ```
 
 **Example:**
+
 ```sql
 SELECT
   LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -163,6 +170,7 @@ WHERE LOWER(P_GENERAL_EMAIL) = LOWER('<email>')
 ```
 
 ### Partial Email Match (Domain Search)
+
 ```sql
 SELECT
   LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -279,11 +287,11 @@ LIMIT 20
 
 Found {X} potential matches:
 
-| # | Company Name | Operator ID | Email | Plan | MRR |
-|---|--------------|-------------|-------|------|-----|
-| 1 | {name} | {id} | {email} | {plan} | ${mrr} |
-| 2 | {name} | {id} | {email} | {plan} | ${mrr} |
-| 3 | {name} | {id} | {email} | {plan} | ${mrr} |
+| #   | Company Name | Operator ID | Email   | Plan   | MRR    |
+| --- | ------------ | ----------- | ------- | ------ | ------ |
+| 1   | {name}       | {id}        | {email} | {plan} | ${mrr} |
+| 2   | {name}       | {id}        | {email} | {plan} | ${mrr} |
+| 3   | {name}       | {id}        | {email} | {plan} | ${mrr} |
 
 **Best Match:** {company name} (operator_id: {id})
 
@@ -300,12 +308,14 @@ If the query returns 0 rows:
 Search term: "{search_term}"
 
 Possible reasons:
+
 - **Churned customer**: Account may no longer be active
 - **Different identifier**: Try searching by company name or email instead
 - **Data sync delay**: Recent accounts may not be in the CSM view yet
 - **Typo**: Verify the search term is correct
 
 **Suggestions:**
+
 1. Try a partial company name search
 2. Check if the Stripe account ID format is correct (should start with `acct_`)
 3. Search by email domain instead of exact email
@@ -328,77 +338,88 @@ Once you find the operator_id, use it for detailed queries:
 ## Available Fields in CSM_MOOVS
 
 ### Identity Fields
-| Field | Description |
-|-------|-------------|
-| LAGO_EXTERNAL_CUSTOMER_ID | Primary operator ID |
-| P_COMPANY_NAME | Company name |
-| P_GENERAL_EMAIL | Primary email |
-| P_STRIPE_ACCOUNT_ID | Stripe Connect account |
-| PHONE_NUMBER | Contact phone |
+
+| Field                     | Description            |
+| ------------------------- | ---------------------- |
+| LAGO_EXTERNAL_CUSTOMER_ID | Primary operator ID    |
+| P_COMPANY_NAME            | Company name           |
+| P_GENERAL_EMAIL           | Primary email          |
+| P_STRIPE_ACCOUNT_ID       | Stripe Connect account |
+| PHONE_NUMBER              | Contact phone          |
 
 ### Billing Fields (Lago)
-| Field | Description |
-|-------|-------------|
-| LAGO_STATUS | Subscription status |
-| LAGO_PLAN_NAME | Subscription plan name |
-| LAGO_PLAN_INTERVAL | monthly/yearly |
-| LAGO_PLAN_CODE | Plan identifier |
-| CALCULATED_MRR | Monthly recurring revenue |
-| LAGO_CREATED_AT | Billing account created |
-| LAGO_SUBSCRIPTION_AT | Subscription started |
-| LAGO_LIFETIME_DAYS | Days as customer |
+
+| Field                | Description               |
+| -------------------- | ------------------------- |
+| LAGO_STATUS          | Subscription status       |
+| LAGO_PLAN_NAME       | Subscription plan name    |
+| LAGO_PLAN_INTERVAL   | monthly/yearly            |
+| LAGO_PLAN_CODE       | Plan identifier           |
+| CALCULATED_MRR       | Monthly recurring revenue |
+| LAGO_CREATED_AT      | Billing account created   |
+| LAGO_SUBSCRIPTION_AT | Subscription started      |
+| LAGO_LIFETIME_DAYS   | Days as customer          |
 
 ### Usage/Reservation Fields
-| Field | Description |
-|-------|-------------|
-| R_TOTAL_RESERVATIONS_COUNT | Total reservations |
+
+| Field                             | Description               |
+| --------------------------------- | ------------------------- |
+| R_TOTAL_RESERVATIONS_COUNT        | Total reservations        |
 | R_LAST_30_DAYS_RESERVATIONS_COUNT | Last 30 days reservations |
-| R_T12M_TOTAL_AMOUNT | Last 12 months revenue |
-| R_LAST_TRIP_CREATED_AT | Most recent trip |
+| R_T12M_TOTAL_AMOUNT               | Last 12 months revenue    |
+| R_LAST_TRIP_CREATED_AT            | Most recent trip          |
 
 ### Engagement Fields
-| Field | Description |
-|-------|-------------|
-| DA_ENGAGEMENT_STATUS | Engagement classification |
+
+| Field                         | Description                       |
+| ----------------------------- | --------------------------------- |
+| DA_ENGAGEMENT_STATUS          | Engagement classification         |
 | DA_DAYS_SINCE_LAST_ASSIGNMENT | Days since last driver assignment |
-| DA_LAST_ASSIGNED_DRIVER_AT | Last driver assignment date |
+| DA_LAST_ASSIGNED_DRIVER_AT    | Last driver assignment date       |
 
 ### Operator Setup Fields
-| Field | Description |
-|-------|-------------|
-| P_VEHICLES_TOTAL | Number of vehicles |
-| P_DRIVERS_COUNT | Number of drivers |
-| P_TOTAL_MEMBERS | Team members |
-| P_SETUP_SCORE | Onboarding completion |
+
+| Field            | Description           |
+| ---------------- | --------------------- |
+| P_VEHICLES_TOTAL | Number of vehicles    |
+| P_DRIVERS_COUNT  | Number of drivers     |
+| P_TOTAL_MEMBERS  | Team members          |
+| P_SETUP_SCORE    | Onboarding completion |
 
 ### CRM Fields (HubSpot)
-| Field | Description |
-|-------|-------------|
-| HS_C_ID | HubSpot company ID |
-| HS_D_DEAL_ID | HubSpot deal ID |
-| HS_D_STAGE_NAME | Current deal stage |
-| HS_D_OWNER_NAME | Account owner |
-| HS_C_PROPERTY_CUSTOMER_SEGMENT | Customer segment |
-| HS_C_PROPERTY_MOOVS_FLEET_SIZE | Fleet size |
-| HS_D_CHURN_STATUS | Churn status |
+
+| Field                          | Description        |
+| ------------------------------ | ------------------ |
+| HS_C_ID                        | HubSpot company ID |
+| HS_D_DEAL_ID                   | HubSpot deal ID    |
+| HS_D_STAGE_NAME                | Current deal stage |
+| HS_D_OWNER_NAME                | Account owner      |
+| HS_C_PROPERTY_CUSTOMER_SEGMENT | Customer segment   |
+| HS_C_PROPERTY_MOOVS_FLEET_SIZE | Fleet size         |
+| HS_D_CHURN_STATUS              | Churn status       |
 
 ---
 
 ## Edge Cases
 
 ### Stripe Account Not Found
+
 If a Stripe account ID returns no results:
+
 - The customer may have churned and been removed from the active view
 - The Stripe account may belong to a different environment (test vs prod)
 - Try searching by company name or email instead
 
 ### Multiple Matches
+
 If multiple customers match:
+
 - Sort by MRR to prioritize higher-value customers
 - Check billing status to filter active vs churned
 - Use additional fields (email, stripe account) to narrow down
 
 ### Case Sensitivity
+
 - Company names and emails are stored as-is
 - Always use `LOWER()` for case-insensitive matching
 - Stripe account IDs are case-sensitive (use exact match)

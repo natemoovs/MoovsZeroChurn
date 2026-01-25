@@ -110,8 +110,8 @@ export async function GET(request: NextRequest) {
     const limitedAlerts = alerts.slice(0, limit)
 
     // Summary stats
-    const criticalCount = limitedAlerts.filter(a => a.urgencyLevel === "critical").length
-    const highCount = limitedAlerts.filter(a => a.urgencyLevel === "high").length
+    const criticalCount = limitedAlerts.filter((a) => a.urgencyLevel === "critical").length
+    const highCount = limitedAlerts.filter((a) => a.urgencyLevel === "high").length
     const totalMrrAtRisk = limitedAlerts.reduce((sum, a) => sum + (a.mrr || 0), 0)
 
     return NextResponse.json({
@@ -120,8 +120,8 @@ export async function GET(request: NextRequest) {
       summary: {
         critical: criticalCount,
         high: highCount,
-        medium: limitedAlerts.filter(a => a.urgencyLevel === "medium").length,
-        low: limitedAlerts.filter(a => a.urgencyLevel === "low").length,
+        medium: limitedAlerts.filter((a) => a.urgencyLevel === "medium").length,
+        low: limitedAlerts.filter((a) => a.urgencyLevel === "low").length,
         totalMrrAtRisk,
       },
       configured,
@@ -162,7 +162,7 @@ async function fetchMetabaseData(): Promise<MetabaseAccount[]> {
     const result = await metabase.runQuery(METABASE_QUERY_ID)
     const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
 
-    return rows.map(row => ({
+    return rows.map((row) => ({
       companyName: (row.MOOVS_COMPANY_NAME as string) || "",
       totalTrips: (row.ALL_TRIPS_COUNT as number) || 0,
       daysSinceLastLogin: row.DAYS_SINCE_LAST_IDENTIFY as number | null,
@@ -359,9 +359,9 @@ function analyzeCompany(
 
   // Determine health score
   let healthScore: string | null = null
-  if (signals.some(s => s.severity === "critical")) {
+  if (signals.some((s) => s.severity === "critical")) {
     healthScore = "red"
-  } else if (signals.some(s => s.severity === "high")) {
+  } else if (signals.some((s) => s.severity === "high")) {
     healthScore = "yellow"
   }
 
@@ -387,18 +387,18 @@ function generateIntervention(
   signals: AlertSignal[],
   urgencyLevel: string
 ): { recommendation: string; playbook: string | null } {
-  const signalTypes = signals.map(s => s.type)
-  const hasCritical = signals.some(s => s.severity === "critical")
+  const signalTypes = signals.map((s) => s.type)
+  const hasCritical = signals.some((s) => s.severity === "critical")
 
   // Payment issues take priority
   if (signalTypes.includes("payment")) {
-    if (signals.some(s => s.title === "Cancellation Pending")) {
+    if (signals.some((s) => s.title === "Cancellation Pending")) {
       return {
         recommendation: "Immediate save call - understand cancellation reason and offer resolution",
         playbook: "cancellation_save",
       }
     }
-    if (signals.some(s => s.title === "Failed Payment")) {
+    if (signals.some((s) => s.title === "Failed Payment")) {
       return {
         recommendation: "Contact billing contact to update payment method",
         playbook: "payment_recovery",
@@ -407,7 +407,7 @@ function generateIntervention(
   }
 
   // Churned accounts
-  if (signals.some(s => s.title === "Churned")) {
+  if (signals.some((s) => s.title === "Churned")) {
     return {
       recommendation: "Document churn reason and add to win-back sequence",
       playbook: "churn_documentation",

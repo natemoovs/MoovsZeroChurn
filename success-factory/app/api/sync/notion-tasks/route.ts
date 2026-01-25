@@ -39,10 +39,7 @@ async function fetchNotionUsers(): Promise<Map<string, { name: string; email?: s
  */
 export async function GET() {
   if (!NOTION_API_KEY || !CSM_DATABASE_ID) {
-    return NextResponse.json(
-      { error: "Notion not configured" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Notion not configured" }, { status: 500 })
   }
 
   try {
@@ -75,11 +72,13 @@ export async function GET() {
       const notes = extractRichText(props["Notes"])
 
       // Look up user name from our users map if not provided
-      const assignee = assigneeRaw ? {
-        ...assigneeRaw,
-        name: assigneeRaw.name || notionUsers.get(assigneeRaw.id)?.name,
-        email: assigneeRaw.email || notionUsers.get(assigneeRaw.id)?.email,
-      } : null
+      const assignee = assigneeRaw
+        ? {
+            ...assigneeRaw,
+            name: assigneeRaw.name || notionUsers.get(assigneeRaw.id)?.name,
+            email: assigneeRaw.email || notionUsers.get(assigneeRaw.id)?.email,
+          }
+        : null
 
       if (!title) {
         skipped++
@@ -159,10 +158,7 @@ export async function GET() {
     })
   } catch (error) {
     console.error("Notion sync error:", error)
-    return NextResponse.json(
-      { error: "Failed to sync from Notion" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to sync from Notion" }, { status: 500 })
   }
 }
 
@@ -230,7 +226,9 @@ function extractPerson(prop: unknown): { id: string; name?: string; email?: stri
   return null
 }
 
-function mapNotionStatus(status: string | null): "pending" | "in_progress" | "completed" | "cancelled" {
+function mapNotionStatus(
+  status: string | null
+): "pending" | "in_progress" | "completed" | "cancelled" {
   if (!status) return "pending"
   const s = status.toLowerCase()
   if (s === "done" || s === "complete" || s === "completed") return "completed"

@@ -9,7 +9,6 @@ function getAuthServer() {
   return authServer
 }
 
-
 // Helper to get current user in server components/API routes
 export async function getCurrentUser() {
   try {

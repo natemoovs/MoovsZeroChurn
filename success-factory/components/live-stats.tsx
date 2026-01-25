@@ -39,17 +39,17 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
           </div>
         )}
         {stats && (
-          <div className="flex items-center gap-3 text-xs text-content-secondary">
+          <div className="text-content-secondary flex items-center gap-3 text-xs">
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-success-500" />
+              <span className="bg-success-500 h-2 w-2 rounded-full" />
               {stats.healthyAccounts}
             </span>
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-warning-500" />
+              <span className="bg-warning-500 h-2 w-2 rounded-full" />
               {stats.warningAccounts}
             </span>
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-error-500" />
+              <span className="bg-error-500 h-2 w-2 rounded-full" />
               {stats.atRiskAccounts}
             </span>
           </div>
@@ -62,7 +62,7 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
     <div className="card-sf p-4">
       {/* Header with connection status */}
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-semibold text-content-primary">Live Dashboard</h3>
+        <h3 className="text-content-primary font-semibold">Live Dashboard</h3>
         {showConnection && (
           <div
             className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -74,8 +74,8 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
             {isConnected ? (
               <>
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-success-500" />
+                  <span className="bg-success-400 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
+                  <span className="bg-success-500 relative inline-flex h-2 w-2 rounded-full" />
                 </span>
                 <span>Connected</span>
               </>
@@ -92,42 +92,42 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
       {/* Stats Grid */}
       {stats ? (
         <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-lg bg-bg-tertiary p-3">
+          <div className="bg-bg-tertiary rounded-lg p-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-success-500" />
-              <span className="text-xs text-content-secondary">Healthy</span>
+              <CheckCircle2 className="text-success-500 h-4 w-4" />
+              <span className="text-content-secondary text-xs">Healthy</span>
             </div>
-            <p className="mt-1 text-2xl font-bold text-success-600 dark:text-success-400">
+            <p className="text-success-600 dark:text-success-400 mt-1 text-2xl font-bold">
               {stats.healthyAccounts}
             </p>
           </div>
 
-          <div className="rounded-lg bg-bg-tertiary p-3">
+          <div className="bg-bg-tertiary rounded-lg p-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-warning-500" />
-              <span className="text-xs text-content-secondary">Warning</span>
+              <AlertTriangle className="text-warning-500 h-4 w-4" />
+              <span className="text-content-secondary text-xs">Warning</span>
             </div>
-            <p className="mt-1 text-2xl font-bold text-warning-600 dark:text-warning-400">
+            <p className="text-warning-600 dark:text-warning-400 mt-1 text-2xl font-bold">
               {stats.warningAccounts}
             </p>
           </div>
 
-          <div className="rounded-lg bg-bg-tertiary p-3">
+          <div className="bg-bg-tertiary rounded-lg p-3">
             <div className="flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-error-500" />
-              <span className="text-xs text-content-secondary">At Risk</span>
+              <TrendingDown className="text-error-500 h-4 w-4" />
+              <span className="text-content-secondary text-xs">At Risk</span>
             </div>
-            <p className="mt-1 text-2xl font-bold text-error-600 dark:text-error-400">
+            <p className="text-error-600 dark:text-error-400 mt-1 text-2xl font-bold">
               {stats.atRiskAccounts}
             </p>
           </div>
 
-          <div className="rounded-lg bg-bg-tertiary p-3">
+          <div className="bg-bg-tertiary rounded-lg p-3">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-info-500" />
-              <span className="text-xs text-content-secondary">MRR</span>
+              <TrendingUp className="text-info-500 h-4 w-4" />
+              <span className="text-content-secondary text-xs">MRR</span>
             </div>
-            <p className="mt-1 text-2xl font-bold text-info-600 dark:text-info-400">
+            <p className="text-info-600 dark:text-info-400 mt-1 text-2xl font-bold">
               ${(stats.totalMrr / 1000).toFixed(0)}k
             </p>
           </div>
@@ -135,25 +135,20 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
       ) : (
         <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="h-20 shimmer rounded-lg"
-            />
+            <div key={i} className="shimmer h-20 rounded-lg" />
           ))}
         </div>
       )}
 
       {/* Recent Events */}
       <div>
-        <h4 className="mb-2 text-sm font-medium text-content-secondary">
-          Recent Activity
-        </h4>
+        <h4 className="text-content-secondary mb-2 text-sm font-medium">Recent Activity</h4>
         {recentEvents.length > 0 ? (
           <div className="space-y-2">
             {recentEvents.slice(0, 5).map((event, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 rounded-lg bg-bg-tertiary p-2 text-sm"
+                className="bg-bg-tertiary flex items-center gap-3 rounded-lg p-2 text-sm"
               >
                 {"newScore" in event ? (
                   <>
@@ -166,27 +161,25 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
                             : "bg-success-500"
                       }`}
                     />
-                    <span className="flex-1 truncate text-content-secondary">
+                    <span className="text-content-secondary flex-1 truncate">
                       {event.companyName}
                     </span>
-                    <span className="text-xs text-content-secondary">
+                    <span className="text-content-secondary text-xs">
                       {event.previousScore} → {event.newScore}
                     </span>
                   </>
                 ) : (
                   <>
-                    <span className="h-2 w-2 rounded-full bg-info-500" />
-                    <span className="flex-1 truncate text-content-secondary">
-                      {event.title}
-                    </span>
-                    <span className="text-xs text-content-secondary">{event.companyName}</span>
+                    <span className="bg-info-500 h-2 w-2 rounded-full" />
+                    <span className="text-content-secondary flex-1 truncate">{event.title}</span>
+                    <span className="text-content-secondary text-xs">{event.companyName}</span>
                   </>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-content-secondary">
+          <p className="text-content-secondary text-sm">
             No recent activity. Updates will appear here in real-time.
           </p>
         )}

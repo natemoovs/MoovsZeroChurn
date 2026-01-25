@@ -10,12 +10,14 @@ This skill transforms **raw Moovs tickets** into **clear Task Briefs** that deve
 ## When to Use This Skill
 
 Use `/task-shaping` when:
+
 - You have a Notion ticket (DOOM-XX) that's too vague to build
 - The work is estimated at hours-to-days, not weeks
 - You need to clarify problem, solution, and design direction
 - You want the ticket updated directly in Notion
 
 **Don't use this for:**
+
 - Multi-week features (use `/shaping` instead)
 - Raw ideas without a ticket (use `/problem` first)
 - Strategic decisions that need betting table review
@@ -23,6 +25,7 @@ Use `/task-shaping` when:
 ## Philosophy: Clarity Without Bureaucracy
 
 Full shaping is overkill for small tasks. But "just build it" leads to:
+
 - Developers pinging you with questions
 - Wrong assumptions baked into code
 - Rework and frustration
@@ -41,15 +44,15 @@ That's it. No rabbit holes analysis, no pitch narrative, no betting table presen
 
 ## Full Shaping vs. Task Shaping
 
-| Aspect | Full Shaping | Task Shaping |
-|--------|--------------|--------------|
-| **Appetite** | 1-6 weeks | Hours to days |
-| **Output** | Pitch for betting table | Brief for developer |
-| **Interview** | 30-50 questions | 5-10 questions |
-| **Solution detail** | Fat marker sketches | Design notes |
-| **Risk analysis** | Rabbit holes + mitigations | Boundaries only |
-| **Destination** | Betting table | Directly to builder |
-| **Notion update** | Separate document | Updates ticket directly |
+| Aspect              | Full Shaping               | Task Shaping            |
+| ------------------- | -------------------------- | ----------------------- |
+| **Appetite**        | 1-6 weeks                  | Hours to days           |
+| **Output**          | Pitch for betting table    | Brief for developer     |
+| **Interview**       | 30-50 questions            | 5-10 questions          |
+| **Solution detail** | Fat marker sketches        | Design notes            |
+| **Risk analysis**   | Rabbit holes + mitigations | Boundaries only         |
+| **Destination**     | Betting table              | Directly to builder     |
+| **Notion update**   | Separate document          | Updates ticket directly |
 
 ## Process Overview
 
@@ -75,19 +78,20 @@ See [INTERVIEW_GUIDE.md](INTERVIEW_GUIDE.md) for the question framework.
 
 ### What to Clarify
 
-| Gap | Questions to Ask |
-|-----|------------------|
-| **Problem unclear** | "What specific user pain does this solve?" |
-| **Solution vague** | "What exactly should happen when X?" |
-| **Scope undefined** | "What's explicitly NOT included?" |
-| **Design missing** | "Should this match [existing pattern] or be new?" |
-| **Acceptance unclear** | "How will we know this is done?" |
+| Gap                    | Questions to Ask                                  |
+| ---------------------- | ------------------------------------------------- |
+| **Problem unclear**    | "What specific user pain does this solve?"        |
+| **Solution vague**     | "What exactly should happen when X?"              |
+| **Scope undefined**    | "What's explicitly NOT included?"                 |
+| **Design missing**     | "Should this match [existing pattern] or be new?" |
+| **Acceptance unclear** | "How will we know this is done?"                  |
 
 ## Output: The Task Brief
 
 After the interview, generate a Task Brief following the template in [TASK_BRIEF_TEMPLATE.md](TASK_BRIEF_TEMPLATE.md).
 
 The brief contains:
+
 1. **Problem** - 1-2 sentences on what's broken and why it matters
 2. **Solution** - Clear description of what we're building
 3. **In Scope** - Explicit list of what's included
@@ -168,14 +172,15 @@ Then ask your first clarifying question.
 
 **Before finalizing the Task Brief, search the Moovs codebase:**
 
-| Repo | Path | What to Look For |
-|------|------|------------------|
-| **server** | `/Users/amirghorbani/Dev/server` | Data models, APIs, existing logic to extend |
-| **dooms-operator** | `/Users/amirghorbani/Dev/dooms-operator` | UI components, patterns to follow |
-| **dooms-customer** | `/Users/amirghorbani/Dev/dooms-customer` | Customer-facing patterns |
-| **dooms-native-driver** | `/Users/amirghorbani/Dev/dooms-native-driver` | Mobile app patterns |
+| Repo                    | Path                                          | What to Look For                            |
+| ----------------------- | --------------------------------------------- | ------------------------------------------- |
+| **server**              | `/Users/amirghorbani/Dev/server`              | Data models, APIs, existing logic to extend |
+| **dooms-operator**      | `/Users/amirghorbani/Dev/dooms-operator`      | UI components, patterns to follow           |
+| **dooms-customer**      | `/Users/amirghorbani/Dev/dooms-customer`      | Customer-facing patterns                    |
+| **dooms-native-driver** | `/Users/amirghorbani/Dev/dooms-native-driver` | Mobile app patterns                         |
 
 For each task brief:
+
 - Find existing code that relates to the feature
 - Identify specific files/functions that will need changes
 - Note UI patterns the implementation should follow

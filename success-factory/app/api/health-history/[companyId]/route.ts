@@ -50,8 +50,10 @@ export async function GET(
         recent.length
       const olderAvg =
         older.length > 0
-          ? older.reduce((sum, s) => sum + scoreValues[s.healthScore as keyof typeof scoreValues], 0) /
-            older.length
+          ? older.reduce(
+              (sum, s) => sum + scoreValues[s.healthScore as keyof typeof scoreValues],
+              0
+            ) / older.length
           : recentAvg
 
       if (recentAvg > olderAvg + 0.3) {
@@ -117,9 +119,6 @@ export async function GET(
     })
   } catch (error) {
     console.error("Health history fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch health history" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch health history" }, { status: 500 })
   }
 }

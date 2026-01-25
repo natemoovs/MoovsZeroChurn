@@ -10,6 +10,7 @@ send_day: 7
 [Case Study Company] runs a 15-vehicle operation in [City] - mostly airport runs and corporate accounts.
 
 Before switching to Moovs, they were spending 3+ hours daily on:
+
 - Manually confirming every booking by phone
 - Texting drivers trip details
 - Chasing payments from corporate accounts

@@ -28,10 +28,20 @@ import {
 const pages = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", keywords: ["home", "overview"] },
   { href: "/accounts", icon: Users, label: "Accounts", keywords: ["customers", "companies"] },
-  { href: "/predictions", icon: Brain, label: "Predictions", keywords: ["ai", "forecast", "churn"] },
+  {
+    href: "/predictions",
+    icon: Brain,
+    label: "Predictions",
+    keywords: ["ai", "forecast", "churn"],
+  },
   { href: "/benchmarks", icon: Activity, label: "Benchmarks", keywords: ["metrics", "compare"] },
   { href: "/engagement", icon: Zap, label: "Engagement", keywords: ["activity", "usage"] },
-  { href: "/expansion", icon: TrendingUp, label: "Expansion", keywords: ["upsell", "growth", "revenue"] },
+  {
+    href: "/expansion",
+    icon: TrendingUp,
+    label: "Expansion",
+    keywords: ["upsell", "growth", "revenue"],
+  },
   { href: "/cohorts", icon: BarChart3, label: "Cohorts", keywords: ["segments", "groups"] },
   { href: "/roi", icon: PieChart, label: "ROI Dashboard", keywords: ["return", "value"] },
   { href: "/team", icon: UsersRound, label: "CSM Workload", keywords: ["workload", "capacity"] },
@@ -85,42 +95,45 @@ export function CommandPalette() {
   }, [])
 
   // Search for accounts, tasks, and skills when query changes
-  const searchData = useCallback(async (query: string) => {
-    if (!query || query.length < 2) {
-      setAccounts([])
-      setTasks([])
-      return
-    }
-
-    setLoading(true)
-    try {
-      // Search accounts and tasks in parallel
-      const [accountsRes, tasksRes, skillsRes] = await Promise.all([
-        fetch(`/api/customer/search?q=${encodeURIComponent(query)}&limit=5`).catch(() => null),
-        fetch(`/api/tasks?search=${encodeURIComponent(query)}&limit=5`).catch(() => null),
-        fetch("/api/skills").catch(() => null),
-      ])
-
-      if (accountsRes?.ok) {
-        const data = await accountsRes.json()
-        setAccounts(data.companies || [])
+  const searchData = useCallback(
+    async (query: string) => {
+      if (!query || query.length < 2) {
+        setAccounts([])
+        setTasks([])
+        return
       }
 
-      if (tasksRes?.ok) {
-        const data = await tasksRes.json()
-        setTasks((data.tasks || []).slice(0, 5))
-      }
+      setLoading(true)
+      try {
+        // Search accounts and tasks in parallel
+        const [accountsRes, tasksRes, skillsRes] = await Promise.all([
+          fetch(`/api/customer/search?q=${encodeURIComponent(query)}&limit=5`).catch(() => null),
+          fetch(`/api/tasks?search=${encodeURIComponent(query)}&limit=5`).catch(() => null),
+          fetch("/api/skills").catch(() => null),
+        ])
 
-      if (skillsRes?.ok && skills.length === 0) {
-        const data = await skillsRes.json()
-        setSkills(data.skills || [])
+        if (accountsRes?.ok) {
+          const data = await accountsRes.json()
+          setAccounts(data.companies || [])
+        }
+
+        if (tasksRes?.ok) {
+          const data = await tasksRes.json()
+          setTasks((data.tasks || []).slice(0, 5))
+        }
+
+        if (skillsRes?.ok && skills.length === 0) {
+          const data = await skillsRes.json()
+          setSkills(data.skills || [])
+        }
+      } catch (error) {
+        console.error("Search error:", error)
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error("Search error:", error)
-    } finally {
-      setLoading(false)
-    }
-  }, [skills.length])
+    },
+    [skills.length]
+  )
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -130,11 +143,13 @@ export function CommandPalette() {
   }, [search, searchData])
 
   // Filter skills client-side
-  const filteredSkills = skills.filter(
-    (skill) =>
-      skill.name.toLowerCase().includes(search.toLowerCase()) ||
-      skill.description.toLowerCase().includes(search.toLowerCase())
-  ).slice(0, 5)
+  const filteredSkills = skills
+    .filter(
+      (skill) =>
+        skill.name.toLowerCase().includes(search.toLowerCase()) ||
+        skill.description.toLowerCase().includes(search.toLowerCase())
+    )
+    .slice(0, 5)
 
   const runCommand = useCallback((command: () => void) => {
     setOpen(false)
@@ -149,59 +164,59 @@ export function CommandPalette() {
       className="fixed inset-0 z-[100]"
     >
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => setOpen(false)}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
       {/* Dialog */}
-      <div className="fixed left-1/2 top-[20%] w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border-default bg-bg-elevated shadow-2xl">
+      <div className="border-border-default bg-bg-elevated fixed top-[20%] left-1/2 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border shadow-2xl">
         {/* Search Input */}
-        <div className="flex items-center gap-3 border-b border-border-default px-4">
-          <Search className="h-5 w-5 text-content-tertiary" />
+        <div className="border-border-default flex items-center gap-3 border-b px-4">
+          <Search className="text-content-tertiary h-5 w-5" />
           <Command.Input
             value={search}
             onValueChange={setSearch}
             placeholder="Search accounts, tasks, pages..."
-            className="flex-1 bg-transparent py-4 text-base outline-none placeholder:text-content-tertiary text-content-primary"
+            className="placeholder:text-content-tertiary text-content-primary flex-1 bg-transparent py-4 text-base outline-none"
           />
-          <kbd className="hidden rounded bg-bg-tertiary px-2 py-1 text-xs text-content-secondary sm:inline-block">
+          <kbd className="bg-bg-tertiary text-content-secondary hidden rounded px-2 py-1 text-xs sm:inline-block">
             ESC
           </kbd>
         </div>
 
         {/* Results */}
         <Command.List className="max-h-[400px] overflow-y-auto p-2">
-          <Command.Empty className="py-6 text-center text-sm text-content-secondary">
+          <Command.Empty className="text-content-secondary py-6 text-center text-sm">
             {loading ? "Searching..." : "No results found."}
           </Command.Empty>
 
           {/* Accounts */}
           {accounts.length > 0 && (
-            <Command.Group heading="Accounts" className="px-2 py-1.5 text-xs font-medium text-content-secondary">
+            <Command.Group
+              heading="Accounts"
+              className="text-content-secondary px-2 py-1.5 text-xs font-medium"
+            >
               {accounts.map((account) => (
                 <Command.Item
                   key={account.id}
                   value={`account-${account.name}`}
                   onSelect={() => runCommand(() => router.push(`/accounts/${account.id}`))}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100"
+                  className="text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100 flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
                 >
-                  <Building2 className="h-4 w-4 text-content-tertiary" />
+                  <Building2 className="text-content-tertiary h-4 w-4" />
                   <span className="flex-1">{account.name}</span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       account.healthScore === "green"
                         ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                         : account.healthScore === "yellow"
-                        ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
-                        : account.healthScore === "red"
-                        ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
-                        : "bg-bg-tertiary text-content-secondary"
+                          ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                          : account.healthScore === "red"
+                            ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                            : "bg-bg-tertiary text-content-secondary"
                     }`}
                   >
                     {account.healthScore}
                   </span>
-                  <ArrowRight className="h-4 w-4 text-content-tertiary" />
+                  <ArrowRight className="text-content-tertiary h-4 w-4" />
                 </Command.Item>
               ))}
             </Command.Group>
@@ -209,20 +224,23 @@ export function CommandPalette() {
 
           {/* Tasks */}
           {tasks.length > 0 && (
-            <Command.Group heading="Tasks" className="px-2 py-1.5 text-xs font-medium text-content-secondary">
+            <Command.Group
+              heading="Tasks"
+              className="text-content-secondary px-2 py-1.5 text-xs font-medium"
+            >
               {tasks.map((task) => (
                 <Command.Item
                   key={task.id}
                   value={`task-${task.title}`}
                   onSelect={() => runCommand(() => router.push("/tasks"))}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100"
+                  className="text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100 flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
                 >
-                  <CheckSquare className="h-4 w-4 text-content-tertiary" />
+                  <CheckSquare className="text-content-tertiary h-4 w-4" />
                   <div className="flex-1 truncate">
                     <span>{task.title}</span>
-                    <span className="ml-2 text-xs text-content-tertiary">{task.companyName}</span>
+                    <span className="text-content-tertiary ml-2 text-xs">{task.companyName}</span>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-content-tertiary" />
+                  <ArrowRight className="text-content-tertiary h-4 w-4" />
                 </Command.Item>
               ))}
             </Command.Group>
@@ -230,56 +248,64 @@ export function CommandPalette() {
 
           {/* Skills */}
           {filteredSkills.length > 0 && search.length >= 2 && (
-            <Command.Group heading="Skills" className="px-2 py-1.5 text-xs font-medium text-content-secondary">
+            <Command.Group
+              heading="Skills"
+              className="text-content-secondary px-2 py-1.5 text-xs font-medium"
+            >
               {filteredSkills.map((skill) => (
                 <Command.Item
                   key={skill.slug}
                   value={`skill-${skill.name}`}
                   onSelect={() => runCommand(() => router.push(`/skills/${skill.slug}`))}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100"
+                  className="text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100 flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
                 >
-                  <Sparkles className="h-4 w-4 text-content-tertiary" />
+                  <Sparkles className="text-content-tertiary h-4 w-4" />
                   <div className="flex-1">
                     <span>{skill.name}</span>
-                    <span className="ml-2 text-xs text-content-tertiary truncate">{skill.description}</span>
+                    <span className="text-content-tertiary ml-2 truncate text-xs">
+                      {skill.description}
+                    </span>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-content-tertiary" />
+                  <ArrowRight className="text-content-tertiary h-4 w-4" />
                 </Command.Item>
               ))}
             </Command.Group>
           )}
 
           {/* Pages */}
-          <Command.Group heading="Pages" className="px-2 py-1.5 text-xs font-medium text-content-secondary">
+          <Command.Group
+            heading="Pages"
+            className="text-content-secondary px-2 py-1.5 text-xs font-medium"
+          >
             {pages.map((page) => (
               <Command.Item
                 key={page.href}
                 value={`page-${page.label} ${page.keywords.join(" ")}`}
                 onSelect={() => runCommand(() => router.push(page.href))}
-                className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100"
+                className="text-content-secondary aria-selected:bg-success-50 aria-selected:text-success-900 dark:aria-selected:bg-success-950 dark:aria-selected:text-success-100 flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
               >
-                <page.icon className="h-4 w-4 text-content-tertiary" />
+                <page.icon className="text-content-tertiary h-4 w-4" />
                 <span className="flex-1">{page.label}</span>
-                <ArrowRight className="h-4 w-4 text-content-tertiary" />
+                <ArrowRight className="text-content-tertiary h-4 w-4" />
               </Command.Item>
             ))}
           </Command.Group>
         </Command.List>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-border-default px-4 py-2 text-xs text-content-secondary">
+        <div className="border-border-default text-content-secondary flex items-center justify-between border-t px-4 py-2 text-xs">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1">
-              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5">↑↓</kbd>
+              <kbd className="bg-bg-tertiary rounded px-1.5 py-0.5">↑↓</kbd>
               navigate
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5">↵</kbd>
+              <kbd className="bg-bg-tertiary rounded px-1.5 py-0.5">↵</kbd>
               select
             </span>
           </div>
           <span className="flex items-center gap-1">
-            <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5">⌘K</kbd>
+            <kbd className="bg-bg-tertiary rounded px-1.5 py-0.5">⌘K</kbd>
             to open
           </span>
         </div>

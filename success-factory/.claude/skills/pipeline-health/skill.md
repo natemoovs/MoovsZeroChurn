@@ -18,40 +18,49 @@ Pipeline health meetings are only as good as the data driving them. This skill t
 
 ## Your Pipelines
 
-| Pipeline | Focus | Sales Motion | Typical Deal |
-|----------|-------|--------------|--------------|
-| **Enterprise** | Large operators, $1M+ revenue | High-touch, long cycle | ~$1,800 |
-| **Mid-market** | Growing operators, $250K-$1M | Sales-assisted | ~$160 |
-| **SMB** | Smaller operators, <$250K | PLG / Self-serve | ~$150 |
-| **Add-on** | Upsells to existing customers | Expansion | ~$125 |
+| Pipeline       | Focus                         | Sales Motion           | Typical Deal |
+| -------------- | ----------------------------- | ---------------------- | ------------ |
+| **Enterprise** | Large operators, $1M+ revenue | High-touch, long cycle | ~$1,800      |
+| **Mid-market** | Growing operators, $250K-$1M  | Sales-assisted         | ~$160        |
+| **SMB**        | Smaller operators, <$250K     | PLG / Self-serve       | ~$150        |
+| **Add-on**     | Upsells to existing customers | Expansion              | ~$125        |
 
 ## Available Reports
 
 ### 1. Full Pipeline Review
+
 ```
 /pipeline-health review
 ```
+
 Complete pipeline analysis for leadership meetings:
+
 - Pipeline snapshot by stage (value, count, velocity)
 - Recent performance (wins/losses last 30 days)
 - Stuck deals needing action
 - Rep-level breakdown
 
 ### 2. Pipeline Snapshot
+
 ```
 /pipeline-health snapshot
 ```
+
 Quick pulse on active pipeline:
+
 - Active deals by pipeline and stage
 - Total pipeline value
 - Average days in each stage
 - Bottleneck identification
 
 ### 3. Stuck Deals
+
 ```
 /pipeline-health stuck [pipeline]
 ```
+
 Deals aging past threshold that need attention:
+
 - SMB: 30+ days
 - Mid-market: 45+ days
 - Enterprise: 60+ days
@@ -60,30 +69,39 @@ Deals aging past threshold that need attention:
 Shows deal name, owner, stage, days in pipeline, and recommended action.
 
 ### 4. Recent Performance
+
 ```
 /pipeline-health wins [days]
 ```
+
 Conversion performance (default: last 30 days):
+
 - Deals won by pipeline
 - Total closed value
 - Average deal size
 - Win rate trends
 
 ### 5. Rep Scorecard
+
 ```
 /pipeline-health reps [pipeline]
 ```
+
 Individual rep performance:
+
 - Active pipeline per rep
 - Stuck deals by rep
 - Recent wins by rep
 - Activity and velocity
 
 ### 6. Single Pipeline Deep Dive
+
 ```
 /pipeline-health [pipeline-name]
 ```
+
 Focus on one pipeline (smb, midmarket, enterprise, addon):
+
 - Stage-by-stage breakdown
 - Top 10 deals by value
 - Stuck deals for this pipeline
@@ -96,31 +114,35 @@ Focus on one pipeline (smb, midmarket, enterprise, addon):
 
 ### Key Columns
 
-| Column | Description |
-|--------|-------------|
-| `HS_D_DEAL_ID` | HubSpot deal ID |
-| `HS_D_DEAL_NAME` | Deal name |
+| Column                  | Description                                    |
+| ----------------------- | ---------------------------------------------- |
+| `HS_D_DEAL_ID`          | HubSpot deal ID                                |
+| `HS_D_DEAL_NAME`        | Deal name                                      |
 | `HS_D_PIPELINE_SEGMENT` | Pipeline (SMB, Mid-market, Enterprise, Add-on) |
-| `HS_D_STAGE_NAME` | Current stage |
-| `HS_D_CLOSED_AMOUNT` | Deal value |
-| `HS_D_CREATE_DATE` | Date deal created |
-| `HS_D_CLOSE_DATE` | Date deal closed (won/lost) |
-| `HS_D_OWNER_NAME` | Deal owner (rep) |
-| `HS_D_MOOVS_PLAN` | Target Moovs plan |
-| `HS_D_SOURCE` | Lead source |
+| `HS_D_STAGE_NAME`       | Current stage                                  |
+| `HS_D_CLOSED_AMOUNT`    | Deal value                                     |
+| `HS_D_CREATE_DATE`      | Date deal created                              |
+| `HS_D_CLOSE_DATE`       | Date deal closed (won/lost)                    |
+| `HS_D_OWNER_NAME`       | Deal owner (rep)                               |
+| `HS_D_MOOVS_PLAN`       | Target Moovs plan                              |
+| `HS_D_SOURCE`           | Lead source                                    |
 
 ### Pipeline Stages
 
 **SMB Pipeline:**
+
 - Lead → PQL → Opportunity → Paid Account / Fully Onboarded → Closed Lost
 
 **Mid-market Pipeline:**
+
 - Interest → Discovery → Demo → Negotiation → Closed Won → Closed Lost
 
 **Enterprise Pipeline:**
+
 - Interest → Discovery → Demo → Negotiation → Closed Won → Closed Lost
 
 **Add-on Pipeline:**
+
 - Lead → Discovery Call → Demo → Prospecting → Contract sent → Onboarding → Fully Onboarded / Paid Account → Closed Lost
 
 ## Process
@@ -156,6 +178,7 @@ For detailed query templates, see [QUERIES.md](QUERIES.md).
 All reports should be **sales-focused** and **action-oriented**:
 
 ### DO:
+
 - Lead with the number/insight, not the methodology
 - Highlight deals that need action TODAY
 - Show trends (up/down from prior period)
@@ -163,6 +186,7 @@ All reports should be **sales-focused** and **action-oriented**:
 - End with recommended actions
 
 ### DON'T:
+
 - Dump raw SQL results
 - Show data without interpretation
 - Bury the lead in methodology

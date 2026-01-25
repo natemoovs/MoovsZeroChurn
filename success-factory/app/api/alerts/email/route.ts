@@ -9,7 +9,13 @@ const SMTP_USER = process.env.SMTP_USER
 const SMTP_PASS = process.env.SMTP_PASS
 const EMAIL_FROM = process.env.EMAIL_FROM || "alerts@successfactory.app"
 
-type AlertType = "at_risk" | "health_change" | "renewal_upcoming" | "payment_failed" | "inactive" | "digest"
+type AlertType =
+  | "at_risk"
+  | "health_change"
+  | "renewal_upcoming"
+  | "payment_failed"
+  | "inactive"
+  | "digest"
 
 interface EmailAlert {
   type: AlertType
@@ -104,11 +110,13 @@ export async function POST(request: NextRequest) {
     )
   } catch (error) {
     console.error("Email alert error:", error)
-    await logAlert({ type: "at_risk", to: "", details: {} } as EmailAlert, "email", false, String(error))
-    return NextResponse.json(
-      { error: "Failed to send email alert" },
-      { status: 500 }
+    await logAlert(
+      { type: "at_risk", to: "", details: {} } as EmailAlert,
+      "email",
+      false,
+      String(error)
     )
+    return NextResponse.json({ error: "Failed to send email alert" }, { status: 500 })
   }
 }
 
@@ -292,7 +300,8 @@ function buildEmailContent(alert: EmailAlert): { subject: string; html: string; 
     if (alert.companyName) text += `Company: ${alert.companyName}\n`
     if (alert.details.healthScore) text += `Health Score: ${alert.details.healthScore}\n`
     if (alert.details.mrr !== undefined) text += `MRR: $${alert.details.mrr.toLocaleString()}/mo\n`
-    if (alert.details.daysUntilRenewal !== undefined) text += `Renewal in: ${alert.details.daysUntilRenewal} days\n`
+    if (alert.details.daysUntilRenewal !== undefined)
+      text += `Renewal in: ${alert.details.daysUntilRenewal} days\n`
     if (alert.details.riskSignals && alert.details.riskSignals.length > 0) {
       text += `Risk Signals:\n${alert.details.riskSignals.map((s) => `- ${s}`).join("\n")}\n`
     }
@@ -329,12 +338,7 @@ function getEmailSubject(alert: EmailAlert): string {
   return `[Success Factory] ${titles[alert.type]}`
 }
 
-async function logAlert(
-  alert: EmailAlert,
-  channel: string,
-  success: boolean,
-  error?: string
-) {
+async function logAlert(alert: EmailAlert, channel: string, success: boolean, error?: string) {
   try {
     await prisma.alertLog.create({
       data: {

@@ -184,10 +184,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Playbooks fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch playbooks" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch playbooks" }, { status: 500 })
   }
 }
 
@@ -224,9 +221,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(playbook, { status: 201 })
   } catch (error) {
     console.error("Playbook create error:", error)
-    return NextResponse.json(
-      { error: "Failed to create playbook" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to create playbook" }, { status: 500 })
   }
 }

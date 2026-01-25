@@ -27,18 +27,24 @@ export async function GET(
 
     if (!pageRes.ok) {
       const error = await pageRes.json()
-      return NextResponse.json({ error: error.message || "Failed to fetch page" }, { status: pageRes.status })
+      return NextResponse.json(
+        { error: error.message || "Failed to fetch page" },
+        { status: pageRes.status }
+      )
     }
 
     const page = await pageRes.json()
 
     // Fetch page content (blocks)
-    const blocksRes = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children?page_size=100`, {
-      headers: {
-        Authorization: `Bearer ${NOTION_API_KEY}`,
-        "Notion-Version": "2022-06-28",
-      },
-    })
+    const blocksRes = await fetch(
+      `https://api.notion.com/v1/blocks/${pageId}/children?page_size=100`,
+      {
+        headers: {
+          Authorization: `Bearer ${NOTION_API_KEY}`,
+          "Notion-Version": "2022-06-28",
+        },
+      }
+    )
 
     let blocks: unknown[] = []
     if (blocksRes.ok) {
@@ -47,12 +53,15 @@ export async function GET(
     }
 
     // Fetch comments
-    const commentsRes = await fetch(`https://api.notion.com/v1/comments?block_id=${pageId}&page_size=100`, {
-      headers: {
-        Authorization: `Bearer ${NOTION_API_KEY}`,
-        "Notion-Version": "2022-06-28",
-      },
-    })
+    const commentsRes = await fetch(
+      `https://api.notion.com/v1/comments?block_id=${pageId}&page_size=100`,
+      {
+        headers: {
+          Authorization: `Bearer ${NOTION_API_KEY}`,
+          "Notion-Version": "2022-06-28",
+        },
+      }
+    )
 
     let comments: unknown[] = []
     if (commentsRes.ok) {
@@ -112,7 +121,10 @@ export async function PATCH(
 
     if (!res.ok) {
       const error = await res.json()
-      return NextResponse.json({ error: error.message || "Failed to update page" }, { status: res.status })
+      return NextResponse.json(
+        { error: error.message || "Failed to update page" },
+        { status: res.status }
+      )
     }
 
     const page = await res.json()
@@ -137,13 +149,16 @@ function extractAllProperties(props: Record<string, unknown>): Record<string, un
       case "title":
         result[key] = {
           type: "title",
-          value: (prop.title as Array<{ plain_text: string }>)?.map(t => t.plain_text).join("") || "",
+          value:
+            (prop.title as Array<{ plain_text: string }>)?.map((t) => t.plain_text).join("") || "",
         }
         break
       case "rich_text":
         result[key] = {
           type: "rich_text",
-          value: (prop.rich_text as Array<{ plain_text: string }>)?.map(t => t.plain_text).join("") || "",
+          value:
+            (prop.rich_text as Array<{ plain_text: string }>)?.map((t) => t.plain_text).join("") ||
+            "",
         }
         break
       case "number":
@@ -159,10 +174,11 @@ function extractAllProperties(props: Record<string, unknown>): Record<string, un
       case "multi_select":
         result[key] = {
           type: "multi_select",
-          value: (prop.multi_select as Array<{ name: string; color: string }>)?.map(s => ({
-            name: s.name,
-            color: s.color,
-          })) || [],
+          value:
+            (prop.multi_select as Array<{ name: string; color: string }>)?.map((s) => ({
+              name: s.name,
+              color: s.color,
+            })) || [],
         }
         break
       case "status":
@@ -175,21 +191,31 @@ function extractAllProperties(props: Record<string, unknown>): Record<string, un
       case "date":
         result[key] = {
           type: "date",
-          value: prop.date ? {
-            start: (prop.date as { start: string; end?: string }).start,
-            end: (prop.date as { start: string; end?: string }).end,
-          } : null,
+          value: prop.date
+            ? {
+                start: (prop.date as { start: string; end?: string }).start,
+                end: (prop.date as { start: string; end?: string }).end,
+              }
+            : null,
         }
         break
       case "people":
         result[key] = {
           type: "people",
-          value: (prop.people as Array<{ id: string; name?: string; avatar_url?: string; person?: { email: string } }>)?.map(p => ({
-            id: p.id,
-            name: p.name,
-            avatar: p.avatar_url,
-            email: p.person?.email,
-          })) || [],
+          value:
+            (
+              prop.people as Array<{
+                id: string
+                name?: string
+                avatar_url?: string
+                person?: { email: string }
+              }>
+            )?.map((p) => ({
+              id: p.id,
+              name: p.name,
+              avatar: p.avatar_url,
+              email: p.person?.email,
+            })) || [],
         }
         break
       case "checkbox":
@@ -222,7 +248,7 @@ function extractAllProperties(props: Record<string, unknown>): Record<string, un
       case "relation":
         result[key] = {
           type: "relation",
-          value: (prop.relation as Array<{ id: string }>)?.map(r => r.id) || [],
+          value: (prop.relation as Array<{ id: string }>)?.map((r) => r.id) || [],
         }
         break
       case "rollup":
@@ -234,7 +260,9 @@ function extractAllProperties(props: Record<string, unknown>): Record<string, un
       case "unique_id":
         result[key] = {
           type: "unique_id",
-          value: prop.unique_id ? `${(prop.unique_id as { prefix?: string; number: number }).prefix || ""}${(prop.unique_id as { number: number }).number}` : null,
+          value: prop.unique_id
+            ? `${(prop.unique_id as { prefix?: string; number: number }).prefix || ""}${(prop.unique_id as { number: number }).number}`
+            : null,
         }
         break
       default:
@@ -253,7 +281,7 @@ function formatBlock(block: unknown): { type: string; content: string; children?
   let content = ""
   if (blockData?.rich_text) {
     content = (blockData.rich_text as Array<{ plain_text: string }>)
-      .map(t => t.plain_text)
+      .map((t) => t.plain_text)
       .join("")
   }
 
@@ -276,7 +304,7 @@ function formatComment(comment: unknown): {
 
   return {
     id: c.id as string,
-    content: richText?.map(t => t.plain_text).join("") || "",
+    content: richText?.map((t) => t.plain_text).join("") || "",
     createdTime: c.created_time as string,
     createdBy: {
       id: createdBy?.id || "",

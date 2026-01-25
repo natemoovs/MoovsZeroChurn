@@ -129,9 +129,7 @@ export default function CohortsPage() {
   })
 
   // Find best and worst performing cohorts
-  const sortedByRetention = [...cohorts].sort(
-    (a, b) => b.retentionRate - a.retentionRate
-  )
+  const sortedByRetention = [...cohorts].sort((a, b) => b.retentionRate - a.retentionRate)
   const bestCohort = sortedByRetention[0]
   const worstCohort = sortedByRetention[sortedByRetention.length - 1]
 
@@ -159,10 +157,8 @@ export default function CohortsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-content-primary">
-              Cohort Analysis
-            </h1>
-            <p className="mt-1 text-content-secondary">
+            <h1 className="text-content-primary text-2xl font-bold">Cohort Analysis</h1>
+            <p className="text-content-secondary mt-1">
               Analyze retention patterns by signup period
             </p>
           </div>
@@ -184,14 +180,12 @@ export default function CohortsPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
-                <Calendar className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+              <div className="bg-primary-100 dark:bg-primary-900/30 flex h-10 w-10 items-center justify-center rounded-lg">
+                <Calendar className="text-primary-600 dark:text-primary-400 h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-content-secondary">
-                  Total Cohorts
-                </p>
-                <p className="text-xl font-bold text-content-primary">
+                <p className="text-content-secondary text-sm">Total Cohorts</p>
+                <p className="text-content-primary text-xl font-bold">
                   {summary?.totalCohorts || 0}
                 </p>
               </div>
@@ -200,14 +194,12 @@ export default function CohortsPage() {
 
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-50">
-                <Users className="h-5 w-5 text-primary-600 dark:text-primary-500" />
+              <div className="bg-primary-100 dark:bg-primary-50 flex h-10 w-10 items-center justify-center rounded-lg">
+                <Users className="text-primary-600 dark:text-primary-500 h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-content-secondary">
-                  Total Companies
-                </p>
-                <p className="text-xl font-bold text-content-primary">
+                <p className="text-content-secondary text-sm">Total Companies</p>
+                <p className="text-content-primary text-xl font-bold">
                   {summary?.totalCompanies || 0}
                 </p>
               </div>
@@ -216,14 +208,12 @@ export default function CohortsPage() {
 
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100 dark:bg-success-50">
-                <TrendingUp className="h-5 w-5 text-success-600 dark:text-success-500" />
+              <div className="bg-success-100 dark:bg-success-50 flex h-10 w-10 items-center justify-center rounded-lg">
+                <TrendingUp className="text-success-600 dark:text-success-500 h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-content-secondary">
-                  Overall Retention
-                </p>
-                <p className="text-xl font-bold text-content-primary">
+                <p className="text-content-secondary text-sm">Overall Retention</p>
+                <p className="text-content-primary text-xl font-bold">
                   {formatPercent(summary?.overallRetention || 0)}
                 </p>
               </div>
@@ -232,14 +222,12 @@ export default function CohortsPage() {
 
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-100 dark:bg-warning-50">
-                <DollarSign className="h-5 w-5 text-warning-600 dark:text-warning-500" />
+              <div className="bg-warning-100 dark:bg-warning-50 flex h-10 w-10 items-center justify-center rounded-lg">
+                <DollarSign className="text-warning-600 dark:text-warning-500 h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-content-secondary">
-                  Avg MRR/Cohort
-                </p>
-                <p className="text-xl font-bold text-content-primary">
+                <p className="text-content-secondary text-sm">Avg MRR/Cohort</p>
+                <p className="text-content-primary text-xl font-bold">
                   {formatCurrency(summary?.avgMrrPerCohort || 0)}
                 </p>
               </div>
@@ -250,33 +238,33 @@ export default function CohortsPage() {
         {/* Best/Worst Cohorts */}
         {cohorts.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-success-300 bg-success-50 p-4 dark:border-success-700 dark:bg-success-50/10 glow-success">
+            <div className="border-success-300 bg-success-50 dark:border-success-700 dark:bg-success-50/10 glow-success rounded-xl border p-4">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-success-600 dark:text-success-500" />
-                <span className="font-medium text-success-700 dark:text-success-500">
+                <TrendingUp className="text-success-600 dark:text-success-500 h-5 w-5" />
+                <span className="text-success-700 dark:text-success-500 font-medium">
                   Best Performing Cohort
                 </span>
               </div>
-              <p className="mt-2 text-2xl font-bold text-success-700 dark:text-success-500">
+              <p className="text-success-700 dark:text-success-500 mt-2 text-2xl font-bold">
                 {bestCohort?.cohort}
               </p>
-              <p className="text-sm text-success-600 dark:text-success-500">
+              <p className="text-success-600 dark:text-success-500 text-sm">
                 {formatPercent(bestCohort?.retentionRate || 0)} retention •{" "}
                 {bestCohort?.activeCompanies} active companies
               </p>
             </div>
 
-            <div className="rounded-xl border border-error-300 bg-error-50 p-4 dark:border-error-700 dark:bg-error-50/10 glow-error">
+            <div className="border-error-300 bg-error-50 dark:border-error-700 dark:bg-error-50/10 glow-error rounded-xl border p-4">
               <div className="flex items-center gap-2">
-                <TrendingDown className="h-5 w-5 text-error-600 dark:text-error-500" />
-                <span className="font-medium text-error-700 dark:text-error-500">
+                <TrendingDown className="text-error-600 dark:text-error-500 h-5 w-5" />
+                <span className="text-error-700 dark:text-error-500 font-medium">
                   Needs Attention
                 </span>
               </div>
-              <p className="mt-2 text-2xl font-bold text-error-700 dark:text-error-500">
+              <p className="text-error-700 dark:text-error-500 mt-2 text-2xl font-bold">
                 {worstCohort?.cohort}
               </p>
-              <p className="text-sm text-error-600 dark:text-error-500">
+              <p className="text-error-600 dark:text-error-500 text-sm">
                 {formatPercent(worstCohort?.retentionRate || 0)} retention •{" "}
                 {worstCohort?.churnedCompanies} churned
               </p>
@@ -286,7 +274,7 @@ export default function CohortsPage() {
 
         {/* View Mode Toggle */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
+          <div className="border-border-default bg-bg-secondary flex gap-1 rounded-lg border p-1">
             <button
               onClick={() => setViewMode("monthly")}
               className={cn(
@@ -311,7 +299,7 @@ export default function CohortsPage() {
             </button>
           </div>
 
-          <div className="flex gap-1 rounded-lg border border-border-default bg-bg-secondary p-1">
+          <div className="border-border-default bg-bg-secondary flex gap-1 rounded-lg border p-1">
             <button
               onClick={() => setMetricView("retention")}
               className={cn(
@@ -349,29 +337,22 @@ export default function CohortsPage() {
         </div>
 
         {/* Survival Curves Chart */}
-        {!loading && cohorts.length > 0 && (
-          <CohortSurvivalChart cohorts={cohorts} />
-        )}
+        {!loading && cohorts.length > 0 && <CohortSurvivalChart cohorts={cohorts} />}
 
         {/* Cohort Table/Chart */}
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="h-16 shimmer rounded-xl"
-              />
+              <div key={i} className="shimmer h-16 rounded-xl" />
             ))}
           </div>
         ) : cohorts.length === 0 ? (
           <div className="card-sf p-12 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-bg-tertiary">
-              <BarChart3 className="h-6 w-6 text-content-tertiary" />
+            <div className="bg-bg-tertiary mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <BarChart3 className="text-content-tertiary h-6 w-6" />
             </div>
-            <h3 className="text-lg font-medium text-content-primary">
-              No cohort data
-            </h3>
-            <p className="mt-1 text-content-tertiary">
+            <h3 className="text-content-primary text-lg font-medium">No cohort data</h3>
+            <p className="text-content-tertiary mt-1">
               Click &quot;Sync Data&quot; to generate cohort analysis
             </p>
           </div>
@@ -380,12 +361,9 @@ export default function CohortsPage() {
             {/* Mobile Card View */}
             <div className="space-y-3 sm:hidden">
               {sortedCohorts.map((cohort) => (
-                <div
-                  key={cohort.cohort}
-                  className="card-sf p-4"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-semibold text-content-primary text-lg">
+                <div key={cohort.cohort} className="card-sf p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-content-primary text-lg font-semibold">
                       {cohort.cohort}
                     </span>
                     <span
@@ -400,7 +378,7 @@ export default function CohortsPage() {
 
                   {/* Retention Progress Bar */}
                   <div className="mb-3">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-bg-tertiary">
+                    <div className="bg-bg-tertiary h-2 w-full overflow-hidden rounded-full">
                       <div
                         className={cn(
                           "h-full rounded-full transition-all",
@@ -415,19 +393,27 @@ export default function CohortsPage() {
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-content-secondary">Companies</span>
-                      <span className="font-medium text-content-primary">{cohort.totalCompanies}</span>
+                      <span className="text-content-primary font-medium">
+                        {cohort.totalCompanies}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-content-secondary">MRR</span>
-                      <span className="font-medium text-content-primary">{formatCurrency(cohort.totalMrr)}</span>
+                      <span className="text-content-primary font-medium">
+                        {formatCurrency(cohort.totalMrr)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-content-secondary">Active</span>
-                      <span className="font-medium text-success-600 dark:text-success-500">{cohort.activeCompanies}</span>
+                      <span className="text-success-600 dark:text-success-500 font-medium">
+                        {cohort.activeCompanies}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-content-secondary">Churned</span>
-                      <span className="font-medium text-error-600 dark:text-error-400">{cohort.churnedCompanies}</span>
+                      <span className="text-error-600 dark:text-error-400 font-medium">
+                        {cohort.churnedCompanies}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -435,82 +421,79 @@ export default function CohortsPage() {
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden sm:block overflow-hidden card-sf">
+            <div className="card-sf hidden overflow-hidden sm:block">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px]">
                   <thead>
-                    <tr className="border-b border-border-default bg-bg-secondary">
+                    <tr className="border-border-default bg-bg-secondary border-b">
                       <th
                         onClick={() => toggleSort("cohort")}
-                        className="cursor-pointer px-4 py-3 text-left text-sm font-medium text-content-tertiary hover:text-content-primary"
+                        className="text-content-tertiary hover:text-content-primary cursor-pointer px-4 py-3 text-left text-sm font-medium"
                       >
                         Cohort
                         <SortIcon field="cohort" />
                       </th>
                       <th
                         onClick={() => toggleSort("companies")}
-                        className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
+                        className="text-content-tertiary hover:text-content-primary cursor-pointer px-4 py-3 text-right text-sm font-medium"
                       >
                         Companies
                         <SortIcon field="companies" />
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-content-tertiary">
+                      <th className="text-content-tertiary px-4 py-3 text-right text-sm font-medium">
                         Active
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-content-tertiary">
+                      <th className="text-content-tertiary px-4 py-3 text-right text-sm font-medium">
                         Churned
                       </th>
                       <th
                         onClick={() => toggleSort("retention")}
-                        className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
+                        className="text-content-tertiary hover:text-content-primary cursor-pointer px-4 py-3 text-right text-sm font-medium"
                       >
                         Retention
                         <SortIcon field="retention" />
                       </th>
                       <th
                         onClick={() => toggleSort("mrr")}
-                        className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
+                        className="text-content-tertiary hover:text-content-primary cursor-pointer px-4 py-3 text-right text-sm font-medium"
                       >
                         Total MRR
                         <SortIcon field="mrr" />
                       </th>
-                      <th className="hidden px-4 py-3 text-left text-sm font-medium text-content-tertiary lg:table-cell">
+                      <th className="text-content-tertiary hidden px-4 py-3 text-left text-sm font-medium lg:table-cell">
                         Retention
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border-default">
+                  <tbody className="divide-border-default divide-y">
                     {sortedCohorts.map((cohort) => (
-                      <tr
-                        key={cohort.cohort}
-                        className="transition-colors hover:bg-surface-hover"
-                      >
-                        <td className="whitespace-nowrap px-4 py-3 font-medium text-content-primary">
+                      <tr key={cohort.cohort} className="hover:bg-surface-hover transition-colors">
+                        <td className="text-content-primary px-4 py-3 font-medium whitespace-nowrap">
                           {cohort.cohort}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right text-content-secondary">
+                        <td className="text-content-secondary px-4 py-3 text-right whitespace-nowrap">
                           {cohort.totalCompanies}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right text-success-600 dark:text-success-500">
+                        <td className="text-success-600 dark:text-success-500 px-4 py-3 text-right whitespace-nowrap">
                           {cohort.activeCompanies}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right text-error-600 dark:text-error-400">
+                        <td className="text-error-600 dark:text-error-400 px-4 py-3 text-right whitespace-nowrap">
                           {cohort.churnedCompanies}
                         </td>
                         <td
                           className={cn(
-                            "whitespace-nowrap px-4 py-3 text-right font-semibold",
+                            "px-4 py-3 text-right font-semibold whitespace-nowrap",
                             getRetentionTextColor(cohort.retentionRate)
                           )}
                         >
                           {formatPercent(cohort.retentionRate)}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-content-primary">
+                        <td className="text-content-primary px-4 py-3 text-right font-medium whitespace-nowrap">
                           {formatCurrency(cohort.totalMrr)}
                         </td>
                         <td className="hidden px-4 py-3 lg:table-cell">
                           <div className="flex items-center gap-2">
-                            <div className="h-2.5 w-28 overflow-hidden rounded-full bg-bg-tertiary">
+                            <div className="bg-bg-tertiary h-2.5 w-28 overflow-hidden rounded-full">
                               <div
                                 className={cn(
                                   "h-full rounded-full transition-all",
@@ -521,7 +504,7 @@ export default function CohortsPage() {
                                 }}
                               />
                             </div>
-                            <span className="text-xs text-content-tertiary">
+                            <span className="text-content-tertiary text-xs">
                               {formatPercent(cohort.retentionRate)}
                             </span>
                           </div>
@@ -540,10 +523,10 @@ export default function CohortsPage() {
           <div className="card-sf p-4 sm:p-6">
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-content-primary">
+                <h3 className="text-content-primary text-lg font-semibold">
                   Segment Distribution by Cohort
                 </h3>
-                <p className="text-sm text-content-secondary">
+                <p className="text-content-secondary text-sm">
                   Customer segments within each cohort
                 </p>
               </div>
@@ -561,12 +544,9 @@ export default function CohortsPage() {
                     return (
                       <div key={segment} className="flex items-center gap-1.5">
                         <span
-                          className={cn(
-                            "h-2.5 w-2.5 rounded-full",
-                            colors[idx % colors.length]
-                          )}
+                          className={cn("h-2.5 w-2.5 rounded-full", colors[idx % colors.length])}
                         />
-                        <span className="text-xs text-content-secondary sm:text-sm">
+                        <span className="text-content-secondary text-xs sm:text-sm">
                           {segment || "Unknown"}
                         </span>
                       </div>
@@ -578,47 +558,41 @@ export default function CohortsPage() {
               {sortedCohorts.slice(0, 6).map((cohort) => (
                 <div key={cohort.cohort} className="group">
                   <div className="mb-1.5 flex items-center justify-between text-sm">
-                    <span className="font-medium text-content-primary">
-                      {cohort.cohort}
-                    </span>
-                    <span className="text-xs text-content-tertiary sm:text-sm">
+                    <span className="text-content-primary font-medium">{cohort.cohort}</span>
+                    <span className="text-content-tertiary text-xs sm:text-sm">
                       {cohort.totalCompanies} companies
                     </span>
                   </div>
-                  <div className="flex h-5 overflow-hidden rounded-lg bg-bg-tertiary sm:h-6">
-                    {Object.entries(cohort.segments).map(
-                      ([segment, count], idx) => {
-                        const percent =
-                          cohort.totalCompanies > 0
-                            ? (count / cohort.totalCompanies) * 100
-                            : 0
-                        const colors = [
-                          "bg-info-500 hover:bg-info-600",
-                          "bg-primary-500 hover:bg-primary-600",
-                          "bg-success-500 hover:bg-success-600",
-                          "bg-warning-500 hover:bg-warning-600",
-                          "bg-error-500 hover:bg-error-600",
-                        ]
-                        return (
-                          <div
-                            key={segment}
-                            className={cn(
-                              "relative flex items-center justify-center transition-all",
-                              colors[idx % colors.length],
-                              percent >= 15 && "group/seg"
-                            )}
-                            style={{ width: `${Math.max(percent, 1)}%` }}
-                            title={`${segment || "Unknown"}: ${count} (${Math.round(percent)}%)`}
-                          >
-                            {percent >= 15 && (
-                              <span className="hidden text-[10px] font-medium text-white sm:block">
-                                {Math.round(percent)}%
-                              </span>
-                            )}
-                          </div>
-                        )
-                      }
-                    )}
+                  <div className="bg-bg-tertiary flex h-5 overflow-hidden rounded-lg sm:h-6">
+                    {Object.entries(cohort.segments).map(([segment, count], idx) => {
+                      const percent =
+                        cohort.totalCompanies > 0 ? (count / cohort.totalCompanies) * 100 : 0
+                      const colors = [
+                        "bg-info-500 hover:bg-info-600",
+                        "bg-primary-500 hover:bg-primary-600",
+                        "bg-success-500 hover:bg-success-600",
+                        "bg-warning-500 hover:bg-warning-600",
+                        "bg-error-500 hover:bg-error-600",
+                      ]
+                      return (
+                        <div
+                          key={segment}
+                          className={cn(
+                            "relative flex items-center justify-center transition-all",
+                            colors[idx % colors.length],
+                            percent >= 15 && "group/seg"
+                          )}
+                          style={{ width: `${Math.max(percent, 1)}%` }}
+                          title={`${segment || "Unknown"}: ${count} (${Math.round(percent)}%)`}
+                        >
+                          {percent >= 15 && (
+                            <span className="hidden text-[10px] font-medium text-white sm:block">
+                              {Math.round(percent)}%
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               ))}

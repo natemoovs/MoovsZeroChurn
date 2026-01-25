@@ -78,10 +78,7 @@ export async function GET(request: NextRequest) {
       })
 
       if (!company) {
-        return NextResponse.json(
-          { error: "Company not found" },
-          { status: 404 }
-        )
+        return NextResponse.json({ error: "Company not found" }, { status: 404 })
       }
 
       const roiData = await calculateCompanyROI(company)
@@ -94,22 +91,15 @@ export async function GET(request: NextRequest) {
         take: 50,
       })
 
-      const roiData = await Promise.all(
-        companies.map((company) => calculateCompanyROI(company))
-      )
+      const roiData = await Promise.all(companies.map((company) => calculateCompanyROI(company)))
 
       // Calculate portfolio summary
       const totalMrr = roiData.reduce((sum, c) => sum + (c.mrr || 0), 0)
-      const totalLTV = roiData.reduce(
-        (sum, c) => sum + c.roi.lifetimeValue,
-        0
-      )
+      const totalLTV = roiData.reduce((sum, c) => sum + c.roi.lifetimeValue, 0)
       const avgLifetimeMonths =
-        roiData.reduce((sum, c) => sum + c.monthsAsCustomer, 0) /
-        roiData.length
+        roiData.reduce((sum, c) => sum + c.monthsAsCustomer, 0) / roiData.length
       const avgTripGrowth =
-        roiData.reduce((sum, c) => sum + c.metrics.tripGrowth, 0) /
-        roiData.length
+        roiData.reduce((sum, c) => sum + c.metrics.tripGrowth, 0) / roiData.length
 
       return NextResponse.json({
         companies: roiData,
@@ -125,35 +115,27 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("Failed to calculate ROI:", error)
-    return NextResponse.json(
-      { error: "Failed to calculate ROI" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to calculate ROI" }, { status: 500 })
   }
 }
 
-async function calculateCompanyROI(
-  company: {
-    hubspotId: string
-    name: string
-    domain: string | null
-    customerSegment: string | null
-    planCode: string | null
-    mrr: number | null
-    totalTrips: number | null
-    daysSinceLastLogin: number | null
-    healthScore: string | null
-    hubspotCreatedAt: Date | null
-    createdAt: Date
-  }
-): Promise<CompanyROI> {
+async function calculateCompanyROI(company: {
+  hubspotId: string
+  name: string
+  domain: string | null
+  customerSegment: string | null
+  planCode: string | null
+  mrr: number | null
+  totalTrips: number | null
+  daysSinceLastLogin: number | null
+  healthScore: string | null
+  hubspotCreatedAt: Date | null
+  createdAt: Date
+}): Promise<CompanyROI> {
   const customerSince = company.hubspotCreatedAt || company.createdAt
   const monthsAsCustomer = Math.max(
     1,
-    Math.floor(
-      (Date.now() - new Date(customerSince).getTime()) /
-        (1000 * 60 * 60 * 24 * 30)
-    )
+    Math.floor((Date.now() - new Date(customerSince).getTime()) / (1000 * 60 * 60 * 24 * 30))
   )
 
   const totalTrips = company.totalTrips || 0
@@ -170,29 +152,14 @@ async function calculateCompanyROI(
   const recentRevenue = mrr * 3
 
   const tripGrowth =
-    earlyTrips > 0
-      ? Math.round(((recentTrips - earlyTrips) / earlyTrips) * 100)
-      : 0
+    earlyTrips > 0 ? Math.round(((recentTrips - earlyTrips) / earlyTrips) * 100) : 0
   const revenueGrowth =
-    earlyRevenue > 0
-      ? Math.round(((recentRevenue - earlyRevenue) / earlyRevenue) * 100)
-      : 0
+    earlyRevenue > 0 ? Math.round(((recentRevenue - earlyRevenue) / earlyRevenue) * 100) : 0
 
   // Feature adoption (simulated based on segment)
   const featuresBySegment: Record<string, string[]> = {
-    enterprise: [
-      "API Integration",
-      "Custom Reporting",
-      "SSO",
-      "Dedicated Support",
-      "White Label",
-    ],
-    mid_market: [
-      "API Integration",
-      "Custom Reporting",
-      "Priority Support",
-      "Team Management",
-    ],
+    enterprise: ["API Integration", "Custom Reporting", "SSO", "Dedicated Support", "White Label"],
+    mid_market: ["API Integration", "Custom Reporting", "Priority Support", "Team Management"],
     smb: ["Basic Reporting", "Email Support", "Standard Features"],
     free: ["Trial Features"],
   }
@@ -206,8 +173,12 @@ async function calculateCompanyROI(
     Math.round(
       (totalTrips > 0 ? 30 : 0) +
         (tripsPerMonth > 5 ? 20 : tripsPerMonth > 1 ? 10 : 0) +
-        ((company.daysSinceLastLogin ?? 30) < 7 ? 30 : (company.daysSinceLastLogin ?? 30) < 14 ? 15 : 0) +
-        (featuresUsed.length * 5)
+        ((company.daysSinceLastLogin ?? 30) < 7
+          ? 30
+          : (company.daysSinceLastLogin ?? 30) < 14
+            ? 15
+            : 0) +
+        featuresUsed.length * 5
     )
   )
 
@@ -221,9 +192,7 @@ async function calculateCompanyROI(
     avgRevenuePerMonth: mrr,
     avgDaysBetweenLogins: company.daysSinceLastLogin || 0,
     lastLoginDate: company.daysSinceLastLogin
-      ? new Date(
-          Date.now() - (company.daysSinceLastLogin || 0) * 24 * 60 * 60 * 1000
-        ).toISOString()
+      ? new Date(Date.now() - (company.daysSinceLastLogin || 0) * 24 * 60 * 60 * 1000).toISOString()
       : null,
     featuresUsed,
     adoptionScore,

@@ -6,11 +6,11 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 
 ## Quick Reference
 
-| Variation | Decision Maker | Contract Length | CSM Priority |
-|-----------|----------------|-----------------|--------------|
-| **University** | Transportation Dir | 1-3 years (RFP) | Named CSM |
-| **Corporate** | Facilities Dir | 1-2 years | Named CSM |
-| **Operator** | Owner/GM | Annual | Pooled CSM |
+| Variation      | Decision Maker     | Contract Length | CSM Priority |
+| -------------- | ------------------ | --------------- | ------------ |
+| **University** | Transportation Dir | 1-3 years (RFP) | Named CSM    |
+| **Corporate**  | Facilities Dir     | 1-2 years       | Named CSM    |
+| **Operator**   | Owner/GM           | Annual          | Pooled CSM   |
 
 ---
 
@@ -26,12 +26,12 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 
 ### Churn Signals
 
-| Signal | Severity | Response |
-|--------|----------|----------|
-| RFP process announced | Critical | Competitive response |
-| New Transportation Director | High | Relationship building |
-| Student complaints about tracking | Medium | Feature adoption |
-| Budget cycle discussions | Medium | Value documentation |
+| Signal                            | Severity | Response              |
+| --------------------------------- | -------- | --------------------- |
+| RFP process announced             | Critical | Competitive response  |
+| New Transportation Director       | High     | Relationship building |
+| Student complaints about tracking | Medium   | Feature adoption      |
+| Budget cycle discussions          | Medium   | Value documentation   |
 
 ### Expansion Triggers
 
@@ -42,12 +42,12 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 
 ### Key Success Metrics
 
-| Metric | Target |
-|--------|--------|
-| Ridership utilization | >70% |
-| On-time performance | >95% |
-| Student satisfaction | >4.0/5 |
-| Administration NPS | >8 |
+| Metric                | Target |
+| --------------------- | ------ |
+| Ridership utilization | >70%   |
+| On-time performance   | >95%   |
+| Student satisfaction  | >4.0/5 |
+| Administration NPS    | >8     |
 
 ---
 
@@ -62,12 +62,12 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 
 ### Churn Signals
 
-| Signal | Severity | Response |
-|--------|----------|----------|
+| Signal                       | Severity | Response               |
+| ---------------------------- | -------- | ---------------------- |
 | Office closure/consolidation | Critical | Strategic conversation |
-| HR leadership change | High | New relationship |
-| Low ridership | Medium | Engagement analysis |
-| RTO policy change | Medium | Program impact review |
+| HR leadership change         | High     | New relationship       |
+| Low ridership                | Medium   | Engagement analysis    |
+| RTO policy change            | Medium   | Program impact review  |
 
 ### Expansion Triggers
 
@@ -78,12 +78,12 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 
 ### Key Success Metrics
 
-| Metric | Target |
-|--------|--------|
-| Employee adoption | >40% of eligible |
-| Route utilization | >60% |
-| Cost per rider | Declining |
-| ESG metrics reported | Yes |
+| Metric               | Target           |
+| -------------------- | ---------------- |
+| Employee adoption    | >40% of eligible |
+| Route utilization    | >60%             |
+| Cost per rider       | Declining        |
+| ESG metrics reported | Yes              |
 
 ---
 
@@ -98,12 +98,12 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 
 ### Churn Signals
 
-| Signal | Severity | Response |
-|--------|----------|----------|
-| Lost major contract | Critical | Business review |
-| Competitor offering better tools | High | Feature conversation |
-| Margins declining | Medium | Operational review |
-| Champion departure | Medium | Relationship building |
+| Signal                           | Severity | Response              |
+| -------------------------------- | -------- | --------------------- |
+| Lost major contract              | Critical | Business review       |
+| Competitor offering better tools | High     | Feature conversation  |
+| Margins declining                | Medium   | Operational review    |
+| Champion departure               | Medium   | Relationship building |
 
 ### Expansion Triggers
 
@@ -114,12 +114,12 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 
 ### Key Success Metrics
 
-| Metric | Target |
-|--------|--------|
+| Metric            | Target  |
+| ----------------- | ------- |
 | Contracts managed | Growing |
-| Client retention | >90% |
-| SLA compliance | >95% |
-| Margin visibility | Full |
+| Client retention  | >90%    |
+| SLA compliance    | >95%    |
+| Margin visibility | Full    |
 
 ---
 
@@ -127,13 +127,13 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 
 ### Different from Black Car
 
-| Aspect | Black Car | Shuttle |
-|--------|-----------|---------|
-| Sale cycle | Shorter | 3-6 months (RFP often) |
-| Relationship | Operator | Multi-stakeholder |
+| Aspect         | Black Car      | Shuttle                 |
+| -------------- | -------------- | ----------------------- |
+| Sale cycle     | Shorter        | 3-6 months (RFP often)  |
+| Relationship   | Operator       | Multi-stakeholder       |
 | Success metric | Trips, revenue | Ridership, satisfaction |
-| Churn timeline | Faster | Longer (contract-based) |
-| Expansion | Features | Routes, programs |
+| Churn timeline | Faster         | Longer (contract-based) |
+| Expansion      | Features       | Routes, programs        |
 
 ### Shuttle-Specific Approaches
 
@@ -146,6 +146,7 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 ### Language for Shuttle
 
 **Do:**
+
 - Ridership, capacity, utilization
 - Student/employee experience
 - On-time performance
@@ -153,6 +154,7 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 - Compliance, safety, reporting
 
 **Don't:**
+
 - Black Car language (VIP, chauffeur)
 - Private vehicle terminology
 - Trip-based thinking
@@ -165,17 +167,20 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 ### University Renewal Playbook
 
 **6 months out:**
+
 - Gather ridership data
 - Compile satisfaction surveys
 - Document safety/compliance metrics
 - Identify expansion opportunities
 
 **3 months out:**
+
 - Present annual review to Transportation Director
 - Propose multi-year renewal
 - Address any concerns proactively
 
 **RFP Response (if required):**
+
 - Reference similar universities
 - Differentiate on tracking/visibility
 - Include student testimonials
@@ -183,16 +188,18 @@ Shuttle customers have fundamentally different needs than Black Car — per-seat
 ### Corporate Shuttle Success Plan
 
 **Quarterly:**
+
 - Ridership analysis
 - Cost-per-rider trending
 - Employee satisfaction pulse
 - ESG reporting support
 
 **Annually:**
+
 - ROI documentation (vs. parking/stipends)
 - Program expansion recommendations
 - Renewal conversation
 
 ---
 
-*For detailed playbooks, see /csm-playbooks/*
+_For detailed playbooks, see /csm-playbooks/_

@@ -78,7 +78,7 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
       })
       if (res.ok) {
         // Refresh data
-        const result = await fetch(`/api/nps?companyId=${companyId}&days=365`).then(r => r.json())
+        const result = await fetch(`/api/nps?companyId=${companyId}&days=365`).then((r) => r.json())
         if (!result.error) setData(result)
       }
     } catch (error) {
@@ -90,7 +90,7 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-content-tertiary" />
+        <Loader2 className="text-content-tertiary h-6 w-6 animate-spin" />
       </div>
     )
   }
@@ -98,12 +98,10 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
   if (!data || data.distribution.total === 0) {
     return (
       <div className="card-sf p-6 text-center">
-        <MessageSquare className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
-        <p className="text-sm text-content-secondary">
-          No NPS responses yet
-        </p>
+        <MessageSquare className="text-content-tertiary mx-auto mb-2 h-8 w-8" />
+        <p className="text-content-secondary text-sm">No NPS responses yet</p>
         {showSendButton && (
-          <p className="mt-2 text-xs text-content-tertiary">
+          <p className="text-content-tertiary mt-2 text-xs">
             Send an NPS survey to collect feedback
           </p>
         )}
@@ -114,21 +112,28 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
   const { npsScore, distribution, responses, pending } = data
 
   // Calculate trend from responses
-  const recentResponses = responses.filter(r => r.score !== null).slice(0, 3)
-  const olderResponses = responses.filter(r => r.score !== null).slice(3, 6)
-  const recentAvg = recentResponses.length > 0
-    ? recentResponses.reduce((sum, r) => sum + (r.score || 0), 0) / recentResponses.length
-    : null
-  const olderAvg = olderResponses.length > 0
-    ? olderResponses.reduce((sum, r) => sum + (r.score || 0), 0) / olderResponses.length
-    : null
-  const trend = recentAvg && olderAvg
-    ? recentAvg > olderAvg ? "improving" : recentAvg < olderAvg ? "declining" : "stable"
-    : "unknown"
+  const recentResponses = responses.filter((r) => r.score !== null).slice(0, 3)
+  const olderResponses = responses.filter((r) => r.score !== null).slice(3, 6)
+  const recentAvg =
+    recentResponses.length > 0
+      ? recentResponses.reduce((sum, r) => sum + (r.score || 0), 0) / recentResponses.length
+      : null
+  const olderAvg =
+    olderResponses.length > 0
+      ? olderResponses.reduce((sum, r) => sum + (r.score || 0), 0) / olderResponses.length
+      : null
+  const trend =
+    recentAvg && olderAvg
+      ? recentAvg > olderAvg
+        ? "improving"
+        : recentAvg < olderAvg
+          ? "declining"
+          : "stable"
+      : "unknown"
 
   // Find detractors that need follow-up
   const detractorsNeedingFollowUp = responses.filter(
-    r => r.category === "detractor" && r.respondedAt && !r.followedUpAt
+    (r) => r.category === "detractor" && r.respondedAt && !r.followedUpAt
   )
 
   return (
@@ -136,39 +141,48 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
       {/* NPS Score Card */}
       <div className="card-sf p-5">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-content-primary">NPS Score</h3>
+          <h3 className="text-content-primary font-semibold">NPS Score</h3>
           {trend !== "unknown" && (
-            <div className={cn(
-              "flex items-center gap-1 text-xs font-medium",
-              trend === "improving" && "text-success-600 dark:text-success-400",
-              trend === "declining" && "text-error-600 dark:text-error-400",
-              trend === "stable" && "text-content-secondary"
-            )}>
-              {trend === "improving" ? <TrendingUp className="h-3 w-3" /> :
-               trend === "declining" ? <TrendingDown className="h-3 w-3" /> :
-               <Minus className="h-3 w-3" />}
+            <div
+              className={cn(
+                "flex items-center gap-1 text-xs font-medium",
+                trend === "improving" && "text-success-600 dark:text-success-400",
+                trend === "declining" && "text-error-600 dark:text-error-400",
+                trend === "stable" && "text-content-secondary"
+              )}
+            >
+              {trend === "improving" ? (
+                <TrendingUp className="h-3 w-3" />
+              ) : trend === "declining" ? (
+                <TrendingDown className="h-3 w-3" />
+              ) : (
+                <Minus className="h-3 w-3" />
+              )}
               {trend}
             </div>
           )}
         </div>
 
         <div className="mt-4 flex items-end gap-4">
-          <div className={cn(
-            "text-5xl font-bold",
-            npsScore !== null && npsScore >= 50 && "text-success-600 dark:text-success-400",
-            npsScore !== null && npsScore >= 0 && npsScore < 50 && "text-warning-600 dark:text-warning-400",
-            npsScore !== null && npsScore < 0 && "text-error-600 dark:text-error-400"
-          )}>
+          <div
+            className={cn(
+              "text-5xl font-bold",
+              npsScore !== null && npsScore >= 50 && "text-success-600 dark:text-success-400",
+              npsScore !== null &&
+                npsScore >= 0 &&
+                npsScore < 50 &&
+                "text-warning-600 dark:text-warning-400",
+              npsScore !== null && npsScore < 0 && "text-error-600 dark:text-error-400"
+            )}
+          >
             {npsScore !== null ? npsScore : "—"}
           </div>
-          <div className="mb-1 text-sm text-content-secondary">
-            {distribution.total} responses
-          </div>
+          <div className="text-content-secondary mb-1 text-sm">{distribution.total} responses</div>
         </div>
 
         {/* Distribution Bar */}
         <div className="mt-4">
-          <div className="flex h-3 overflow-hidden rounded-full bg-bg-tertiary">
+          <div className="bg-bg-tertiary flex h-3 overflow-hidden rounded-full">
             {distribution.promoters > 0 && (
               <div
                 className="bg-success-500"
@@ -188,17 +202,17 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
               />
             )}
           </div>
-          <div className="mt-2 flex justify-between text-xs text-content-secondary">
+          <div className="text-content-secondary mt-2 flex justify-between text-xs">
             <div className="flex items-center gap-1">
-              <ThumbsUp className="h-3 w-3 text-success-500" />
+              <ThumbsUp className="text-success-500 h-3 w-3" />
               <span>{distribution.promoters} promoters</span>
             </div>
             <div className="flex items-center gap-1">
-              <Minus className="h-3 w-3 text-warning-500" />
+              <Minus className="text-warning-500 h-3 w-3" />
               <span>{distribution.passives} passives</span>
             </div>
             <div className="flex items-center gap-1">
-              <ThumbsDown className="h-3 w-3 text-error-500" />
+              <ThumbsDown className="text-error-500 h-3 w-3" />
               <span>{distribution.detractors} detractors</span>
             </div>
           </div>
@@ -207,10 +221,10 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
 
       {/* Detractors Needing Follow-Up */}
       {detractorsNeedingFollowUp.length > 0 && (
-        <div className="rounded-xl border border-error-200 bg-error-50 p-4 dark:border-error-900 dark:bg-error-950/30">
+        <div className="border-error-200 bg-error-50 dark:border-error-900 dark:bg-error-950/30 rounded-xl border p-4">
           <div className="mb-3 flex items-center gap-2">
-            <ThumbsDown className="h-5 w-5 text-error-600 dark:text-error-400" />
-            <h3 className="font-semibold text-error-900 dark:text-error-200">
+            <ThumbsDown className="text-error-600 dark:text-error-400 h-5 w-5" />
+            <h3 className="text-error-900 dark:text-error-200 font-semibold">
               Detractors Needing Follow-Up
             </h3>
           </div>
@@ -218,18 +232,18 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
             {detractorsNeedingFollowUp.slice(0, 3).map((response) => (
               <div
                 key={response.id}
-                className="rounded-lg border border-error-200 bg-bg-elevated p-3 dark:border-error-800 dark:bg-error-950/50"
+                className="border-error-200 bg-bg-elevated dark:border-error-800 dark:bg-error-950/50 rounded-lg border p-3"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-medium text-content-primary">
+                    <p className="text-content-primary font-medium">
                       {response.contactName || response.contactEmail}
                     </p>
-                    <p className="text-sm text-content-secondary">
+                    <p className="text-content-secondary text-sm">
                       Score: {response.score}/10 • {formatDate(response.respondedAt!)}
                     </p>
                     {response.comment && (
-                      <p className="mt-2 text-sm italic text-content-secondary">
+                      <p className="text-content-secondary mt-2 text-sm italic">
                         &quot;{response.comment}&quot;
                       </p>
                     )}
@@ -239,7 +253,7 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
                     disabled={followingUp === response.id}
                     className={cn(
                       "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                      "bg-error-600 text-white hover:bg-error-700",
+                      "bg-error-600 hover:bg-error-700 text-white",
                       "disabled:opacity-50"
                     )}
                   >
@@ -258,48 +272,56 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
 
       {/* Recent Responses */}
       <div className="card-sf p-5">
-        <h3 className="mb-3 font-semibold text-content-primary">
-          Recent Responses
-        </h3>
+        <h3 className="text-content-primary mb-3 font-semibold">Recent Responses</h3>
         <div className="space-y-3">
           {responses.slice(0, 5).map((response) => (
             <div
               key={response.id}
-              className="flex items-center gap-3 rounded-lg border border-border-default p-3"
+              className="border-border-default flex items-center gap-3 rounded-lg border p-3"
             >
-              <div className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full",
-                response.category === "promoter" && "bg-success-100 text-success-600 dark:bg-success-900/30",
-                response.category === "passive" && "bg-warning-100 text-warning-600 dark:bg-warning-900/30",
-                response.category === "detractor" && "bg-error-100 text-error-600 dark:bg-error-900/30"
-              )}>
+              <div
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full",
+                  response.category === "promoter" &&
+                    "bg-success-100 text-success-600 dark:bg-success-900/30",
+                  response.category === "passive" &&
+                    "bg-warning-100 text-warning-600 dark:bg-warning-900/30",
+                  response.category === "detractor" &&
+                    "bg-error-100 text-error-600 dark:bg-error-900/30"
+                )}
+              >
                 {response.score !== null ? (
                   <span className="text-lg font-bold">{response.score}</span>
                 ) : (
-                  <Clock className="h-5 w-5 text-content-tertiary" />
+                  <Clock className="text-content-tertiary h-5 w-5" />
                 )}
               </div>
               <div className="flex-1">
-                <p className="font-medium text-content-primary">
+                <p className="text-content-primary font-medium">
                   {response.contactName || response.contactEmail}
                 </p>
-                <p className="text-sm text-content-secondary">
+                <p className="text-content-secondary text-sm">
                   {response.respondedAt ? formatDate(response.respondedAt) : "Pending response"}
                   {response.followedUpAt && (
-                    <span className="ml-2 inline-flex items-center gap-1 text-success-600 dark:text-success-400">
+                    <span className="text-success-600 dark:text-success-400 ml-2 inline-flex items-center gap-1">
                       <CheckCircle className="h-3 w-3" />
                       Followed up
                     </span>
                   )}
                 </p>
               </div>
-              <span className={cn(
-                "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                response.category === "promoter" && "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400",
-                response.category === "passive" && "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
-                response.category === "detractor" && "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
-                !response.category && "bg-bg-tertiary text-content-secondary"
-              )}>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                  response.category === "promoter" &&
+                    "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400",
+                  response.category === "passive" &&
+                    "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+                  response.category === "detractor" &&
+                    "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
+                  !response.category && "bg-bg-tertiary text-content-secondary"
+                )}
+              >
                 {response.category || "pending"}
               </span>
             </div>
@@ -307,7 +329,7 @@ export function NPSSummary({ companyId, showSendButton = true }: NPSSummaryProps
         </div>
 
         {pending > 0 && (
-          <p className="mt-3 text-center text-sm text-content-secondary">
+          <p className="text-content-secondary mt-3 text-center text-sm">
             {pending} surveys pending response
           </p>
         )}

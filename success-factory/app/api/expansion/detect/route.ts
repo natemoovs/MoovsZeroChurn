@@ -15,9 +15,7 @@ interface ExpansionSignal {
 /**
  * Detect expansion signals for a specific company
  */
-async function detectExpansionSignals(
-  companyId: string
-): Promise<ExpansionSignal[]> {
+async function detectExpansionSignals(companyId: string): Promise<ExpansionSignal[]> {
   const signals: ExpansionSignal[] = []
 
   // Get company data
@@ -109,17 +107,10 @@ async function detectExpansionSignals(
   // Signal 5: Long tenure without upgrade
   const customerSinceDate = company.hubspotCreatedAt || company.createdAt
   const monthsAsCustomer = customerSinceDate
-    ? Math.floor(
-        (Date.now() - new Date(customerSinceDate).getTime()) /
-          (1000 * 60 * 60 * 24 * 30)
-      )
+    ? Math.floor((Date.now() - new Date(customerSinceDate).getTime()) / (1000 * 60 * 60 * 24 * 30))
     : 0
 
-  if (
-    monthsAsCustomer > 12 &&
-    segment !== "enterprise" &&
-    company.healthScore === "green"
-  ) {
+  if (monthsAsCustomer > 12 && segment !== "enterprise" && company.healthScore === "green") {
     signals.push({
       type: "upsell",
       source: "csm_identified",
@@ -143,10 +134,7 @@ export async function GET(request: NextRequest) {
   const companyId = searchParams.get("companyId")
 
   if (!companyId) {
-    return NextResponse.json(
-      { error: "companyId is required" },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: "companyId is required" }, { status: 400 })
   }
 
   try {
@@ -179,9 +167,7 @@ export async function GET(request: NextRequest) {
     )
 
     // Filter out signals that already have opportunities
-    const newSignals = signals.filter(
-      (s) => !existingKeys.has(`${s.source}-${s.type}`)
-    )
+    const newSignals = signals.filter((s) => !existingKeys.has(`${s.source}-${s.type}`))
 
     return NextResponse.json({
       company,
@@ -191,10 +177,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Failed to detect expansion signals:", error)
-    return NextResponse.json(
-      { error: "Failed to detect signals" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to detect signals" }, { status: 500 })
   }
 }
 
@@ -233,10 +216,7 @@ export async function POST() {
 
       // Create new opportunities for high-confidence signals
       for (const signal of signals) {
-        if (
-          signal.confidence === "high" &&
-          !existingKeys.has(`${signal.source}-${signal.type}`)
-        ) {
+        if (signal.confidence === "high" && !existingKeys.has(`${signal.source}-${signal.type}`)) {
           await prisma.expansionOpportunity.create({
             data: {
               companyId: company.hubspotId,
@@ -266,9 +246,6 @@ export async function POST() {
     })
   } catch (error) {
     console.error("Failed to run expansion detection:", error)
-    return NextResponse.json(
-      { error: "Failed to run detection" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to run detection" }, { status: 500 })
   }
 }

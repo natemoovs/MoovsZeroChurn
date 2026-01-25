@@ -18,6 +18,7 @@ The problem skill is the FIRST step. Before you can shape a solution, you must d
 ## When to Use This Skill
 
 Use this skill when:
+
 - A customer requests a feature
 - Sales brings a new requirement
 - Someone on the team has an idea
@@ -34,11 +35,11 @@ Use this skill when:
 
 When someone says they need a feature, they've already jumped to a solution. Your job is to work backwards:
 
-| What You Hear | What You Ask | What You Discover |
-|--------------|--------------|-------------------|
+| What You Hear               | What You Ask                                   | What You Discover                                         |
+| --------------------------- | ---------------------------------------------- | --------------------------------------------------------- |
 | "We need a scheduler board" | "What happens when you try to schedule today?" | Dispatchers can't see driver availability alongside trips |
-| "Add a customer portal" | "What are customers calling you about?" | They want to change pickup times without calling |
-| "We need realtime tracking" | "When did you last lose track of a vehicle?" | Operations doesn't know if shuttles are running late |
+| "Add a customer portal"     | "What are customers calling you about?"        | They want to change pickup times without calling          |
+| "We need realtime tracking" | "When did you last lose track of a vehicle?"   | Operations doesn't know if shuttles are running late      |
 
 **The goal: Understand the pain so well that YOU can propose the right solution.**
 
@@ -59,19 +60,23 @@ You MUST conduct a focused interview before creating the problem.md. Use the que
 ### Interview Phases
 
 #### Phase 1: The Trigger (2-3 questions)
+
 - What specific event brought this problem to your attention?
 - Who raised this? Customer? Sales? Internal observation?
 
 #### Phase 2: The Story (3-5 questions)
+
 - Walk me through a specific recent instance of this problem
 - What did the person do? What went wrong? What was the consequence?
 
 #### Phase 3: The Scope (2-4 questions)
+
 - Who else experiences this? How often?
 - What's the cost of the status quo?
 - What workarounds exist today?
 
 #### Phase 4: The Stakes (2-3 questions)
+
 - What happens if we do nothing for 6 months?
 - Is this a burning platform or a nice-to-have?
 
@@ -80,6 +85,7 @@ You MUST conduct a focused interview before creating the problem.md. Use the que
 After the interview, generate a `problem.md` file following the template in [PROBLEM_TEMPLATE.md](PROBLEM_TEMPLATE.md).
 
 The document captures:
+
 1. **Source** - Where did this problem come from?
 2. **The Story** - A specific narrative showing the pain
 3. **Who's Affected** - The people experiencing this
@@ -103,6 +109,7 @@ When the user invokes this skill:
 ## After Problem Discovery
 
 Once you've created the `problem.md`, the user can:
+
 - Run `/shaping` to begin the full shaping process
 - Save it for future shaping sessions
 - Share it with the team for prioritization
@@ -113,14 +120,15 @@ The problem.md is an INPUT to shaping, not the final output. Keep it focused on 
 
 **When capturing problems, search the codebase to understand current state:**
 
-| Repo | Path | What to Look For |
-|------|------|------------------|
-| **server** | `/Users/amirghorbani/Dev/server` | Existing data models, APIs, business logic |
-| **dooms-operator** | `/Users/amirghorbani/Dev/dooms-operator` | Current UI/UX, existing workflows |
-| **dooms-customer** | `/Users/amirghorbani/Dev/dooms-customer` | Customer-facing features |
-| **dooms-native-driver** | `/Users/amirghorbani/Dev/dooms-native-driver` | Driver app capabilities |
+| Repo                    | Path                                          | What to Look For                           |
+| ----------------------- | --------------------------------------------- | ------------------------------------------ |
+| **server**              | `/Users/amirghorbani/Dev/server`              | Existing data models, APIs, business logic |
+| **dooms-operator**      | `/Users/amirghorbani/Dev/dooms-operator`      | Current UI/UX, existing workflows          |
+| **dooms-customer**      | `/Users/amirghorbani/Dev/dooms-customer`      | Customer-facing features                   |
+| **dooms-native-driver** | `/Users/amirghorbani/Dev/dooms-native-driver` | Driver app capabilities                    |
 
 During problem discovery:
+
 - Search repos to verify claims about current functionality
 - Find where existing workarounds live in the code
 - Understand what's already built that relates to the problem

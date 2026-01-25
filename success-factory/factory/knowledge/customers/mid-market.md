@@ -6,14 +6,14 @@ Growing transportation businesses with $250K-$1M revenue, 6-19 vehicles. Operato
 
 ## Quick Stats
 
-| Attribute | Value |
-|-----------|-------|
-| Revenue | $250K-$1M |
-| Fleet | 6-19 vehicles |
-| Drivers | 10-24 |
-| Budget | $250-$500/mo |
-| CSM Model | Pooled CSM |
-| Sales Cycle | 45 days |
+| Attribute   | Value         |
+| ----------- | ------------- |
+| Revenue     | $250K-$1M     |
+| Fleet       | 6-19 vehicles |
+| Drivers     | 10-24         |
+| Budget      | $250-$500/mo  |
+| CSM Model   | Pooled CSM    |
+| Sales Cycle | 45 days       |
 
 ---
 
@@ -30,14 +30,14 @@ Growing transportation businesses with $250K-$1M revenue, 6-19 vehicles. Operato
 
 ### Key Success Metrics
 
-| Metric | Healthy | At Risk |
-|--------|---------|---------|
-| Ops Manager logins | Daily | <3x/week |
-| Driver app adoption | >80% | <50% |
-| Trips/month | Growing 10%+ | Flat |
-| Features used | 8+ | <5 |
-| NPS | 8+ | <6 |
-| Expansion interest | Yes | No |
+| Metric              | Healthy      | At Risk  |
+| ------------------- | ------------ | -------- |
+| Ops Manager logins  | Daily        | <3x/week |
+| Driver app adoption | >80%         | <50%     |
+| Trips/month         | Growing 10%+ | Flat     |
+| Features used       | 8+           | <5       |
+| NPS                 | 8+           | <6       |
+| Expansion interest  | Yes          | No       |
 
 ### Success Milestones
 
@@ -52,30 +52,30 @@ Growing transportation businesses with $250K-$1M revenue, 6-19 vehicles. Operato
 
 ### Early Warning (Intervene Within Week)
 
-| Signal | Why It Matters | Response |
-|--------|----------------|----------|
-| **Champion leaves** | Lost advocate | Find new champion ASAP |
-| **Usage drops 30%+** | Something changed | Immediate check-in call |
-| **Support escalation** | Frustration peak | Executive attention |
+| Signal                        | Why It Matters    | Response                  |
+| ----------------------------- | ----------------- | ------------------------- |
+| **Champion leaves**           | Lost advocate     | Find new champion ASAP    |
+| **Usage drops 30%+**          | Something changed | Immediate check-in call   |
+| **Support escalation**        | Frustration peak  | Executive attention       |
 | **Competitor demo scheduled** | Active evaluation | Save call with leadership |
 
 ### Yellow Flags (Act Within 2 Weeks)
 
-| Signal | Why It Matters | Response |
-|--------|----------------|----------|
-| **Driver app adoption stalls** | Value not reaching field | Adoption push |
-| **Only basic features** | Not seeing full value | Feature adoption plan |
-| **Renewal hesitation** | Budget or satisfaction issue | Value review |
-| **Requests going ignored** | Feeling unheard | Product escalation |
+| Signal                         | Why It Matters               | Response              |
+| ------------------------------ | ---------------------------- | --------------------- |
+| **Driver app adoption stalls** | Value not reaching field     | Adoption push         |
+| **Only basic features**        | Not seeing full value        | Feature adoption plan |
+| **Renewal hesitation**         | Budget or satisfaction issue | Value review          |
+| **Requests going ignored**     | Feeling unheard              | Product escalation    |
 
 ### Red Flags (Immediate Save Protocol)
 
-| Signal | Why It Matters | Response |
-|--------|----------------|----------|
-| **"Not sure we're getting value"** | Direct churn signal | Save call |
-| **Asked for data export** | Exit planning | Executive escalation |
-| **Multiple team members leaving** | Organizational change | Relationship rebuild |
-| **Stopped renewing licenses** | Scaling back | Business review |
+| Signal                             | Why It Matters        | Response             |
+| ---------------------------------- | --------------------- | -------------------- |
+| **"Not sure we're getting value"** | Direct churn signal   | Save call            |
+| **Asked for data export**          | Exit planning         | Executive escalation |
+| **Multiple team members leaving**  | Organizational change | Relationship rebuild |
+| **Stopped renewing licenses**      | Scaling back          | Business review      |
 
 ---
 
@@ -119,23 +119,26 @@ Growing transportation businesses with $250K-$1M revenue, 6-19 vehicles. Operato
 
 ### When to Suggest Upgrade
 
-| Trigger | From | To | Why Now |
-|---------|------|-----|---------|
-| Hitting 20 vehicles | Pro | Enterprise | AI Scheduler value |
-| Won corporate contract | Pro | Pro + Insights | Reporting requirements |
-| Opening 2nd location | Pro | Enterprise | Multi-location needs |
-| Affiliate network growing | Pro | Enterprise | Farm-out management |
-| Manually importing trips | Any | AI Import | Time savings |
+| Trigger                   | From | To             | Why Now                |
+| ------------------------- | ---- | -------------- | ---------------------- |
+| Hitting 20 vehicles       | Pro  | Enterprise     | AI Scheduler value     |
+| Won corporate contract    | Pro  | Pro + Insights | Reporting requirements |
+| Opening 2nd location      | Pro  | Enterprise     | Multi-location needs   |
+| Affiliate network growing | Pro  | Enterprise     | Farm-out management    |
+| Manually importing trips  | Any  | AI Import      | Time savings           |
 
 ### Expansion Conversation Starters
 
 **Fleet growth:**
+
 > "You're at 18 vehicles now — when you hit 20, the AI Scheduler starts making a real difference. Operators save 3-4 hours daily on dispatch. Want to see it?"
 
 **Corporate accounts:**
+
 > "That new corporate contract is going to want reporting. Moovs Insights would let you generate those with one click instead of hours in spreadsheets."
 
 **Efficiency pain:**
+
 > "You mentioned spending 2 hours on trip imports every week. AI Import reads those manifests automatically. Most Mid-Market operators make this their first Enterprise add-on."
 
 ### What NOT to Push Too Early
@@ -154,16 +157,19 @@ Growing transportation businesses with $250K-$1M revenue, 6-19 vehicles. Operato
 **Goal:** Full team adoption, measurable efficiency gains
 
 **Week 1-2:**
+
 - Kick-off call with Ops Manager
 - Team training scheduled
 - Success metrics defined
 
 **Week 3-4:**
+
 - Driver app rollout
 - First health check
 - Address adoption blockers
 
 **Week 5-8:**
+
 - 30-day review call
 - Efficiency comparison (before/after)
 - Feature gap identification
@@ -171,11 +177,13 @@ Growing transportation businesses with $250K-$1M revenue, 6-19 vehicles. Operato
 ### Ongoing (Pooled CSM)
 
 **Monthly:**
+
 - Health score review
 - Proactive outreach for yellow flags
 - Feature adoption tracking
 
 **Quarterly:**
+
 - QBR with champion
 - ROI review
 - Expansion opportunity assessment
@@ -183,15 +191,18 @@ Growing transportation businesses with $250K-$1M revenue, 6-19 vehicles. Operato
 ### Renewal (Annual)
 
 **90 days out:**
+
 - Business review meeting
 - Value documentation
 - Expansion conversation
 
 **60 days out:**
+
 - Renewal proposal
 - Address concerns
 
 **30 days out:**
+
 - Close renewal
 - Escalate if at-risk
 
@@ -258,15 +269,15 @@ Growing transportation businesses with $250K-$1M revenue, 6-19 vehicles. Operato
 
 ## Key Metrics to Track
 
-| Metric | Definition | Target |
-|--------|------------|--------|
-| **Champion health** | Is champion engaged? | Yes |
-| **Driver adoption** | % drivers using app | >80% |
-| **Feature adoption** | Core features used | 8+ |
-| **Growth rate** | QoQ trip/vehicle growth | >5% |
-| **NPS** | Net Promoter Score | >8 |
-| **Expansion revenue** | % of base ARR | >10% |
+| Metric                | Definition              | Target |
+| --------------------- | ----------------------- | ------ |
+| **Champion health**   | Is champion engaged?    | Yes    |
+| **Driver adoption**   | % drivers using app     | >80%   |
+| **Feature adoption**  | Core features used      | 8+     |
+| **Growth rate**       | QoQ trip/vehicle growth | >5%    |
+| **NPS**               | Net Promoter Score      | >8     |
+| **Expansion revenue** | % of base ARR           | >10%   |
 
 ---
 
-*For playbooks on specific scenarios, see /csm-playbooks/*
+_For playbooks on specific scenarios, see /csm-playbooks/_

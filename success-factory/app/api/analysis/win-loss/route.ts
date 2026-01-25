@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Dedupe saves by company
-    const savesByCompany = new Map<string, typeof potentialSaves[0]>()
+    const savesByCompany = new Map<string, (typeof potentialSaves)[0]>()
     for (const save of potentialSaves) {
       if (!savesByCompany.has(save.companyId)) {
         savesByCompany.set(save.companyId, save)
@@ -109,7 +109,11 @@ export async function GET(request: NextRequest) {
         netMrrImpact: savedMrr - churnedMrr,
       },
       churnReasons: Object.entries(churnReasons)
-        .map(([reason, count]) => ({ reason, count, percentage: Math.round((count / churns.length) * 100) }))
+        .map(([reason, count]) => ({
+          reason,
+          count,
+          percentage: Math.round((count / churns.length) * 100),
+        }))
         .sort((a, b) => b.count - a.count),
       topFeatureGaps: Object.entries(featureGaps)
         .map(([feature, count]) => ({ feature, count }))
@@ -143,10 +147,16 @@ export async function GET(request: NextRequest) {
 ### Losses (Churns): ${churns.length} accounts, $${churnedMrr.toLocaleString()} MRR lost
 
 Top Churn Reasons:
-${analysis.churnReasons.slice(0, 5).map((r) => `- ${r.reason}: ${r.count} (${r.percentage}%)`).join("\n")}
+${analysis.churnReasons
+  .slice(0, 5)
+  .map((r) => `- ${r.reason}: ${r.count} (${r.percentage}%)`)
+  .join("\n")}
 
 Feature Gaps Mentioned:
-${analysis.topFeatureGaps.slice(0, 5).map((f) => `- ${f.feature}: ${f.count} mentions`).join("\n")}
+${analysis.topFeatureGaps
+  .slice(0, 5)
+  .map((f) => `- ${f.feature}: ${f.count} mentions`)
+  .join("\n")}
 
 Competitors Won Against Us:
 ${analysis.topCompetitors.map((c) => `- ${c.name}: ${c.count} losses`).join("\n") || "- No competitor data"}
@@ -156,7 +166,10 @@ ${analysis.topCompetitors.map((c) => `- ${c.name}: ${c.count} losses`).join("\n"
 Save Rate: ${Math.round(saveRate)}%
 
 Recent Saves:
-${saves.slice(0, 5).map((s) => `- ${s.company?.name}: went from red to ${s.newScore}`).join("\n")}
+${saves
+  .slice(0, 5)
+  .map((s) => `- ${s.company?.name}: went from red to ${s.newScore}`)
+  .join("\n")}
 `
 
       const response = await anthropic.messages.create({

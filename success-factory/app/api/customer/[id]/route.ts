@@ -35,10 +35,7 @@ function sanitizeIdForSql(id: string | null | undefined): string | null {
  * - Operator ID
  * - Stripe account ID
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // Require authentication
   const authResult = await requireAuth()
   if (isAuthError(authResult)) return authResult
@@ -53,11 +50,7 @@ export async function GET(
     // First, try to find in local database
     let company = await prisma.hubSpotCompany.findFirst({
       where: {
-        OR: [
-          { hubspotId: id },
-          { operatorId: id },
-          { stripeAccountId: id },
-        ],
+        OR: [{ hubspotId: id }, { operatorId: id }, { stripeAccountId: id }],
       },
     })
 
@@ -74,10 +67,7 @@ export async function GET(
     }
 
     if (!company) {
-      return NextResponse.json(
-        { error: "Customer not found", searchedFor: id },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Customer not found", searchedFor: id }, { status: 404 })
     }
 
     // Get reservation details and TRENDS from Metabase if we have operator ID
@@ -134,7 +124,7 @@ export async function GET(
 
         if (trendRows.length > 0) {
           // Calculate month-over-month change
-          const months = trendRows.map(r => ({
+          const months = trendRows.map((r) => ({
             month: r.month,
             reservations: (r.reservations as number) || 0,
             revenue: (r.revenue as number) || 0,
@@ -220,17 +210,14 @@ export async function GET(
     if (process.env.NOTION_API_KEY) {
       try {
         const tickets = await notion.searchTicketsByCustomer(company.name)
-        const openTickets = tickets.filter(t =>
-          t.status !== "Done" && t.status !== "Archived"
-        )
+        const openTickets = tickets.filter((t) => t.status !== "Done" && t.status !== "Archived")
 
         supportTickets = {
           total: tickets.length,
           open: openTickets.length,
-          highPriority: openTickets.filter(t =>
-            t.priority === "High" || t.priority === "Urgent"
-          ).length,
-          recentTickets: tickets.slice(0, 5).map(t => ({
+          highPriority: openTickets.filter((t) => t.priority === "High" || t.priority === "Urgent")
+            .length,
+          recentTickets: tickets.slice(0, 5).map((t) => ({
             id: t.id,
             title: t.title,
             status: t.status,
@@ -325,7 +312,10 @@ export async function GET(
   } catch (error) {
     console.error("Customer research failed:", error)
     return NextResponse.json(
-      { error: "Failed to fetch customer data", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Failed to fetch customer data",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }

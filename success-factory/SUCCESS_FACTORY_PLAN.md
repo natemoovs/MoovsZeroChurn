@@ -7,6 +7,7 @@
 ## Current State
 
 ### What We Have (Success Factory)
+
 - Health score tracking (green/yellow/red)
 - HubSpot sync for customer data
 - NPS surveys via email
@@ -16,20 +17,21 @@
 
 ### What We Gained (moovs-factory)
 
-| Asset | Value for CSM |
-|-------|---------------|
-| **MCPs** | HubSpot, Notion, Slack, Metabase, Stripe - real-time data |
-| **Customer Research Skill** | Deep 360° account analysis methodology |
-| **Problem Skill** | Structured churn reason documentation |
-| **Tickets Skill** | Track at-risk accounts in Notion |
-| **Knowledge Base** | Customer segments, product context |
-| **Notion Scripts** | Bypass MCP limitations, create tickets/tasks |
+| Asset                       | Value for CSM                                             |
+| --------------------------- | --------------------------------------------------------- |
+| **MCPs**                    | HubSpot, Notion, Slack, Metabase, Stripe - real-time data |
+| **Customer Research Skill** | Deep 360° account analysis methodology                    |
+| **Problem Skill**           | Structured churn reason documentation                     |
+| **Tickets Skill**           | Track at-risk accounts in Notion                          |
+| **Knowledge Base**          | Customer segments, product context                        |
+| **Notion Scripts**          | Bypass MCP limitations, create tickets/tasks              |
 
 ---
 
 ## The Plan: 3 Phases
 
 ### Phase 1: Enhanced Data Integration ✅ COMPLETE
+
 **Goal:** Connect real data sources for smarter insights
 
 - [x] **Fix HubSpot Sync** - Fixed env variable naming (HUBSPOT_ACCESS_TOKEN)
@@ -39,6 +41,7 @@
 - [x] **Customer 360 Endpoint** - Unified view combining all data sources
 
 **New Capabilities:**
+
 - Real usage trends (not just "last login")
 - Payment failure early warning
 - CSM task tracking with full context
@@ -47,6 +50,7 @@
 ---
 
 ### Phase 2: AI-Powered Customer Intelligence ✅ COMPLETE
+
 **Goal:** Proactive churn detection and intervention
 
 1. **Deep Customer Research Agent** ✅
@@ -68,17 +72,19 @@
 ---
 
 ### Phase 3: Autonomous AI Agents ✅ COMPLETE
+
 **Goal:** AI that works while you sleep
 
-| Agent | Trigger | Action |
-|-------|---------|--------|
-| **Health Monitor** ✅ | Daily cron (6 AM UTC) | Scan all accounts, flag changes, create tasks |
-| **Pre-QBR Prep** ✅ | Weekly (Mon 7 AM UTC) | Generate account brief with talking points |
-| **Renewal Risk** ✅ | Weekly (Sun 8 AM UTC) | Deep analysis + intervention playbook |
-| **Payment Recovery** ✅ | Daily (9 AM UTC) | Auto-outreach sequence + escalation |
-| **Win-Back** ✅ | Weekly (Thu 10 AM UTC) | 30/60/90 day check-in sequence |
+| Agent                   | Trigger                | Action                                        |
+| ----------------------- | ---------------------- | --------------------------------------------- |
+| **Health Monitor** ✅   | Daily cron (6 AM UTC)  | Scan all accounts, flag changes, create tasks |
+| **Pre-QBR Prep** ✅     | Weekly (Mon 7 AM UTC)  | Generate account brief with talking points    |
+| **Renewal Risk** ✅     | Weekly (Sun 8 AM UTC)  | Deep analysis + intervention playbook         |
+| **Payment Recovery** ✅ | Daily (9 AM UTC)       | Auto-outreach sequence + escalation           |
+| **Win-Back** ✅         | Weekly (Thu 10 AM UTC) | 30/60/90 day check-in sequence                |
 
 **How Agents Work:**
+
 ```
 [Scheduled Trigger or Event]
     ↓
@@ -132,6 +138,7 @@
 ## Progress Log
 
 ### 2026-01-21
+
 - [x] Synced moovs-factory upstream (MCPs, skills, knowledge)
 - [x] Created enhancement plan
 - [x] Phase 1: Fixed HubSpot env variable naming

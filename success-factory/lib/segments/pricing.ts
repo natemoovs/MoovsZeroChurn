@@ -217,9 +217,16 @@ export function identifyPricingTier(planName: string | null): PricingTier {
 
   // Fuzzy matching for variations
   if (plan.includes("free") || plan.includes("trial")) return "free"
-  if (plan.includes("enterprise") || plan.includes("custom") || plan.includes("vip") || plan.includes("elite")) return "enterprise"
+  if (
+    plan.includes("enterprise") ||
+    plan.includes("custom") ||
+    plan.includes("vip") ||
+    plan.includes("elite")
+  )
+    return "enterprise"
   if (plan.includes("pro") || plan.includes("professional")) return "pro"
-  if (plan.includes("standard") || plan.includes("starter") || plan.includes("basic")) return "standard"
+  if (plan.includes("standard") || plan.includes("starter") || plan.includes("basic"))
+    return "standard"
 
   return "unknown"
 }
@@ -296,7 +303,7 @@ export function checkPlanMisalignment(
       currentTier,
       recommendedTier,
       reason: "Plan matches segment and usage",
-      "revenueImpact": "aligned",
+      revenueImpact: "aligned",
       urgency: "low",
     }
   }
@@ -312,7 +319,10 @@ export function checkPlanMisalignment(
     } else if (segment === "mid_market" && currentTier === "free") {
       reason = `Mid-Market customer on Free plan - missing revenue opportunity`
       urgency = "high"
-    } else if (currentTier === "free" && (vehicleCount && vehicleCount > 10 || driverCount && driverCount > 10)) {
+    } else if (
+      currentTier === "free" &&
+      ((vehicleCount && vehicleCount > 10) || (driverCount && driverCount > 10))
+    ) {
       reason = `Exceeding Free tier limits (${vehicleCount} vehicles, ${driverCount} drivers) - upgrade conversation needed`
       urgency = "high"
     } else {
@@ -325,7 +335,7 @@ export function checkPlanMisalignment(
       currentTier,
       recommendedTier,
       reason,
-      "revenueImpact": "undermonetized",
+      revenueImpact: "undermonetized",
       urgency,
     }
   }
@@ -336,7 +346,7 @@ export function checkPlanMisalignment(
     currentTier,
     recommendedTier,
     reason: `Customer on ${PRICING_TIERS[currentTier].name} but usage suggests ${PRICING_TIERS[recommendedTier].name} - potential churn risk if not getting value`,
-    "revenueImpact": "at_risk",
+    revenueImpact: "at_risk",
     urgency: "medium",
   }
 }
@@ -368,7 +378,13 @@ export function identifyUpsellOpportunities(
   const segment = classifySegment(mrr)
 
   // Tier upgrade opportunity
-  const misalignment = checkPlanMisalignment(mrr, currentPlan, vehicleCount, driverCount, monthlyTrips)
+  const misalignment = checkPlanMisalignment(
+    mrr,
+    currentPlan,
+    vehicleCount,
+    driverCount,
+    monthlyTrips
+  )
   if (misalignment.isMisaligned && misalignment["revenueImpact"] === "undermonetized") {
     const recommendedConfig = PRICING_TIERS[misalignment.recommendedTier]
     opportunities.push({
@@ -390,7 +406,8 @@ export function identifyUpsellOpportunities(
         name: "Shuttle Platform",
         currentValue: 0,
         potentialValue: 499,
-        reason: "High trip volume suggests shuttle operations could benefit from dedicated platform",
+        reason:
+          "High trip volume suggests shuttle operations could benefit from dedicated platform",
         signals: [`${vehicleCount} vehicles`, `${monthlyTrips} monthly trips`],
       })
     }
@@ -422,7 +439,11 @@ export function identifyUpsellOpportunities(
     }
 
     // Insights - for data-driven operators
-    if ((currentTier === "pro" || currentTier === "enterprise") && monthlyTrips && monthlyTrips >= 30) {
+    if (
+      (currentTier === "pro" || currentTier === "enterprise") &&
+      monthlyTrips &&
+      monthlyTrips >= 30
+    ) {
       opportunities.push({
         type: "add_on",
         name: "Moovs Insights",

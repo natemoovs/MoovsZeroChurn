@@ -5,10 +5,7 @@ import { prisma } from "@/lib/db"
  * PATCH /api/tasks/[id]/company
  * Update the company association for a task
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await request.json()
@@ -23,10 +20,7 @@ export async function PATCH(
     if (!resolvedCompanyName) {
       const company = await prisma.hubSpotCompany.findFirst({
         where: {
-          OR: [
-            { hubspotId: companyId },
-            { id: companyId },
-          ],
+          OR: [{ hubspotId: companyId }, { id: companyId }],
         },
         select: { name: true, hubspotId: true },
       })

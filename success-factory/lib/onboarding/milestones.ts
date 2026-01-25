@@ -86,7 +86,7 @@ export const MILESTONES: MilestoneDefinition[] = [
 export function getMilestonesForSegment(segment: string): MilestoneDefinition[] {
   const normalizedSegment = segment?.toLowerCase().replace("-", "_") || "free"
 
-  return MILESTONES.filter(m =>
+  return MILESTONES.filter((m) =>
     m.requiredFor.includes(normalizedSegment as "free" | "smb" | "mid_market" | "enterprise")
   )
 }
@@ -101,9 +101,7 @@ export function calculateOnboardingProgress(
   const required = getMilestonesForSegment(segment)
   if (required.length === 0) return 100
 
-  const completedCount = required.filter(m =>
-    completedMilestones.includes(m.id)
-  ).length
+  const completedCount = required.filter((m) => completedMilestones.includes(m.id)).length
 
   return Math.round((completedCount / required.length) * 100)
 }
@@ -117,7 +115,7 @@ export function getNextMilestone(
 ): MilestoneDefinition | null {
   const required = getMilestonesForSegment(segment)
 
-  return required.find(m => !completedMilestones.includes(m.id)) || null
+  return required.find((m) => !completedMilestones.includes(m.id)) || null
 }
 
 /**
@@ -130,9 +128,7 @@ export function isMilestoneOverdue(
 ): boolean {
   if (completedAt) return false
 
-  const daysSinceSignup = Math.floor(
-    (Date.now() - signupDate.getTime()) / (1000 * 60 * 60 * 24)
-  )
+  const daysSinceSignup = Math.floor((Date.now() - signupDate.getTime()) / (1000 * 60 * 60 * 24))
 
   return daysSinceSignup > milestone.targetDays
 }
@@ -154,19 +150,15 @@ export function getOnboardingStatus(
   const required = getMilestonesForSegment(segment)
   const progress = calculateOnboardingProgress(completedMilestones, segment)
 
-  const overdue = required.filter(m =>
-    isMilestoneOverdue(m, signupDate,
-      completedMilestones.includes(m.id) ? new Date() : null
-    )
+  const overdue = required.filter((m) =>
+    isMilestoneOverdue(m, signupDate, completedMilestones.includes(m.id) ? new Date() : null)
   )
 
   const nextMilestone = getNextMilestone(completedMilestones, segment)
 
   let daysToNextDeadline: number | null = null
   if (nextMilestone) {
-    const daysSinceSignup = Math.floor(
-      (Date.now() - signupDate.getTime()) / (1000 * 60 * 60 * 24)
-    )
+    const daysSinceSignup = Math.floor((Date.now() - signupDate.getTime()) / (1000 * 60 * 60 * 24))
     daysToNextDeadline = nextMilestone.targetDays - daysSinceSignup
   }
 

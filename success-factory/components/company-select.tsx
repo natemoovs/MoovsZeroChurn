@@ -17,7 +17,11 @@ interface CompanySelectProps {
   placeholder?: string
 }
 
-export function CompanySelect({ value, onChange, placeholder = "Search companies..." }: CompanySelectProps) {
+export function CompanySelect({
+  value,
+  onChange,
+  placeholder = "Search companies...",
+}: CompanySelectProps) {
   const [query, setQuery] = useState(value)
   const [companies, setCompanies] = useState<Company[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -33,7 +37,9 @@ export function CompanySelect({ value, onChange, placeholder = "Search companies
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/integrations/hubspot/companies?q=${encodeURIComponent(searchQuery)}`)
+      const response = await fetch(
+        `/api/integrations/hubspot/companies?q=${encodeURIComponent(searchQuery)}`
+      )
       const data = await response.json()
       setIsConfigured(data.configured)
       setCompanies(data.companies || [])
@@ -91,11 +97,7 @@ export function CompanySelect({ value, onChange, placeholder = "Search companies
   // If HubSpot isn't configured, just show a regular input
   if (isConfigured === false) {
     return (
-      <Input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-      />
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
     )
   }
 
@@ -109,23 +111,21 @@ export function CompanySelect({ value, onChange, placeholder = "Search companies
         placeholder={isConfigured ? "Type to search HubSpot..." : placeholder}
       />
 
-      {showDropdown && (query.length >= 2) && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-border-default bg-bg-elevated shadow-lg">
+      {showDropdown && query.length >= 2 && (
+        <div className="border-border-default bg-bg-elevated absolute z-50 mt-1 w-full rounded-md border shadow-lg">
           {isLoading ? (
-            <div className="px-4 py-3 text-sm text-content-secondary">Searching...</div>
+            <div className="text-content-secondary px-4 py-3 text-sm">Searching...</div>
           ) : companies.length > 0 ? (
             <ul className="max-h-60 overflow-auto py-1">
               {companies.map((company) => (
                 <li
                   key={company.id}
-                  className="cursor-pointer px-4 py-2 hover:bg-surface-hover"
+                  className="hover:bg-surface-hover cursor-pointer px-4 py-2"
                   onClick={() => handleSelect(company)}
                 >
-                  <div className="font-medium text-content-primary">
-                    {company.name}
-                  </div>
+                  <div className="text-content-primary font-medium">{company.name}</div>
                   {(company.domain || company.industry) && (
-                    <div className="text-sm text-content-secondary">
+                    <div className="text-content-secondary text-sm">
                       {[company.domain, company.industry].filter(Boolean).join(" · ")}
                     </div>
                   )}
@@ -133,7 +133,7 @@ export function CompanySelect({ value, onChange, placeholder = "Search companies
               ))}
             </ul>
           ) : (
-            <div className="px-4 py-3 text-sm text-content-secondary">
+            <div className="text-content-secondary px-4 py-3 text-sm">
               No companies found. Type more to search or enter manually.
             </div>
           )}

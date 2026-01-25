@@ -167,10 +167,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("NPS comment error:", error)
-    return NextResponse.json(
-      { error: "Failed to save comment" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to save comment" }, { status: 500 })
   }
 }
 
@@ -202,11 +199,12 @@ function renderPage(title: string, message: string, type: "success" | "error"): 
 
 function renderThankYouPage(token: string, score: number, category: string): string {
   const emoji = category === "promoter" ? "🎉" : category === "passive" ? "👍" : "🙏"
-  const message = category === "promoter"
-    ? "We're thrilled you're having a great experience!"
-    : category === "passive"
-    ? "Thanks for your feedback!"
-    : "We're sorry to hear that. We'd love to make things right."
+  const message =
+    category === "promoter"
+      ? "We're thrilled you're having a great experience!"
+      : category === "passive"
+        ? "Thanks for your feedback!"
+        : "We're sorry to hear that. We'd love to make things right."
 
   return `
     <!DOCTYPE html>

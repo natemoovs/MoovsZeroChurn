@@ -55,9 +55,7 @@ export async function GET(
     })
 
     // Calculate overall status
-    const completedIds = milestones
-      .filter((m) => m.completedAt)
-      .map((m) => m.milestone)
+    const completedIds = milestones.filter((m) => m.completedAt).map((m) => m.milestone)
 
     const signupDate = company.hubspotCreatedAt || company.createdAt
     const status = getOnboardingStatus(completedIds, segment, signupDate)
@@ -72,10 +70,7 @@ export async function GET(
     })
   } catch (error) {
     console.error("Failed to get onboarding status:", error)
-    return NextResponse.json(
-      { error: "Failed to get onboarding status" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to get onboarding status" }, { status: 500 })
   }
 }
 
@@ -194,9 +189,6 @@ export async function POST(
     return NextResponse.json({ error: "Invalid action" }, { status: 400 })
   } catch (error) {
     console.error("Failed to update onboarding:", error)
-    return NextResponse.json(
-      { error: "Failed to update onboarding" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to update onboarding" }, { status: 500 })
   }
 }

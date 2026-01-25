@@ -8,14 +8,15 @@ export async function GET(request: NextRequest) {
   try {
     // Search local database for companies
     const companies = await prisma.hubSpotCompany.findMany({
-      where: query && query.length >= 2
-        ? {
-            OR: [
-              { name: { contains: query, mode: "insensitive" } },
-              { domain: { contains: query, mode: "insensitive" } },
-            ],
-          }
-        : {},
+      where:
+        query && query.length >= 2
+          ? {
+              OR: [
+                { name: { contains: query, mode: "insensitive" } },
+                { domain: { contains: query, mode: "insensitive" } },
+              ],
+            }
+          : {},
       orderBy: { mrr: "desc" },
       take: 20,
       select: {

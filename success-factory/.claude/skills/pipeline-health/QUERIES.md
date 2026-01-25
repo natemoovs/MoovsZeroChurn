@@ -265,20 +265,22 @@ ORDER BY WIN_RATE DESC
 
 When filtering by pipeline, use these exact values:
 
-| Shorthand | Full Pipeline Name |
-|-----------|-------------------|
-| smb | `SMB pipeline` |
-| midmarket | `Mid-market pipeline` |
+| Shorthand  | Full Pipeline Name    |
+| ---------- | --------------------- |
+| smb        | `SMB pipeline`        |
+| midmarket  | `Mid-market pipeline` |
 | enterprise | `Enterprise pipeline` |
-| addon | `Add-on pipeline` |
+| addon      | `Add-on pipeline`     |
 
 ## Stage Name Reference
 
 **Closed/Won Stages (exclude from active pipeline):**
+
 - `%closed%` - Any closed stage
 - `%paid%` - Paid Account
 - `%onboarded%` - Fully Onboarded
 - `%won%` - Closed Won
 
 **Active Stages (include in pipeline):**
+
 - Everything else not matching above patterns

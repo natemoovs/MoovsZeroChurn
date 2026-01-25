@@ -30,6 +30,7 @@ Generate a quick health summary for a customer account to prep for a call or QBR
 ## Required Knowledge
 
 Before generating, the skill loads:
+
 - @knowledge/success-factory/csm-playbook.md - Best practices for customer success conversations
 - @knowledge/success-factory/health-scoring.md - How to interpret health signals
 
@@ -38,27 +39,35 @@ Before generating, the skill loads:
 ## Questions
 
 ### customerName: What's the customer name and any relevant account context?
+
 Examples:
+
 - Acme Corp - Enterprise, 18 months tenure, $50K ARR
 - Smith & Co - Mid-market, just renewed last quarter
 - TechStart Inc - SMB, 6 months in, growing fast
 
 ### meetingType: What type of meeting is this?
+
 Examples:
+
 - Check-in call (regular touch-base)
 - QBR (Quarterly Business Review)
 - Renewal discussion
 - Escalation / save call
 
 ### winsAndIssues: Any known wins or issues to highlight?
+
 Examples:
+
 - Win: Successfully launched their second location using our platform
 - Win: Reduced churn by 15% since implementing our recommendations
 - Issue: Support tickets up 40% this month
 - Issue: Champion left the company, need to rebuild relationships
 
 ### rawData: Paste any usage stats, support tickets, or other data you have
+
 Examples:
+
 - Login frequency: Daily active for 28/30 days
 - Feature adoption: Using 8/12 core features
 - Support: 3 tickets this month (2 resolved, 1 pending)
@@ -83,12 +92,12 @@ The summary should be concise (1 page max) and actionable.
 
 ## Account Snapshot
 
-| Metric | Value | Trend |
-|--------|-------|-------|
-| Health Score | [Calculated] | [Up/Down/Stable] |
-| Tenure | [From context] | - |
-| ARR | [From context] | - |
-| Last Contact | [If known] | - |
+| Metric       | Value          | Trend            |
+| ------------ | -------------- | ---------------- |
+| Health Score | [Calculated]   | [Up/Down/Stable] |
+| Tenure       | [From context] | -                |
+| ARR          | [From context] | -                |
+| Last Contact | [If known]     | -                |
 
 ---
 
@@ -103,10 +112,10 @@ The summary should be concise (1 page max) and actionable.
 
 ## Risk Signals to Address
 
-| Signal | Severity | Recommended Action |
-|--------|----------|-------------------|
-| [Issue 1] | High/Medium/Low | [Specific action] |
-| [Issue 2] | High/Medium/Low | [Specific action] |
+| Signal    | Severity        | Recommended Action |
+| --------- | --------------- | ------------------ |
+| [Issue 1] | High/Medium/Low | [Specific action]  |
+| [Issue 2] | High/Medium/Low | [Specific action]  |
 
 > **Talking Point:** "I noticed [signal]. I'd love to understand more about [probe question]."
 

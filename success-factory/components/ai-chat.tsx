@@ -119,9 +119,7 @@ export function AIChat() {
               if (event.type === "text") {
                 setMessages((prev) =>
                   prev.map((m) =>
-                    m.id === assistantId
-                      ? { ...m, content: m.content + (event.content || "") }
-                      : m
+                    m.id === assistantId ? { ...m, content: m.content + (event.content || "") } : m
                   )
                 )
               } else if (event.type === "tool_start" || event.type === "tool_executing") {
@@ -139,9 +137,7 @@ export function AIChat() {
               } else if (event.type === "error") {
                 setMessages((prev) =>
                   prev.map((m) =>
-                    m.id === assistantId
-                      ? { ...m, content: `Error: ${event.message}` }
-                      : m
+                    m.id === assistantId ? { ...m, content: `Error: ${event.message}` } : m
                   )
                 )
               }
@@ -187,7 +183,7 @@ export function AIChat() {
       {/* Floating button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-4 right-4 z-50 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full gradient-bg text-white shadow-lg glow transition-all hover:scale-105 hover:shadow-xl sm:bottom-6 sm:right-6 ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
+        className={`gradient-bg glow fixed right-4 bottom-4 z-50 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl sm:right-6 sm:bottom-6 sm:h-14 sm:w-14 ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
         title="Ask AI (⌘⇧A)"
       >
         <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -195,21 +191,17 @@ export function AIChat() {
 
       {/* Chat panel - full screen on mobile, card on desktop */}
       <div
-        className={`fixed z-50 flex flex-col overflow-hidden glass-heavy transition-all
-          inset-0 sm:inset-auto sm:bottom-6 sm:right-6
-          sm:h-[600px] sm:w-[420px] sm:max-h-[calc(100vh-48px)]
-          sm:rounded-2xl border-0 sm:border sm:border-border-default
-          ${isOpen ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"}`}
+        className={`glass-heavy sm:border-border-default fixed inset-0 z-50 flex flex-col overflow-hidden border-0 transition-all sm:inset-auto sm:right-6 sm:bottom-6 sm:h-[600px] sm:max-h-[calc(100vh-48px)] sm:w-[420px] sm:rounded-2xl sm:border ${isOpen ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-default gradient-bg px-4 py-3 sm:py-3">
+        <div className="border-border-default gradient-bg flex items-center justify-between border-b px-4 py-3 sm:py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-white" />
             <span className="font-semibold text-white">AI Assistant</span>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="rounded-lg p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-white/80 transition-colors-smooth hover:bg-white/20 hover:text-white"
+            className="transition-colors-smooth flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 text-white/80 hover:bg-white/20 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
@@ -218,14 +210,12 @@ export function AIChat() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4">
           {messages.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-center px-4">
-              <div className="mb-4 rounded-full bg-primary-100 dark:bg-primary-50 p-4">
-                <MessageCircle className="h-8 w-8 text-primary-600 dark:text-primary-500" />
+            <div className="flex h-full flex-col items-center justify-center px-4 text-center">
+              <div className="bg-primary-100 dark:bg-primary-50 mb-4 rounded-full p-4">
+                <MessageCircle className="text-primary-600 dark:text-primary-500 h-8 w-8" />
               </div>
-              <h3 className="mb-2 font-semibold text-content-primary">
-                How can I help?
-              </h3>
-              <p className="mb-4 text-sm text-content-secondary">
+              <h3 className="text-content-primary mb-2 font-semibold">How can I help?</h3>
+              <p className="text-content-secondary mb-4 text-sm">
                 Ask me about your accounts, risks, or tasks
               </p>
               <div className="flex flex-wrap justify-center gap-2">
@@ -233,7 +223,7 @@ export function AIChat() {
                   <button
                     key={i}
                     onClick={() => setInput(s)}
-                    className="rounded-full border border-border-default bg-bg-secondary px-3 py-2 min-h-[44px] text-xs text-content-secondary transition-colors-smooth hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700"
+                    className="border-border-default bg-bg-secondary text-content-secondary transition-colors-smooth hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 min-h-[44px] rounded-full border px-3 py-2 text-xs"
                   >
                     {s}
                   </button>
@@ -254,21 +244,23 @@ export function AIChat() {
                         : "bg-bg-tertiary text-content-primary"
                     }`}
                   >
-                    {message.role === "assistant" && message.toolCalls && message.toolCalls.length > 0 && (
-                      <div className="mb-2 flex flex-wrap gap-1">
-                        {[...new Set(message.toolCalls)].map((tool, i) => (
-                          <span
-                            key={i}
-                            className="badge-sf badge-primary inline-flex items-center gap-1"
-                          >
-                            <Wrench className="h-3 w-3" />
-                            {tool.replace(/_/g, " ")}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {message.role === "assistant" &&
+                      message.toolCalls &&
+                      message.toolCalls.length > 0 && (
+                        <div className="mb-2 flex flex-wrap gap-1">
+                          {[...new Set(message.toolCalls)].map((tool, i) => (
+                            <span
+                              key={i}
+                              className="badge-sf badge-primary inline-flex items-center gap-1"
+                            >
+                              <Wrench className="h-3 w-3" />
+                              {tool.replace(/_/g, " ")}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     {message.role === "assistant" ? (
-                      <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+                      <div className="prose prose-sm dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-li:my-0 max-w-none">
                         <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
                       </div>
                     ) : (
@@ -278,8 +270,8 @@ export function AIChat() {
                 </div>
               ))}
               {currentTools.length > 0 && (
-                <div className="flex items-center gap-2 text-sm text-content-secondary">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
+                <div className="text-content-secondary flex items-center gap-2 text-sm">
+                  <Loader2 className="text-primary-500 h-4 w-4 animate-spin" />
                   <span>Using {currentTools[currentTools.length - 1].replace(/_/g, " ")}...</span>
                 </div>
               )}
@@ -289,7 +281,7 @@ export function AIChat() {
         </div>
 
         {/* Input */}
-        <div className="border-t border-border-default p-4">
+        <div className="border-border-default border-t p-4">
           <div className="flex items-center gap-2">
             <input
               ref={inputRef}
@@ -304,7 +296,7 @@ export function AIChat() {
             <button
               onClick={sendMessage}
               disabled={!input.trim() || isLoading}
-              className="btn-primary flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl disabled:opacity-50"
+              className="btn-primary flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-xl disabled:opacity-50"
             >
               {isLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -314,7 +306,7 @@ export function AIChat() {
             </button>
           </div>
           {!isTouchDevice && (
-            <p className="mt-2 text-center text-xs text-content-tertiary hidden sm:block">
+            <p className="text-content-tertiary mt-2 hidden text-center text-xs sm:block">
               Press ⌘⇧A to toggle • Esc to close
             </p>
           )}

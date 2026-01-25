@@ -11,10 +11,7 @@ const CSM_DATABASE_ID = process.env.NOTION_CSM_DATABASE_ID
  */
 export async function POST() {
   if (!process.env.NOTION_API_KEY || !CSM_DATABASE_ID) {
-    return NextResponse.json(
-      { error: "Notion not configured" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Notion not configured" }, { status: 500 })
   }
 
   try {
@@ -85,7 +82,14 @@ export async function POST() {
 
       // Extract task data from Notion
       // Support various property name conventions (including the title property which Notion uses)
-      const title = extractTitle(props["Task Name"] || props["Name"] || props["Title"] || props["task"] || props["name"] || props["title"])
+      const title = extractTitle(
+        props["Task Name"] ||
+          props["Name"] ||
+          props["Title"] ||
+          props["task"] ||
+          props["name"] ||
+          props["title"]
+      )
       const company = extractRichText(props["Company"])
       const status = extractStatus(props["Status"])
       const priority = extractSelect(props["Priority"])
@@ -179,10 +183,7 @@ export async function POST() {
     })
   } catch (error) {
     console.error("Notion sync error:", error)
-    return NextResponse.json(
-      { error: "Failed to sync from Notion" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to sync from Notion" }, { status: 500 })
   }
 }
 
@@ -250,17 +251,22 @@ function extractPerson(prop: unknown): { id: string; name?: string; email?: stri
   return null
 }
 
-function mapNotionStatus(status: string | null): "pending" | "in_progress" | "completed" | "cancelled" {
+function mapNotionStatus(
+  status: string | null
+): "pending" | "in_progress" | "completed" | "cancelled" {
   if (!status) return "pending"
   const s = status.toLowerCase()
   // Completed states (Notion "Complete" group: Archived, Done)
   if (s === "done" || s === "complete" || s === "completed" || s === "archived") return "completed"
   // In progress states (Notion "In progress" group)
-  if (s === "in progress" || s === "doing" || s === "in-progress" || s === "active") return "in_progress"
+  if (s === "in progress" || s === "doing" || s === "in-progress" || s === "active")
+    return "in_progress"
   // Cancelled/skipped states
-  if (s === "cancelled" || s === "canceled" || s === "closed" || s === "not doing anymore") return "cancelled"
+  if (s === "cancelled" || s === "canceled" || s === "closed" || s === "not doing anymore")
+    return "cancelled"
   // Open/pending states (Notion "To-do" group: Accepted, Ingestion, etc.)
-  if (s === "open" || s === "to do" || s === "todo" || s === "not started" || s === "backlog") return "pending"
+  if (s === "open" || s === "to do" || s === "todo" || s === "not started" || s === "backlog")
+    return "pending"
   if (s === "accepted" || s === "ingestion") return "pending"
   return "pending"
 }

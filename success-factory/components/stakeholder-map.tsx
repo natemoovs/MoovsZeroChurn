@@ -61,10 +61,7 @@ interface StakeholderMapProps {
   compact?: boolean
 }
 
-const ROLE_CONFIG: Record<
-  string,
-  { label: string; icon: typeof User; color: string }
-> = {
+const ROLE_CONFIG: Record<string, { label: string; icon: typeof User; color: string }> = {
   champion: {
     label: "Champion",
     icon: Crown,
@@ -129,7 +126,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
   if (loading) {
     return (
       <div className="flex items-center justify-center p-6">
-        <Loader2 className="h-5 w-5 animate-spin text-content-tertiary" />
+        <Loader2 className="text-content-tertiary h-5 w-5 animate-spin" />
       </div>
     )
   }
@@ -150,8 +147,8 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-content-tertiary" />
-            <span className="text-sm font-medium text-content-secondary">
+            <Users className="text-content-tertiary h-4 w-4" />
+            <span className="text-content-secondary text-sm font-medium">
               {data.summary.active} contacts
             </span>
           </div>
@@ -165,7 +162,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
           </span>
         </div>
         {data.alerts.length > 0 && (
-          <div className="rounded-lg bg-warning-50 p-2 text-xs text-warning-700 dark:bg-warning-900/20 dark:text-warning-400">
+          <div className="bg-warning-50 text-warning-700 dark:bg-warning-900/20 dark:text-warning-400 rounded-lg p-2 text-xs">
             <AlertTriangle className="mr-1 inline h-3 w-3" />
             {data.alerts[0]}
           </div>
@@ -179,12 +176,8 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-content-primary">
-            Key Stakeholders
-          </h3>
-          <p className="text-sm text-content-secondary">
-            {data.summary.active} active contacts
-          </p>
+          <h3 className="text-content-primary font-semibold">Key Stakeholders</h3>
+          <p className="text-content-secondary text-sm">{data.summary.active} active contacts</p>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -197,7 +190,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
           </span>
           <button
             onClick={() => setShowAddModal(true)}
-            className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover hover:text-content-primary"
+            className="text-content-tertiary hover:bg-surface-hover hover:text-content-primary rounded-lg p-2"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -210,7 +203,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
           {data.alerts.map((alert, i) => (
             <div
               key={i}
-              className="flex items-start gap-2 rounded-lg bg-warning-50 p-3 text-sm text-warning-700 dark:bg-warning-900/20 dark:text-warning-400"
+              className="bg-warning-50 text-warning-700 dark:bg-warning-900/20 dark:text-warning-400 flex items-start gap-2 rounded-lg p-3 text-sm"
             >
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               {alert}
@@ -221,14 +214,12 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
 
       {/* Stakeholder List */}
       {data.stakeholders.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border-default p-6 text-center">
-          <Users className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
-          <p className="text-sm text-content-secondary">
-            No stakeholders mapped yet
-          </p>
+        <div className="border-border-default rounded-lg border border-dashed p-6 text-center">
+          <Users className="text-content-tertiary mx-auto mb-2 h-8 w-8" />
+          <p className="text-content-secondary text-sm">No stakeholders mapped yet</p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="mt-2 text-sm font-medium text-success-600 hover:text-success-700 dark:text-success-400"
+            className="text-success-600 hover:text-success-700 dark:text-success-400 mt-2 text-sm font-medium"
           >
             Add first contact
           </button>
@@ -270,17 +261,15 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
                   {/* Info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-content-primary">
-                        {stakeholder.name}
-                      </p>
+                      <p className="text-content-primary font-medium">{stakeholder.name}</p>
                       {!stakeholder.isActive && (
-                        <span className="flex items-center gap-1 rounded bg-bg-tertiary px-1.5 py-0.5 text-xs text-content-secondary">
+                        <span className="bg-bg-tertiary text-content-secondary flex items-center gap-1 rounded px-1.5 py-0.5 text-xs">
                           <UserX className="h-3 w-3" />
                           Left
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-content-secondary">
+                    <p className="text-content-secondary text-sm">
                       {stakeholder.title || config.label}
                     </p>
                   </div>
@@ -292,22 +281,22 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
                       stakeholder.sentiment === "positive"
                         ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
                         : stakeholder.sentiment === "negative"
-                        ? "bg-error-100 text-error-600 dark:bg-error-900/30 dark:text-error-400"
-                        : "bg-bg-tertiary text-content-tertiary"
+                          ? "bg-error-100 text-error-600 dark:bg-error-900/30 dark:text-error-400"
+                          : "bg-bg-tertiary text-content-tertiary"
                     )}
                   >
                     <SentimentIcon className="h-4 w-4" />
                   </div>
 
-                  <MoreHorizontal className="h-4 w-4 text-content-tertiary" />
+                  <MoreHorizontal className="text-content-tertiary h-4 w-4" />
                 </div>
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="border-t border-border-default p-3">
+                  <div className="border-border-default border-t p-3">
                     <div className="grid gap-3 text-sm sm:grid-cols-2">
                       {stakeholder.email && (
-                        <div className="flex items-center gap-2 text-content-secondary">
+                        <div className="text-content-secondary flex items-center gap-2">
                           <Mail className="h-4 w-4" />
                           <a
                             href={`mailto:${stakeholder.email}`}
@@ -318,7 +307,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
                         </div>
                       )}
                       {stakeholder.phone && (
-                        <div className="flex items-center gap-2 text-content-secondary">
+                        <div className="text-content-secondary flex items-center gap-2">
                           <Phone className="h-4 w-4" />
                           {stakeholder.phone}
                         </div>
@@ -333,9 +322,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
                       </div>
                     </div>
                     {stakeholder.notes && (
-                      <p className="mt-2 text-sm text-content-secondary">
-                        {stakeholder.notes}
-                      </p>
+                      <p className="text-content-secondary mt-2 text-sm">{stakeholder.notes}</p>
                     )}
                   </div>
                 )}
@@ -403,14 +390,12 @@ function AddStakeholderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-xl bg-bg-elevated p-4 sm:max-w-md sm:rounded-xl sm:p-6">
+      <div className="bg-bg-elevated max-h-[90vh] w-full overflow-y-auto rounded-t-xl p-4 sm:max-w-md sm:rounded-xl sm:p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-content-primary">
-            Add Stakeholder
-          </h2>
+          <h2 className="text-content-primary text-lg font-semibold">Add Stakeholder</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover"
+            className="text-content-tertiary hover:bg-surface-hover rounded-lg p-2"
           >
             <X className="h-5 w-5" />
           </button>
@@ -418,52 +403,46 @@ function AddStakeholderModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-content-secondary">
-              Name *
-            </label>
+            <label className="text-content-secondary mb-1 block text-sm font-medium">Name *</label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+              className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
               required
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-content-secondary">
-                Email
-              </label>
+              <label className="text-content-secondary mb-1 block text-sm font-medium">Email</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+                className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-content-secondary">
-                Title
-              </label>
+              <label className="text-content-secondary mb-1 block text-sm font-medium">Title</label>
               <input
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+                className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
               />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-content-secondary">
+              <label className="text-content-secondary mb-1 block text-sm font-medium">
                 Role *
               </label>
               <select
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
-                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+                className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
               >
                 <option value="champion">Champion</option>
                 <option value="decision_maker">Decision Maker</option>
@@ -474,13 +453,13 @@ function AddStakeholderModal({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-content-secondary">
+              <label className="text-content-secondary mb-1 block text-sm font-medium">
                 Sentiment
               </label>
               <select
                 value={form.sentiment}
                 onChange={(e) => setForm({ ...form, sentiment: e.target.value })}
-                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+                className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
               >
                 <option value="positive">Positive</option>
                 <option value="neutral">Neutral</option>
@@ -490,14 +469,12 @@ function AddStakeholderModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-content-secondary">
-              Notes
-            </label>
+            <label className="text-content-secondary mb-1 block text-sm font-medium">Notes</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               rows={2}
-              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
+              className="border-border-default bg-bg-elevated focus:border-success-500 focus:ring-success-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
             />
           </div>
 
@@ -505,14 +482,14 @@ function AddStakeholderModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
+              className="text-content-secondary hover:bg-surface-hover rounded-lg px-4 py-2 text-sm font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || !form.name}
-              className="rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
+              className="bg-success-600 hover:bg-success-700 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {saving ? "Adding..." : "Add Stakeholder"}
             </button>

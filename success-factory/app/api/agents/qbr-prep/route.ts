@@ -109,9 +109,7 @@ Be specific and actionable. Format with clear headers.`,
           ],
         })
 
-        const briefContent = message.content[0].type === "text"
-          ? message.content[0].text
-          : ""
+        const briefContent = message.content[0].type === "text" ? message.content[0].text : ""
 
         // Create task with the brief
         const task = await prisma.task.create({
@@ -146,7 +144,7 @@ Be specific and actionable. Format with clear headers.`,
         accountsFound: upcomingQBRs.length,
         briefsGenerated: briefsGenerated.length,
       },
-      accounts: upcomingQBRs.map(a => ({
+      accounts: upcomingQBRs.map((a) => ({
         id: a.id,
         name: a.name,
         qbrDate: a.qbrDate,
@@ -155,7 +153,10 @@ Be specific and actionable. Format with clear headers.`,
   } catch (error) {
     console.error("[QBR Prep Agent] Error:", error)
     return NextResponse.json(
-      { error: "QBR prep agent failed", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "QBR prep agent failed",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }
@@ -255,9 +256,9 @@ function buildAccountContext(
   if (contacts.length > 0) {
     lines.push("### Key Contacts:")
     for (const contact of contacts.slice(0, 5)) {
-      const name = [contact.properties.firstname, contact.properties.lastname]
-        .filter(Boolean)
-        .join(" ") || "Unknown"
+      const name =
+        [contact.properties.firstname, contact.properties.lastname].filter(Boolean).join(" ") ||
+        "Unknown"
       const title = contact.properties.jobtitle || ""
       const email = contact.properties.email || ""
       lines.push(`- ${name}${title ? ` (${title})` : ""} - ${email}`)
@@ -293,7 +294,7 @@ export async function GET() {
     })
 
     return NextResponse.json({
-      recentBriefs: recentTasks.map(t => ({
+      recentBriefs: recentTasks.map((t) => ({
         id: t.id,
         companyName: t.companyName,
         createdAt: t.createdAt,

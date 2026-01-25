@@ -14,7 +14,8 @@ export const checkEscalations = inngest.createFunction(
   async ({ step }) => {
     // Configuration
     const DAYS_BEFORE_ESCALATION = 7 // Days at red before escalating
-    const ESCALATION_EMAIL = process.env.ESCALATION_EMAIL || process.env.DIGEST_EMAIL_RECIPIENTS?.split(",")[0]
+    const ESCALATION_EMAIL =
+      process.env.ESCALATION_EMAIL || process.env.DIGEST_EMAIL_RECIPIENTS?.split(",")[0]
 
     if (!ESCALATION_EMAIL) {
       return { skipped: true, reason: "No escalation email configured" }
@@ -53,8 +54,8 @@ export const checkEscalations = inngest.createFunction(
         })
 
         // If all snapshots in the period are red, needs escalation
-        const allRed = healthHistory.length > 0 &&
-          healthHistory.every((h) => h.healthScore === "red")
+        const allRed =
+          healthHistory.length > 0 && healthHistory.every((h) => h.healthScore === "red")
 
         // Check if already escalated recently
         const recentEscalation = await prisma.alertLog.findFirst({

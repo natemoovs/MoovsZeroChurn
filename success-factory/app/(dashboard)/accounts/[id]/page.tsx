@@ -177,14 +177,18 @@ export default function AccountDetailPage() {
         if (!res.ok) throw new Error("Failed to fetch account")
         return res.json()
       }),
-      fetch(`/api/health-history/${id}?days=30`).then((res) => {
-        if (!res.ok) return null
-        return res.json()
-      }).catch(() => null),
-      fetch(`/api/journey/${id}`).then((res) => {
-        if (!res.ok) return null
-        return res.json()
-      }).catch(() => null),
+      fetch(`/api/health-history/${id}?days=30`)
+        .then((res) => {
+          if (!res.ok) return null
+          return res.json()
+        })
+        .catch(() => null),
+      fetch(`/api/journey/${id}`)
+        .then((res) => {
+          if (!res.ok) return null
+          return res.json()
+        })
+        .catch(() => null),
     ])
       .then(([accountData, historyData, journeyData]) => {
         setAccount(accountData)
@@ -210,18 +214,14 @@ export default function AccountDetailPage() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center py-16">
-          <div className="mb-4 rounded-full bg-error-100 p-4 dark:bg-error-50">
-            <AlertTriangle className="h-8 w-8 text-error-600 dark:text-error-500" />
+          <div className="bg-error-100 dark:bg-error-50 mb-4 rounded-full p-4">
+            <AlertTriangle className="text-error-600 dark:text-error-500 h-8 w-8" />
           </div>
-          <h2 className="text-xl font-semibold text-content-primary">
-            Account not found
-          </h2>
-          <p className="mt-2 text-content-secondary">
-            {error || "Unable to load account details"}
-          </p>
+          <h2 className="text-content-primary text-xl font-semibold">Account not found</h2>
+          <p className="text-content-secondary mt-2">{error || "Unable to load account details"}</p>
           <button
             onClick={() => router.back()}
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-content-primary px-4 py-2 text-sm font-medium text-bg-primary hover:bg-content-secondary"
+            className="bg-content-primary text-bg-primary hover:bg-content-secondary mt-6 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium"
           >
             <ArrowLeft className="h-4 w-4" />
             Go back
@@ -231,9 +231,7 @@ export default function AccountDetailPage() {
     )
   }
 
-  const location = [account.city, account.state, account.country]
-    .filter(Boolean)
-    .join(", ")
+  const location = [account.city, account.state, account.country].filter(Boolean).join(", ")
 
   const handleJourneyUpdate = async (newStage: string, reason?: string) => {
     try {
@@ -268,7 +266,7 @@ export default function AccountDetailPage() {
         {/* Back button */}
         <Link
           href="/accounts"
-          className="inline-flex items-center gap-2 text-sm text-content-secondary hover:text-content-primary"
+          className="text-content-secondary hover:text-content-primary inline-flex items-center gap-2 text-sm"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to accounts
@@ -276,14 +274,15 @@ export default function AccountDetailPage() {
 
         {/* No HubSpot record indicator */}
         {!account.hasHubSpotRecord && (
-          <div className="flex items-center gap-3 rounded-lg border border-info-200 bg-info-50 px-4 py-3 dark:border-info-900 dark:bg-info-950/30">
-            <Database className="h-5 w-5 text-info-600 dark:text-info-400" />
+          <div className="border-info-200 bg-info-50 dark:border-info-900 dark:bg-info-950/30 flex items-center gap-3 rounded-lg border px-4 py-3">
+            <Database className="text-info-600 dark:text-info-400 h-5 w-5" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-info-900 dark:text-info-200">
+              <p className="text-info-900 dark:text-info-200 text-sm font-medium">
                 Metabase data only
               </p>
-              <p className="text-sm text-info-700 dark:text-info-300">
-                This operator doesn&apos;t have a HubSpot company record. Contacts, deals, and activity timeline may be limited.
+              <p className="text-info-700 dark:text-info-300 text-sm">
+                This operator doesn&apos;t have a HubSpot company record. Contacts, deals, and
+                activity timeline may be limited.
               </p>
             </div>
           </div>
@@ -292,30 +291,22 @@ export default function AccountDetailPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-bg-tertiary">
-              <Building2 className="h-8 w-8 text-content-secondary" />
+            <div className="bg-bg-tertiary flex h-16 w-16 items-center justify-center rounded-xl">
+              <Building2 className="text-content-secondary h-8 w-8" />
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-content-primary">
-                  {account.name}
-                </h1>
+                <h1 className="text-content-primary text-2xl font-bold">{account.name}</h1>
                 <HealthBadge score={account.healthScore} size="lg" />
               </div>
-              {account.domain && (
-                <p className="mt-1 text-content-secondary">
-                  {account.domain}
-                </p>
-              )}
-              <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-content-secondary">
+              {account.domain && <p className="text-content-secondary mt-1">{account.domain}</p>}
+              <div className="text-content-secondary mt-2 flex flex-wrap items-center gap-4 text-sm">
                 {account.plan && (
-                  <span className="rounded-full bg-bg-tertiary px-2.5 py-0.5 font-medium">
+                  <span className="bg-bg-tertiary rounded-full px-2.5 py-0.5 font-medium">
                     {account.plan}
                   </span>
                 )}
-                {account.customerSegment && (
-                  <span>{account.customerSegment}</span>
-                )}
+                {account.customerSegment && <span>{account.customerSegment}</span>}
                 {account.industry && <span>{account.industry}</span>}
               </div>
             </div>
@@ -325,17 +316,21 @@ export default function AccountDetailPage() {
           <div className="flex gap-2">
             <Link
               href={`/skills/customer-health?company=${encodeURIComponent(account.name)}`}
-              className="inline-flex items-center gap-2 rounded-lg btn-primary"
+              className="btn-primary inline-flex items-center gap-2 rounded-lg"
             >
               <Sparkles className="h-4 w-4" />
               Generate Brief
             </Link>
             {account.website && (
               <a
-                href={account.website.startsWith("http") ? account.website : `https://${account.website}`}
+                href={
+                  account.website.startsWith("http")
+                    ? account.website
+                    : `https://${account.website}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg border border-border-default bg-bg-elevated px-4 py-2 text-sm font-medium text-content-primary hover:bg-surface-hover"
+                className="border-border-default bg-bg-elevated text-content-primary hover:bg-surface-hover inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium"
               >
                 <ExternalLink className="h-4 w-4" />
                 Website
@@ -386,20 +381,18 @@ export default function AccountDetailPage() {
         {(account.riskSignals.length > 0 || account.positiveSignals.length > 0) && (
           <div className="grid gap-4 lg:grid-cols-2">
             {account.riskSignals.length > 0 && (
-              <div className="rounded-xl border border-error-300 bg-error-50 p-4 dark:border-error-700 dark:bg-error-50/10">
+              <div className="border-error-300 bg-error-50 dark:border-error-700 dark:bg-error-50/10 rounded-xl border p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-error-600 dark:text-error-500" />
-                  <h3 className="font-semibold text-error-700 dark:text-error-500">
-                    Risk Signals
-                  </h3>
+                  <AlertTriangle className="text-error-600 dark:text-error-500 h-5 w-5" />
+                  <h3 className="text-error-700 dark:text-error-500 font-semibold">Risk Signals</h3>
                 </div>
                 <ul className="space-y-2">
                   {account.riskSignals.map((signal, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-2 text-sm text-error-700 dark:text-error-500"
+                      className="text-error-700 dark:text-error-500 flex items-center gap-2 text-sm"
                     >
-                      <span className="h-1.5 w-1.5 rounded-full bg-error-500" />
+                      <span className="bg-error-500 h-1.5 w-1.5 rounded-full" />
                       {signal}
                     </li>
                   ))}
@@ -407,10 +400,10 @@ export default function AccountDetailPage() {
               </div>
             )}
             {account.positiveSignals.length > 0 && (
-              <div className="rounded-xl border border-success-300 bg-success-50 p-4 dark:border-success-700 dark:bg-success-50/10">
+              <div className="border-success-300 bg-success-50 dark:border-success-700 dark:bg-success-50/10 rounded-xl border p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-success-600 dark:text-success-500" />
-                  <h3 className="font-semibold text-success-700 dark:text-success-500">
+                  <CheckCircle className="text-success-600 dark:text-success-500 h-5 w-5" />
+                  <h3 className="text-success-700 dark:text-success-500 font-semibold">
                     Positive Signals
                   </h3>
                 </div>
@@ -418,9 +411,9 @@ export default function AccountDetailPage() {
                   {account.positiveSignals.map((signal, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-2 text-sm text-success-700 dark:text-success-500"
+                      className="text-success-700 dark:text-success-500 flex items-center gap-2 text-sm"
                     >
-                      <span className="h-1.5 w-1.5 rounded-full bg-success-500" />
+                      <span className="bg-success-500 h-1.5 w-1.5 rounded-full" />
                       {signal}
                     </li>
                   ))}
@@ -449,21 +442,23 @@ export default function AccountDetailPage() {
           <div className="space-y-6 lg:col-span-1">
             {/* Company Info */}
             <div className="card-sf p-5">
-              <h2 className="mb-4 font-semibold text-content-primary">
-                Company Info
-              </h2>
+              <h2 className="text-content-primary mb-4 font-semibold">Company Info</h2>
               <dl className="space-y-3 text-sm">
                 {account.website && (
                   <div className="flex items-start gap-3">
-                    <Globe className="mt-0.5 h-4 w-4 text-content-tertiary" />
+                    <Globe className="text-content-tertiary mt-0.5 h-4 w-4" />
                     <div>
                       <dt className="text-content-secondary">Website</dt>
                       <dd className="text-content-primary">
                         <a
-                          href={account.website.startsWith("http") ? account.website : `https://${account.website}`}
+                          href={
+                            account.website.startsWith("http")
+                              ? account.website
+                              : `https://${account.website}`
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-success-600 hover:underline dark:text-success-500"
+                          className="text-success-600 dark:text-success-500 hover:underline"
                         >
                           {account.website}
                         </a>
@@ -473,33 +468,27 @@ export default function AccountDetailPage() {
                 )}
                 {account.phone && (
                   <div className="flex items-start gap-3">
-                    <Phone className="mt-0.5 h-4 w-4 text-content-tertiary" />
+                    <Phone className="text-content-tertiary mt-0.5 h-4 w-4" />
                     <div>
                       <dt className="text-content-secondary">Phone</dt>
-                      <dd className="text-content-primary">
-                        {account.phone}
-                      </dd>
+                      <dd className="text-content-primary">{account.phone}</dd>
                     </div>
                   </div>
                 )}
                 {location && (
                   <div className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-4 w-4 text-content-tertiary" />
+                    <MapPin className="text-content-tertiary mt-0.5 h-4 w-4" />
                     <div>
                       <dt className="text-content-secondary">Location</dt>
-                      <dd className="text-content-primary">
-                        {location}
-                      </dd>
+                      <dd className="text-content-primary">{location}</dd>
                     </div>
                   </div>
                 )}
                 {account.customerSince && (
                   <div className="flex items-start gap-3">
-                    <Calendar className="mt-0.5 h-4 w-4 text-content-tertiary" />
+                    <Calendar className="text-content-tertiary mt-0.5 h-4 w-4" />
                     <div>
-                      <dt className="text-content-secondary">
-                        Customer Since
-                      </dt>
+                      <dt className="text-content-secondary">Customer Since</dt>
                       <dd className="text-content-primary">
                         {new Date(account.customerSince).toLocaleDateString()}
                       </dd>
@@ -508,23 +497,17 @@ export default function AccountDetailPage() {
                 )}
                 {account.lifecycleStage && (
                   <div className="flex items-start gap-3">
-                    <RefreshCw className="mt-0.5 h-4 w-4 text-content-tertiary" />
+                    <RefreshCw className="text-content-tertiary mt-0.5 h-4 w-4" />
                     <div>
-                      <dt className="text-content-secondary">
-                        Lifecycle Stage
-                      </dt>
-                      <dd className="text-content-primary capitalize">
-                        {account.lifecycleStage}
-                      </dd>
+                      <dt className="text-content-secondary">Lifecycle Stage</dt>
+                      <dd className="text-content-primary capitalize">{account.lifecycleStage}</dd>
                     </div>
                   </div>
                 )}
               </dl>
               {account.description && (
-                <div className="mt-4 border-t border-border-default pt-4">
-                  <p className="text-sm text-content-secondary">
-                    {account.description}
-                  </p>
+                <div className="border-border-default mt-4 border-t pt-4">
+                  <p className="text-content-secondary text-sm">{account.description}</p>
                 </div>
               )}
             </div>
@@ -537,39 +520,33 @@ export default function AccountDetailPage() {
 
             {/* Contacts */}
             <div className="card-sf p-5">
-              <h2 className="mb-4 font-semibold text-content-primary">
+              <h2 className="text-content-primary mb-4 font-semibold">
                 Contacts ({account.contacts.length})
               </h2>
               {account.contacts.length === 0 ? (
-                <p className="text-sm text-content-secondary">
-                  No contacts found
-                </p>
+                <p className="text-content-secondary text-sm">No contacts found</p>
               ) : (
                 <div className="space-y-3">
                   {account.contacts.slice(0, 5).map((contact) => (
                     <div
                       key={contact.id}
-                      className="flex items-start gap-3 rounded-lg border border-border-default p-3"
+                      className="border-border-default flex items-start gap-3 rounded-lg border p-3"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-tertiary text-sm font-medium text-content-secondary">
-                        {(contact.firstName?.[0] || "") +
-                          (contact.lastName?.[0] || "") || "?"}
+                      <div className="bg-bg-tertiary text-content-secondary flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium">
+                        {(contact.firstName?.[0] || "") + (contact.lastName?.[0] || "") || "?"}
                       </div>
                       <div className="flex-1 overflow-hidden">
-                        <p className="font-medium text-content-primary">
-                          {[contact.firstName, contact.lastName]
-                            .filter(Boolean)
-                            .join(" ") || "Unknown"}
+                        <p className="text-content-primary font-medium">
+                          {[contact.firstName, contact.lastName].filter(Boolean).join(" ") ||
+                            "Unknown"}
                         </p>
                         {contact.jobTitle && (
-                          <p className="text-sm text-content-secondary">
-                            {contact.jobTitle}
-                          </p>
+                          <p className="text-content-secondary text-sm">{contact.jobTitle}</p>
                         )}
                         {contact.email && (
                           <a
                             href={`mailto:${contact.email}`}
-                            className="block truncate text-sm text-success-600 hover:underline dark:text-success-500"
+                            className="text-success-600 dark:text-success-500 block truncate text-sm hover:underline"
                           >
                             {contact.email}
                           </a>
@@ -578,7 +555,7 @@ export default function AccountDetailPage() {
                     </div>
                   ))}
                   {account.contacts.length > 5 && (
-                    <p className="text-center text-sm text-content-secondary">
+                    <p className="text-content-secondary text-center text-sm">
                       +{account.contacts.length - 5} more contacts
                     </p>
                   )}
@@ -589,25 +566,23 @@ export default function AccountDetailPage() {
             {/* Deals */}
             {account.deals.length > 0 && (
               <div className="card-sf p-5">
-                <h2 className="mb-4 font-semibold text-content-primary">
+                <h2 className="text-content-primary mb-4 font-semibold">
                   Deals ({account.deals.length})
                 </h2>
                 <div className="space-y-3">
                   {account.deals.map((deal) => (
                     <div
                       key={deal.id}
-                      className="flex items-center justify-between rounded-lg border border-border-default p-3"
+                      className="border-border-default flex items-center justify-between rounded-lg border p-3"
                     >
                       <div>
-                        <p className="font-medium text-content-primary">
-                          {deal.name}
-                        </p>
-                        <p className="text-sm text-content-secondary">
+                        <p className="text-content-primary font-medium">{deal.name}</p>
+                        <p className="text-content-secondary text-sm">
                           {deal.stage || "Unknown stage"}
                         </p>
                       </div>
                       {deal.amount && (
-                        <span className="font-semibold text-content-primary">
+                        <span className="text-content-primary font-semibold">
                           ${deal.amount.toLocaleString()}
                         </span>
                       )}
@@ -619,36 +594,28 @@ export default function AccountDetailPage() {
 
             {/* Quick Actions */}
             <div className="card-sf p-5">
-              <h2 className="mb-4 font-semibold text-content-primary">
-                Quick Actions
-              </h2>
+              <h2 className="text-content-primary mb-4 font-semibold">Quick Actions</h2>
               <div className="space-y-2">
                 <Link
                   href={`/skills/customer-health?company=${encodeURIComponent(account.name)}`}
-                  className="flex items-center gap-3 rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
+                  className="border-border-default hover:bg-surface-hover flex items-center gap-3 rounded-lg border p-3 transition-colors"
                 >
-                  <MessageSquare className="h-5 w-5 text-content-tertiary" />
-                  <span className="text-sm font-medium text-content-primary">
-                    Prep for Call
-                  </span>
+                  <MessageSquare className="text-content-tertiary h-5 w-5" />
+                  <span className="text-content-primary text-sm font-medium">Prep for Call</span>
                 </Link>
                 <Link
                   href={`/skills/renewal-prep?company=${encodeURIComponent(account.name)}`}
-                  className="flex items-center gap-3 rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
+                  className="border-border-default hover:bg-surface-hover flex items-center gap-3 rounded-lg border p-3 transition-colors"
                 >
-                  <FileText className="h-5 w-5 text-content-tertiary" />
-                  <span className="text-sm font-medium text-content-primary">
-                    Renewal Strategy
-                  </span>
+                  <FileText className="text-content-tertiary h-5 w-5" />
+                  <span className="text-content-primary text-sm font-medium">Renewal Strategy</span>
                 </Link>
                 <Link
                   href={`/skills/churn-risk?company=${encodeURIComponent(account.name)}`}
-                  className="flex items-center gap-3 rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
+                  className="border-border-default hover:bg-surface-hover flex items-center gap-3 rounded-lg border p-3 transition-colors"
                 >
-                  <AlertTriangle className="h-5 w-5 text-content-tertiary" />
-                  <span className="text-sm font-medium text-content-primary">
-                    Churn Analysis
-                  </span>
+                  <AlertTriangle className="text-content-tertiary h-5 w-5" />
+                  <span className="text-content-primary text-sm font-medium">Churn Analysis</span>
                 </Link>
               </div>
             </div>
@@ -660,9 +627,7 @@ export default function AccountDetailPage() {
           {/* Right Column - Activity Timeline */}
           <div className="lg:col-span-2">
             <div className="card-sf p-5">
-              <h2 className="mb-4 font-semibold text-content-primary">
-                Activity Timeline
-              </h2>
+              <h2 className="text-content-primary mb-4 font-semibold">Activity Timeline</h2>
               <ActivityTimeline companyId={account.id} limit={30} showFilters={true} />
             </div>
           </div>
@@ -686,7 +651,7 @@ function MetricCard({
   return (
     <div className="card-sf p-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-content-secondary">{label}</span>
+        <span className="text-content-secondary text-sm">{label}</span>
         <Icon
           className={cn(
             "h-5 w-5",
@@ -744,9 +709,7 @@ function TimelineItem({
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp)
     const now = new Date()
-    const diffDays = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
-    )
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
 
     if (diffDays === 0) return "Today"
     if (diffDays === 1) return "Yesterday"
@@ -766,17 +729,13 @@ function TimelineItem({
       </div>
       <div className="flex-1 pt-1">
         <div className="flex items-start justify-between gap-2">
-          <p className="font-medium text-content-primary">
-            {event.title}
-          </p>
-          <span className="whitespace-nowrap text-sm text-content-secondary">
+          <p className="text-content-primary font-medium">{event.title}</p>
+          <span className="text-content-secondary text-sm whitespace-nowrap">
             {formatDate(event.timestamp)}
           </span>
         </div>
         {event.description && (
-          <p className="mt-1 text-sm text-content-secondary">
-            {event.description}
-          </p>
+          <p className="text-content-secondary mt-1 text-sm">{event.description}</p>
         )}
       </div>
     </div>
@@ -785,30 +744,38 @@ function TimelineItem({
 
 function HealthTrendCard({ history }: { history: HealthHistory }) {
   const { snapshots, trend, distribution, changes } = history
-  const totalSnapshots = distribution.green + distribution.yellow + distribution.red + distribution.unknown
+  const totalSnapshots =
+    distribution.green + distribution.yellow + distribution.red + distribution.unknown
 
-  const TrendIcon = trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus
-  const trendColor = trend === "improving"
-    ? "text-success-600 dark:text-success-500"
-    : trend === "declining"
-    ? "text-error-600 dark:text-error-500"
-    : "text-content-secondary"
-  const trendBg = trend === "improving"
-    ? "bg-success-100 dark:bg-success-900/30"
-    : trend === "declining"
-    ? "bg-error-100 dark:bg-error-900/30"
-    : "bg-surface-muted"
+  const TrendIcon =
+    trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus
+  const trendColor =
+    trend === "improving"
+      ? "text-success-600 dark:text-success-500"
+      : trend === "declining"
+        ? "text-error-600 dark:text-error-500"
+        : "text-content-secondary"
+  const trendBg =
+    trend === "improving"
+      ? "bg-success-100 dark:bg-success-900/30"
+      : trend === "declining"
+        ? "bg-error-100 dark:bg-error-900/30"
+        : "bg-surface-muted"
 
   return (
     <div className="card-sf p-5">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <BarChart3 className="h-5 w-5 text-content-tertiary" />
-          <h2 className="font-semibold text-content-primary">
-            Health Score Trend
-          </h2>
+          <BarChart3 className="text-content-tertiary h-5 w-5" />
+          <h2 className="text-content-primary font-semibold">Health Score Trend</h2>
         </div>
-        <div className={cn("flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium", trendBg, trendColor)}>
+        <div
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium",
+            trendBg,
+            trendColor
+          )}
+        >
           <TrendIcon className="h-4 w-4" />
           <span className="capitalize">{trend}</span>
         </div>
@@ -834,7 +801,7 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
             return (
               <div
                 key={snapshot.id || i}
-                className="flex-1 min-w-1 rounded-t transition-all hover:opacity-80"
+                className="min-w-1 flex-1 rounded-t transition-all hover:opacity-80"
                 style={{ height: heights[score] }}
                 title={`${new Date(snapshot.createdAt).toLocaleDateString()}: ${score}`}
               >
@@ -843,7 +810,7 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
             )
           })}
         </div>
-        <div className="mt-2 flex justify-between text-xs text-content-secondary">
+        <div className="text-content-secondary mt-2 flex justify-between text-xs">
           <span>30 days ago</span>
           <span>Today</span>
         </div>
@@ -851,7 +818,7 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
 
       {/* Distribution */}
       <div className="mb-4">
-        <div className="mb-2 flex h-3 overflow-hidden rounded-full bg-bg-tertiary">
+        <div className="bg-bg-tertiary mb-2 flex h-3 overflow-hidden rounded-full">
           {distribution.green > 0 && (
             <div
               className="bg-success-500"
@@ -871,7 +838,7 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
             />
           )}
         </div>
-        <div className="flex justify-between text-xs text-content-secondary">
+        <div className="text-content-secondary flex justify-between text-xs">
           <span>{distribution.green} green</span>
           <span>{distribution.yellow} yellow</span>
           <span>{distribution.red} red</span>
@@ -880,44 +847,60 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
 
       {/* Recent Changes */}
       {changes.length > 0 && (
-        <div className="border-t border-border-default pt-4">
-          <h3 className="mb-2 text-sm font-medium text-content-primary">
-            Recent Changes
-          </h3>
+        <div className="border-border-default border-t pt-4">
+          <h3 className="text-content-primary mb-2 text-sm font-medium">Recent Changes</h3>
           <div className="space-y-2">
-            {changes.slice(-3).reverse().map((change, i) => {
-              const isDowngrade =
-                (change.from === "green" && (change.to === "yellow" || change.to === "red")) ||
-                (change.from === "yellow" && change.to === "red")
-              return (
-                <div
-                  key={i}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={cn(
-                      "inline-block h-2 w-2 rounded-full",
-                      change.from === "green" ? "bg-success-500" :
-                      change.from === "yellow" ? "bg-warning-500" :
-                      change.from === "red" ? "bg-error-500" : "bg-content-tertiary"
-                    )} />
-                    <span className="text-content-secondary">→</span>
-                    <span className={cn(
-                      "inline-block h-2 w-2 rounded-full",
-                      change.to === "green" ? "bg-success-500" :
-                      change.to === "yellow" ? "bg-warning-500" :
-                      change.to === "red" ? "bg-error-500" : "bg-content-tertiary"
-                    )} />
-                    <span className={isDowngrade ? "text-error-600 dark:text-error-500" : "text-success-600 dark:text-success-500"}>
-                      {change.from} → {change.to}
+            {changes
+              .slice(-3)
+              .reverse()
+              .map((change, i) => {
+                const isDowngrade =
+                  (change.from === "green" && (change.to === "yellow" || change.to === "red")) ||
+                  (change.from === "yellow" && change.to === "red")
+                return (
+                  <div key={i} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "inline-block h-2 w-2 rounded-full",
+                          change.from === "green"
+                            ? "bg-success-500"
+                            : change.from === "yellow"
+                              ? "bg-warning-500"
+                              : change.from === "red"
+                                ? "bg-error-500"
+                                : "bg-content-tertiary"
+                        )}
+                      />
+                      <span className="text-content-secondary">→</span>
+                      <span
+                        className={cn(
+                          "inline-block h-2 w-2 rounded-full",
+                          change.to === "green"
+                            ? "bg-success-500"
+                            : change.to === "yellow"
+                              ? "bg-warning-500"
+                              : change.to === "red"
+                                ? "bg-error-500"
+                                : "bg-content-tertiary"
+                        )}
+                      />
+                      <span
+                        className={
+                          isDowngrade
+                            ? "text-error-600 dark:text-error-500"
+                            : "text-success-600 dark:text-success-500"
+                        }
+                      >
+                        {change.from} → {change.to}
+                      </span>
+                    </div>
+                    <span className="text-content-secondary">
+                      {new Date(change.date).toLocaleDateString()}
                     </span>
                   </div>
-                  <span className="text-content-secondary">
-                    {new Date(change.date).toLocaleDateString()}
-                  </span>
-                </div>
-              )
-            })}
+                )
+              })}
           </div>
         </div>
       )}
@@ -957,10 +940,8 @@ function JourneyStageCard({
     <div className="card-sf p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Route className="h-5 w-5 text-content-tertiary" />
-          <h2 className="font-semibold text-content-primary">
-            Customer Journey
-          </h2>
+          <Route className="text-content-tertiary h-5 w-5" />
+          <h2 className="text-content-primary font-semibold">Customer Journey</h2>
         </div>
 
         {/* Stage Selector */}
@@ -970,30 +951,35 @@ function JourneyStageCard({
             disabled={updating}
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              "border border-border-default bg-bg-elevated hover:bg-surface-hover",
-              updating && "opacity-50 cursor-not-allowed"
+              "border-border-default bg-bg-elevated hover:bg-surface-hover border",
+              updating && "cursor-not-allowed opacity-50"
             )}
           >
             <span className={cn("h-2.5 w-2.5 rounded-full", currentStageInfo.color)} />
             <span className="text-content-primary">{currentStageInfo.label}</span>
-            <ChevronDown className={cn("h-4 w-4 text-content-tertiary transition-transform", isOpen && "rotate-180")} />
+            <ChevronDown
+              className={cn(
+                "text-content-tertiary h-4 w-4 transition-transform",
+                isOpen && "rotate-180"
+              )}
+            />
           </button>
 
           {isOpen && (
-            <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-border-default bg-bg-elevated py-1 shadow-lg">
+            <div className="border-border-default bg-bg-elevated absolute top-full right-0 z-20 mt-1 w-48 rounded-lg border py-1 shadow-lg">
               {JOURNEY_STAGES.map((stage) => (
                 <button
                   key={stage.id}
                   onClick={() => handleStageChange(stage.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-surface-hover",
+                    "hover:bg-surface-hover flex w-full items-center gap-2 px-3 py-2 text-sm",
                     stage.id === currentStage && "bg-surface-hover"
                   )}
                 >
                   <span className={cn("h-2.5 w-2.5 rounded-full", stage.color)} />
                   <span className="text-content-primary">{stage.label}</span>
                   {stage.id === currentStage && (
-                    <CheckCircle className="ml-auto h-4 w-4 text-success-500" />
+                    <CheckCircle className="text-success-500 ml-auto h-4 w-4" />
                   )}
                 </button>
               ))}
@@ -1020,19 +1006,17 @@ function JourneyStageCard({
                       ? isChurned
                         ? "bg-content-tertiary"
                         : isAtRisk
-                        ? "bg-error-400"
-                        : stage.color
+                          ? "bg-error-400"
+                          : stage.color
                       : "bg-surface-muted"
                   )}
                 />
-                {i < JOURNEY_STAGES.length - 2 && (
-                  <div className="h-1 w-1" />
-                )}
+                {i < JOURNEY_STAGES.length - 2 && <div className="h-1 w-1" />}
               </div>
             )
           })}
         </div>
-        <div className="mt-2 flex justify-between text-xs text-content-secondary">
+        <div className="text-content-secondary mt-2 flex justify-between text-xs">
           <span>Onboarding</span>
           <span>Maturity</span>
           <span>Renewal</span>
@@ -1041,10 +1025,8 @@ function JourneyStageCard({
 
       {/* Journey History */}
       {journey?.history && journey.history.length > 0 && (
-        <div className="mt-4 border-t border-border-default pt-4">
-          <h3 className="mb-2 text-sm font-medium text-content-primary">
-            Recent Changes
-          </h3>
+        <div className="border-border-default mt-4 border-t pt-4">
+          <h3 className="text-content-primary mb-2 text-sm font-medium">Recent Changes</h3>
           <div className="space-y-2">
             {journey.history.slice(0, 3).map((h) => {
               const fromStage = JOURNEY_STAGES.find((s) => s.id === h.fromStage)
@@ -1058,9 +1040,15 @@ function JourneyStageCard({
                         <span className="text-content-secondary">→</span>
                       </>
                     )}
-                    <span className={cn("h-2 w-2 rounded-full", toStage?.color || "bg-content-tertiary")} />
+                    <span
+                      className={cn(
+                        "h-2 w-2 rounded-full",
+                        toStage?.color || "bg-content-tertiary"
+                      )}
+                    />
                     <span className="text-content-primary">
-                      {fromStage ? `${fromStage.label} → ` : ""}{toStage?.label}
+                      {fromStage ? `${fromStage.label} → ` : ""}
+                      {toStage?.label}
                     </span>
                   </div>
                   <span className="text-content-secondary">
@@ -1079,25 +1067,22 @@ function JourneyStageCard({
 function AccountDetailSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="h-5 w-24 shimmer rounded" />
+      <div className="shimmer h-5 w-24 rounded" />
       <div className="flex items-start gap-4">
-        <div className="h-16 w-16 shimmer rounded-xl" />
+        <div className="shimmer h-16 w-16 rounded-xl" />
         <div className="space-y-2">
-          <div className="h-8 w-48 shimmer rounded" />
-          <div className="h-5 w-32 shimmer rounded" />
+          <div className="shimmer h-8 w-48 rounded" />
+          <div className="shimmer h-5 w-32 rounded" />
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="h-24 shimmer rounded-xl"
-          />
+          <div key={i} className="shimmer h-24 rounded-xl" />
         ))}
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="h-64 shimmer rounded-xl" />
-        <div className="h-96 shimmer rounded-xl lg:col-span-2" />
+        <div className="shimmer h-64 rounded-xl" />
+        <div className="shimmer h-96 rounded-xl lg:col-span-2" />
       </div>
     </div>
   )

@@ -3,6 +3,7 @@
 Corporate-specific variation of the Shuttle Platform ICP. For shared elements (pain points, core capabilities), reference the [Base Shuttle ICP](./base.md).
 
 **Use this variation when:**
+
 - Target is a corporation or business campus
 - Program is employee commuter transportation
 - Decision makers are in HR, Facilities, or Real Estate
@@ -12,15 +13,17 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ## Quick Reference
 
 ### Key Stats
-| Attribute | Value |
-|-----------|-------|
-| Employee Count | 500 - 10,000+ |
-| Fleet Size | 5-30+ shuttle buses |
-| Budget Range | $25K-$150K+ annually |
-| Sales Cycle | 3-4 months |
-| Budget Cycle | Fiscal year (often calendar year) |
+
+| Attribute      | Value                             |
+| -------------- | --------------------------------- |
+| Employee Count | 500 - 10,000+                     |
+| Fleet Size     | 5-30+ shuttle buses               |
+| Budget Range   | $25K-$150K+ annually              |
+| Sales Cycle    | 3-4 months                        |
+| Budget Cycle   | Fiscal year (often calendar year) |
 
 ### Top 5 Pain Points
+
 1. **Retention & recruitment** - Commute is top reason for turnover
 2. **No ROI visibility** - Can't prove program value to CFO
 3. **Parking pressure** - Running out of spaces, expensive to build
@@ -28,6 +31,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 5. **Employee complaints** - "Where's the shuttle?" calls to HR
 
 ### Messaging Do's
+
 - Lead with retention/recruitment ROI
 - Emphasize employee satisfaction and NPS
 - Provide sustainability metrics (ESG reporting)
@@ -36,6 +40,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 - Reference peer companies in their industry
 
 ### Messaging Don'ts
+
 - Lead with cost savings alone (employee experience matters)
 - Ignore hybrid work reality
 - Promise features requiring custom development
@@ -43,9 +48,11 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 - Underestimate IT security requirements
 
 ### Primary CTA
+
 "See How [Peer Company] Reduced Commute-Related Turnover"
 
 ### Proof Points Needed
+
 - Employee retention improvement stats
 - Commute satisfaction scores
 - Ridership and utilization data
@@ -57,6 +64,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ## Organization Profile
 
 ### Company Types
+
 - Technology companies (campuses, office parks)
 - Financial services firms
 - Healthcare systems (employee shuttles, not patient transport)
@@ -65,16 +73,19 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 - Multi-building office complexes
 
 ### Employee Population
+
 - Sweet Spot: 500 - 10,000+ employees
 - Minimum viable: 300+ employees (for dedicated shuttle program)
 - Best fit: Suburban campuses with parking constraints
 
 ### Program Ownership
+
 - **Department:** HR/People Operations, Facilities, Real Estate, or Corporate Services
 - **Staff:** Commute Program Manager, Facilities Coordinator, Transportation Lead
 - **Reporting Line:** Typically to VP of HR, VP of Facilities, or Chief People Officer
 
 ### Geographic Footprint
+
 - Campus-to-transit hub routes (train stations, park & ride)
 - Inter-campus routes (multiple office buildings)
 - Parking lot shuttles (remote lots to main buildings)
@@ -85,12 +96,14 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ## Budget & Fleet
 
 ### Budget Characteristics
+
 - Annual Transportation Budget: $200K - $2M+
 - Shuttle Software Budget: $25K - $150K+ annually
 - Funding Sources: Facilities budget, HR benefits budget, real estate savings
 - Budget Cycle: Fiscal year (often aligned with calendar year)
 
 ### Fleet Characteristics
+
 - Vehicle Count: 5-30+ shuttle buses
 - Vehicle Types: 15-40 passenger buses, executive vans, accessible vehicles
 - Ownership: Company-owned, leased, or contracted fleet
@@ -103,21 +116,25 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ### Buying Committee
 
 **Primary Decision Maker:**
+
 - VP of Facilities / Real Estate
 - VP of Human Resources / People Operations
 - Chief People Officer
 
 **Economic Buyer:**
+
 - CFO or VP of Finance
 - VP of Corporate Services
 - Budget authority typically at VP or C-level
 
 **Champion (Day-to-Day User):**
+
 - Commute Program Manager
 - Facilities Operations Manager
 - Employee Experience Lead
 
 **Key Influencers:**
+
 - **IT/Security:** Data security, SSO integration requirements
 - **Sustainability/ESG:** Environmental goals and reporting
 - **Employee Resource Groups:** Accessibility, equity concerns
@@ -129,12 +146,14 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ### Typical Buying Triggers
 
 **Operational Triggers:**
+
 - Current shuttle software contract expiring
 - Employee complaints about lack of real-time tracking
 - Service disruptions causing employee dissatisfaction
 - Difficulty managing hybrid work demand fluctuations
 
 **Strategic Triggers:**
+
 - Office relocation or consolidation
 - Return-to-office initiatives
 - ESG/sustainability commitments
@@ -142,12 +161,14 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 - Retention crisis (exit interviews cite commute)
 
 **Financial Triggers:**
+
 - Need to justify program ROI to leadership
 - Budget cuts requiring efficiency improvements
 - Parking construction costs driving shuttle investment
 - Real estate savings from remote parking
 
 **External Triggers:**
+
 - Peer companies offering better commute benefits
 - Employee expectations from consumer apps
 - Talent competition in tight labor markets
@@ -200,6 +221,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 **Cycle Length:** 3-4 months (can extend with procurement)
 
 **Typical Timeline:**
+
 - Month 1: Discovery and vendor research
 - Month 2: Demos and stakeholder presentations
 - Month 3: Security review, reference checks, proposal
@@ -207,6 +229,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 - Implementation: 4-6 weeks post-contract
 
 **Best Times to Engage:**
+
 - Q3-Q4: Budget planning for next fiscal year
 - January-March: New year initiatives, return-to-office planning
 - Post-return-to-office mandates: When demand spikes
@@ -215,17 +238,20 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ### Budget Authority & Deal Size
 
 **Budget Range:**
+
 - Small programs (5-10 vehicles): $25K-$50K annually
 - Medium programs (10-20 vehicles): $50K-$100K annually
 - Large programs (20+ vehicles): $100K-$200K+ annually
 
 **Funding Sources:**
+
 - Facilities/Real Estate budget (most common)
 - HR benefits budget
 - Sustainability initiative funds
 - Parking revenue offset
 
 **Approval Process:**
+
 - Facilities/HR Director has spending authority up to $50K
 - Above that threshold requires VP or C-level approval
 - Very large contracts (>$150K) may require Board or executive committee
@@ -273,6 +299,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 **Primary:** "Attract and retain top talent with a modern commute program that employees actually use — while proving ROI to your CFO with real data."
 
 **Key Messages:**
+
 - "Turn your commute program into a retention advantage"
 - "Give employees the real-time tracking they expect from consumer apps"
 - "Prove program value with ridership data and employee satisfaction metrics"
@@ -281,23 +308,27 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ### Language That Resonates
 
 **Employee-Centric:**
+
 - "Employee experience is a competitive advantage"
 - "Modern employees expect real-time tracking"
 - "Improve commute satisfaction scores"
 - "Reduce HR burden with self-service"
 
 **Business Value:**
+
 - "Quantifiable ROI for your commute program"
 - "Data-driven justification for leadership"
 - "Cost-per-ride vs. cost-per-parking-space"
 - "Retention impact in dollars saved"
 
 **Sustainability:**
+
 - "Support your ESG commitments"
 - "Track carbon offset and car trips avoided"
 - "Green commute program metrics for reporting"
 
 **Hybrid Ready:**
+
 - "Reservation system for variable demand"
 - "Capacity management for unpredictable schedules"
 - "Flex your program with your workforce"
@@ -309,12 +340,14 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ### Primary Approach
 
 **Sales-Led with Champion Development:**
+
 - Often starts with Facilities or HR champion who experiences the pain
 - Requires building business case for economic buyer
 - Demo and pilot are critical for stakeholder buy-in
 - Security/IT review is common gate
 
 ### Marketing Channels
+
 - HR/People operations conferences (SHRM, HR Tech)
 - Corporate real estate events (CoreNet)
 - Sustainability/ESG forums
@@ -324,17 +357,20 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ### Key Sales Activities
 
 **1. Champion Development:**
+
 - Identify frustrated Facilities/HR manager
 - Provide ROI calculator and business case templates
 - Arm champion with peer company examples
 
 **2. Demo Strategy:**
+
 - Show employee-facing app first (employee experience is #1)
 - Demonstrate reservation and capacity management
 - Walk through ROI dashboards and reporting
 - Address IT/security requirements early
 
 **3. Pilot Program:**
+
 - Start with one route or one building
 - Run for 30-60 days
 - Gather employee feedback actively
@@ -343,15 +379,19 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ### Typical Objections & Responses
 
 **"Our employees won't download another app."**
+
 > "Companies see 70%+ adoption in first month with proper launch. We provide employee communication templates and launch support. Plus, SSO means no new password to remember."
 
 **"We can't justify the cost right now."**
+
 > "Let's calculate your cost-per-parking-space vs. cost-per-shuttle-ride. Most companies find shuttles are 3-4x more cost-effective. And that's before retention savings."
 
 **"Hybrid work makes demand unpredictable."**
+
 > "That's exactly why you need reservations and real-time capacity data. You can right-size your fleet based on actual demand, not guesses."
 
 **"Our IT team won't approve another vendor."**
+
 > "We integrate with SSO and meet SOC 2 requirements. We're happy to do a security review with your IT team."
 
 ---
@@ -361,6 +401,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ### Ideal Corporate Customer
 
 **Characteristics:**
+
 - 1,000+ employees in commute program area
 - Multi-route system (3+ routes)
 - Progressive HR/Facilities leadership
@@ -381,6 +422,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ### Expansion Indicators
 
 **Signs of Strong LTV:**
+
 - Adding new routes or buildings
 - Employee ridership growing
 - Active program marketing to employees
@@ -389,6 +431,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 - Participation in case studies
 
 **Upsell Opportunities:**
+
 - Advanced analytics and retention correlation
 - White-label app with company branding
 - Integration with HRIS and expense systems
@@ -401,6 +444,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 ## Do's and Don'ts
 
 ### DO:
+
 - Emphasize employee experience and retention impact
 - Provide ROI calculators and business case templates
 - Address hybrid work and variable demand
@@ -410,6 +454,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 - Offer pilot programs to reduce risk
 
 ### DON'T:
+
 - Lead with cost savings alone (employee experience matters more)
 - Ignore hybrid work scheduling challenges
 - Promise features requiring custom development
@@ -420,7 +465,7 @@ Corporate-specific variation of the Shuttle Platform ICP. For shared elements (p
 
 ---
 
-*Use with [Base Shuttle ICP](./base.md) for core capabilities and pain points.*
+_Use with [Base Shuttle ICP](./base.md) for core capabilities and pain points._
 
-*Last Updated: January 2026*
-*Maintained By: GTM Leadership*
+_Last Updated: January 2026_
+_Maintained By: GTM Leadership_

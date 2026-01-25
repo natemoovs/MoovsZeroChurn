@@ -80,10 +80,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get all active accounts
     const companies = await prisma.hubSpotCompany.findMany({
-      orderBy: [
-        { numericHealthScore: "asc" },
-        { mrr: "desc" },
-      ],
+      orderBy: [{ numericHealthScore: "asc" }, { mrr: "desc" }],
     })
 
     const triggeredAccounts: TriggeredAccount[] = []
@@ -120,7 +117,9 @@ export async function GET(request: NextRequest) {
         paymentHealth: company.paymentHealth,
         riskSignalCount: company.riskSignals.length,
         daysToRenewal: company.contractEndDate
-          ? Math.floor((new Date(company.contractEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          ? Math.floor(
+              (new Date(company.contractEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+            )
           : null,
         openTicketCount: 0, // Would need from Notion
         currentPlan: company.plan,
@@ -132,7 +131,7 @@ export async function GET(request: NextRequest) {
 
       // Filter by priority if specified
       if (priorityFilter !== "all") {
-        const filteredTriggers = triggers.filter(t => t.priority === priorityFilter)
+        const filteredTriggers = triggers.filter((t) => t.priority === priorityFilter)
         if (filteredTriggers.length === 0) continue
       }
 
@@ -166,7 +165,7 @@ export async function GET(request: NextRequest) {
         numericScore: company.numericHealthScore,
         mrr: company.mrr,
 
-        triggeredPlaybooks: triggers.map(t => ({
+        triggeredPlaybooks: triggers.map((t) => ({
           type: t.type,
           name: t.name,
           priority: t.priority,
@@ -222,7 +221,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Playbook report error:", error)
     return NextResponse.json(
-      { error: "Failed to generate playbook report", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Failed to generate playbook report",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }
@@ -240,7 +242,9 @@ function generatePlaybookInsights(
 
   // Overall trigger rate
   const triggerRate = totalAccounts > 0 ? Math.round((triggeredCount / totalAccounts) * 100) : 0
-  insights.push(`${triggeredCount} of ${totalAccounts} accounts (${triggerRate}%) have active playbook triggers`)
+  insights.push(
+    `${triggeredCount} of ${totalAccounts} accounts (${triggerRate}%) have active playbook triggers`
+  )
 
   // Critical priority
   if (criticalCount > 0) {
@@ -272,12 +276,16 @@ function generatePlaybookInsights(
 
   // Onboarding stalled
   if (byPlaybookType["onboarding_stalled"] && byPlaybookType["onboarding_stalled"] > 5) {
-    insights.push(`${byPlaybookType["onboarding_stalled"]} accounts have stalled onboarding - consider activation campaign`)
+    insights.push(
+      `${byPlaybookType["onboarding_stalled"]} accounts have stalled onboarding - consider activation campaign`
+    )
   }
 
   // Expansion opportunities
   if (byPlaybookType["expansion_ready"] && byPlaybookType["expansion_ready"] > 0) {
-    insights.push(`${byPlaybookType["expansion_ready"]} accounts show expansion readiness - sales opportunity`)
+    insights.push(
+      `${byPlaybookType["expansion_ready"]} accounts show expansion readiness - sales opportunity`
+    )
   }
 
   return insights.slice(0, 5)

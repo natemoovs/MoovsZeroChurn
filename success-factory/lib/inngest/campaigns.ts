@@ -264,7 +264,7 @@ async function evaluateCondition(
         where: {
           companyId: company.hubspotId,
           occurredAt: {
-            gte: new Date(Date.now() - (config.withinDays as number || 7) * 24 * 60 * 60 * 1000),
+            gte: new Date(Date.now() - ((config.withinDays as number) || 7) * 24 * 60 * 60 * 1000),
           },
         },
       })
@@ -275,9 +275,5 @@ async function evaluateCondition(
 }
 
 function calculateNextDue(delayDays: number, delayHours: number): Date {
-  return new Date(
-    Date.now() +
-      delayDays * 24 * 60 * 60 * 1000 +
-      delayHours * 60 * 60 * 1000
-  )
+  return new Date(Date.now() + delayDays * 24 * 60 * 60 * 1000 + delayHours * 60 * 60 * 1000)
 }

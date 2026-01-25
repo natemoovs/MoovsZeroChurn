@@ -10,8 +10,8 @@ const CSM_DATABASE_ID = process.env.NOTION_CSM_DATABASE_ID
 
 // Notion user IDs for CSM assignment
 const NOTION_USERS = {
-  nate: "2d5d872b-594c-8152-a869-0002a290d93f",      // nate@moovsapp.com - Enterprise
-  andrea: "2e6d872b-594c-815e-9450-0002a2899317",   // andrea@moovsapp.com - Mid-Market & SMB
+  nate: "2d5d872b-594c-8152-a869-0002a290d93f", // nate@moovsapp.com - Enterprise
+  andrea: "2e6d872b-594c-815e-9450-0002a2899317", // andrea@moovsapp.com - Mid-Market & SMB
 } as const
 
 export interface CreateTaskInput {
@@ -25,9 +25,9 @@ export interface CreateTaskInput {
   ownerEmail?: string
   ownerName?: string
   playbookId?: string
-  segment?: string           // enterprise, mid-market, smb, free
-  tags?: string[]            // Optional tags for the task
-  notionAssigneeId?: string  // Direct Notion user ID for assignment (overrides auto-assignment)
+  segment?: string // enterprise, mid-market, smb, free
+  tags?: string[] // Optional tags for the task
+  notionAssigneeId?: string // Direct Notion user ID for assignment (overrides auto-assignment)
   metadata?: Prisma.InputJsonValue
 }
 
@@ -102,7 +102,8 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
 
       // Assignee - people field
       // Priority: direct notionAssigneeId > owner email match > segment-based
-      const assigneeId = input.notionAssigneeId || getNotionAssignee(input.ownerEmail, input.segment)
+      const assigneeId =
+        input.notionAssigneeId || getNotionAssignee(input.ownerEmail, input.segment)
       if (assigneeId) {
         notionProps["Assignee"] = {
           people: [{ id: assigneeId }],
@@ -116,7 +117,7 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
       }
       if (tags.length > 0) {
         notionProps["Tags"] = {
-          multi_select: tags.map(name => ({ name })),
+          multi_select: tags.map((name) => ({ name })),
         }
       }
 
@@ -136,9 +137,10 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
       result.notionUrl = page.url
 
       // Store Notion page ID in task metadata for future sync
-      const existingMetadata = (input.metadata && typeof input.metadata === "object" && !Array.isArray(input.metadata))
-        ? input.metadata as Record<string, unknown>
-        : {}
+      const existingMetadata =
+        input.metadata && typeof input.metadata === "object" && !Array.isArray(input.metadata)
+          ? (input.metadata as Record<string, unknown>)
+          : {}
       await prisma.task.update({
         where: { id: task.id },
         data: {
@@ -239,10 +241,7 @@ function mapStatusToNotion(status: string): string {
 /**
  * Check if a similar task already exists (for deduplication)
  */
-export async function taskExists(
-  companyId: string,
-  playbookId: string
-): Promise<boolean> {
+export async function taskExists(companyId: string, playbookId: string): Promise<boolean> {
   const existing = await prisma.task.findFirst({
     where: {
       companyId,

@@ -3,6 +3,7 @@
 Operator-specific variation of the Shuttle Platform ICP. For shared elements (pain points, core capabilities), reference the [Base Shuttle ICP](./base.md).
 
 **Use this variation when:**
+
 - Target is a transportation company running shuttle contracts
 - They serve multiple clients (universities, corporations, hotels)
 - Decision makers are operations-focused business owners
@@ -12,15 +13,17 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ## Quick Reference
 
 ### Key Stats
-| Attribute | Value |
-|-----------|-------|
-| Revenue | $500K - $5M+ |
-| Fleet Size | 10-50+ shuttle vehicles |
-| Contracts | 3-20+ active clients |
-| Budget Range | $15K-$75K+ annually |
-| Sales Cycle | 2-3 months |
+
+| Attribute    | Value                   |
+| ------------ | ----------------------- |
+| Revenue      | $500K - $5M+            |
+| Fleet Size   | 10-50+ shuttle vehicles |
+| Contracts    | 3-20+ active clients    |
+| Budget Range | $15K-$75K+ annually     |
+| Sales Cycle  | 2-3 months              |
 
 ### Top 5 Pain Points
+
 1. **Win more contracts** - Need modern tech to compete for RFPs
 2. **Multi-client complexity** - Managing different clients with different needs
 3. **Thin margins** - Every inefficiency eats profit
@@ -28,6 +31,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 5. **Driver coordination** - Managing drivers across multiple contracts
 
 ### Messaging Do's
+
 - Lead with winning contracts and competitive advantage
 - Emphasize multi-client management and efficiency
 - Show client-facing portals and reporting
@@ -35,6 +39,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 - Reference similar operators with multiple contracts
 
 ### Messaging Don'ts
+
 - Focus only on end-rider experience (operators care about business metrics)
 - Ignore the B2B contract context
 - Use language that implies they're the end client
@@ -42,9 +47,11 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 - Promise features that don't scale across clients
 
 ### Primary CTA
+
 "See How Operators Win More Contracts with Modern Technology"
 
 ### Proof Points Needed
+
 - Contract win rates / RFP success stories
 - Multi-client management efficiency gains
 - Margin improvement percentages
@@ -56,6 +63,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ## Organization Profile
 
 ### Operator Types
+
 - Charter and shuttle companies with contract work
 - Private transportation providers
 - Regional transit contractors
@@ -64,16 +72,19 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 - Event transportation companies
 
 ### Business Scale
+
 - Sweet Spot: $500K - $5M+ revenue, 10-50+ vehicles
 - Minimum viable: $250K revenue, 5+ vehicles, 2+ clients
 - Contract-based revenue model (B2B)
 
 ### Program Ownership
+
 - **Decision Maker:** Owner/CEO or General Manager
 - **Day-to-Day:** Operations Manager, Dispatch Lead
 - **Staff:** Drivers, dispatchers, account managers
 
 ### Service Characteristics
+
 - Multiple concurrent contracts
 - Different service types (fixed route, on-demand, hybrid)
 - Client-specific requirements and SLAs
@@ -84,12 +95,14 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ## Budget & Operations
 
 ### Budget Characteristics
+
 - Software Budget: $15K - $75K+ annually
 - Pricing sensitivity: High (thin margins)
 - Funding: Operating budget, often tied to contract profitability
 - Budget Cycle: Rolling (contract renewals throughout year)
 
 ### Fleet Characteristics
+
 - Vehicle Count: 10-50+ shuttle vehicles
 - Vehicle Types: Vans, minibuses, cutaways, full-size buses
 - Mixed ownership: Owned, leased, and contracted
@@ -102,20 +115,24 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ### Buying Committee
 
 **Primary Decision Maker:**
+
 - Owner/CEO
 - General Manager
 - VP of Operations
 
 **Economic Buyer:**
+
 - Owner (almost always in this segment)
 - Operations directly tied to profitability
 
 **Champion (Day-to-Day User):**
+
 - Operations Manager
 - Head Dispatcher
 - Account Manager
 
 **Key Influencers:**
+
 - **Clients:** Their requirements often drive technology decisions
 - **Drivers:** Adoption and usability concerns
 - **Accountant/Bookkeeper:** Integration with billing/invoicing
@@ -123,18 +140,21 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ### Typical Buying Triggers
 
 **Business Triggers:**
+
 - Lost an RFP because competitor had better technology
 - Won a new contract that requires real-time tracking
 - Client demanding better reporting or rider app
 - Current software can't handle multiple clients
 
 **Operational Triggers:**
+
 - Managing multiple systems is too complex
 - Reporting takes too much time
 - Can't scale to additional contracts
 - Driver coordination is breaking down
 
 **Financial Triggers:**
+
 - Margins too thin, need efficiency gains
 - Software costs too high for value delivered
 - Need to reduce administrative overhead
@@ -181,6 +201,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 **Cycle Length:** 2-3 months (operators move faster)
 
 **Typical Timeline:**
+
 - Week 1-2: Discovery and initial demo
 - Week 3-4: Detailed demo, stakeholder buy-in
 - Week 5-6: Proposal, pricing discussion
@@ -188,6 +209,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 - Implementation: 2-4 weeks
 
 **Best Times to Engage:**
+
 - Before RFP season (varies by vertical)
 - When contracts are up for renewal
 - After losing a contract to competitor
@@ -196,16 +218,19 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ### Budget Authority & Deal Size
 
 **Budget Range:**
+
 - Small operators (10-20 vehicles): $15K-$30K annually
 - Medium operators (20-35 vehicles): $30K-$50K annually
 - Large operators (35+ vehicles): $50K-$100K+ annually
 
 **Pricing Sensitivity:**
+
 - High - margins are thin in contract shuttle
 - Need clear ROI justification
 - Often comparing to current software costs
 
 **Approval Process:**
+
 - Owner typically has full authority
 - May consult with operations team
 - Faster decisions than enterprise clients
@@ -253,6 +278,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 **Primary:** "Win more contracts and run them profitably — with one platform that handles all your clients, impresses in RFPs, and saves hours on reporting."
 
 **Key Messages:**
+
 - "Differentiate in RFPs with modern, client-facing technology"
 - "Manage all your contracts from one platform"
 - "Turn reporting from hours into minutes"
@@ -261,18 +287,21 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ### Language That Resonates
 
 **Business Growth:**
+
 - "Win more contracts"
 - "Stand out in RFPs"
 - "Client-facing technology that impresses"
 - "Grow without adding headcount"
 
 **Operational:**
+
 - "Manage all clients in one place"
 - "Multi-client dashboard"
 - "Automated reporting per client"
 - "Driver coordination across contracts"
 
 **Financial:**
+
 - "Protect your margins"
 - "Reduce administrative overhead"
 - "Software that pays for itself"
@@ -285,12 +314,14 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ### Primary Approach
 
 **Sales-Led, Efficiency-Focused:**
+
 - Operators are pragmatic buyers who move quickly
 - Focus on business impact: win contracts, save time, improve margins
 - Demo should show multi-client management
 - Pricing conversation happens early
 
 ### Marketing Channels
+
 - Industry events (NLA, regional associations)
 - Trade publications (LCT, Chauffeur Driven)
 - LinkedIn: Owner/operators, operations managers
@@ -300,17 +331,20 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ### Key Sales Activities
 
 **1. RFP Readiness:**
+
 - Position as technology partner for winning contracts
 - Provide case studies of RFP wins
 - Show client-facing features that differentiate
 
 **2. Demo Strategy:**
+
 - Start with multi-client dashboard (their world)
 - Show client portal and reporting (what impresses their clients)
 - Demonstrate driver coordination across contracts
 - End with pricing/ROI discussion
 
 **3. Pilot Approach:**
+
 - Start with one contract/client
 - Prove value quickly (operators are impatient)
 - Expand to additional contracts
@@ -318,15 +352,19 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ### Typical Objections & Responses
 
 **"Your price is higher than what I'm paying now."**
+
 > "Let's calculate your reporting time alone. If you're spending 10 hours a month on reports at $50/hour, that's $6K a year. Plus the contracts you're not winning because of outdated tech. What's that worth?"
 
 **"My clients don't need real-time tracking."**
+
 > "Your competitors are offering it. When those contracts come up for renewal, you want to be the one with better technology, not the one explaining why you don't have it."
 
 **"I don't have time to switch systems."**
+
 > "We handle migration. You can run parallel for 2 weeks with no disruption. Operators with 30+ vehicles are live in under a month."
 
 **"My drivers won't use a new app."**
+
 > "Our driver app is simpler than what they use now. One tap to start, built-in navigation. We've converted drivers who were on paper logs."
 
 ---
@@ -336,6 +374,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ### Ideal Operator Customer
 
 **Characteristics:**
+
 - 3+ active contracts/clients
 - $500K+ annual revenue
 - Growth-minded (wants to win more contracts)
@@ -354,6 +393,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ### Expansion Indicators
 
 **Signs of Strong LTV:**
+
 - Winning new contracts
 - Adding vehicles and drivers
 - Expanding to new service areas
@@ -361,6 +401,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 - Referrals to other operators
 
 **Upsell Opportunities:**
+
 - Additional contracts/clients
 - White-label client portals
 - Advanced analytics and reporting
@@ -372,6 +413,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 ## Do's and Don'ts
 
 ### DO:
+
 - Lead with business impact (win contracts, save time)
 - Show multi-client management capabilities
 - Emphasize margin protection and efficiency
@@ -381,6 +423,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 - Discuss pricing early and transparently
 
 ### DON'T:
+
 - Focus only on end-rider experience (operators care about business)
 - Ignore the B2B contract context
 - Underestimate price sensitivity
@@ -390,7 +433,7 @@ Operator-specific variation of the Shuttle Platform ICP. For shared elements (pa
 
 ---
 
-*Use with [Base Shuttle ICP](./base.md) for core capabilities and pain points.*
+_Use with [Base Shuttle ICP](./base.md) for core capabilities and pain points._
 
-*Last Updated: January 2026*
-*Maintained By: GTM Leadership*
+_Last Updated: January 2026_
+_Maintained By: GTM Leadership_

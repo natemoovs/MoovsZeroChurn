@@ -1,10 +1,10 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   // Include factory directory in serverless function output
   outputFileTracingIncludes: {
-    '/*': ['./factory/**/*'],
+    "/*": ["./factory/**/*"],
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

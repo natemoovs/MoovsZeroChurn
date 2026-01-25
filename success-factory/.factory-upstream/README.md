@@ -83,11 +83,11 @@ moovs-factory/
 
 The `/knowledge` folder contains shared context used by all skills:
 
-| File | Purpose |
-|------|---------|
-| `brand/voice-guidelines.md` | How Moovs communicates |
+| File                           | Purpose                       |
+| ------------------------------ | ----------------------------- |
+| `brand/voice-guidelines.md`    | How Moovs communicates        |
 | `customers/icp-definitions.md` | Our 4 ideal customer profiles |
-| `product/platform-overview.md` | What Moovs does |
+| `product/platform-overview.md` | What Moovs does               |
 
 ## MCP Setup
 
@@ -116,25 +116,28 @@ All servers should show `✓ Connected`.
 
 ### Where to get API keys
 
-| Service | Where to get it |
-|---------|-----------------|
-| Notion | [notion.so/my-integrations](https://www.notion.so/my-integrations) → Create integration |
-| HubSpot | Settings → Integrations → Private Apps → Create |
-| Metabase | Admin → Settings → Authentication → API Keys |
+| Service  | Where to get it                                                                         |
+| -------- | --------------------------------------------------------------------------------------- |
+| Notion   | [notion.so/my-integrations](https://www.notion.so/my-integrations) → Create integration |
+| HubSpot  | Settings → Integrations → Private Apps → Create                                         |
+| Metabase | Admin → Settings → Authentication → API Keys                                            |
 
 ### Troubleshooting
 
 **"Missing environment variables" warning:**
+
 - Run `./scripts/setup-mcp.sh` again
 - Make sure to run `source ~/.zshrc` after
 - Restart Claude Code
 
 **OAuth service not connecting:**
+
 - Re-run `claude mcp auth <service>`
 
 ## Integrations
 
 The factory connects to:
+
 - **Figma** - Design system, brand assets, UI designs
 - **Notion** - Tickets database, problem docs
 - **HubSpot** - CRM data for customer research

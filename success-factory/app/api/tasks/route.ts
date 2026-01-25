@@ -36,11 +36,7 @@ export async function GET(request: NextRequest) {
 
     const tasks = await prisma.task.findMany({
       where,
-      orderBy: [
-        { priority: "desc" },
-        { dueDate: "asc" },
-        { createdAt: "desc" },
-      ],
+      orderBy: [{ priority: "desc" }, { dueDate: "asc" }, { createdAt: "desc" }],
       include: {
         playbook: {
           select: {
@@ -74,10 +70,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Tasks fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch tasks" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 })
   }
 }
 
@@ -140,16 +133,16 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({
-      ...task,
-      notionUrl: result.notionUrl,
-      notionSynced: !!result.notionPageId,
-    }, { status: 201 })
+    return NextResponse.json(
+      {
+        ...task,
+        notionUrl: result.notionUrl,
+        notionSynced: !!result.notionPageId,
+      },
+      { status: 201 }
+    )
   } catch (error) {
     console.error("Task create error:", error)
-    return NextResponse.json(
-      { error: "Failed to create task" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to create task" }, { status: 500 })
   }
 }

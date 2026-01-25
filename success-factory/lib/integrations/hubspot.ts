@@ -136,7 +136,7 @@ async function rateLimitedDelay(): Promise<void> {
   const now = Date.now()
   const timeSinceLastRequest = now - lastRequestTime
   if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
+    await new Promise((resolve) => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
   }
   lastRequestTime = Date.now()
 }
@@ -146,7 +146,7 @@ function getHeaders(): HeadersInit {
     throw new Error("HUBSPOT_API_KEY environment variable is not set")
   }
   return {
-    "Authorization": `Bearer ${HUBSPOT_API_KEY}`,
+    Authorization: `Bearer ${HUBSPOT_API_KEY}`,
     "Content-Type": "application/json",
   }
 }
@@ -171,8 +171,10 @@ async function hubspotFetch<T>(
   if (response.status === 429 && retries > 0) {
     const retryAfter = parseInt(response.headers.get("Retry-After") || "1", 10)
     const waitTime = Math.max(retryAfter * 1000, 1000) * (4 - retries) // Exponential backoff
-    console.log(`HubSpot rate limited, waiting ${waitTime}ms before retry (${retries} retries left)`)
-    await new Promise(resolve => setTimeout(resolve, waitTime))
+    console.log(
+      `HubSpot rate limited, waiting ${waitTime}ms before retry (${retries} retries left)`
+    )
+    await new Promise((resolve) => setTimeout(resolve, waitTime))
     return hubspotFetch<T>(endpoint, options, retries - 1)
   }
 
@@ -193,41 +195,64 @@ async function hubspotFetch<T>(
  */
 export async function getCompany(id: string): Promise<HubSpotCompany> {
   const properties = [
-    "name", "domain", "industry", "numberofemployees", "annualrevenue",
-    "city", "state", "country", "phone", "website", "description",
-    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate"
+    "name",
+    "domain",
+    "industry",
+    "numberofemployees",
+    "annualrevenue",
+    "city",
+    "state",
+    "country",
+    "phone",
+    "website",
+    "description",
+    "lifecyclestage",
+    "hs_lead_status",
+    "createdate",
+    "hs_lastmodifieddate",
   ].join(",")
 
-  return hubspotFetch<HubSpotCompany>(
-    `/crm/v3/objects/companies/${id}?properties=${properties}`
-  )
+  return hubspotFetch<HubSpotCompany>(`/crm/v3/objects/companies/${id}?properties=${properties}`)
 }
 
 /**
  * Find a company by its domain
  */
 export async function getCompanyByDomain(domain: string): Promise<HubSpotCompany | null> {
-  const result = await hubspotFetch<HubSpotSearchResult>(
-    "/crm/v3/objects/companies/search",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        filterGroups: [{
-          filters: [{
-            propertyName: "domain",
-            operator: "EQ",
-            value: domain,
-          }],
-        }],
-        properties: [
-          "name", "domain", "industry", "numberofemployees", "annualrevenue",
-          "city", "state", "country", "phone", "website", "description",
-          "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate"
-        ],
-        limit: 1,
-      }),
-    }
-  )
+  const result = await hubspotFetch<HubSpotSearchResult>("/crm/v3/objects/companies/search", {
+    method: "POST",
+    body: JSON.stringify({
+      filterGroups: [
+        {
+          filters: [
+            {
+              propertyName: "domain",
+              operator: "EQ",
+              value: domain,
+            },
+          ],
+        },
+      ],
+      properties: [
+        "name",
+        "domain",
+        "industry",
+        "numberofemployees",
+        "annualrevenue",
+        "city",
+        "state",
+        "country",
+        "phone",
+        "website",
+        "description",
+        "lifecyclestage",
+        "hs_lead_status",
+        "createdate",
+        "hs_lastmodifieddate",
+      ],
+      limit: 1,
+    }),
+  })
 
   return result.results[0] || null
 }
@@ -246,17 +271,24 @@ export async function getContacts(companyId: string): Promise<HubSpotContact[]> 
   }
 
   // Batch read the contacts
-  const contactIds = associations.results.map(a => a.id)
+  const contactIds = associations.results.map((a) => a.id)
   const result = await hubspotFetch<{ results: HubSpotContact[] }>(
     "/crm/v3/objects/contacts/batch/read",
     {
       method: "POST",
       body: JSON.stringify({
         properties: [
-          "firstname", "lastname", "email", "phone", "jobtitle",
-          "lifecyclestage", "hs_lead_status", "lastmodifieddate", "createdate"
+          "firstname",
+          "lastname",
+          "email",
+          "phone",
+          "jobtitle",
+          "lifecyclestage",
+          "hs_lead_status",
+          "lastmodifieddate",
+          "createdate",
         ],
-        inputs: contactIds.map(id => ({ id })),
+        inputs: contactIds.map((id) => ({ id })),
       }),
     }
   )
@@ -278,17 +310,22 @@ export async function getDeals(companyId: string): Promise<HubSpotDeal[]> {
   }
 
   // Batch read the deals
-  const dealIds = associations.results.map(a => a.id)
+  const dealIds = associations.results.map((a) => a.id)
   const result = await hubspotFetch<{ results: HubSpotDeal[] }>(
     "/crm/v3/objects/deals/batch/read",
     {
       method: "POST",
       body: JSON.stringify({
         properties: [
-          "dealname", "amount", "dealstage", "pipeline",
-          "closedate", "createdate", "hs_lastmodifieddate"
+          "dealname",
+          "amount",
+          "dealstage",
+          "pipeline",
+          "closedate",
+          "createdate",
+          "hs_lastmodifieddate",
         ],
-        inputs: dealIds.map(id => ({ id })),
+        inputs: dealIds.map((id) => ({ id })),
       }),
     }
   )
@@ -328,23 +365,23 @@ export async function getRecentActivity(companyId: string): Promise<HubSpotActiv
 
   return {
     engagements: [],
-    notes: notes.results.map(n => ({
+    notes: notes.results.map((n) => ({
       id: n.id,
       body: n.properties.hs_note_body || "",
       timestamp: n.createdAt,
     })),
-    emails: emails.results.map(e => ({
+    emails: emails.results.map((e) => ({
       id: e.id,
       subject: e.properties.hs_email_subject || "",
       timestamp: e.createdAt,
     })),
-    calls: calls.results.map(c => ({
+    calls: calls.results.map((c) => ({
       id: c.id,
       disposition: c.properties.hs_call_disposition || "",
       duration: parseInt(c.properties.hs_call_duration || "0", 10),
       timestamp: c.createdAt,
     })),
-    meetings: meetings.results.map(m => ({
+    meetings: meetings.results.map((m) => ({
       id: m.id,
       title: m.properties.hs_meeting_title || "",
       startTime: m.properties.hs_meeting_start_time || "",
@@ -354,7 +391,7 @@ export async function getRecentActivity(companyId: string): Promise<HubSpotActiv
 }
 
 // Helper to add delay between requests to avoid rate limits
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * List all CUSTOMERS (lifecycle stage = customer) with pagination
@@ -362,10 +399,23 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
  */
 export async function listCustomers(): Promise<HubSpotCompany[]> {
   const properties = [
-    "name", "domain", "industry", "numberofemployees", "annualrevenue",
-    "city", "state", "country", "phone", "website", "description",
-    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated",
-    "hubspot_owner_id"
+    "name",
+    "domain",
+    "industry",
+    "numberofemployees",
+    "annualrevenue",
+    "city",
+    "state",
+    "country",
+    "phone",
+    "website",
+    "description",
+    "lifecyclestage",
+    "hs_lead_status",
+    "createdate",
+    "hs_lastmodifieddate",
+    "notes_last_updated",
+    "hubspot_owner_id",
   ]
 
   const allCustomers: HubSpotCompany[] = []
@@ -375,13 +425,17 @@ export async function listCustomers(): Promise<HubSpotCompany[]> {
   // Use search API with filter for lifecycle stage = customer
   while (true) {
     const body: Record<string, unknown> = {
-      filterGroups: [{
-        filters: [{
-          propertyName: "lifecyclestage",
-          operator: "EQ",
-          value: "customer"
-        }]
-      }],
+      filterGroups: [
+        {
+          filters: [
+            {
+              propertyName: "lifecyclestage",
+              operator: "EQ",
+              value: "customer",
+            },
+          ],
+        },
+      ],
       properties,
       limit: 100,
     }
@@ -420,10 +474,23 @@ export async function listCustomers(): Promise<HubSpotCompany[]> {
  */
 export async function listCompanies(): Promise<HubSpotCompany[]> {
   const properties = [
-    "name", "domain", "industry", "numberofemployees", "annualrevenue",
-    "city", "state", "country", "phone", "website", "description",
-    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated",
-    "hubspot_owner_id"
+    "name",
+    "domain",
+    "industry",
+    "numberofemployees",
+    "annualrevenue",
+    "city",
+    "state",
+    "country",
+    "phone",
+    "website",
+    "description",
+    "lifecyclestage",
+    "hs_lead_status",
+    "createdate",
+    "hs_lastmodifieddate",
+    "notes_last_updated",
+    "hubspot_owner_id",
   ].join(",")
 
   const allCompanies: HubSpotCompany[] = []
@@ -461,21 +528,30 @@ export async function searchCompanies(query: string): Promise<HubSpotCompany[]> 
     return listCustomers()
   }
 
-  const result = await hubspotFetch<HubSpotSearchResult>(
-    "/crm/v3/objects/companies/search",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        query,
-        properties: [
-          "name", "domain", "industry", "numberofemployees", "annualrevenue",
-          "city", "state", "country", "phone", "website", "description",
-          "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate"
-        ],
-        limit: 20,
-      }),
-    }
-  )
+  const result = await hubspotFetch<HubSpotSearchResult>("/crm/v3/objects/companies/search", {
+    method: "POST",
+    body: JSON.stringify({
+      query,
+      properties: [
+        "name",
+        "domain",
+        "industry",
+        "numberofemployees",
+        "annualrevenue",
+        "city",
+        "state",
+        "country",
+        "phone",
+        "website",
+        "description",
+        "lifecyclestage",
+        "hs_lead_status",
+        "createdate",
+        "hs_lastmodifieddate",
+      ],
+      limit: 20,
+    }),
+  })
 
   return result.results
 }
@@ -499,9 +575,7 @@ export interface HubSpotOwner {
  * Get all HubSpot owners (users/CSMs)
  */
 export async function getOwners(): Promise<HubSpotOwner[]> {
-  const result = await hubspotFetch<{ results: HubSpotOwner[] }>(
-    "/crm/v3/owners?limit=100"
-  )
+  const result = await hubspotFetch<{ results: HubSpotOwner[] }>("/crm/v3/owners?limit=100")
   return result.results
 }
 
@@ -521,10 +595,23 @@ export async function getOwner(ownerId: string): Promise<HubSpotOwner | null> {
  */
 export async function getCompaniesByOwner(ownerId: string): Promise<HubSpotCompany[]> {
   const properties = [
-    "name", "domain", "industry", "numberofemployees", "annualrevenue",
-    "city", "state", "country", "phone", "website", "description",
-    "lifecyclestage", "hs_lead_status", "createdate", "hs_lastmodifieddate", "notes_last_updated",
-    "hubspot_owner_id"
+    "name",
+    "domain",
+    "industry",
+    "numberofemployees",
+    "annualrevenue",
+    "city",
+    "state",
+    "country",
+    "phone",
+    "website",
+    "description",
+    "lifecyclestage",
+    "hs_lead_status",
+    "createdate",
+    "hs_lastmodifieddate",
+    "notes_last_updated",
+    "hubspot_owner_id",
   ]
 
   const allCompanies: HubSpotCompany[] = []
@@ -532,20 +619,22 @@ export async function getCompaniesByOwner(ownerId: string): Promise<HubSpotCompa
 
   while (true) {
     const body: Record<string, unknown> = {
-      filterGroups: [{
-        filters: [
-          {
-            propertyName: "hubspot_owner_id",
-            operator: "EQ",
-            value: ownerId
-          },
-          {
-            propertyName: "lifecyclestage",
-            operator: "EQ",
-            value: "customer"
-          }
-        ]
-      }],
+      filterGroups: [
+        {
+          filters: [
+            {
+              propertyName: "hubspot_owner_id",
+              operator: "EQ",
+              value: ownerId,
+            },
+            {
+              propertyName: "lifecyclestage",
+              operator: "EQ",
+              value: "customer",
+            },
+          ],
+        },
+      ],
       properties,
       limit: 100,
     }

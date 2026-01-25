@@ -173,7 +173,10 @@ export async function GET() {
   } catch (error) {
     console.error("Dashboard stats failed:", error)
     return NextResponse.json(
-      { error: "Failed to fetch dashboard stats", details: error instanceof Error ? error.message : "Unknown" },
+      {
+        error: "Failed to fetch dashboard stats",
+        details: error instanceof Error ? error.message : "Unknown",
+      },
       { status: 500 }
     )
   }

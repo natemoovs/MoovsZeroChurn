@@ -75,15 +75,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate segment benchmarks
-    const segmentData = new Map<string, {
-      companies: typeof companies
-      mrrValues: number[]
-      usageValues: number[]
-      activityValues: number[]
-      tenureValues: number[]
-      npsValues: number[]
-      healthCounts: { green: number; yellow: number; red: number }
-    }>()
+    const segmentData = new Map<
+      string,
+      {
+        companies: typeof companies
+        mrrValues: number[]
+        usageValues: number[]
+        activityValues: number[]
+        tenureValues: number[]
+        npsValues: number[]
+        healthCounts: { green: number; yellow: number; red: number }
+      }
+    >()
 
     for (const company of companies) {
       const segment = company.customerSegment || "unknown"
@@ -103,10 +106,13 @@ export async function GET(request: NextRequest) {
       const data = segmentData.get(segment)!
       data.companies.push(company)
 
-      const tenure = Math.max(1, Math.floor(
-        (Date.now() - new Date(company.hubspotCreatedAt || company.createdAt).getTime()) /
-        (1000 * 60 * 60 * 24 * 30)
-      ))
+      const tenure = Math.max(
+        1,
+        Math.floor(
+          (Date.now() - new Date(company.hubspotCreatedAt || company.createdAt).getTime()) /
+            (1000 * 60 * 60 * 24 * 30)
+        )
+      )
       const tripsPerMonth = (company.totalTrips || 0) / tenure
 
       data.mrrValues.push(company.mrr || 0)
@@ -130,7 +136,8 @@ export async function GET(request: NextRequest) {
     for (const [segment, data] of segmentData) {
       if (segmentFilter && segment !== segmentFilter) continue
 
-      const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
+      const avg = (arr: number[]) =>
+        arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
 
       segmentBenchmarks.push({
         segment,
@@ -148,7 +155,7 @@ export async function GET(request: NextRequest) {
 
     // If requesting specific company, calculate their comparison
     if (companyId) {
-      const company = companies.find(c => c.hubspotId === companyId)
+      const company = companies.find((c) => c.hubspotId === companyId)
       if (!company) {
         return NextResponse.json({ error: "Company not found" }, { status: 404 })
       }
@@ -160,18 +167,22 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Segment data not found" }, { status: 404 })
       }
 
-      const tenure = Math.max(1, Math.floor(
-        (Date.now() - new Date(company.hubspotCreatedAt || company.createdAt).getTime()) /
-        (1000 * 60 * 60 * 24 * 30)
-      ))
+      const tenure = Math.max(
+        1,
+        Math.floor(
+          (Date.now() - new Date(company.hubspotCreatedAt || company.createdAt).getTime()) /
+            (1000 * 60 * 60 * 24 * 30)
+        )
+      )
       const tripsPerMonth = (company.totalTrips || 0) / tenure
       const daysSinceLogin = company.daysSinceLastLogin ?? 30
       const npsScore = npsMap.get(company.hubspotId) ?? null
 
-      const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
+      const avg = (arr: number[]) =>
+        arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
       const percentile = (value: number, arr: number[], inverse: boolean = false) => {
         const sorted = [...arr].sort((a, b) => a - b)
-        const index = sorted.findIndex(v => v >= value)
+        const index = sorted.findIndex((v) => v >= value)
         const pct = index === -1 ? 100 : Math.round((index / sorted.length) * 100)
         return inverse ? 100 - pct : pct
       }
@@ -191,9 +202,7 @@ export async function GET(request: NextRequest) {
         usageVsSegment: pctDiff(tripsPerMonth, avgUsage),
         activityVsSegment: pctDiff(avgActivity, daysSinceLogin), // Inverse - lower is better
         tenureVsSegment: pctDiff(tenure, avgTenure),
-        npsVsSegment: npsScore !== null && avgNps !== null
-          ? Math.round(npsScore - avgNps)
-          : null,
+        npsVsSegment: npsScore !== null && avgNps !== null ? Math.round(npsScore - avgNps) : null,
       }
 
       const percentiles = {
@@ -206,9 +215,9 @@ export async function GET(request: NextRequest) {
       // Overall score: weighted average of percentiles
       const overallScore = Math.round(
         percentiles.mrr * 0.25 +
-        percentiles.usage * 0.30 +
-        percentiles.activity * 0.25 +
-        percentiles.tenure * 0.20
+          percentiles.usage * 0.3 +
+          percentiles.activity * 0.25 +
+          percentiles.tenure * 0.2
       )
 
       const companyBenchmark: CompanyBenchmark = {
@@ -230,7 +239,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         company: companyBenchmark,
-        segmentBenchmark: segmentBenchmarks.find(s => s.segment === segment),
+        segmentBenchmark: segmentBenchmarks.find((s) => s.segment === segment),
         allSegments: segmentBenchmarks,
       })
     }
@@ -246,9 +255,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Failed to calculate benchmarks:", error)
-    return NextResponse.json(
-      { error: "Failed to calculate benchmarks" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to calculate benchmarks" }, { status: 500 })
   }
 }

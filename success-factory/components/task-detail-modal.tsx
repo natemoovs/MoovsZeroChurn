@@ -178,7 +178,9 @@ export function TaskDetailModal({
     const timer = setTimeout(async () => {
       setSearchingCompanies(true)
       try {
-        const res = await fetch(`/api/companies?search=${encodeURIComponent(companySearchQuery)}&limit=10`)
+        const res = await fetch(
+          `/api/companies?search=${encodeURIComponent(companySearchQuery)}&limit=10`
+        )
         const data = await res.json()
         setCompanySearchResults(data.companies || [])
       } catch (err) {
@@ -221,7 +223,17 @@ export function TaskDetailModal({
   if (!isOpen) return null
 
   // Key properties to show prominently
-  const keyProps = ["Status", "Assignee", "Assigned To", "Priority", "Due", "Due Date", "Tags", "Project", "Team"]
+  const keyProps = [
+    "Status",
+    "Assignee",
+    "Assigned To",
+    "Priority",
+    "Due",
+    "Due Date",
+    "Tags",
+    "Project",
+    "Team",
+  ]
   const titleProp = Object.entries(pageData?.properties || {}).find(([, v]) => v.type === "title")
   const statusProp = pageData?.properties["Status"]
   const assigneeProp = pageData?.properties["Assignee"] || pageData?.properties["Assigned To"]
@@ -235,16 +247,17 @@ export function TaskDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 pt-[5vh]">
-      <div className="relative w-full max-w-3xl rounded-2xl bg-bg-elevated shadow-2xl">
+      <div className="bg-bg-elevated relative w-full max-w-3xl rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border-default bg-bg-elevated p-4">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-content-primary pr-8">
+        <div className="border-border-default bg-bg-elevated sticky top-0 z-10 flex items-start justify-between gap-4 border-b p-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-content-primary pr-8 text-lg font-semibold">
               {titleProp ? String(titleProp[1].value) : taskTitle}
             </h2>
             {pageData && (
-              <p className="mt-1 text-xs text-content-secondary">
-                Last edited {formatDistanceToNow(new Date(pageData.lastEditedTime), { addSuffix: true })}
+              <p className="text-content-secondary mt-1 text-xs">
+                Last edited{" "}
+                {formatDistanceToNow(new Date(pageData.lastEditedTime), { addSuffix: true })}
               </p>
             )}
           </div>
@@ -254,7 +267,7 @@ export function TaskDetailModal({
                 href={pageData.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 rounded-lg border border-border-default px-3 py-1.5 text-sm text-content-secondary hover:bg-surface-hover"
+                className="border-border-default text-content-secondary hover:bg-surface-hover flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm"
               >
                 <ExternalLink className="h-4 w-4" />
                 Open in Notion
@@ -262,7 +275,7 @@ export function TaskDetailModal({
             )}
             <button
               onClick={onClose}
-              className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary"
+              className="text-content-tertiary hover:bg-surface-hover hover:text-content-secondary rounded-lg p-2"
             >
               <X className="h-5 w-5" />
             </button>
@@ -273,15 +286,15 @@ export function TaskDetailModal({
         <div className="p-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-content-tertiary" />
+              <Loader2 className="text-content-tertiary h-8 w-8 animate-spin" />
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <AlertCircle className="mb-2 h-8 w-8 text-error-500" />
+              <AlertCircle className="text-error-500 mb-2 h-8 w-8" />
               <p className="text-error-600 dark:text-error-400">{error}</p>
               <button
                 onClick={fetchPageData}
-                className="mt-4 rounded-lg bg-bg-tertiary px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
+                className="bg-bg-tertiary text-content-secondary hover:bg-surface-hover mt-4 rounded-lg px-4 py-2 text-sm font-medium"
               >
                 Retry
               </button>
@@ -291,14 +304,13 @@ export function TaskDetailModal({
               {/* Status Actions */}
               {statusProp && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-content-secondary mr-2">Status:</span>
+                  <span className="text-content-secondary mr-2 text-sm">Status:</span>
                   {["Not Started", "In Progress", "Done"].map((status) => {
                     const currentStatus = String(statusProp.value || "").toLowerCase()
                     // Handle both "Done" and "Completed" as completed states
                     const isCompleteStatus = ["done", "completed"].includes(currentStatus)
-                    const isActive = status === "Done"
-                      ? isCompleteStatus
-                      : currentStatus === status.toLowerCase()
+                    const isActive =
+                      status === "Done" ? isCompleteStatus : currentStatus === status.toLowerCase()
                     return (
                       <button
                         key={status}
@@ -309,9 +321,9 @@ export function TaskDetailModal({
                             ? status === "Done"
                               ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                               : status === "In Progress"
-                              ? "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400"
-                              : "bg-bg-tertiary text-content-secondary"
-                            : "border border-border-default text-content-secondary hover:bg-surface-hover"
+                                ? "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400"
+                                : "bg-bg-tertiary text-content-secondary"
+                            : "border-border-default text-content-secondary hover:bg-surface-hover border"
                         )}
                       >
                         {status === "Done" ? (
@@ -329,20 +341,20 @@ export function TaskDetailModal({
               )}
 
               {/* Company Association */}
-              <div className="rounded-lg border border-border-default p-3">
+              <div className="border-border-default rounded-lg border p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Building2 className="h-4 w-4 text-content-tertiary" />
+                    <Building2 className="text-content-tertiary h-4 w-4" />
                     <div>
-                      <p className="text-xs text-content-secondary">Company</p>
-                      <p className="text-sm font-medium text-content-primary">
+                      <p className="text-content-secondary text-xs">Company</p>
+                      <p className="text-content-primary text-sm font-medium">
                         {currentCompanyName || initialCompanyName || "No company linked"}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowCompanySearch(!showCompanySearch)}
-                    className="rounded-lg border border-border-default px-3 py-1.5 text-sm text-content-secondary hover:bg-surface-hover"
+                    className="border-border-default text-content-secondary hover:bg-surface-hover rounded-lg border px-3 py-1.5 text-sm"
                   >
                     {showCompanySearch ? "Cancel" : "Change"}
                   </button>
@@ -352,53 +364,55 @@ export function TaskDetailModal({
                 {showCompanySearch && (
                   <div className="mt-3 space-y-2">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-tertiary" />
+                      <Search className="text-content-tertiary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                       <input
                         type="text"
                         value={companySearchQuery}
                         onChange={(e) => setCompanySearchQuery(e.target.value)}
                         placeholder="Search companies..."
-                        className="w-full rounded-lg border border-border-default bg-bg-elevated py-2 pl-9 pr-3 text-sm text-content-primary outline-none focus:border-success-500 focus:ring-1 focus:ring-success-500"
+                        className="border-border-default bg-bg-elevated text-content-primary focus:border-success-500 focus:ring-success-500 w-full rounded-lg border py-2 pr-3 pl-9 text-sm outline-none focus:ring-1"
                         autoFocus
                       />
                       {searchingCompanies && (
-                        <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-content-tertiary" />
+                        <Loader2 className="text-content-tertiary absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
                       )}
                     </div>
 
                     {/* Search Results */}
                     {companySearchResults.length > 0 && (
-                      <div className="max-h-48 overflow-y-auto rounded-lg border border-border-default bg-bg-elevated">
+                      <div className="border-border-default bg-bg-elevated max-h-48 overflow-y-auto rounded-lg border">
                         {companySearchResults.map((company) => (
                           <button
                             key={company.id}
                             onClick={() => updateCompany(company)}
                             disabled={updatingCompany}
-                            className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-surface-hover disabled:opacity-50"
+                            className="hover:bg-surface-hover flex w-full items-center justify-between px-3 py-2 text-left disabled:opacity-50"
                           >
                             <div>
-                              <p className="text-sm font-medium text-content-primary">
+                              <p className="text-content-primary text-sm font-medium">
                                 {company.name}
                               </p>
                               {company.domain && (
-                                <p className="text-xs text-content-secondary">{company.domain}</p>
+                                <p className="text-content-secondary text-xs">{company.domain}</p>
                               )}
                             </div>
                             {updatingCompany ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-content-tertiary" />
+                              <Loader2 className="text-content-tertiary h-4 w-4 animate-spin" />
                             ) : (
-                              <Check className="h-4 w-4 text-success-500 opacity-0 group-hover:opacity-100" />
+                              <Check className="text-success-500 h-4 w-4 opacity-0 group-hover:opacity-100" />
                             )}
                           </button>
                         ))}
                       </div>
                     )}
 
-                    {companySearchQuery && !searchingCompanies && companySearchResults.length === 0 && (
-                      <p className="text-center text-sm text-content-secondary py-2">
-                        No companies found
-                      </p>
-                    )}
+                    {companySearchQuery &&
+                      !searchingCompanies &&
+                      companySearchResults.length === 0 && (
+                        <p className="text-content-secondary py-2 text-center text-sm">
+                          No companies found
+                        </p>
+                      )}
                   </div>
                 )}
               </div>
@@ -428,22 +442,20 @@ export function TaskDetailModal({
                   />
                 )}
                 {tagsProp && (
-                  <PropertyCard
-                    icon={Tag}
-                    label="Tags"
-                    value={formatPropertyValue(tagsProp)}
-                  />
+                  <PropertyCard icon={Tag} label="Tags" value={formatPropertyValue(tagsProp)} />
                 )}
               </div>
 
               {/* Other Properties (collapsible) */}
               {otherProps.length > 0 && (
-                <div className="rounded-lg border border-border-default">
+                <div className="border-border-default rounded-lg border">
                   <button
                     onClick={() => setShowAllProperties(!showAllProperties)}
-                    className="flex w-full items-center justify-between p-3 text-sm font-medium text-content-secondary hover:bg-surface-hover"
+                    className="text-content-secondary hover:bg-surface-hover flex w-full items-center justify-between p-3 text-sm font-medium"
                   >
-                    <span>{showAllProperties ? "Hide" : "Show"} all properties ({otherProps.length})</span>
+                    <span>
+                      {showAllProperties ? "Hide" : "Show"} all properties ({otherProps.length})
+                    </span>
                     {showAllProperties ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (
@@ -451,7 +463,7 @@ export function TaskDetailModal({
                     )}
                   </button>
                   {showAllProperties && (
-                    <div className="border-t border-border-default p-3">
+                    <div className="border-border-default border-t p-3">
                       <div className="grid gap-2 sm:grid-cols-2">
                         {otherProps.map(([key, prop]) => (
                           <div key={key} className="text-sm">
@@ -469,12 +481,12 @@ export function TaskDetailModal({
 
               {/* Page Content */}
               {pageData.content.length > 0 && (
-                <div className="rounded-lg border border-border-default p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-content-secondary">
+                <div className="border-border-default rounded-lg border p-4">
+                  <div className="text-content-secondary mb-3 flex items-center gap-2 text-sm font-medium">
                     <FileText className="h-4 w-4" />
                     Content
                   </div>
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
                     {pageData.content.map((block, i) => (
                       <ContentBlock key={i} block={block} />
                     ))}
@@ -483,8 +495,8 @@ export function TaskDetailModal({
               )}
 
               {/* Comments */}
-              <div className="rounded-lg border border-border-default p-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-content-secondary">
+              <div className="border-border-default rounded-lg border p-4">
+                <div className="text-content-secondary mb-3 flex items-center gap-2 text-sm font-medium">
                   <MessageSquare className="h-4 w-4" />
                   Comments ({pageData.comments.length})
                 </div>
@@ -493,10 +505,7 @@ export function TaskDetailModal({
                 {pageData.comments.length > 0 ? (
                   <div className="mb-4 space-y-3">
                     {pageData.comments.map((comment) => (
-                      <div
-                        key={comment.id}
-                        className="rounded-lg bg-bg-tertiary p-3"
-                      >
+                      <div key={comment.id} className="bg-bg-tertiary rounded-lg p-3">
                         <div className="mb-1 flex items-center gap-2">
                           {comment.createdBy.avatar ? (
                             <img
@@ -505,25 +514,27 @@ export function TaskDetailModal({
                               className="h-6 w-6 rounded-full"
                             />
                           ) : (
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-tertiary text-xs font-medium text-content-secondary">
+                            <div className="bg-bg-tertiary text-content-secondary flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium">
                               {comment.createdBy.name?.[0] || "?"}
                             </div>
                           )}
-                          <span className="text-sm font-medium text-content-primary">
+                          <span className="text-content-primary text-sm font-medium">
                             {comment.createdBy.name || "Unknown"}
                           </span>
-                          <span className="text-xs text-content-secondary">
-                            {formatDistanceToNow(new Date(comment.createdTime), { addSuffix: true })}
+                          <span className="text-content-secondary text-xs">
+                            {formatDistanceToNow(new Date(comment.createdTime), {
+                              addSuffix: true,
+                            })}
                           </span>
                         </div>
-                        <p className="text-sm text-content-secondary whitespace-pre-wrap">
+                        <p className="text-content-secondary text-sm whitespace-pre-wrap">
                           {comment.content}
                         </p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="mb-4 text-sm text-content-secondary">No comments yet</p>
+                  <p className="text-content-secondary mb-4 text-sm">No comments yet</p>
                 )}
 
                 {/* New Comment */}
@@ -534,12 +545,12 @@ export function TaskDetailModal({
                     onChange={(e) => setNewComment(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handlePostComment()}
                     placeholder="Add a comment..."
-                    className="flex-1 rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm placeholder:text-content-tertiary focus:border-success-500 focus:outline-none focus:ring-1 focus:ring-success-500"
+                    className="border-border-default bg-bg-elevated placeholder:text-content-tertiary focus:border-success-500 focus:ring-success-500 flex-1 rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                   />
                   <button
                     onClick={handlePostComment}
                     disabled={!newComment.trim() || postingComment}
-                    className="flex items-center gap-1 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
+                    className="bg-success-600 hover:bg-success-700 flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                   >
                     {postingComment ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -608,15 +619,13 @@ function PropertyCard({
   const iconColor = iconColorStyles[colorKey] || iconColorStyles.default
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border-default bg-bg-elevated p-3 transition-colors hover:bg-surface-hover">
+    <div className="border-border-default bg-bg-elevated hover:bg-surface-hover flex items-center gap-3 rounded-xl border p-3 transition-colors">
       <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", iconBg)}>
         <Icon className={cn("h-4 w-4", iconColor)} />
       </div>
       <div>
-        <p className="text-xs font-medium text-content-tertiary">{label}</p>
-        <p className={cn("text-sm font-semibold", textColor)}>
-          {value || "—"}
-        </p>
+        <p className="text-content-tertiary text-xs font-medium">{label}</p>
+        <p className={cn("text-sm font-semibold", textColor)}>{value || "—"}</p>
       </div>
     </div>
   )
@@ -639,15 +648,27 @@ function ContentBlock({ block }: { block: NotionBlock }) {
     case "to_do":
       return <li className="ml-4 list-none">{block.content}</li>
     case "toggle":
-      return <details><summary>{block.content}</summary></details>
+      return (
+        <details>
+          <summary>{block.content}</summary>
+        </details>
+      )
     case "code":
-      return <pre className="rounded bg-bg-tertiary p-2 text-xs"><code>{block.content}</code></pre>
+      return (
+        <pre className="bg-bg-tertiary rounded p-2 text-xs">
+          <code>{block.content}</code>
+        </pre>
+      )
     case "quote":
-      return <blockquote className="border-l-2 border-border-default pl-4 italic">{block.content}</blockquote>
+      return (
+        <blockquote className="border-border-default border-l-2 pl-4 italic">
+          {block.content}
+        </blockquote>
+      )
     case "divider":
       return <hr />
     case "callout":
-      return <div className="rounded-lg bg-bg-tertiary p-3">{block.content}</div>
+      return <div className="bg-bg-tertiary rounded-lg p-3">{block.content}</div>
     default:
       return block.content ? <p>{block.content}</p> : null
   }
@@ -668,13 +689,17 @@ function formatPropertyValue(prop: NotionProperty): string {
     case "status":
       return String(prop.value ?? "")
     case "multi_select":
-      return (prop.value as Array<{ name: string }>)?.map(s => s.name).join(", ") || ""
+      return (prop.value as Array<{ name: string }>)?.map((s) => s.name).join(", ") || ""
     case "date":
       const date = prop.value as { start: string; end?: string } | null
       if (!date) return ""
       return date.end ? `${date.start} → ${date.end}` : date.start
     case "people":
-      return (prop.value as Array<{ name?: string; email?: string }>)?.map(p => p.name || p.email || "Unknown").join(", ") || ""
+      return (
+        (prop.value as Array<{ name?: string; email?: string }>)
+          ?.map((p) => p.name || p.email || "Unknown")
+          .join(", ") || ""
+      )
     case "created_time":
     case "last_edited_time":
       return prop.value ? new Date(prop.value as string).toLocaleString() : ""

@@ -6,11 +6,11 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 
 ## Onboarding Goals by Segment
 
-| Segment | Primary Goal | Timeline | Success Metric |
-|---------|--------------|----------|----------------|
-| **SMB** | First online booking | 14 days | Portal live, 1 booking |
-| **Mid-Market** | Team + drivers adopted | 60 days | 80% driver app usage |
-| **Enterprise** | Full migration, parallel run complete | 90 days | Zero parallel systems |
+| Segment        | Primary Goal                          | Timeline | Success Metric         |
+| -------------- | ------------------------------------- | -------- | ---------------------- |
+| **SMB**        | First online booking                  | 14 days  | Portal live, 1 booking |
+| **Mid-Market** | Team + drivers adopted                | 60 days  | 80% driver app usage   |
+| **Enterprise** | Full migration, parallel run complete | 90 days  | Zero parallel systems  |
 
 ---
 
@@ -21,6 +21,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Account setup complete, portal configured
 
 **Actions:**
+
 1. Welcome email with quick-start video (automated)
 2. Prompt: "Add your first vehicle and driver"
 3. Prompt: "Configure your online booking"
@@ -32,6 +33,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** First booking through portal
 
 **Actions:**
+
 1. Health check: Did they complete setup? (automated)
 2. If incomplete: Re-engagement email with help offer
 3. If complete: Celebrate first booking (automated)
@@ -43,6 +45,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Using Moovs for daily dispatch
 
 **Actions:**
+
 1. Feature tip: "Did you know about automated confirmations?"
 2. Usage monitoring (automated alerts if inactive)
 3. Check-in email at day 14
@@ -54,6 +57,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Payments flowing, communications automated
 
 **Actions:**
+
 1. Prompt: "Set up payment processing"
 2. Prompt: "Turn on automated SMS confirmations"
 3. 30-day health call (if high potential) or email
@@ -76,6 +80,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Team aligned, success metrics defined
 
 **Actions:**
+
 1. Kickoff call: Meet the team, understand goals
 2. Define success metrics: What does "working" look like?
 3. Schedule training sessions
@@ -88,6 +93,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Platform configured, primary user trained
 
 **Actions:**
+
 1. Administrator training (settings, vehicles, drivers)
 2. Rate and pricing configuration
 3. Customer portal customization
@@ -100,6 +106,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Dispatchers and drivers trained
 
 **Actions:**
+
 1. Dispatcher training session
 2. Driver app rollout plan
 3. First driver app installations
@@ -112,6 +119,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Full team using daily
 
 **Actions:**
+
 1. Daily usage monitoring
 2. Address adoption blockers
 3. Driver training for stragglers
@@ -124,6 +132,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Confirm value, identify gaps
 
 **Actions:**
+
 1. 30-day health check call
 2. Review metrics vs. goals
 3. Feature adoption assessment
@@ -147,6 +156,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Flawless migration plan, stakeholder alignment
 
 **Actions:**
+
 1. Discovery: Understand all systems being replaced
 2. Stakeholder mapping: Who needs to be involved?
 3. Data migration planning: What data, what format?
@@ -154,6 +164,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 5. Risk assessment: What could go wrong?
 
 **Deliverables:**
+
 - Migration plan document
 - Stakeholder communication plan
 - Training schedule
@@ -164,6 +175,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Data migrated, systems connected
 
 **Actions:**
+
 1. Data import (customers, vehicles, drivers)
 2. Integration setup (Stripe, QuickBooks, etc.)
 3. Rate configuration and validation
@@ -178,6 +190,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Running both systems, validating Moovs
 
 **Actions:**
+
 1. Live trips through Moovs
 2. Side-by-side comparison
 3. Issue tracking and resolution
@@ -190,6 +203,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Legacy system turned off
 
 **Actions:**
+
 1. Resolve all migration issues
 2. Turn off legacy system
 3. All trips through Moovs
@@ -202,6 +216,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Efficiency gains visible, AI features considered
 
 **Actions:**
+
 1. Dispatch efficiency measurement
 2. Feature adoption review
 3. AI Scheduler pilot discussion
@@ -214,6 +229,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 **Goal:** Value proven, case study potential
 
 **Actions:**
+
 1. 90-day executive business review
 2. ROI documentation
 3. Case study discussion
@@ -233,11 +249,11 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 
 ## Onboarding Health Metrics
 
-| Segment | Day 7 | Day 14 | Day 30 | Day 60 |
-|---------|-------|--------|--------|--------|
-| **SMB** | Setup >50% | First booking | Active usage | Payment processed |
-| **Mid-Market** | Admin trained | Drivers >50% | Drivers >80% | Efficiency gains |
-| **Enterprise** | Data migrated | Parallel running | Legacy off | AI discussion |
+| Segment        | Day 7         | Day 14           | Day 30       | Day 60            |
+| -------------- | ------------- | ---------------- | ------------ | ----------------- |
+| **SMB**        | Setup >50%    | First booking    | Active usage | Payment processed |
+| **Mid-Market** | Admin trained | Drivers >50%     | Drivers >80% | Efficiency gains  |
+| **Enterprise** | Data migrated | Parallel running | Legacy off   | AI discussion     |
 
 ---
 
@@ -252,6 +268,7 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 > Welcome! I'm excited to help you look professional and save time.
 >
 > Your first 3 steps:
+>
 > 1. Add your first vehicle (2 minutes)
 > 2. Add a driver (2 minutes)
 > 3. Turn on online booking (5 minutes)
@@ -296,4 +313,4 @@ Get customers to first value fast. The first 30-60 days determine whether they'l
 
 ---
 
-*Success in onboarding = success in retention. Nail this phase.*
+_Success in onboarding = success in retention. Nail this phase._

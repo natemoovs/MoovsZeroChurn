@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS, getErrorResponse } from "@/lib/ai"
+import {
+  getAnthropicClient,
+  createMessage,
+  AI_MODEL,
+  TOKEN_LIMITS,
+  getErrorResponse,
+} from "@/lib/ai"
 
 /**
  * Deep Customer Research Agent
@@ -64,10 +70,7 @@ Be direct about risks. Don't sugarcoat.`,
 export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY not configured" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 })
   }
 
   try {
@@ -84,9 +87,10 @@ export async function POST(request: NextRequest) {
     const reportConfig = REPORT_TYPES[type as keyof typeof REPORT_TYPES] || REPORT_TYPES.health
 
     // Fetch Customer 360 data
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
-      || "http://localhost:3000"
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+      "http://localhost:3000"
 
     const params = new URLSearchParams()
     if (companyId) params.set("id", companyId)
@@ -99,19 +103,13 @@ export async function POST(request: NextRequest) {
     )
 
     if (!customer360Res.ok) {
-      return NextResponse.json(
-        { error: "Failed to fetch customer data" },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: "Failed to fetch customer data" }, { status: 500 })
     }
 
     const customerData = await customer360Res.json()
 
     if (!customerData.name) {
-      return NextResponse.json(
-        { error: "Customer not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 })
     }
 
     // Build context for Claude
@@ -137,9 +135,7 @@ Generate the ${reportConfig.name} for ${customerData.name}.`,
       ],
     })
 
-    const reportContent = message.content[0].type === "text"
-      ? message.content[0].text
-      : ""
+    const reportContent = message.content[0].type === "text" ? message.content[0].text : ""
 
     return NextResponse.json({
       success: true,
@@ -160,10 +156,7 @@ Generate the ${reportConfig.name} for ${customerData.name}.`,
     })
   } catch (error) {
     console.error("Research agent error:", error)
-    return NextResponse.json(
-      { error: "Failed to generate report" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to generate report" }, { status: 500 })
   }
 }
 
@@ -178,8 +171,8 @@ function buildCustomerContext(data: Record<string, unknown>): string {
   lines.push("")
 
   // Risk/positive signals
-  const riskSignals = data.riskSignals as string[] || []
-  const positiveSignals = data.positiveSignals as string[] || []
+  const riskSignals = (data.riskSignals as string[]) || []
+  const positiveSignals = (data.positiveSignals as string[]) || []
 
   if (riskSignals.length > 0) {
     lines.push(`**Risk Signals:** ${riskSignals.join(", ")}`)
@@ -198,14 +191,18 @@ function buildCustomerContext(data: Record<string, unknown>): string {
     lines.push(`- Customer Since: ${crm.customerSince || "Unknown"}`)
     lines.push(`- Last Activity: ${crm.lastActivity || "Unknown"}`)
 
-    const contacts = crm.contacts as Array<Record<string, unknown>> || []
+    const contacts = (crm.contacts as Array<Record<string, unknown>>) || []
     if (contacts.length > 0) {
-      lines.push(`- Key Contacts: ${contacts.map(c => `${c.name} (${c.title || "No title"})`).join(", ")}`)
+      lines.push(
+        `- Key Contacts: ${contacts.map((c) => `${c.name} (${c.title || "No title"})`).join(", ")}`
+      )
     }
 
-    const deals = crm.deals as Array<Record<string, unknown>> || []
+    const deals = (crm.deals as Array<Record<string, unknown>>) || []
     if (deals.length > 0) {
-      lines.push(`- Deals: ${deals.map(d => `${d.name}: $${d.amount || 0} (${d.stage})`).join("; ")}`)
+      lines.push(
+        `- Deals: ${deals.map((d) => `${d.name}: $${d.amount || 0} (${d.stage})`).join("; ")}`
+      )
     }
     lines.push("")
   }
@@ -230,10 +227,12 @@ function buildCustomerContext(data: Record<string, unknown>): string {
     lines.push(`- MRR: $${billing.mrr}`)
     lines.push(`- Has Failed Payments: ${billing.hasFailedPayments ? "Yes" : "No"}`)
 
-    const subscriptions = billing.subscriptions as Array<Record<string, unknown>> || []
+    const subscriptions = (billing.subscriptions as Array<Record<string, unknown>>) || []
     if (subscriptions.length > 0) {
       for (const sub of subscriptions) {
-        lines.push(`- Subscription: ${sub.plan || "Unknown plan"} - ${sub.status} (renews ${sub.renewalDate})${sub.cancelPending ? " ⚠️ CANCELING" : ""}`)
+        lines.push(
+          `- Subscription: ${sub.plan || "Unknown plan"} - ${sub.status} (renews ${sub.renewalDate})${sub.cancelPending ? " ⚠️ CANCELING" : ""}`
+        )
       }
     }
 

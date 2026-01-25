@@ -61,19 +61,13 @@ export async function POST(request: NextRequest) {
     // Validate password is set
     if (!sitePassword) {
       logWarn("login", "SITE_PW not configured")
-      return NextResponse.json(
-        { error: "Login not configured" },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: "Login not configured" }, { status: 500 })
     }
 
     // Validate password
     if (!password || password !== sitePassword) {
       logWarn("login", "Invalid password attempt", { ip: clientIp })
-      return NextResponse.json(
-        { error: "Invalid password" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "Invalid password" }, { status: 401 })
     }
 
     // Generate session token
@@ -102,10 +96,7 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     logWarn("login", "Login error", { error: String(error), ip: clientIp })
-    return NextResponse.json(
-      { error: "Invalid request" },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
   }
 }
 

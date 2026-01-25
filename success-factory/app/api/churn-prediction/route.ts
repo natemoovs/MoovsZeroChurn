@@ -25,11 +25,11 @@ interface ChurnPrediction {
 
 // Feature weights for the prediction model
 const WEIGHTS = {
-  daysSinceLastLogin: 0.20,
+  daysSinceLastLogin: 0.2,
   usageTrend: 0.18,
   healthScore: 0.15,
   supportTickets: 0.12,
-  npsScore: 0.10,
+  npsScore: 0.1,
   stakeholderEngagement: 0.08,
   contractTenure: 0.07,
   paymentHistory: 0.05,
@@ -39,18 +39,23 @@ const WEIGHTS = {
 /**
  * Calculate churn probability based on multiple factors
  */
-function calculateChurnProbability(company: {
-  hubspotId: string
-  name: string
-  domain: string | null
-  customerSegment: string | null
-  mrr: number | null
-  totalTrips: number | null
-  daysSinceLastLogin: number | null
-  healthScore: string | null
-  hubspotCreatedAt: Date | null
-  createdAt: Date
-}, npsScore: number | null, stakeholderCount: number, hasChampion: boolean): ChurnPrediction {
+function calculateChurnProbability(
+  company: {
+    hubspotId: string
+    name: string
+    domain: string | null
+    customerSegment: string | null
+    mrr: number | null
+    totalTrips: number | null
+    daysSinceLastLogin: number | null
+    healthScore: string | null
+    hubspotCreatedAt: Date | null
+    createdAt: Date
+  },
+  npsScore: number | null,
+  stakeholderCount: number,
+  hasChampion: boolean
+): ChurnPrediction {
   const riskFactors: RiskFactor[] = []
   const protectiveFactors: RiskFactor[] = []
   let totalRiskScore = 0
@@ -79,10 +84,13 @@ function calculateChurnProbability(company: {
 
   // 2. Usage trend (18% weight)
   const totalTrips = company.totalTrips || 0
-  const monthsAsCustomer = Math.max(1, Math.floor(
-    (Date.now() - new Date(company.hubspotCreatedAt || company.createdAt).getTime()) /
-    (1000 * 60 * 60 * 24 * 30)
-  ))
+  const monthsAsCustomer = Math.max(
+    1,
+    Math.floor(
+      (Date.now() - new Date(company.hubspotCreatedAt || company.createdAt).getTime()) /
+        (1000 * 60 * 60 * 24 * 30)
+    )
+  )
   const tripsPerMonth = totalTrips / monthsAsCustomer
 
   if (totalTrips === 0) {
@@ -217,7 +225,7 @@ function calculateChurnProbability(company: {
 
   // Calculate final probability (0-100)
   // Normalize risk score to 0-1 range, then convert to percentage
-  const normalizedRisk = Math.max(0, Math.min(1, (totalRiskScore + 0.5)))
+  const normalizedRisk = Math.max(0, Math.min(1, totalRiskScore + 0.5))
   const churnProbability = Math.round(normalizedRisk * 100)
 
   // Determine confidence based on data completeness
@@ -250,19 +258,19 @@ function calculateChurnProbability(company: {
 
   // Generate recommended actions
   const recommendedActions: string[] = []
-  if (riskFactors.some(r => r.factor === "Inactivity")) {
+  if (riskFactors.some((r) => r.factor === "Inactivity")) {
     recommendedActions.push("Schedule re-engagement call")
   }
-  if (riskFactors.some(r => r.factor === "Zero Usage" || r.factor === "Low Usage")) {
+  if (riskFactors.some((r) => r.factor === "Zero Usage" || r.factor === "Low Usage")) {
     recommendedActions.push("Conduct training session")
   }
-  if (riskFactors.some(r => r.factor === "No Champion")) {
+  if (riskFactors.some((r) => r.factor === "No Champion")) {
     recommendedActions.push("Identify and nurture champion")
   }
-  if (riskFactors.some(r => r.factor === "Detractor")) {
+  if (riskFactors.some((r) => r.factor === "Detractor")) {
     recommendedActions.push("Address NPS feedback urgently")
   }
-  if (riskFactors.some(r => r.factor === "New Customer")) {
+  if (riskFactors.some((r) => r.factor === "New Customer")) {
     recommendedActions.push("Accelerate onboarding milestones")
   }
   if (churnProbability > 50) {
@@ -297,16 +305,14 @@ export async function GET(request: NextRequest) {
   try {
     // Get companies
     const companies = await prisma.hubSpotCompany.findMany({
-      where: companyId
-        ? { hubspotId: companyId }
-        : { mrr: { gt: 0 } },
+      where: companyId ? { hubspotId: companyId } : { mrr: { gt: 0 } },
       orderBy: { mrr: "desc" },
     })
 
     // Get NPS scores
     const npsSurveys = await prisma.nPSSurvey.findMany({
       where: {
-        companyId: { in: companies.map(c => c.hubspotId) },
+        companyId: { in: companies.map((c) => c.hubspotId) },
         score: { not: null },
       },
       orderBy: { respondedAt: "desc" },
@@ -322,7 +328,7 @@ export async function GET(request: NextRequest) {
     // Get stakeholders
     const stakeholders = await prisma.stakeholder.findMany({
       where: {
-        companyId: { in: companies.map(c => c.hubspotId) },
+        companyId: { in: companies.map((c) => c.hubspotId) },
         isActive: true,
       },
     })
@@ -336,33 +342,46 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate predictions
-    let predictions = companies.map(company => {
+    let predictions = companies.map((company) => {
       const nps = npsMap.get(company.hubspotId) ?? null
-      const stakeholderInfo = stakeholderMap.get(company.hubspotId) || { count: 0, hasChampion: false }
-      return calculateChurnProbability(company, nps, stakeholderInfo.count, stakeholderInfo.hasChampion)
+      const stakeholderInfo = stakeholderMap.get(company.hubspotId) || {
+        count: 0,
+        hasChampion: false,
+      }
+      return calculateChurnProbability(
+        company,
+        nps,
+        stakeholderInfo.count,
+        stakeholderInfo.hasChampion
+      )
     })
 
     // Filter by risk level
     if (riskLevel === "high") {
-      predictions = predictions.filter(p => p.churnProbability >= 70)
+      predictions = predictions.filter((p) => p.churnProbability >= 70)
     } else if (riskLevel === "medium") {
-      predictions = predictions.filter(p => p.churnProbability >= 40 && p.churnProbability < 70)
+      predictions = predictions.filter((p) => p.churnProbability >= 40 && p.churnProbability < 70)
     } else if (riskLevel === "low") {
-      predictions = predictions.filter(p => p.churnProbability < 40)
+      predictions = predictions.filter((p) => p.churnProbability < 40)
     }
 
     // Sort by churn probability (highest risk first)
     predictions.sort((a, b) => b.churnProbability - a.churnProbability)
 
     // Calculate summary stats
-    const highRisk = predictions.filter(p => p.churnProbability >= 70)
-    const mediumRisk = predictions.filter(p => p.churnProbability >= 40 && p.churnProbability < 70)
-    const lowRisk = predictions.filter(p => p.churnProbability < 40)
+    const highRisk = predictions.filter((p) => p.churnProbability >= 70)
+    const mediumRisk = predictions.filter(
+      (p) => p.churnProbability >= 40 && p.churnProbability < 70
+    )
+    const lowRisk = predictions.filter((p) => p.churnProbability < 40)
 
     const atRiskMrr = highRisk.reduce((sum, p) => sum + (p.mrr || 0), 0)
-    const avgChurnProbability = predictions.length > 0
-      ? Math.round(predictions.reduce((sum, p) => sum + p.churnProbability, 0) / predictions.length)
-      : 0
+    const avgChurnProbability =
+      predictions.length > 0
+        ? Math.round(
+            predictions.reduce((sum, p) => sum + p.churnProbability, 0) / predictions.length
+          )
+        : 0
 
     return NextResponse.json({
       predictions: companyId ? predictions[0] : predictions,
@@ -377,9 +396,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Failed to calculate churn predictions:", error)
-    return NextResponse.json(
-      { error: "Failed to calculate predictions" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to calculate predictions" }, { status: 500 })
   }
 }
