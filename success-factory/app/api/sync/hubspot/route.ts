@@ -92,6 +92,19 @@ function getSegmentFromPlanCode(
 /**
  * Fetch account data from Metabase CSM_MOOVS view
  */
+// Debug info stored during fetch for UI display
+let metabaseDebugInfo: {
+  originalColumns: string[]
+  normalizedColumns: string[]
+  missingColumns: string[]
+  sampleMetabaseRow: Record<string, unknown> | null
+} = {
+  originalColumns: [],
+  normalizedColumns: [],
+  missingColumns: [],
+  sampleMetabaseRow: null,
+}
+
 async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
   if (!process.env.METABASE_URL || !process.env.METABASE_API_KEY) {
     console.log("Metabase not configured (missing METABASE_URL or METABASE_API_KEY)")
@@ -113,34 +126,32 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
     return normalized
   })
 
-  // Log column names for debugging (show both original and normalized)
-  const originalColumns = Object.keys(rawRows[0] || {})
-  const normalizedColumns = Object.keys(rows[0] || {})
-  console.log("Metabase CSM_MOOVS columns (original):", originalColumns.join(", "))
-  console.log("Metabase CSM_MOOVS columns (normalized):", normalizedColumns.join(", "))
+  // Store debug info for UI display
+  metabaseDebugInfo.originalColumns = Object.keys(rawRows[0] || {})
+  metabaseDebugInfo.normalizedColumns = Object.keys(rows[0] || {})
 
-  // Log specific columns we're looking for
   const expectedColumns = [
     "P_VEHICLES_TOTAL", "P_DRIVERS_COUNT", "P_TOTAL_MEMBERS", "P_SETUP_SCORE",
     "R_LAST_30_DAYS_RESERVATIONS_COUNT", "DA_ENGAGEMENT_STATUS", "CALCULATED_MRR"
   ]
-  const missingColumns = expectedColumns.filter(col => !normalizedColumns.includes(col))
-  if (missingColumns.length > 0) {
-    console.warn("⚠️ Missing expected columns:", missingColumns.join(", "))
-  }
+  metabaseDebugInfo.missingColumns = expectedColumns.filter(
+    col => !metabaseDebugInfo.normalizedColumns.includes(col)
+  )
 
-  // Log sample row with key fields
+  // Store sample row with key Card 1469 fields
   const sampleRow = rows[0] || {}
-  console.log("Sample row key fields:", {
+  metabaseDebugInfo.sampleMetabaseRow = {
     company: sampleRow.P_COMPANY_NAME,
     vehiclesTotal: sampleRow.P_VEHICLES_TOTAL,
     driversCount: sampleRow.P_DRIVERS_COUNT,
     membersCount: sampleRow.P_TOTAL_MEMBERS,
     setupScore: sampleRow.P_SETUP_SCORE,
-    tripsLast30: sampleRow.R_LAST_30_DAYS_RESERVATIONS_COUNT,
+    tripsLast30Days: sampleRow.R_LAST_30_DAYS_RESERVATIONS_COUNT,
     engagementStatus: sampleRow.DA_ENGAGEMENT_STATUS,
     mrr: sampleRow.CALCULATED_MRR,
-  })
+  }
+
+  console.log("Metabase debug info:", metabaseDebugInfo)
 
   return rows.map((row) => ({
     // Identity - from CSM_MOOVS fields
@@ -882,6 +893,19 @@ export async function POST(request: NextRequest) {
             ? new Date(Date.now() - mbData.daysSinceLastActivity * 24 * 60 * 60 * 1000)
             : parseDate(hsProps.last_login_date)
 
+        // Debug: Log a sample of the actual data being saved
+        if (synced === 0) {
+          console.log("First record data being saved:", {
+            company: companyName,
+            totalTrips: mbData.totalTrips,
+            tripsLast30Days: mbData.tripsLast30Days,
+            vehiclesTotal: mbData.vehiclesTotal,
+            driversCount: mbData.driversCount,
+            setupScore: mbData.setupScore,
+            engagementStatus: mbData.engagementStatus,
+          })
+        }
+
         // Upsert company
         const upsertedCompany = await prisma.hubSpotCompany.upsert({
           where: { hubspotId: recordId },
@@ -1113,8 +1137,16 @@ export async function POST(request: NextRequest) {
       stripeMatches,
       milestonesDetected,
       companiesWithMilestones,
-      // Debug: sample synced record with Card 1469 fields
-      sampleRecord,
+      // Debug info for troubleshooting Card 1469 sync
+      debug: {
+        metabaseColumns: {
+          original: metabaseDebugInfo.originalColumns.slice(0, 10), // First 10 columns
+          normalized: metabaseDebugInfo.normalizedColumns.slice(0, 10),
+          missing: metabaseDebugInfo.missingColumns,
+        },
+        sampleFromMetabase: metabaseDebugInfo.sampleMetabaseRow,
+        sampleFromDatabase: sampleRecord,
+      },
     })
   } catch (error) {
     console.error("Sync failed:", error)
