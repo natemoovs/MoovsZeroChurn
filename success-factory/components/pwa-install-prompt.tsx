@@ -120,15 +120,15 @@ export function PWAInstallPrompt() {
   return (
     <>
       {/* Main prompt banner */}
-      <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-surface-secondary border border-border-primary rounded-lg shadow-lg z-50 animate-in slide-in-from-bottom-4">
+      <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 animate-in slide-in-from-bottom-4">
         <div className="p-4">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-surface-tertiary">
+            <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
               <img src="/logo.jpg" alt="Success Factory" className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-content-primary font-semibold text-sm">Install Success Factory</h3>
-              <p className="text-content-secondary text-xs mt-0.5">
+              <h3 className="text-gray-900 dark:text-white font-semibold text-sm">Install Success Factory</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
                 {deviceType === "ios"
                   ? "Add to your home screen for quick access"
                   : "Install the app for a better experience"}
@@ -136,7 +136,7 @@ export function PWAInstallPrompt() {
             </div>
             <button
               onClick={handleDismiss}
-              className="flex-shrink-0 text-content-tertiary hover:text-content-primary transition-colors"
+              className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
               aria-label="Dismiss"
             >
               <X className="w-5 h-5" />
@@ -147,7 +147,7 @@ export function PWAInstallPrompt() {
             {deferredPrompt ? (
               <button
                 onClick={handleInstall}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-accent-primary text-white rounded-md text-sm font-medium hover:bg-accent-primary/90 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Install
@@ -155,7 +155,7 @@ export function PWAInstallPrompt() {
             ) : (
               <button
                 onClick={() => setShowInstructions(true)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-accent-primary text-white rounded-md text-sm font-medium hover:bg-accent-primary/90 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
               >
                 <Share className="w-4 h-4" />
                 How to Install
@@ -163,7 +163,7 @@ export function PWAInstallPrompt() {
             )}
             <button
               onClick={handleDismiss}
-              className="px-4 py-2 text-content-secondary hover:text-content-primary text-sm transition-colors"
+              className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-sm transition-colors"
             >
               Not now
             </button>
@@ -173,13 +173,13 @@ export function PWAInstallPrompt() {
 
       {/* Instructions modal */}
       {showInstructions && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-surface-primary border border-border-primary rounded-xl max-w-md w-full shadow-xl">
-            <div className="p-4 border-b border-border-primary flex items-center justify-between">
-              <h2 className="text-content-primary font-semibold">Install Success Factory</h2>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl max-w-md w-full shadow-2xl">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-gray-900 dark:text-white font-semibold">Install Success Factory</h2>
               <button
                 onClick={() => setShowInstructions(false)}
-                className="text-content-tertiary hover:text-content-primary transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -195,10 +195,10 @@ export function PWAInstallPrompt() {
               )}
             </div>
 
-            <div className="p-4 border-t border-border-primary">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setShowInstructions(false)}
-                className="w-full px-4 py-2 bg-surface-secondary text-content-primary rounded-md text-sm font-medium hover:bg-surface-tertiary transition-colors"
+                className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-md text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 Got it
               </button>
@@ -213,41 +213,41 @@ export function PWAInstallPrompt() {
 function IOSInstructions() {
   return (
     <div className="space-y-4">
-      <p className="text-content-secondary text-sm">
+      <p className="text-gray-600 dark:text-gray-400 text-sm">
         To install Success Factory on your iPhone or iPad:
       </p>
       <ol className="space-y-3">
         <li className="flex gap-3">
-          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
             1
           </span>
           <div className="text-sm">
-            <p className="text-content-primary font-medium">Tap the Share button</p>
-            <p className="text-content-secondary text-xs mt-0.5">
+            <p className="text-gray-900 dark:text-white font-medium">Tap the Share button</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
               Look for the{" "}
               <Share className="w-3 h-3 inline" /> icon at the bottom of Safari
             </p>
           </div>
         </li>
         <li className="flex gap-3">
-          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
             2
           </span>
           <div className="text-sm">
-            <p className="text-content-primary font-medium">Scroll and tap &quot;Add to Home Screen&quot;</p>
-            <p className="text-content-secondary text-xs mt-0.5">
+            <p className="text-gray-900 dark:text-white font-medium">Scroll and tap &quot;Add to Home Screen&quot;</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
               Look for the{" "}
               <Plus className="w-3 h-3 inline" /> icon in the menu
             </p>
           </div>
         </li>
         <li className="flex gap-3">
-          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
             3
           </span>
           <div className="text-sm">
-            <p className="text-content-primary font-medium">Tap &quot;Add&quot; to confirm</p>
-            <p className="text-content-secondary text-xs mt-0.5">
+            <p className="text-gray-900 dark:text-white font-medium">Tap &quot;Add&quot; to confirm</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
               The app will appear on your home screen
             </p>
           </div>
@@ -260,17 +260,17 @@ function IOSInstructions() {
 function AndroidInstructions({ browserType }: { browserType: BrowserType }) {
   return (
     <div className="space-y-4">
-      <p className="text-content-secondary text-sm">
+      <p className="text-gray-600 dark:text-gray-400 text-sm">
         To install Success Factory on your Android device:
       </p>
       <ol className="space-y-3">
         <li className="flex gap-3">
-          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
             1
           </span>
           <div className="text-sm">
-            <p className="text-content-primary font-medium">Tap the menu button</p>
-            <p className="text-content-secondary text-xs mt-0.5">
+            <p className="text-gray-900 dark:text-white font-medium">Tap the menu button</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
               {browserType === "chrome"
                 ? "Look for the ⋮ icon in the top right corner"
                 : "Look for the menu icon in your browser"}
@@ -278,11 +278,11 @@ function AndroidInstructions({ browserType }: { browserType: BrowserType }) {
           </div>
         </li>
         <li className="flex gap-3">
-          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
             2
           </span>
           <div className="text-sm">
-            <p className="text-content-primary font-medium">
+            <p className="text-gray-900 dark:text-white font-medium">
               {browserType === "chrome"
                 ? 'Tap "Install app" or "Add to Home screen"'
                 : 'Look for "Install" or "Add to Home screen"'}
@@ -290,12 +290,12 @@ function AndroidInstructions({ browserType }: { browserType: BrowserType }) {
           </div>
         </li>
         <li className="flex gap-3">
-          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
             3
           </span>
           <div className="text-sm">
-            <p className="text-content-primary font-medium">Confirm the installation</p>
-            <p className="text-content-secondary text-xs mt-0.5">
+            <p className="text-gray-900 dark:text-white font-medium">Confirm the installation</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
               The app will be added to your home screen
             </p>
           </div>
@@ -308,17 +308,17 @@ function AndroidInstructions({ browserType }: { browserType: BrowserType }) {
 function DesktopInstructions({ browserType }: { browserType: BrowserType }) {
   return (
     <div className="space-y-4">
-      <p className="text-content-secondary text-sm">To install Success Factory on your computer:</p>
+      <p className="text-gray-600 dark:text-gray-400 text-sm">To install Success Factory on your computer:</p>
       <ol className="space-y-3">
         {browserType === "chrome" || browserType === "edge" ? (
           <>
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
                 1
               </span>
               <div className="text-sm">
-                <p className="text-content-primary font-medium">Look for the install icon</p>
-                <p className="text-content-secondary text-xs mt-0.5">
+                <p className="text-gray-900 dark:text-white font-medium">Look for the install icon</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
                   {browserType === "chrome"
                     ? "Click the install icon (⊕) in the address bar"
                     : "Click the install icon in the address bar or ••• menu"}
@@ -326,12 +326,12 @@ function DesktopInstructions({ browserType }: { browserType: BrowserType }) {
               </div>
             </li>
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
                 2
               </span>
               <div className="text-sm">
-                <p className="text-content-primary font-medium">Click &quot;Install&quot;</p>
-                <p className="text-content-secondary text-xs mt-0.5">
+                <p className="text-gray-900 dark:text-white font-medium">Click &quot;Install&quot;</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
                   The app will open in its own window
                 </p>
               </div>
@@ -340,23 +340,23 @@ function DesktopInstructions({ browserType }: { browserType: BrowserType }) {
         ) : (
           <>
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
                 1
               </span>
               <div className="text-sm">
-                <p className="text-content-primary font-medium">Use Chrome or Edge</p>
-                <p className="text-content-secondary text-xs mt-0.5">
+                <p className="text-gray-900 dark:text-white font-medium">Use Chrome or Edge</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
                   For the best experience, open this site in Chrome or Edge
                 </p>
               </div>
             </li>
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center text-xs font-semibold">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
                 2
               </span>
               <div className="text-sm">
-                <p className="text-content-primary font-medium">Look for the install option</p>
-                <p className="text-content-secondary text-xs mt-0.5">
+                <p className="text-gray-900 dark:text-white font-medium">Look for the install option</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
                   Click the install icon in the address bar to install the app
                 </p>
               </div>

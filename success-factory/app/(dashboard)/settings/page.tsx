@@ -626,12 +626,33 @@ export default function SettingsPage() {
         <div className="card-sf p-6">
           <div className="mb-4 flex items-center gap-3">
             <Database className="text-content-tertiary h-5 w-5" />
-            <h2 className="text-content-primary text-lg font-semibold">HubSpot Data Sync</h2>
+            <h2 className="text-content-primary text-lg font-semibold">Customer Data Sync</h2>
           </div>
           <p className="text-content-secondary mb-4 text-sm">
-            Sync customer data from HubSpot to the local database for faster portfolio loads.
-            Automatic sync runs at 5am UTC daily.
+            Syncs customer data from multiple sources: Metabase analytics (usage, health scores),
+            HubSpot (company details, owners), Stripe (payment status), and auto-detects onboarding
+            milestones. Runs automatically at 5am UTC daily.
           </p>
+
+          {/* Data Sources */}
+          <div className="mb-4 flex flex-wrap gap-2">
+            <span className="bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+              <span className="bg-info-500 h-1.5 w-1.5 rounded-full" />
+              Metabase
+            </span>
+            <span className="bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+              <span className="bg-warning-500 h-1.5 w-1.5 rounded-full" />
+              HubSpot
+            </span>
+            <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+              <span className="bg-purple-500 h-1.5 w-1.5 rounded-full" />
+              Stripe
+            </span>
+            <span className="bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+              <span className="bg-success-500 h-1.5 w-1.5 rounded-full" />
+              Milestones
+            </span>
+          </div>
 
           {/* Sync Status */}
           {syncStatus && (
