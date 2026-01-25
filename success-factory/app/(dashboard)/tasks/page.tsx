@@ -889,7 +889,7 @@ function NewTaskModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               value={formData.companyId}
               onChange={(e) => setFormData({ ...formData, companyId: e.target.value })}
               className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-              placeholder="HubSpot Company ID"
+              placeholder="Company ID"
               required
             />
           </div>

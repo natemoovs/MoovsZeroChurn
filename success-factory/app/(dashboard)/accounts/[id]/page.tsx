@@ -281,16 +281,16 @@ export default function AccountDetailPage() {
           Back to accounts
         </Link>
 
-        {/* No HubSpot record indicator */}
+        {/* No CRM record indicator */}
         {!account.hasHubSpotRecord && (
           <div className="border-info-200 bg-info-50 dark:border-info-900 dark:bg-info-950/30 flex items-center gap-3 rounded-lg border px-4 py-3">
             <Database className="text-info-600 dark:text-info-400 h-5 w-5" />
             <div className="flex-1">
               <p className="text-info-900 dark:text-info-200 text-sm font-medium">
-                Metabase data only
+                Billing data only
               </p>
               <p className="text-info-700 dark:text-info-300 text-sm">
-                This operator doesn&apos;t have a HubSpot company record. Contacts, deals, and
+                This operator doesn&apos;t have a linked CRM record. Contacts, deals, and
                 activity timeline may be limited.
               </p>
             </div>

@@ -215,8 +215,8 @@ export default function RenewalsPage() {
         ) : !data?.configured ? (
           <div className="card-sf p-12 text-center">
             <Calendar className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-            <h3 className="text-content-primary text-lg font-medium">HubSpot not configured</h3>
-            <p className="text-content-secondary mt-1">Connect HubSpot to track renewals</p>
+            <h3 className="text-content-primary text-lg font-medium">Data sync not configured</h3>
+            <p className="text-content-secondary mt-1">Run data sync to track renewals</p>
           </div>
         ) : (
           <>
