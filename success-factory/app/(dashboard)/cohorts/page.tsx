@@ -184,8 +184,8 @@ export default function CohortsPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                <Calendar className="h-5 w-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <p className="text-sm text-content-secondary">
@@ -371,7 +371,7 @@ export default function CohortsPage() {
             <h3 className="text-lg font-medium text-content-primary">
               No cohort data
             </h3>
-            <p className="mt-1 text-zinc-500 dark:text-content-tertiary">
+            <p className="mt-1 text-content-tertiary">
               Click &quot;Sync Data&quot; to generate cohort analysis
             </p>
           </div>
@@ -383,39 +383,39 @@ export default function CohortsPage() {
                   <tr className="border-b border-border-default bg-bg-secondary">
                     <th
                       onClick={() => toggleSort("cohort")}
-                      className="cursor-pointer px-4 py-3 text-left text-sm font-medium text-zinc-500 hover:text-content-primary"
+                      className="cursor-pointer px-4 py-3 text-left text-sm font-medium text-content-tertiary hover:text-content-primary"
                     >
                       Cohort
                       <SortIcon field="cohort" />
                     </th>
                     <th
                       onClick={() => toggleSort("companies")}
-                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-content-primary"
+                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
                     >
                       Companies
                       <SortIcon field="companies" />
                     </th>
-                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-content-tertiary sm:table-cell">
+                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-content-tertiary sm:table-cell">
                       Active
                     </th>
-                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-zinc-500 dark:text-content-tertiary sm:table-cell">
+                    <th className="hidden px-4 py-3 text-right text-sm font-medium text-content-tertiary sm:table-cell">
                       Churned
                     </th>
                     <th
                       onClick={() => toggleSort("retention")}
-                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-content-primary"
+                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
                     >
                       Retention
                       <SortIcon field="retention" />
                     </th>
                     <th
                       onClick={() => toggleSort("mrr")}
-                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-zinc-500 hover:text-content-primary"
+                      className="cursor-pointer px-4 py-3 text-right text-sm font-medium text-content-tertiary hover:text-content-primary"
                     >
                       Total MRR
                       <SortIcon field="mrr" />
                     </th>
-                    <th className="hidden px-4 py-3 text-left text-sm font-medium text-zinc-500 dark:text-content-tertiary lg:table-cell">
+                    <th className="hidden px-4 py-3 text-left text-sm font-medium text-content-tertiary lg:table-cell">
                       Retention
                     </th>
                   </tr>
@@ -429,7 +429,7 @@ export default function CohortsPage() {
                       <td className="whitespace-nowrap px-4 py-3 font-medium text-content-primary">
                         {cohort.cohort}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-zinc-600 dark:text-content-tertiary">
+                      <td className="whitespace-nowrap px-4 py-3 text-right text-content-secondary">
                         {cohort.totalCompanies}
                       </td>
                       <td className="hidden whitespace-nowrap px-4 py-3 text-right text-success-600 dark:text-success-500 sm:table-cell">
@@ -492,11 +492,11 @@ export default function CohortsPage() {
                 {cohorts[0] &&
                   Object.keys(cohorts[0].segments).map((segment, idx) => {
                     const colors = [
-                      "bg-blue-500",
-                      "bg-purple-500",
+                      "bg-info-500",
+                      "bg-primary-500",
                       "bg-success-500",
-                      "bg-amber-500",
-                      "bg-red-500",
+                      "bg-warning-500",
+                      "bg-error-500",
                     ]
                     return (
                       <div key={segment} className="flex items-center gap-1.5">
@@ -506,7 +506,7 @@ export default function CohortsPage() {
                             colors[idx % colors.length]
                           )}
                         />
-                        <span className="text-xs text-zinc-600 dark:text-content-tertiary sm:text-sm">
+                        <span className="text-xs text-content-secondary sm:text-sm">
                           {segment || "Unknown"}
                         </span>
                       </div>
@@ -521,7 +521,7 @@ export default function CohortsPage() {
                     <span className="font-medium text-content-primary">
                       {cohort.cohort}
                     </span>
-                    <span className="text-xs text-zinc-500 dark:text-content-tertiary sm:text-sm">
+                    <span className="text-xs text-content-tertiary sm:text-sm">
                       {cohort.totalCompanies} companies
                     </span>
                   </div>
@@ -533,11 +533,11 @@ export default function CohortsPage() {
                             ? (count / cohort.totalCompanies) * 100
                             : 0
                         const colors = [
-                          "bg-blue-500 hover:bg-blue-600",
-                          "bg-purple-500 hover:bg-purple-600",
+                          "bg-info-500 hover:bg-info-600",
+                          "bg-primary-500 hover:bg-primary-600",
                           "bg-success-500 hover:bg-success-600",
-                          "bg-amber-500 hover:bg-amber-600",
-                          "bg-red-500 hover:bg-red-600",
+                          "bg-warning-500 hover:bg-warning-600",
+                          "bg-error-500 hover:bg-error-600",
                         ]
                         return (
                           <div

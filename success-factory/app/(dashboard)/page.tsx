@@ -287,21 +287,21 @@ export default function DashboardPage() {
                   <Link
                     key={task.id}
                     href={`/accounts/${task.companyId}`}
-                    className="flex items-center justify-between rounded-lg border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                    className="flex items-center justify-between rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="truncate text-sm font-medium text-content-primary">
                         {task.title}
                       </p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">{task.companyName}</p>
+                      <p className="text-xs text-content-secondary">{task.companyName}</p>
                     </div>
                     <span
                       className={cn(
                         "ml-2 rounded-full px-2 py-0.5 text-xs font-medium",
-                        task.priority === "urgent" && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                        task.priority === "high" && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                        task.priority === "medium" && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                        task.priority === "low" && "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                        task.priority === "urgent" && "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
+                        task.priority === "high" && "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+                        task.priority === "medium" && "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
+                        task.priority === "low" && "bg-bg-tertiary text-content-secondary dark:text-content-tertiary"
                       )}
                     >
                       {task.priority}
@@ -342,23 +342,23 @@ export default function DashboardPage() {
                   <Link
                     key={renewal.companyId}
                     href={`/accounts/${renewal.companyId}`}
-                    className="flex items-center justify-between rounded-lg border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                    className="flex items-center justify-between rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="truncate text-sm font-medium text-content-primary">
                         {renewal.companyName}
                       </p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="text-xs text-content-secondary">
                         {renewal.daysUntilRenewal} days · {renewal.amount ? `$${renewal.amount.toLocaleString()}` : "No amount"}
                       </p>
                     </div>
                     <span
                       className={cn(
                         "ml-2 h-2.5 w-2.5 rounded-full",
-                        renewal.healthScore === "green" && "bg-emerald-500",
-                        renewal.healthScore === "yellow" && "bg-amber-500",
-                        renewal.healthScore === "red" && "bg-red-500",
-                        renewal.healthScore === "unknown" && "bg-zinc-400"
+                        renewal.healthScore === "green" && "bg-success-500",
+                        renewal.healthScore === "yellow" && "bg-warning-500",
+                        renewal.healthScore === "red" && "bg-error-500",
+                        renewal.healthScore === "unknown" && "bg-content-tertiary"
                       )}
                     />
                   </Link>
@@ -404,26 +404,26 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={i}
-                      className="flex items-center justify-between rounded-lg border border-zinc-100 p-3 dark:border-zinc-800"
+                      className="flex items-center justify-between rounded-lg border border-border-default p-3"
                     >
                       <div className="flex items-center gap-2">
                         {isDowngrade ? (
-                          <ArrowDownRight className="h-4 w-4 text-red-500" />
+                          <ArrowDownRight className="h-4 w-4 text-error-500" />
                         ) : isUpgrade ? (
-                          <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                          <ArrowUpRight className="h-4 w-4 text-success-500" />
                         ) : (
-                          <Minus className="h-4 w-4 text-zinc-400" />
+                          <Minus className="h-4 w-4 text-content-tertiary" />
                         )}
                         <div>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          <p className="text-sm font-medium text-content-primary">
                             {change.companyName}
                           </p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                          <p className="text-xs text-content-secondary">
                             {change.from} → {change.to}
                           </p>
                         </div>
                       </div>
-                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                      <span className="text-xs text-content-tertiary">
                         {new Date(change.date).toLocaleDateString()}
                       </span>
                     </div>
@@ -443,7 +443,7 @@ export default function DashboardPage() {
                 Stalled Onboardings
               </h2>
               {stalledOnboardings && stalledOnboardings.count > 0 && (
-                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                <span className="rounded-full bg-warning-100 px-2.5 py-0.5 text-xs font-medium text-warning-700 dark:bg-warning-900/30 dark:text-warning-400">
                   {stalledOnboardings.count} stalled
                 </span>
               )}
@@ -465,22 +465,22 @@ export default function DashboardPage() {
                   <Link
                     key={account.companyId}
                     href={`/accounts/${account.companyId}`}
-                    className="flex items-center justify-between rounded-lg border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                    className="flex items-center justify-between rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="truncate text-sm font-medium text-content-primary">
                         {account.companyName}
                       </p>
-                      <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="truncate text-xs text-content-secondary">
                         {account.overdueMilestones.length} overdue milestone{account.overdueMilestones.length !== 1 ? "s" : ""}
                       </p>
                     </div>
                     <span
                       className={cn(
                         "ml-2 rounded-full px-2 py-0.5 text-xs font-medium",
-                        account.severity === "critical" && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                        account.severity === "high" && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                        account.severity === "medium" && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        account.severity === "critical" && "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
+                        account.severity === "high" && "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+                        account.severity === "medium" && "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400"
                       )}
                     >
                       {account.severity}
@@ -488,7 +488,7 @@ export default function DashboardPage() {
                   </Link>
                 ))}
                 {stalledOnboardings.mrrAtRisk > 0 && (
-                  <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-2 text-center text-xs text-content-secondary">
                     ${stalledOnboardings.mrrAtRisk.toLocaleString()} MRR at risk
                   </p>
                 )}
@@ -506,9 +506,9 @@ export default function DashboardPage() {
                 <span
                   className={cn(
                     "flex items-center gap-1 text-xs font-medium",
-                    npsTrends.trend === "improving" && "text-emerald-600 dark:text-emerald-400",
-                    npsTrends.trend === "declining" && "text-red-600 dark:text-red-400",
-                    npsTrends.trend === "stable" && "text-zinc-500 dark:text-zinc-400"
+                    npsTrends.trend === "improving" && "text-success-600 dark:text-success-400",
+                    npsTrends.trend === "declining" && "text-error-600 dark:text-error-400",
+                    npsTrends.trend === "stable" && "text-content-secondary"
                   )}
                 >
                   {npsTrends.trend === "improving" ? (
@@ -524,7 +524,7 @@ export default function DashboardPage() {
             </div>
             {loading ? (
               <div className="flex h-32 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-success-500 border-t-transparent" />
               </div>
             ) : !npsTrends || npsTrends.totalResponses === 0 ? (
               <div className="py-8 text-center text-content-secondary">
@@ -536,18 +536,18 @@ export default function DashboardPage() {
                 <div
                   className={cn(
                     "text-5xl font-bold",
-                    npsTrends.currentNPS !== null && npsTrends.currentNPS >= 50 && "text-emerald-600 dark:text-emerald-400",
-                    npsTrends.currentNPS !== null && npsTrends.currentNPS >= 0 && npsTrends.currentNPS < 50 && "text-amber-600 dark:text-amber-400",
-                    npsTrends.currentNPS !== null && npsTrends.currentNPS < 0 && "text-red-600 dark:text-red-400"
+                    npsTrends.currentNPS !== null && npsTrends.currentNPS >= 50 && "text-success-600 dark:text-success-400",
+                    npsTrends.currentNPS !== null && npsTrends.currentNPS >= 0 && npsTrends.currentNPS < 50 && "text-warning-600 dark:text-warning-400",
+                    npsTrends.currentNPS !== null && npsTrends.currentNPS < 0 && "text-error-600 dark:text-error-400"
                   )}
                 >
                   {npsTrends.currentNPS ?? "—"}
                 </div>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-sm text-content-secondary">
                   {npsTrends.totalResponses} responses (30 days)
                 </p>
                 {npsTrends.recentDetractors > 0 && (
-                  <div className="mt-4 flex items-center justify-center gap-2 text-sm text-red-600 dark:text-red-400">
+                  <div className="mt-4 flex items-center justify-center gap-2 text-sm text-error-600 dark:text-error-400">
                     <ThumbsDown className="h-4 w-4" />
                     <span>{npsTrends.recentDetractors} detractor{npsTrends.recentDetractors !== 1 ? "s" : ""} need attention</span>
                   </div>
@@ -577,8 +577,8 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {championAlerts.recentChampionLeft.length > 0 && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
-                    <div className="flex items-center gap-2 text-sm font-medium text-red-700 dark:text-red-400">
+                  <div className="rounded-lg border border-error-200 bg-error-50 p-3 dark:border-error-900 dark:bg-error-950/30">
+                    <div className="flex items-center gap-2 text-sm font-medium text-error-700 dark:text-error-400">
                       <UserX className="h-4 w-4" />
                       Champion Left
                     </div>
@@ -586,7 +586,7 @@ export default function DashboardPage() {
                       <Link
                         key={`${alert.companyId}-${alert.championName}`}
                         href={`/accounts/${alert.companyId}`}
-                        className="mt-2 block text-sm text-red-600 hover:underline dark:text-red-300"
+                        className="mt-2 block text-sm text-error-600 hover:underline dark:text-error-300"
                       >
                         {alert.championName} left {alert.companyName}
                       </Link>
@@ -594,17 +594,17 @@ export default function DashboardPage() {
                   </div>
                 )}
                 {championAlerts.noChampion > 0 && (
-                  <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-                    <span className="text-sm text-amber-700 dark:text-amber-400">No champion identified</span>
-                    <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-800 dark:text-amber-200">
+                  <div className="flex items-center justify-between rounded-lg border border-warning-200 bg-warning-50 p-3 dark:border-warning-900 dark:bg-warning-950/30">
+                    <span className="text-sm text-warning-700 dark:text-warning-400">No champion identified</span>
+                    <span className="rounded-full bg-warning-200 px-2 py-0.5 text-xs font-medium text-warning-800 dark:bg-warning-800 dark:text-warning-200">
                       {championAlerts.noChampion}
                     </span>
                   </div>
                 )}
                 {championAlerts.singleThreaded > 0 && (
-                  <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
-                    <span className="text-sm text-blue-700 dark:text-blue-400">Single-threaded accounts</span>
-                    <span className="rounded-full bg-blue-200 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-800 dark:text-blue-200">
+                  <div className="flex items-center justify-between rounded-lg border border-info-200 bg-info-50 p-3 dark:border-info-900 dark:bg-info-950/30">
+                    <span className="text-sm text-info-700 dark:text-info-400">Single-threaded accounts</span>
+                    <span className="rounded-full bg-info-200 px-2 py-0.5 text-xs font-medium text-info-800 dark:bg-info-800 dark:text-info-200">
                       {championAlerts.singleThreaded}
                     </span>
                   </div>
@@ -621,7 +621,7 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold text-content-primary">
                 Recent Activity
               </h2>
-              <Activity className="h-5 w-5 text-zinc-400" />
+              <Activity className="h-5 w-5 text-content-tertiary" />
             </div>
             {loading ? (
               <div className="space-y-3">
@@ -635,16 +635,16 @@ export default function DashboardPage() {
                   <Link
                     key={event.id}
                     href={`/accounts/${event.companyId}`}
-                    className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                    className="flex items-center gap-3 rounded-lg border border-border-default p-3 transition-colors hover:bg-surface-hover"
                   >
                     <div
                       className={cn(
                         "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-                        event.source === "platform" && "bg-purple-100 text-purple-600 dark:bg-purple-900/30",
-                        event.source === "nps" && "bg-blue-100 text-blue-600 dark:bg-blue-900/30",
-                        event.source === "hubspot" && "bg-orange-100 text-orange-600 dark:bg-orange-900/30",
-                        event.source === "stripe" && "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30",
-                        !["platform", "nps", "hubspot", "stripe"].includes(event.source) && "bg-zinc-100 text-zinc-600 dark:bg-zinc-800"
+                        event.source === "platform" && "bg-primary-100 text-primary-600 dark:bg-primary-900/30",
+                        event.source === "nps" && "bg-info-100 text-info-600 dark:bg-info-900/30",
+                        event.source === "hubspot" && "bg-warning-100 text-warning-600 dark:bg-warning-900/30",
+                        event.source === "stripe" && "bg-success-100 text-success-600 dark:bg-success-900/30",
+                        !["platform", "nps", "hubspot", "stripe"].includes(event.source) && "bg-bg-tertiary text-content-secondary"
                       )}
                     >
                       {event.source === "nps" ? (
@@ -656,15 +656,15 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="truncate text-sm font-medium text-content-primary">
                         {event.title}
                       </p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="text-xs text-content-secondary">
                         {event.companyName} · {new Date(event.occurredAt).toLocaleDateString()}
                       </p>
                     </div>
                     {event.importance === "critical" && (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                      <span className="rounded-full bg-error-100 px-2 py-0.5 text-xs font-medium text-error-700 dark:bg-error-900/30 dark:text-error-400">
                         Critical
                       </span>
                     )}
@@ -685,7 +685,7 @@ export default function DashboardPage() {
               {atRiskAccounts.length > 3 && (
                 <Link
                   href="/accounts?filter=at-risk"
-                  className="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+                  className="text-sm font-medium text-success-600 hover:text-success-700 dark:text-success-400 dark:hover:text-success-300"
                 >
                   View all {atRiskAccounts.length} →
                 </Link>
@@ -726,7 +726,7 @@ export default function DashboardPage() {
               {monitorAccounts.length > 5 && (
                 <Link
                   href="/accounts?filter=monitor"
-                  className="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+                  className="text-sm font-medium text-success-600 hover:text-success-700 dark:text-success-400 dark:hover:text-success-300"
                 >
                   View all {monitorAccounts.length} →
                 </Link>
@@ -738,7 +738,7 @@ export default function DashboardPage() {
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="h-16 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                      className="h-16 shimmer rounded-lg"
                     />
                   ))}
                 </div>

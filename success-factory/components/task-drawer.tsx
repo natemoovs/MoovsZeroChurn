@@ -43,15 +43,15 @@ interface TaskDrawerProps {
 
 const statusConfig = {
   pending: { icon: Circle, label: "Pending", color: "text-content-tertiary" },
-  in_progress: { icon: PlayCircle, label: "In Progress", color: "text-blue-500" },
+  in_progress: { icon: PlayCircle, label: "In Progress", color: "text-info-500" },
   completed: { icon: CheckCircle2, label: "Completed", color: "text-success-500" },
   cancelled: { icon: XCircle, label: "Cancelled", color: "text-error-500" },
 }
 
 const priorityColors = {
   urgent: "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
-  high: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-  medium: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  high: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+  medium: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
   low: "bg-bg-tertiary text-content-secondary",
 }
 

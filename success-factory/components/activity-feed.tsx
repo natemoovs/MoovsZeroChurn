@@ -87,11 +87,11 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
       case "health_change":
         return "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400"
       case "renewal":
-        return "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+        return "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400"
       case "expansion":
-        return "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+        return "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
       case "note":
-        return "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+        return "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
       case "escalation":
         return "bg-error-100 text-error-600 dark:bg-error-900/30 dark:text-error-400"
       default:

@@ -73,22 +73,22 @@ const ROLE_CONFIG: Record<
   decision_maker: {
     label: "Decision Maker",
     icon: Briefcase,
-    color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    color: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400",
   },
   executive_sponsor: {
     label: "Exec Sponsor",
     icon: Crown,
-    color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
+    color: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
   },
   user: {
     label: "User",
     icon: User,
-    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    color: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
   },
   influencer: {
     label: "Influencer",
     icon: Users,
-    color: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+    color: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
   },
   detractor: {
     label: "Detractor",
@@ -140,7 +140,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
 
   const healthColors = {
     strong: "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400",
-    moderate: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    moderate: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
     weak: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
     critical: "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
   }

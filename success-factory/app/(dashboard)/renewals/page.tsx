@@ -362,14 +362,14 @@ function RenewalSection({
   variant: "urgent" | "upcoming" | "future"
 }) {
   const colors = {
-    urgent: "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20",
-    upcoming: "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20",
+    urgent: "border-error-200 bg-error-50/50 dark:border-error-900 dark:bg-error-950/20",
+    upcoming: "border-warning-200 bg-warning-50/50 dark:border-warning-900 dark:bg-warning-950/20",
     future: "border-border-default bg-bg-secondary/50 dark:bg-bg-tertiary/50",
   }
 
   const headerColors = {
-    urgent: "text-red-700 dark:text-red-400",
-    upcoming: "text-amber-700 dark:text-amber-400",
+    urgent: "text-error-700 dark:text-error-400",
+    upcoming: "text-warning-700 dark:text-warning-400",
     future: "text-content-primary",
   }
 
@@ -429,7 +429,7 @@ function RenewalCard({ renewal }: { renewal: Renewal }) {
           </p>
           {renewal.riskSignals.length > 0 && (
             <div className="mt-1 flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3 text-red-500" />
+              <AlertTriangle className="h-3 w-3 text-error-500" />
               <span className="text-xs text-error-600 dark:text-error-400">
                 {renewal.riskSignals.slice(0, 2).join(", ")}
               </span>
@@ -467,7 +467,7 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
         </div>
 
         {/* Likely Revenue */}
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
+        <div className="rounded-lg border border-success-200 bg-success-50/50 p-4 dark:border-success-900 dark:bg-success-950/20">
           <p className="text-sm text-success-700 dark:text-success-400">Likely Revenue</p>
           <p className="mt-1 text-2xl font-bold text-success-600 dark:text-success-500">
             ${forecast.likelyRevenue.toLocaleString()}
@@ -476,7 +476,7 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
         </div>
 
         {/* At Risk Revenue */}
-        <div className="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900 dark:bg-red-950/20">
+        <div className="rounded-lg border border-error-200 bg-error-50/50 p-4 dark:border-error-900 dark:bg-error-950/20">
           <p className="text-sm text-error-700 dark:text-error-400">At Risk</p>
           <p className="mt-1 text-2xl font-bold text-error-600 dark:text-error-400">
             ${forecast.atRiskRevenue.toLocaleString()}
@@ -490,8 +490,8 @@ function ForecastSection({ renewals, timeRange }: { renewals: Renewal[]; timeRan
           <p className={cn(
             "mt-1 text-2xl font-bold",
             forecast.retentionRate >= 90 ? "text-success-600 dark:text-success-500" :
-            forecast.retentionRate >= 70 ? "text-amber-600 dark:text-amber-400" :
-            "text-red-600 dark:text-red-400"
+            forecast.retentionRate >= 70 ? "text-warning-600 dark:text-warning-400" :
+            "text-error-600 dark:text-error-400"
           )}>
             {forecast.retentionRate.toFixed(1)}%
           </p>
@@ -584,8 +584,8 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
   const weekHealthColors: Record<string, string> = {
     empty: "border-border-default",
     green: "border-success-300 bg-success-50/50 dark:border-success-800 dark:bg-success-950/20",
-    yellow: "border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20",
-    red: "border-red-300 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20",
+    yellow: "border-warning-300 bg-warning-50/50 dark:border-warning-800 dark:bg-warning-950/20",
+    red: "border-error-300 bg-error-50/50 dark:border-error-800 dark:bg-error-950/20",
   }
 
   return (
@@ -634,7 +634,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                             className={cn(
                               "h-2 w-2 rounded-full",
                               r.healthScore === "green" && "bg-success-500",
-                              r.healthScore === "yellow" && "bg-amber-500",
+                              r.healthScore === "yellow" && "bg-warning-500",
                               r.healthScore === "red" && "bg-error-500",
                               r.healthScore === "unknown" && "bg-content-tertiary"
                             )}
@@ -677,7 +677,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                       className={cn(
                         "mt-1 h-3 w-3 flex-shrink-0 rounded-full",
                         renewal.healthScore === "green" && "bg-success-500",
-                        renewal.healthScore === "yellow" && "bg-amber-500",
+                        renewal.healthScore === "yellow" && "bg-warning-500",
                         renewal.healthScore === "red" && "bg-error-500",
                         renewal.healthScore === "unknown" && "bg-content-tertiary"
                       )}
@@ -701,7 +701,7 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                       </p>
                       {renewal.riskSignals.length > 0 && (
                         <div className="mt-1 flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3 text-red-500" />
+                          <AlertTriangle className="h-3 w-3 text-error-500" />
                           <span className="text-xs text-error-600 dark:text-error-400">
                             {renewal.riskSignals.join(", ")}
                           </span>
@@ -718,11 +718,11 @@ function RenewalCalendar({ renewals }: { renewals: Renewal[] }) {
                           className={cn(
                             "flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
                             action.priority === "high" &&
-                              "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                              "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
                             action.priority === "medium" &&
-                              "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                              "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
                             action.priority === "low" &&
-                              "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-content-tertiary"
+                              "bg-bg-tertiary text-content-secondary"
                           )}
                         >
                           <action.icon className="h-3 w-3" />

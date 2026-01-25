@@ -98,10 +98,10 @@ interface CustomerJourney {
 }
 
 const JOURNEY_STAGES = [
-  { id: "onboarding", label: "Onboarding", color: "bg-blue-500" },
-  { id: "adoption", label: "Adoption", color: "bg-purple-500" },
+  { id: "onboarding", label: "Onboarding", color: "bg-info-500" },
+  { id: "adoption", label: "Adoption", color: "bg-primary-500" },
   { id: "growth", label: "Growth", color: "bg-success-500" },
-  { id: "maturity", label: "Maturity", color: "bg-teal-500" },
+  { id: "maturity", label: "Maturity", color: "bg-accent-500" },
   { id: "renewal", label: "Renewal", color: "bg-warning-500" },
   { id: "at_risk", label: "At Risk", color: "bg-error-500" },
   { id: "churned", label: "Churned", color: "bg-surface-muted" },
@@ -221,7 +221,7 @@ export default function AccountDetailPage() {
           </p>
           <button
             onClick={() => router.back()}
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-content-primary px-4 py-2 text-sm font-medium text-bg-primary hover:bg-content-secondary"
           >
             <ArrowLeft className="h-4 w-4" />
             Go back
@@ -276,13 +276,13 @@ export default function AccountDetailPage() {
 
         {/* No HubSpot record indicator */}
         {!account.hasHubSpotRecord && (
-          <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/30">
-            <Database className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center gap-3 rounded-lg border border-info-200 bg-info-50 px-4 py-3 dark:border-info-900 dark:bg-info-950/30">
+            <Database className="h-5 w-5 text-info-600 dark:text-info-400" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+              <p className="text-sm font-medium text-info-900 dark:text-info-200">
                 Metabase data only
               </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
+              <p className="text-sm text-info-700 dark:text-info-300">
                 This operator doesn&apos;t have a HubSpot company record. Contacts, deals, and activity timeline may be limited.
               </p>
             </div>
@@ -731,11 +731,11 @@ function TimelineItem({
   }
 
   const colors = {
-    note: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-    email: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-    call: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-    meeting: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-    deal: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
+    note: "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400",
+    email: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
+    call: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
+    meeting: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
+    deal: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
     health_change: "bg-bg-tertiary text-content-secondary",
   }
 
@@ -794,9 +794,9 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
     ? "text-error-600 dark:text-error-500"
     : "text-content-secondary"
   const trendBg = trend === "improving"
-    ? "bg-emerald-100 dark:bg-emerald-900/30"
+    ? "bg-success-100 dark:bg-success-900/30"
     : trend === "declining"
-    ? "bg-red-100 dark:bg-red-900/30"
+    ? "bg-error-100 dark:bg-error-900/30"
     : "bg-surface-muted"
 
   return (
@@ -820,7 +820,7 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
           {snapshots.slice(-30).map((snapshot, i) => {
             const colors = {
               green: "bg-success-500",
-              yellow: "bg-yellow-500",
+              yellow: "bg-warning-500",
               red: "bg-error-500",
               unknown: "bg-content-tertiary",
             }
@@ -860,7 +860,7 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
           )}
           {distribution.yellow > 0 && (
             <div
-              className="bg-yellow-500"
+              className="bg-warning-500"
               style={{ width: `${(distribution.yellow / totalSnapshots) * 100}%` }}
             />
           )}
@@ -898,14 +898,14 @@ function HealthTrendCard({ history }: { history: HealthHistory }) {
                     <span className={cn(
                       "inline-block h-2 w-2 rounded-full",
                       change.from === "green" ? "bg-success-500" :
-                      change.from === "yellow" ? "bg-yellow-500" :
+                      change.from === "yellow" ? "bg-warning-500" :
                       change.from === "red" ? "bg-error-500" : "bg-content-tertiary"
                     )} />
                     <span className="text-content-secondary">→</span>
                     <span className={cn(
                       "inline-block h-2 w-2 rounded-full",
                       change.to === "green" ? "bg-success-500" :
-                      change.to === "yellow" ? "bg-yellow-500" :
+                      change.to === "yellow" ? "bg-warning-500" :
                       change.to === "red" ? "bg-error-500" : "bg-content-tertiary"
                     )} />
                     <span className={isDowngrade ? "text-error-600 dark:text-error-500" : "text-success-600 dark:text-success-500"}>
@@ -980,7 +980,7 @@ function JourneyStageCard({
           </button>
 
           {isOpen && (
-            <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+            <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-border-default bg-bg-elevated py-1 shadow-lg">
               {JOURNEY_STAGES.map((stage) => (
                 <button
                   key={stage.id}
@@ -1020,7 +1020,7 @@ function JourneyStageCard({
                       ? isChurned
                         ? "bg-content-tertiary"
                         : isAtRisk
-                        ? "bg-red-400"
+                        ? "bg-error-400"
                         : stage.color
                       : "bg-surface-muted"
                   )}
@@ -1058,7 +1058,7 @@ function JourneyStageCard({
                         <span className="text-content-secondary">→</span>
                       </>
                     )}
-                    <span className={cn("h-2 w-2 rounded-full", toStage?.color || "bg-zinc-400")} />
+                    <span className={cn("h-2 w-2 rounded-full", toStage?.color || "bg-content-tertiary")} />
                     <span className="text-content-primary">
                       {fromStage ? `${fromStage.label} → ` : ""}{toStage?.label}
                     </span>

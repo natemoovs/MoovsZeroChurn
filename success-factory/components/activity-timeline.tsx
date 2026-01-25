@@ -53,13 +53,13 @@ const SOURCE_ICONS: Record<string, typeof Activity> = {
 }
 
 const SOURCE_COLORS: Record<string, string> = {
-  platform: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-  hubspot: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-  stripe: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+  platform: "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400",
+  hubspot: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
+  stripe: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
   support: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
   nps: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
   task: "bg-bg-tertiary text-content-secondary",
-  journey: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+  journey: "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400",
 }
 
 export function ActivityTimeline({

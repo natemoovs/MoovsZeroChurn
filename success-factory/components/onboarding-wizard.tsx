@@ -449,8 +449,8 @@ function DataSourceCard({
   color: string
 }) {
   const colorClasses: Record<string, string> = {
-    orange: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-    purple: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+    orange: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
+    purple: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
     zinc: "bg-bg-tertiary text-content-secondary",
   }
 

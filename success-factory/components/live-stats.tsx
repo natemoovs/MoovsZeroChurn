@@ -124,10 +124,10 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
 
           <div className="rounded-lg bg-bg-tertiary p-3">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-blue-500" />
+              <TrendingUp className="h-4 w-4 text-info-500" />
               <span className="text-xs text-content-secondary">MRR</span>
             </div>
-            <p className="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <p className="mt-1 text-2xl font-bold text-info-600 dark:text-info-400">
               ${(stats.totalMrr / 1000).toFixed(0)}k
             </p>
           </div>
@@ -175,7 +175,7 @@ export function LiveStats({ showConnection = true, compact = false }: LiveStatsP
                   </>
                 ) : (
                   <>
-                    <span className="h-2 w-2 rounded-full bg-blue-500" />
+                    <span className="h-2 w-2 rounded-full bg-info-500" />
                     <span className="flex-1 truncate text-content-secondary">
                       {event.title}
                     </span>

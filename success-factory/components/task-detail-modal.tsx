@@ -309,7 +309,7 @@ export function TaskDetailModal({
                             ? status === "Done"
                               ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                               : status === "In Progress"
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                              ? "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400"
                               : "bg-bg-tertiary text-content-secondary"
                             : "border border-border-default text-content-secondary hover:bg-surface-hover"
                         )}

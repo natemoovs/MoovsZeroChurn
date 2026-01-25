@@ -53,8 +53,8 @@ const typeLabels: Record<string, string> = {
 
 const typeColors: Record<string, string> = {
   upsell: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400",
-  cross_sell: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  add_on: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+  cross_sell: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400",
+  add_on: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
   upgrade: "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400",
 }
 
@@ -219,8 +219,8 @@ export default function ExpansionPage() {
 
           <div className="card-sf p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <Target className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                <Target className="h-5 w-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <p className="text-sm text-content-secondary">

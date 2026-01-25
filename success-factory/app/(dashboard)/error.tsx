@@ -41,7 +41,7 @@ export default function Error({
 
             <button
               onClick={() => window.location.href = "/"}
-              className="w-full px-4 py-2.5 text-content-secondary hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              className="w-full px-4 py-2.5 text-content-secondary hover:text-content-primary transition-colors"
             >
               Go to home
             </button>

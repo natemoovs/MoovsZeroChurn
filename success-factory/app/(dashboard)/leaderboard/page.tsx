@@ -64,10 +64,10 @@ export default function LeaderboardPage() {
   }
 
   const metrics = [
-    { key: "savedAccounts", label: "Saves", icon: Heart, color: "text-red-500" },
-    { key: "expansionRevenue", label: "Expansion $", icon: TrendingUp, color: "text-green-500" },
+    { key: "savedAccounts", label: "Saves", icon: Heart, color: "text-error-500" },
+    { key: "expansionRevenue", label: "Expansion $", icon: TrendingUp, color: "text-success-500" },
     { key: "healthyAccounts", label: "Healthy", icon: Star, color: "text-success-500" },
-    { key: "tasksCompleted", label: "Tasks Done", icon: Target, color: "text-blue-500" },
+    { key: "tasksCompleted", label: "Tasks Done", icon: Target, color: "text-info-500" },
   ]
 
   return (
@@ -77,7 +77,7 @@ export default function LeaderboardPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold text-content-primary">
-              <Trophy className="h-7 w-7 text-amber-500" />
+              <Trophy className="h-7 w-7 text-warning-500" />
               CSM Leaderboard
             </h1>
             <p className="mt-1 text-content-secondary">
@@ -177,7 +177,7 @@ export default function LeaderboardPage() {
                     key={csm.email}
                     className={cn(
                       "transition-colors hover:bg-surface-hover",
-                      index === 0 && "bg-amber-50/50 dark:bg-amber-900/10"
+                      index === 0 && "bg-warning-50/50 dark:bg-warning-900/10"
                     )}
                   >
                     <td className="px-4 py-4">

@@ -49,7 +49,7 @@ export function HealthExplainer({ companyId, healthScore, compact = false }: Hea
       <button
         onClick={fetchExplanation}
         disabled={loading}
-        className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50"
+        className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50"
         title="Explain this health score with AI"
       >
         {loading ? (
@@ -83,7 +83,7 @@ export function HealthExplainer({ companyId, healthScore, compact = false }: Hea
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {loading && <Loader2 className="h-5 w-5 animate-spin text-purple-500" />}
+          {loading && <Loader2 className="h-5 w-5 animate-spin text-primary-500" />}
           {isOpen ? (
             <ChevronUp className="h-5 w-5 text-content-tertiary" />
           ) : (
@@ -111,7 +111,7 @@ export function HealthExplainer({ companyId, healthScore, compact = false }: Hea
                 h2: ({ children }) => (
                   <h4 className="mt-3 flex items-center gap-2 text-sm font-semibold text-content-primary">
                     {String(children).includes("Risk") && <AlertTriangle className="h-4 w-4 text-error-500" />}
-                    {String(children).includes("Trend") && <TrendingUp className="h-4 w-4 text-blue-500" />}
+                    {String(children).includes("Trend") && <TrendingUp className="h-4 w-4 text-info-500" />}
                     {String(children).includes("Recommend") && <Lightbulb className="h-4 w-4 text-warning-500" />}
                     {children}
                   </h4>

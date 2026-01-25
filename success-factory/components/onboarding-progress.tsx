@@ -89,7 +89,7 @@ export function OnboardingProgress({
 
   const statusColors = {
     complete: "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400",
-    on_track: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    on_track: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
     at_risk: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
     stalled: "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
   }
@@ -128,7 +128,7 @@ export function OnboardingProgress({
                   ? "bg-error-500"
                   : status.status === "at_risk"
                   ? "bg-warning-500"
-                  : "bg-blue-500"
+                  : "bg-info-500"
               )}
               style={{ width: `${status.progress}%` }}
             />
@@ -177,7 +177,7 @@ export function OnboardingProgress({
               ? "bg-error-500"
               : status.status === "at_risk"
               ? "bg-warning-500"
-              : "bg-blue-500"
+              : "bg-info-500"
           )}
           style={{ width: `${status.progress}%` }}
         />
