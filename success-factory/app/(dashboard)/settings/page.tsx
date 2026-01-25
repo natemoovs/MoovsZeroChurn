@@ -153,6 +153,7 @@ export default function SettingsPage() {
     metabaseColumns?: { original: string[]; normalized: string[]; missing: string[] }
     sampleFromMetabase?: Record<string, unknown> | null
     sampleFromDatabase?: Record<string, unknown> | null
+    anyRecordWithVehicles?: Record<string, unknown> | null
   } | null>(null)
 
   const fetchSyncStatus = async () => {
@@ -754,10 +755,23 @@ export default function SettingsPage() {
 
               {syncDebug.sampleFromDatabase && (
                 <div className="text-sm">
-                  <p className="font-medium text-blue-800 dark:text-blue-200">Sample from Database:</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-200">ATX Limousines in DB:</p>
                   <pre className="mt-1 overflow-x-auto rounded bg-blue-100 p-2 text-xs text-blue-900 dark:bg-blue-900/50 dark:text-blue-100">
                     {JSON.stringify(syncDebug.sampleFromDatabase, null, 2)}
                   </pre>
+                </div>
+              )}
+
+              {syncDebug.anyRecordWithVehicles ? (
+                <div className="text-sm">
+                  <p className="font-medium text-green-800 dark:text-green-200">Record with vehicles found:</p>
+                  <pre className="mt-1 overflow-x-auto rounded bg-green-100 p-2 text-xs text-green-900 dark:bg-green-900/50 dark:text-green-100">
+                    {JSON.stringify(syncDebug.anyRecordWithVehicles, null, 2)}
+                  </pre>
+                </div>
+              ) : (
+                <div className="text-sm">
+                  <p className="font-medium text-red-600 dark:text-red-400">No records have vehiclesTotal set!</p>
                 </div>
               )}
             </div>

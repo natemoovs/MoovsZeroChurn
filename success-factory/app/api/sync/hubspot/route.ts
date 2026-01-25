@@ -893,19 +893,6 @@ export async function POST(request: NextRequest) {
             ? new Date(Date.now() - mbData.daysSinceLastActivity * 24 * 60 * 60 * 1000)
             : parseDate(hsProps.last_login_date)
 
-        // Debug: Log a sample of the actual data being saved
-        if (synced === 0) {
-          console.log("First record data being saved:", {
-            company: companyName,
-            totalTrips: mbData.totalTrips,
-            tripsLast30Days: mbData.tripsLast30Days,
-            vehiclesTotal: mbData.vehiclesTotal,
-            driversCount: mbData.driversCount,
-            setupScore: mbData.setupScore,
-            engagementStatus: mbData.engagementStatus,
-          })
-        }
-
         // Upsert company
         const upsertedCompany = await prisma.hubSpotCompany.upsert({
           where: { hubspotId: recordId },
@@ -1110,11 +1097,12 @@ export async function POST(request: NextRequest) {
       console.error("Milestone detection failed (non-critical):", err)
     }
 
-    // Get a sample synced record to verify data
+    // Get a sample synced record to verify data - find ATX Limousines specifically
     const sampleRecord = await prisma.hubSpotCompany.findFirst({
-      where: { vehiclesTotal: { not: null } },
+      where: { name: { contains: "ATX" } },
       select: {
         name: true,
+        hubspotId: true,
         vehiclesTotal: true,
         driversCount: true,
         membersCount: true,
@@ -1122,8 +1110,15 @@ export async function POST(request: NextRequest) {
         tripsLast30Days: true,
         engagementStatus: true,
         mrr: true,
+        totalTrips: true,
+        lastSyncedAt: true,
       },
-      orderBy: { hubspotUpdatedAt: "desc" },
+    })
+
+    // Also get any record with vehiclesTotal set
+    const anyWithVehicles = await prisma.hubSpotCompany.findFirst({
+      where: { vehiclesTotal: { not: null } },
+      select: { name: true, vehiclesTotal: true },
     })
 
     return NextResponse.json({
@@ -1146,6 +1141,7 @@ export async function POST(request: NextRequest) {
         },
         sampleFromMetabase: metabaseDebugInfo.sampleMetabaseRow,
         sampleFromDatabase: sampleRecord,
+        anyRecordWithVehicles: anyWithVehicles,
       },
     })
   } catch (error) {
