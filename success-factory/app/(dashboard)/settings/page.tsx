@@ -150,7 +150,7 @@ export default function SettingsPage() {
     deletedTasks?: string[]
   } | null>(null)
   const [syncDebug, setSyncDebug] = useState<{
-    stats?: { totalFromMetabase: number; synced: number; skippedChurned: number; failed: number }
+    stats?: { totalFromMetabase: number; synced: number; skippedChurned: number; failed: number; firstError?: string | null }
     metabaseColumns?: { original: string[]; normalized: string[]; missing: string[] }
     sampleFromMetabase?: Record<string, unknown> | null
     sampleFromDatabase?: Record<string, unknown> | null
@@ -732,11 +732,18 @@ export default function SettingsPage() {
               <h4 className="font-medium text-blue-900 dark:text-blue-100">Sync Debug Info</h4>
 
               {syncDebug.stats && (
-                <div className="text-sm grid grid-cols-2 gap-2">
-                  <div><span className="font-medium">From Metabase:</span> {syncDebug.stats.totalFromMetabase}</div>
-                  <div><span className="font-medium">Synced:</span> {syncDebug.stats.synced}</div>
-                  <div><span className="font-medium">Skipped (churned):</span> {syncDebug.stats.skippedChurned}</div>
-                  <div><span className="font-medium">Failed:</span> {syncDebug.stats.failed}</div>
+                <div className="text-sm space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><span className="font-medium">From Metabase:</span> {syncDebug.stats.totalFromMetabase}</div>
+                    <div><span className="font-medium">Synced:</span> {syncDebug.stats.synced}</div>
+                    <div><span className="font-medium">Skipped (churned):</span> {syncDebug.stats.skippedChurned}</div>
+                    <div><span className="font-medium">Failed:</span> {syncDebug.stats.failed}</div>
+                  </div>
+                  {syncDebug.stats.firstError && (
+                    <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded text-red-800 dark:text-red-200 text-xs break-all">
+                      <span className="font-medium">First error:</span> {syncDebug.stats.firstError}
+                    </div>
+                  )}
                 </div>
               )}
 
