@@ -568,11 +568,12 @@ export default function AccountDetailPage() {
                       </div>
                       <p className={cn(
                         "mt-1 text-lg font-semibold",
-                        account.setupScore >= 70 ? "text-success-600 dark:text-success-500" :
-                        account.setupScore >= 40 ? "text-warning-600 dark:text-warning-500" :
+                        // Setup score is 0-30 scale: >= 25 (83%) = good, >= 15 (50%) = medium
+                        account.setupScore >= 25 ? "text-success-600 dark:text-success-500" :
+                        account.setupScore >= 15 ? "text-warning-600 dark:text-warning-500" :
                         "text-error-600 dark:text-error-500"
                       )}>
-                        {account.setupScore}%
+                        {Math.round((account.setupScore / 30) * 100)}%
                       </p>
                     </div>
                   )}
