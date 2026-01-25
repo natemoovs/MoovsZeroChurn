@@ -442,7 +442,7 @@ export default function TasksPage() {
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border py-2 pr-3 pl-9 text-sm outline-none focus:ring-1"
+              className="border-border-default bg-bg-elevated focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border py-2 pr-3 pl-10 text-sm outline-none focus:ring-1"
             />
           </div>
 
