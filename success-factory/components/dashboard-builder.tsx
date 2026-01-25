@@ -199,25 +199,25 @@ export function DashboardBuilder({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative flex h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-900">
+      <div className="relative flex h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-bg-elevated shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-b border-border-default p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-              <LayoutGrid className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100 dark:bg-success-900/30">
+              <LayoutGrid className="h-5 w-5 text-success-600 dark:text-success-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-content-primary">
                 Customize Dashboard
               </h2>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-content-secondary">
                 Add, remove, and reorder widgets
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+            className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary"
           >
             <X className="h-5 w-5" />
           </button>
@@ -226,8 +226,8 @@ export function DashboardBuilder({
         {/* Content */}
         <div className="flex flex-1 overflow-hidden">
           {/* Active widgets */}
-          <div className="flex-1 overflow-y-auto border-r border-zinc-200 p-4 dark:border-zinc-800">
-            <h3 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <div className="flex-1 overflow-y-auto border-r border-border-default p-4">
+            <h3 className="mb-3 text-sm font-medium text-content-secondary">
               Active Widgets ({enabledWidgets.length})
             </h3>
             <div className="space-y-2">
@@ -235,32 +235,32 @@ export function DashboardBuilder({
                 <div
                   key={widget.id}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 transition-all dark:border-zinc-800 dark:bg-zinc-800/50",
+                    "flex items-center gap-3 rounded-lg border border-border-default bg-bg-elevated p-3 transition-all",
                     draggedWidget === widget.id && "opacity-50"
                   )}
                 >
-                  <div className="cursor-grab text-zinc-400">
+                  <div className="cursor-grab text-content-tertiary">
                     <GripVertical className="h-4 w-4" />
                   </div>
                   <div
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-lg",
-                      "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400"
+                      "bg-bg-tertiary text-content-secondary"
                     )}
                   >
                     <widget.icon className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    <p className="text-sm font-medium text-content-primary">
                       {widget.name}
                     </p>
-                    <p className="text-xs text-zinc-500">{widget.size} widget</p>
+                    <p className="text-xs text-content-secondary">{widget.size} widget</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => moveWidget(widget.id, "up")}
                       disabled={idx === 0}
-                      className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-30 dark:hover:bg-zinc-700"
+                      className="rounded p-1 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary disabled:opacity-30"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -269,7 +269,7 @@ export function DashboardBuilder({
                     <button
                       onClick={() => moveWidget(widget.id, "down")}
                       disabled={idx === enabledWidgets.length - 1}
-                      className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-30 dark:hover:bg-zinc-700"
+                      className="rounded p-1 text-content-tertiary hover:bg-surface-hover hover:text-content-secondary disabled:opacity-30"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -277,7 +277,7 @@ export function DashboardBuilder({
                     </button>
                     <button
                       onClick={() => toggleWidget(widget.id)}
-                      className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30"
+                      className="rounded p-1 text-content-tertiary hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-900/30"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -285,9 +285,9 @@ export function DashboardBuilder({
                 </div>
               ))}
               {enabledWidgets.length === 0 && (
-                <div className="rounded-lg border-2 border-dashed border-zinc-200 p-8 text-center dark:border-zinc-800">
-                  <LayoutGrid className="mx-auto mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
-                  <p className="text-sm text-zinc-500">
+                <div className="rounded-lg border-2 border-dashed border-border-default p-8 text-center">
+                  <LayoutGrid className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
+                  <p className="text-sm text-content-secondary">
                     Add widgets from the right panel
                   </p>
                 </div>
@@ -296,8 +296,8 @@ export function DashboardBuilder({
           </div>
 
           {/* Available widgets */}
-          <div className="w-80 overflow-y-auto bg-zinc-50 p-4 dark:bg-zinc-800/50">
-            <h3 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <div className="w-80 overflow-y-auto bg-bg-secondary p-4">
+            <h3 className="mb-3 text-sm font-medium text-content-secondary">
               Available Widgets
             </h3>
             <div className="space-y-2">
@@ -313,30 +313,30 @@ export function DashboardBuilder({
                     className={cn(
                       "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all",
                       isEnabled
-                        ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-900/20"
-                        : "border-zinc-200 bg-white hover:border-emerald-300 hover:bg-emerald-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-800 dark:hover:bg-emerald-900/20"
+                        ? "border-success-200 bg-success-50 dark:border-success-900/50 dark:bg-success-900/20"
+                        : "border-border-default bg-bg-elevated hover:border-success-300 hover:bg-success-50 dark:hover:border-success-800 dark:hover:bg-success-900/20"
                     )}
                   >
                     <div
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-lg",
                         isEnabled
-                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400"
+                          ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+                          : "bg-bg-tertiary text-content-secondary"
                       )}
                     >
                       <widget.icon className="h-4 w-4" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="text-sm font-medium text-content-primary">
                         {widget.name}
                       </p>
-                      <p className="text-xs text-zinc-500">{widget.description}</p>
+                      <p className="text-xs text-content-secondary">{widget.description}</p>
                     </div>
                     {isEnabled ? (
-                      <Check className="h-4 w-4 text-emerald-600" />
+                      <Check className="h-4 w-4 text-success-600" />
                     ) : (
-                      <Plus className="h-4 w-4 text-zinc-400" />
+                      <Plus className="h-4 w-4 text-content-tertiary" />
                     )}
                   </button>
                 )
@@ -346,16 +346,16 @@ export function DashboardBuilder({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-t border-border-default p-4">
           <button
             onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+            className="flex items-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700"
           >
             <Check className="h-4 w-4" />
             Save Layout

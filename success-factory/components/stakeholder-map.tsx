@@ -68,32 +68,32 @@ const ROLE_CONFIG: Record<
   champion: {
     label: "Champion",
     icon: Crown,
-    color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    color: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
   },
   decision_maker: {
     label: "Decision Maker",
     icon: Briefcase,
-    color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    color: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400",
   },
   executive_sponsor: {
     label: "Exec Sponsor",
     icon: Crown,
-    color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
+    color: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
   },
   user: {
     label: "User",
     icon: User,
-    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    color: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
   },
   influencer: {
     label: "Influencer",
     icon: Users,
-    color: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+    color: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
   },
   detractor: {
     label: "Detractor",
     icon: AlertTriangle,
-    color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    color: "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
   },
 }
 
@@ -129,7 +129,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
   if (loading) {
     return (
       <div className="flex items-center justify-center p-6">
-        <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+        <Loader2 className="h-5 w-5 animate-spin text-content-tertiary" />
       </div>
     )
   }
@@ -139,10 +139,10 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
   }
 
   const healthColors = {
-    strong: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    moderate: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    weak: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    critical: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    strong: "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400",
+    moderate: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
+    weak: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+    critical: "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
   }
 
   if (compact) {
@@ -150,8 +150,8 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-zinc-400" />
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <Users className="h-4 w-4 text-content-tertiary" />
+            <span className="text-sm font-medium text-content-secondary">
               {data.summary.active} contacts
             </span>
           </div>
@@ -165,7 +165,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
           </span>
         </div>
         {data.alerts.length > 0 && (
-          <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+          <div className="rounded-lg bg-warning-50 p-2 text-xs text-warning-700 dark:bg-warning-900/20 dark:text-warning-400">
             <AlertTriangle className="mr-1 inline h-3 w-3" />
             {data.alerts[0]}
           </div>
@@ -179,10 +179,10 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <h3 className="font-semibold text-content-primary">
             Key Stakeholders
           </h3>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-content-secondary">
             {data.summary.active} active contacts
           </p>
         </div>
@@ -197,7 +197,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
           </span>
           <button
             onClick={() => setShowAddModal(true)}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover hover:text-content-primary"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -210,7 +210,7 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
           {data.alerts.map((alert, i) => (
             <div
               key={i}
-              className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+              className="flex items-start gap-2 rounded-lg bg-warning-50 p-3 text-sm text-warning-700 dark:bg-warning-900/20 dark:text-warning-400"
             >
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               {alert}
@@ -221,14 +221,14 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
 
       {/* Stakeholder List */}
       {data.stakeholders.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-6 text-center dark:border-zinc-700">
-          <Users className="mx-auto mb-2 h-8 w-8 text-zinc-400" />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="rounded-lg border border-dashed border-border-default p-6 text-center">
+          <Users className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
+          <p className="text-sm text-content-secondary">
             No stakeholders mapped yet
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="mt-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+            className="mt-2 text-sm font-medium text-success-600 hover:text-success-700 dark:text-success-400"
           >
             Add first contact
           </button>
@@ -249,8 +249,8 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
                 className={cn(
                   "rounded-lg border transition-all",
                   !stakeholder.isActive
-                    ? "border-zinc-200 bg-zinc-50 opacity-60 dark:border-zinc-800 dark:bg-zinc-900"
-                    : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+                    ? "border-border-default bg-bg-tertiary opacity-60"
+                    : "border-border-default bg-bg-elevated"
                 )}
               >
                 <div
@@ -270,17 +270,17 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
                   {/* Info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="font-medium text-content-primary">
                         {stakeholder.name}
                       </p>
                       {!stakeholder.isActive && (
-                        <span className="flex items-center gap-1 rounded bg-zinc-200 px-1.5 py-0.5 text-xs text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
+                        <span className="flex items-center gap-1 rounded bg-bg-tertiary px-1.5 py-0.5 text-xs text-content-secondary">
                           <UserX className="h-3 w-3" />
                           Left
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <p className="text-sm text-content-secondary">
                       {stakeholder.title || config.label}
                     </p>
                   </div>
@@ -290,50 +290,50 @@ export function StakeholderMap({ companyId, compact = false }: StakeholderMapPro
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-full",
                       stakeholder.sentiment === "positive"
-                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
                         : stakeholder.sentiment === "negative"
-                        ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                        : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                        ? "bg-error-100 text-error-600 dark:bg-error-900/30 dark:text-error-400"
+                        : "bg-bg-tertiary text-content-tertiary"
                     )}
                   >
                     <SentimentIcon className="h-4 w-4" />
                   </div>
 
-                  <MoreHorizontal className="h-4 w-4 text-zinc-400" />
+                  <MoreHorizontal className="h-4 w-4 text-content-tertiary" />
                 </div>
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+                  <div className="border-t border-border-default p-3">
                     <div className="grid gap-3 text-sm sm:grid-cols-2">
                       {stakeholder.email && (
-                        <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                        <div className="flex items-center gap-2 text-content-secondary">
                           <Mail className="h-4 w-4" />
                           <a
                             href={`mailto:${stakeholder.email}`}
-                            className="hover:text-emerald-600"
+                            className="hover:text-success-600"
                           >
                             {stakeholder.email}
                           </a>
                         </div>
                       )}
                       {stakeholder.phone && (
-                        <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                        <div className="flex items-center gap-2 text-content-secondary">
                           <Phone className="h-4 w-4" />
                           {stakeholder.phone}
                         </div>
                       )}
-                      <div className="text-zinc-500 dark:text-zinc-400">
+                      <div className="text-content-secondary">
                         <span className="font-medium">Influence:</span>{" "}
                         <span className="capitalize">{stakeholder.influence}</span>
                       </div>
-                      <div className="text-zinc-500 dark:text-zinc-400">
+                      <div className="text-content-secondary">
                         <span className="font-medium">Engagement:</span>{" "}
                         <span className="capitalize">{stakeholder.engagement}</span>
                       </div>
                     </div>
                     {stakeholder.notes && (
-                      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-2 text-sm text-content-secondary">
                         {stakeholder.notes}
                       </p>
                     )}
@@ -403,14 +403,14 @@ function AddStakeholderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-xl bg-white p-4 sm:max-w-md sm:rounded-xl sm:p-6 dark:bg-zinc-900">
+      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-xl bg-bg-elevated p-4 sm:max-w-md sm:rounded-xl sm:p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-lg font-semibold text-content-primary">
             Add Stakeholder
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="rounded-lg p-2 text-content-tertiary hover:bg-surface-hover"
           >
             <X className="h-5 w-5" />
           </button>
@@ -418,52 +418,52 @@ function AddStakeholderModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-secondary">
               Name *
             </label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
               required
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1 block text-sm font-medium text-content-secondary">
                 Email
               </label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1 block text-sm font-medium text-content-secondary">
                 Title
               </label>
               <input
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
               />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1 block text-sm font-medium text-content-secondary">
                 Role *
               </label>
               <select
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
               >
                 <option value="champion">Champion</option>
                 <option value="decision_maker">Decision Maker</option>
@@ -474,13 +474,13 @@ function AddStakeholderModal({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1 block text-sm font-medium text-content-secondary">
                 Sentiment
               </label>
               <select
                 value={form.sentiment}
                 onChange={(e) => setForm({ ...form, sentiment: e.target.value })}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
               >
                 <option value="positive">Positive</option>
                 <option value="neutral">Neutral</option>
@@ -490,14 +490,14 @@ function AddStakeholderModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-secondary">
               Notes
             </label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               rows={2}
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20"
             />
           </div>
 
@@ -505,14 +505,14 @@ function AddStakeholderModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || !form.name}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
             >
               {saving ? "Adding..." : "Add Stakeholder"}
             </button>

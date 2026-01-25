@@ -96,17 +96,17 @@ export function TaskComments({
   }
 
   return (
-    <div className={cn("border-t border-zinc-200 dark:border-zinc-700", className)}>
+    <div className={cn("border-t border-border-default", className)}>
       {/* Toggle Button */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-content-secondary hover:bg-surface-hover hover:text-content-primary"
       >
         <MessageSquare className="h-4 w-4" />
         <span>
           {expanded ? "Hide Comments" : "Comments"}
           {comments.length > 0 && !expanded && (
-            <span className="ml-1 text-zinc-400">({comments.length})</span>
+            <span className="ml-1 text-content-tertiary">({comments.length})</span>
           )}
         </span>
         {notionUrl && (
@@ -115,7 +115,7 @@ export function TaskComments({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="ml-auto flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+            className="ml-auto flex items-center gap-1 text-xs text-success-600 hover:text-success-700 dark:text-success-400 dark:hover:text-success-300"
           >
             View in Notion
             <ExternalLink className="h-3 w-3" />
@@ -125,10 +125,10 @@ export function TaskComments({
 
       {/* Comments Panel */}
       {expanded && (
-        <div className="border-t border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-800/50">
+        <div className="border-t border-border-default bg-bg-tertiary p-4">
           {/* Error Message */}
           {error && (
-            <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+            <div className="mb-3 rounded-lg bg-error-50 px-3 py-2 text-sm text-error-600 dark:bg-error-900/20 dark:text-error-400">
               {error}
             </div>
           )}
@@ -136,21 +136,21 @@ export function TaskComments({
           {/* Loading State */}
           {loading ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-content-tertiary" />
             </div>
           ) : (
             <>
               {/* Comments List */}
               <div className="mb-4 max-h-64 space-y-3 overflow-y-auto">
                 {comments.length === 0 ? (
-                  <p className="py-2 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="py-2 text-center text-sm text-content-secondary">
                     No comments yet
                   </p>
                 ) : (
                   comments.map((comment) => (
                     <div
                       key={comment.id}
-                      className="rounded-lg bg-white p-3 shadow-sm dark:bg-zinc-900"
+                      className="rounded-lg bg-bg-elevated p-3 shadow-sm"
                     >
                       <div className="mb-1 flex items-center gap-2">
                         {comment.author.avatar ? (
@@ -160,14 +160,14 @@ export function TaskComments({
                             className="h-5 w-5 rounded-full"
                           />
                         ) : (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success-100 text-xs font-medium text-success-700 dark:bg-success-900 dark:text-success-300">
                             {comment.author.name.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        <span className="text-sm font-medium text-content-secondary">
                           {comment.author.name}
                         </span>
-                        <span className="text-xs text-zinc-400">
+                        <span className="text-xs text-content-tertiary">
                           {new Date(comment.createdAt).toLocaleDateString(undefined, {
                             month: "short",
                             day: "numeric",
@@ -176,7 +176,7 @@ export function TaskComments({
                           })}
                         </span>
                       </div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
+                      <p className="text-sm text-content-secondary whitespace-pre-wrap">
                         {comment.text}
                       </p>
                     </div>
@@ -191,13 +191,13 @@ export function TaskComments({
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                  className="flex-1 rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm text-content-primary outline-none focus:border-success-500 focus:ring-1 focus:ring-success-500"
                   disabled={submitting}
                 />
                 <button
                   type="submit"
                   disabled={!newComment.trim() || submitting}
-                  className="flex items-center justify-center rounded-lg bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="flex items-center justify-center rounded-lg bg-success-600 px-3 py-2 text-white hover:bg-success-700 disabled:opacity-50"
                 >
                   {submitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

@@ -42,17 +42,17 @@ interface TaskDrawerProps {
 }
 
 const statusConfig = {
-  pending: { icon: Circle, label: "Pending", color: "text-zinc-400" },
-  in_progress: { icon: PlayCircle, label: "In Progress", color: "text-blue-500" },
-  completed: { icon: CheckCircle2, label: "Completed", color: "text-emerald-500" },
-  cancelled: { icon: XCircle, label: "Cancelled", color: "text-red-500" },
+  pending: { icon: Circle, label: "Pending", color: "text-content-tertiary" },
+  in_progress: { icon: PlayCircle, label: "In Progress", color: "text-info-500" },
+  completed: { icon: CheckCircle2, label: "Completed", color: "text-success-500" },
+  cancelled: { icon: XCircle, label: "Cancelled", color: "text-error-500" },
 }
 
 const priorityColors = {
-  urgent: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  high: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-  medium: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  low: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  urgent: "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
+  high: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+  medium: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
+  low: "bg-bg-tertiary text-content-secondary",
 }
 
 export function TaskDrawer({ task, open, onOpenChange, onStatusChange }: TaskDrawerProps) {
@@ -68,16 +68,16 @@ export function TaskDrawer({ task, open, onOpenChange, onStatusChange }: TaskDra
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 mt-24 flex h-[85vh] flex-col rounded-t-[10px] bg-white dark:bg-zinc-900">
+        <Drawer.Content className="fixed bottom-0 left-0 right-0 mt-24 flex h-[85vh] flex-col rounded-t-[10px] bg-bg-elevated">
           {/* Handle */}
-          <div className="mx-auto mt-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+          <div className="mx-auto mt-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-content-tertiary" />
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4">
             {/* Header */}
             <div className="mb-4">
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                <h2 className="text-lg font-semibold text-content-primary">
                   {task.title}
                 </h2>
                 <span
@@ -90,15 +90,15 @@ export function TaskDrawer({ task, open, onOpenChange, onStatusChange }: TaskDra
                 </span>
               </div>
               {task.description && (
-                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="mt-2 text-sm text-content-secondary">
                   {task.description}
                 </p>
               )}
             </div>
 
             {/* Status */}
-            <div className="mb-4 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
-              <label className="mb-2 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <div className="mb-4 rounded-lg bg-bg-tertiary p-3">
+              <label className="mb-2 block text-xs font-medium text-content-secondary">
                 Status
               </label>
               <div className="flex flex-wrap gap-2">
@@ -112,8 +112,8 @@ export function TaskDrawer({ task, open, onOpenChange, onStatusChange }: TaskDra
                       className={cn(
                         "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                         task.status === status
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-white text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                          : "bg-bg-elevated text-content-secondary hover:bg-surface-hover"
                       )}
                     >
                       <Icon className={cn("h-4 w-4", config.color)} />
@@ -127,11 +127,11 @@ export function TaskDrawer({ task, open, onOpenChange, onStatusChange }: TaskDra
             {/* Details */}
             <div className="mb-4 space-y-3">
               <div className="flex items-center gap-3 text-sm">
-                <Building2 className="h-4 w-4 text-zinc-400" />
-                <span className="text-zinc-600 dark:text-zinc-400">Company:</span>
+                <Building2 className="h-4 w-4 text-content-tertiary" />
+                <span className="text-content-secondary">Company:</span>
                 <a
                   href={`/accounts/${task.companyId}`}
-                  className="font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+                  className="font-medium text-success-600 hover:underline dark:text-success-400"
                 >
                   {task.companyName}
                 </a>
@@ -139,12 +139,12 @@ export function TaskDrawer({ task, open, onOpenChange, onStatusChange }: TaskDra
 
               {task.dueDate && (
                 <div className="flex items-center gap-3 text-sm">
-                  <Calendar className="h-4 w-4 text-zinc-400" />
-                  <span className="text-zinc-600 dark:text-zinc-400">Due:</span>
+                  <Calendar className="h-4 w-4 text-content-tertiary" />
+                  <span className="text-content-secondary">Due:</span>
                   <span
                     className={cn(
                       "font-medium",
-                      isOverdue ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"
+                      isOverdue ? "text-error-600 dark:text-error-400" : "text-content-primary"
                     )}
                   >
                     {new Date(task.dueDate).toLocaleDateString()}
@@ -154,21 +154,21 @@ export function TaskDrawer({ task, open, onOpenChange, onStatusChange }: TaskDra
               )}
 
               <div className="flex items-center gap-3 text-sm">
-                <User className="h-4 w-4 text-zinc-400" />
-                <span className="text-zinc-600 dark:text-zinc-400">Assignee:</span>
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                <User className="h-4 w-4 text-content-tertiary" />
+                <span className="text-content-secondary">Assignee:</span>
+                <span className="font-medium text-content-primary">
                   {task.metadata?.notionAssigneeName || task.ownerEmail || "Unassigned"}
                 </span>
               </div>
 
               {task.metadata?.notionUrl && (
                 <div className="flex items-center gap-3 text-sm">
-                  <ExternalLink className="h-4 w-4 text-zinc-400" />
+                  <ExternalLink className="h-4 w-4 text-content-tertiary" />
                   <a
                     href={task.metadata.notionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+                    className="font-medium text-success-600 hover:underline dark:text-success-400"
                   >
                     View in Notion
                   </a>
@@ -177,9 +177,9 @@ export function TaskDrawer({ task, open, onOpenChange, onStatusChange }: TaskDra
 
               {task.completedAt && (
                 <div className="flex items-center gap-3 text-sm">
-                  <Clock className="h-4 w-4 text-zinc-400" />
-                  <span className="text-zinc-600 dark:text-zinc-400">Completed:</span>
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  <Clock className="h-4 w-4 text-content-tertiary" />
+                  <span className="text-content-secondary">Completed:</span>
+                  <span className="font-medium text-content-primary">
                     {new Date(task.completedAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -188,7 +188,7 @@ export function TaskDrawer({ task, open, onOpenChange, onStatusChange }: TaskDra
 
             {/* Comments */}
             {task.metadata?.notionPageId && (
-              <div className="rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <div className="rounded-lg border border-border-default">
                 <TaskComments
                   taskId={task.id}
                   notionPageId={task.metadata.notionPageId}

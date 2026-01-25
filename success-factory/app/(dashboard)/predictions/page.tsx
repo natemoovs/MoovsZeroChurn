@@ -129,7 +129,7 @@ export default function PredictionsPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <Brain className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <Brain className="h-6 w-6 text-primary-600 dark:text-primary-400" />
               <h1 className="text-2xl font-bold text-content-primary">
                 Churn Predictions
               </h1>
@@ -141,7 +141,7 @@ export default function PredictionsPage() {
           <button
             onClick={fetchPredictions}
             disabled={loading}
-            className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-50"
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             Refresh Model
@@ -278,7 +278,7 @@ export default function PredictionsPage() {
                         className={cn(
                           "flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-bg-secondary",
                           selectedPrediction?.companyId === prediction.companyId &&
-                            "bg-purple-50 dark:bg-purple-950/30"
+                            "bg-primary-50 dark:bg-primary-950/30"
                         )}
                       >
                         <div className="min-w-0 flex-1">
@@ -326,7 +326,7 @@ export default function PredictionsPage() {
                     <div>
                       <Link
                         href={`/accounts/${selectedPrediction.companyId}`}
-                        className="text-xl font-bold text-content-primary hover:text-purple-600 dark:hover:text-purple-400"
+                        className="text-xl font-bold text-content-primary hover:text-primary-600 dark:hover:text-primary-400"
                       >
                         {selectedPrediction.companyName}
                       </Link>
@@ -402,7 +402,7 @@ export default function PredictionsPage() {
                 {/* Risk & Protective Factors */}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {/* Risk Factors */}
-                  <div className="rounded-xl border border-error-200 bg-white p-4 dark:border-error-900/50 dark:bg-zinc-900">
+                  <div className="rounded-xl border border-error-200 bg-bg-elevated p-4 dark:border-error-900/50">
                     <h3 className="mb-3 flex items-center gap-2 font-semibold text-error-700 dark:text-error-400">
                       <AlertTriangle className="h-4 w-4" />
                       Risk Factors
@@ -441,7 +441,7 @@ export default function PredictionsPage() {
                   </div>
 
                   {/* Protective Factors */}
-                  <div className="rounded-xl border border-success-200 bg-white p-4 dark:border-success-900/50 dark:bg-zinc-900">
+                  <div className="rounded-xl border border-success-200 bg-bg-elevated p-4 dark:border-success-900/50">
                     <h3 className="mb-3 flex items-center gap-2 font-semibold text-success-700 dark:text-success-400">
                       <Shield className="h-4 w-4" />
                       Protective Factors
@@ -482,8 +482,8 @@ export default function PredictionsPage() {
 
                 {/* Recommended Actions */}
                 {selectedPrediction.recommendedActions.length > 0 && (
-                  <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 dark:border-purple-900/50 dark:bg-purple-950/30">
-                    <h3 className="mb-3 flex items-center gap-2 font-semibold text-purple-700 dark:text-purple-400">
+                  <div className="rounded-xl border border-primary-200 bg-primary-50 p-4 dark:border-primary-900/50 dark:bg-primary-950/30">
+                    <h3 className="mb-3 flex items-center gap-2 font-semibold text-primary-700 dark:text-primary-400">
                       <Lightbulb className="h-4 w-4" />
                       Recommended Actions
                     </h3>
@@ -491,9 +491,9 @@ export default function PredictionsPage() {
                       {selectedPrediction.recommendedActions.map((action, idx) => (
                         <li
                           key={idx}
-                          className="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-300"
+                          className="flex items-center gap-2 text-sm text-primary-700 dark:text-primary-300"
                         >
-                          <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
                           {action}
                         </li>
                       ))}

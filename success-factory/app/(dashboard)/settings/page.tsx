@@ -650,7 +650,7 @@ export default function SettingsPage() {
             disabled={syncing}
             className={cn(
               "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
-              "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200",
+              "bg-content-primary text-bg-primary hover:bg-content-secondary",
               syncing && "opacity-50 cursor-not-allowed"
             )}
           >

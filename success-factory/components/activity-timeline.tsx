@@ -53,13 +53,13 @@ const SOURCE_ICONS: Record<string, typeof Activity> = {
 }
 
 const SOURCE_COLORS: Record<string, string> = {
-  platform: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-  hubspot: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-  stripe: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-  support: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
-  nps: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
-  task: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-  journey: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+  platform: "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400",
+  hubspot: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
+  stripe: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
+  support: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
+  nps: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
+  task: "bg-bg-tertiary text-content-secondary",
+  journey: "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400",
 }
 
 export function ActivityTimeline({
@@ -94,16 +94,16 @@ export function ActivityTimeline({
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-content-tertiary" />
       </div>
     )
   }
 
   if (grouped.length === 0) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-center dark:border-zinc-800 dark:bg-zinc-900">
-        <Activity className="mx-auto mb-2 h-8 w-8 text-zinc-400" />
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="card-sf p-6 text-center">
+        <Activity className="mx-auto mb-2 h-8 w-8 text-content-tertiary" />
+        <p className="text-sm text-content-secondary">
           No activity recorded yet
         </p>
       </div>
@@ -115,14 +115,14 @@ export function ActivityTimeline({
       {/* Filters */}
       {showFilters && (
         <div className="flex flex-wrap items-center gap-2">
-          <Filter className="h-4 w-4 text-zinc-400" />
+          <Filter className="h-4 w-4 text-content-tertiary" />
           <button
             onClick={() => setSelectedSource(null)}
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",
               !selectedSource
-                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+                ? "bg-content-primary text-bg-elevated dark:bg-white dark:text-bg-elevated"
+                : "bg-bg-tertiary text-content-secondary hover:bg-surface-hover"
             )}
           >
             All
@@ -136,8 +136,8 @@ export function ActivityTimeline({
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors",
                   selectedSource === source
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+                    ? "bg-content-primary text-bg-elevated dark:bg-white dark:text-bg-elevated"
+                    : "bg-bg-tertiary text-content-secondary hover:bg-surface-hover"
                 )}
               >
                 <Icon className="h-3 w-3" />
@@ -153,18 +153,18 @@ export function ActivityTimeline({
         {grouped.map((group) => (
           <div key={group.date}>
             {/* Date Header */}
-            <div className="sticky top-0 z-10 mb-3 flex items-center gap-2 bg-zinc-50/80 py-1 backdrop-blur-sm dark:bg-zinc-950/80">
-              <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <div className="sticky top-0 z-10 mb-3 flex items-center gap-2 bg-bg-secondary/80 py-1 backdrop-blur-sm">
+              <div className="h-px flex-1 bg-bg-tertiary" />
+              <span className="text-xs font-medium text-content-secondary">
                 {formatDate(group.date)}
               </span>
-              <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-px flex-1 bg-bg-tertiary" />
             </div>
 
             {/* Events for this date */}
             <div className="relative space-y-3 pl-6">
               {/* Vertical line */}
-              <div className="absolute left-2.5 top-2 h-[calc(100%-1rem)] w-px bg-zinc-200 dark:bg-zinc-700" />
+              <div className="absolute left-2.5 top-2 h-[calc(100%-1rem)] w-px bg-bg-tertiary" />
 
               {group.events.map((event) => (
                 <TimelineEventCard key={event.id} event={event} />
@@ -195,10 +195,10 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
       className={cn(
         "relative rounded-lg border p-3",
         event.importance === "critical"
-          ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
+          ? "border-error-200 bg-error-50 dark:border-error-900 dark:bg-error-950/30"
           : event.importance === "high"
-          ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30"
-          : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+          ? "border-warning-200 bg-warning-50 dark:border-warning-900 dark:bg-warning-950/30"
+          : "border-border-default bg-bg-elevated"
       )}
     >
       {/* Icon dot */}
@@ -214,16 +214,16 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
       {/* Content */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">
+          <p className="font-medium text-content-primary">
             {event.title}
           </p>
           {event.description && (
-            <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 text-sm text-content-secondary">
               {event.description}
             </p>
           )}
         </div>
-        <span className="shrink-0 text-xs text-zinc-400">
+        <span className="shrink-0 text-xs text-content-tertiary">
           {formatTime(event.occurredAt)}
         </span>
       </div>
@@ -244,8 +244,8 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
             className={cn(
               "rounded-full px-2 py-0.5 text-xs font-medium",
               event.importance === "critical"
-                ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
             )}
           >
             {event.importance}

@@ -45,7 +45,7 @@ function LoginContent() {
       </CardHeader>
       <CardContent className="space-y-4">
         {(error || errorParam) && (
-          <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+          <p className="text-sm text-error-500 bg-error-50 dark:bg-error-900/20 p-3 rounded-lg">
             {error || (errorParam === "no_token" ? "Authentication failed" : "Invalid token")}
           </p>
         )}
@@ -67,10 +67,10 @@ function LoginContent() {
         {/* Neon Auth SSO */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+            <span className="w-full border-t border-border-default" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white dark:bg-zinc-950 px-2 text-zinc-500">Or</span>
+            <span className="bg-bg-secondary px-2 text-content-tertiary">Or</span>
           </div>
         </div>
 
@@ -90,7 +90,7 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen flex items-center justify-center bg-bg-secondary">
       <Suspense fallback={
         <Card className="w-full max-w-sm">
           <CardHeader>

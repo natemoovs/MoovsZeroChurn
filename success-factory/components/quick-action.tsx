@@ -14,9 +14,9 @@ interface QuickActionProps {
 }
 
 const badgeStyles = {
-  default: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-  danger: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400",
-  warning: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
+  default: "bg-bg-tertiary text-content-secondary",
+  danger: "bg-error-100 text-error-700 dark:bg-error-950 dark:text-error-400",
+  warning: "bg-warning-100 text-warning-700 dark:bg-warning-950 dark:text-warning-400",
 }
 
 export function QuickAction({
@@ -30,16 +30,16 @@ export function QuickAction({
   return (
     <Link
       href={href}
-      className="group flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 transition-all hover:border-emerald-200 hover:bg-emerald-50/50 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-900 dark:hover:bg-emerald-950/20"
+      className="group flex items-center justify-between rounded-lg border border-border-default bg-bg-elevated p-4 transition-all hover:border-success-200 hover:bg-success-50/50 hover:shadow-sm dark:hover:border-success-900 dark:hover:bg-success-950/20"
     >
       <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-zinc-100 p-2 transition-colors group-hover:bg-emerald-100 dark:bg-zinc-800 dark:group-hover:bg-emerald-950">
-          <Icon className="h-5 w-5 text-zinc-600 transition-colors group-hover:text-emerald-600 dark:text-zinc-400 dark:group-hover:text-emerald-400" />
+        <div className="rounded-lg bg-bg-tertiary p-2 transition-colors group-hover:bg-success-100 dark:group-hover:bg-success-950">
+          <Icon className="h-5 w-5 text-content-secondary transition-colors group-hover:text-success-600 dark:group-hover:text-success-400" />
         </div>
         <div>
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">{label}</p>
+          <p className="font-medium text-content-primary">{label}</p>
           {description && (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-content-secondary">
               {description}
             </p>
           )}
@@ -56,7 +56,7 @@ export function QuickAction({
             {badge}
           </span>
         )}
-        <ChevronRight className="h-4 w-4 text-zinc-400 transition-transform group-hover:translate-x-0.5 dark:text-zinc-600" />
+        <ChevronRight className="h-4 w-4 text-content-tertiary transition-transform group-hover:translate-x-0.5" />
       </div>
     </Link>
   )

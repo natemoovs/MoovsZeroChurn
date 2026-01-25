@@ -28,7 +28,7 @@ export function HealthChart({ green, yellow, red, className }: HealthChartProps)
             cy="18"
             r="15.915"
             fill="none"
-            className="stroke-zinc-100 dark:stroke-zinc-800"
+            className="stroke-border-default"
             strokeWidth="3"
           />
           {/* Green segment */}
@@ -37,7 +37,7 @@ export function HealthChart({ green, yellow, red, className }: HealthChartProps)
             cy="18"
             r="15.915"
             fill="none"
-            className="stroke-emerald-500"
+            className="stroke-success-500"
             strokeWidth="3"
             strokeDasharray={`${greenPercent} ${100 - greenPercent}`}
             strokeDashoffset="0"
@@ -48,7 +48,7 @@ export function HealthChart({ green, yellow, red, className }: HealthChartProps)
             cy="18"
             r="15.915"
             fill="none"
-            className="stroke-amber-500"
+            className="stroke-warning-500"
             strokeWidth="3"
             strokeDasharray={`${yellowPercent} ${100 - yellowPercent}`}
             strokeDashoffset={`${-greenPercent}`}
@@ -59,7 +59,7 @@ export function HealthChart({ green, yellow, red, className }: HealthChartProps)
             cy="18"
             r="15.915"
             fill="none"
-            className="stroke-red-500"
+            className="stroke-error-500"
             strokeWidth="3"
             strokeDasharray={`${redPercent} ${100 - redPercent}`}
             strokeDashoffset={`${-(greenPercent + yellowPercent)}`}
@@ -67,10 +67,10 @@ export function HealthChart({ green, yellow, red, className }: HealthChartProps)
         </svg>
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+          <span className="text-3xl font-bold text-content-primary">
             {total}
           </span>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-content-secondary">
             accounts
           </span>
         </div>
@@ -79,20 +79,20 @@ export function HealthChart({ green, yellow, red, className }: HealthChartProps)
       {/* Legend */}
       <div className="flex justify-center gap-6">
         <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-emerald-500" />
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+          <span className="h-3 w-3 rounded-full bg-success-500" />
+          <span className="text-sm text-content-secondary">
             {green} Healthy
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-amber-500" />
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+          <span className="h-3 w-3 rounded-full bg-warning-500" />
+          <span className="text-sm text-content-secondary">
             {yellow} Monitor
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-red-500" />
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+          <span className="h-3 w-3 rounded-full bg-error-500" />
+          <span className="text-sm text-content-secondary">
             {red} At Risk
           </span>
         </div>
@@ -111,21 +111,21 @@ export function HealthBar({ green, yellow, red }: HealthChartProps) {
 
   return (
     <div className="space-y-2">
-      <div className="flex h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+      <div className="flex h-3 w-full overflow-hidden rounded-full bg-bg-tertiary">
         <div
-          className="bg-emerald-500 transition-all"
+          className="bg-success-500 transition-all"
           style={{ width: `${greenPercent}%` }}
         />
         <div
-          className="bg-amber-500 transition-all"
+          className="bg-warning-500 transition-all"
           style={{ width: `${yellowPercent}%` }}
         />
         <div
-          className="bg-red-500 transition-all"
+          className="bg-error-500 transition-all"
           style={{ width: `${redPercent}%` }}
         />
       </div>
-      <div className="flex flex-wrap justify-between gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-wrap justify-between gap-1 text-xs text-content-secondary">
         <span>{green} healthy</span>
         <span>{yellow} monitor</span>
         <span>{red} at risk</span>

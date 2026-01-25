@@ -69,7 +69,7 @@ function SkillPageContent() {
     return (
       <DashboardLayout>
         <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-success-500 border-t-transparent" />
         </div>
       </DashboardLayout>
     )
@@ -163,12 +163,12 @@ function SkillPageContent() {
             <div>
               <Link
                 href="/skills"
-                className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                className="inline-flex items-center gap-2 text-sm text-content-secondary hover:text-content-primary"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Skills
               </Link>
-              <h1 className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h1 className="mt-2 text-2xl font-bold text-content-primary">
                 {skill.name}
               </h1>
             </div>
@@ -181,14 +181,14 @@ function SkillPageContent() {
           </div>
 
           {/* Result Card */}
-          <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-xl border border-border-default bg-bg-elevated shadow-sm">
             {/* Actions Bar */}
-            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+            <div className="flex items-center justify-between border-b border-border-default px-4 py-3">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
-                  <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success-100 dark:bg-success-950">
+                  <Check className="h-4 w-4 text-success-600 dark:text-success-400" />
                 </div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="text-sm font-medium text-content-primary">
                   Generated successfully
                 </span>
               </div>
@@ -197,19 +197,19 @@ function SkillPageContent() {
                   variant="outline"
                   size="sm"
                   onClick={() => setFeedback("up")}
-                  className={cn(feedback === "up" && "bg-emerald-50 dark:bg-emerald-950")}
+                  className={cn(feedback === "up" && "bg-success-50 dark:bg-success-950")}
                 >
-                  <ThumbsUp className={cn("h-4 w-4", feedback === "up" && "text-emerald-600")} />
+                  <ThumbsUp className={cn("h-4 w-4", feedback === "up" && "text-success-600")} />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setFeedback("down")}
-                  className={cn(feedback === "down" && "bg-red-50 dark:bg-red-950")}
+                  className={cn(feedback === "down" && "bg-error-50 dark:bg-error-950")}
                 >
-                  <ThumbsDown className={cn("h-4 w-4", feedback === "down" && "text-red-600")} />
+                  <ThumbsDown className={cn("h-4 w-4", feedback === "down" && "text-error-600")} />
                 </Button>
-                <div className="mx-2 h-6 w-px bg-zinc-200 dark:bg-zinc-700" />
+                <div className="mx-2 h-6 w-px bg-bg-tertiary" />
                 <Button variant="outline" size="sm" onClick={handleCopy}>
                   {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
                   {copied ? "Copied!" : "Copy"}
@@ -223,8 +223,8 @@ function SkillPageContent() {
 
             {/* Result Content */}
             <div className="p-6">
-              <div className="prose prose-zinc dark:prose-invert max-w-none">
-                <pre className="whitespace-pre-wrap rounded-lg bg-zinc-50 p-4 text-sm dark:bg-zinc-800/50">
+              <div className="prose dark:prose-invert max-w-none">
+                <pre className="whitespace-pre-wrap rounded-lg bg-bg-secondary p-4 text-sm">
                   {result}
                 </pre>
               </div>
@@ -243,15 +243,15 @@ function SkillPageContent() {
         <div>
           <Link
             href="/skills"
-            className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            className="inline-flex items-center gap-2 text-sm text-content-secondary hover:text-content-primary"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Skills
           </Link>
-          <h1 className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="mt-2 text-2xl font-bold text-content-primary">
             {skill.name}
           </h1>
-          <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-content-secondary">
             {skill.description}
           </p>
         </div>
@@ -259,10 +259,10 @@ function SkillPageContent() {
         {/* Progress */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-500 dark:text-zinc-400">
+            <span className="text-content-secondary">
               Step {currentStep + 1} of {totalSteps}
             </span>
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+            <span className="font-medium text-content-primary">
               {Math.round(progress)}%
             </span>
           </div>
@@ -270,7 +270,7 @@ function SkillPageContent() {
         </div>
 
         {/* Question Card or Review Card */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-border-default bg-bg-elevated p-6 shadow-sm">
           {/* Steps indicator */}
           <div className="mb-6 flex items-center justify-center gap-2">
             {skill.questions.map((_, index) => (
@@ -279,10 +279,10 @@ function SkillPageContent() {
                 className={cn(
                   "h-2 w-2 rounded-full transition-all",
                   index === currentStep
-                    ? "w-6 bg-emerald-500"
+                    ? "w-6 bg-success-500"
                     : index < currentStep
-                    ? "bg-emerald-500"
-                    : "bg-zinc-200 dark:bg-zinc-700"
+                    ? "bg-success-500"
+                    : "bg-bg-tertiary"
                 )}
               />
             ))}
@@ -291,10 +291,10 @@ function SkillPageContent() {
               className={cn(
                 "h-2 w-2 rounded-full transition-all",
                 isReviewStep
-                  ? "w-6 bg-emerald-500"
+                  ? "w-6 bg-success-500"
                   : allQuestionsAnswered
-                  ? "bg-emerald-500"
-                  : "bg-zinc-200 dark:bg-zinc-700"
+                  ? "bg-success-500"
+                  : "bg-bg-tertiary"
               )}
             />
           </div>
@@ -303,14 +303,14 @@ function SkillPageContent() {
             /* Review Step */
             <>
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
-                  <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-100 dark:bg-success-950">
+                  <Check className="h-5 w-5 text-success-600 dark:text-success-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                  <h2 className="text-xl font-semibold text-content-primary">
                     Review & Generate
                   </h2>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm text-content-secondary">
                     Confirm your answers before generating
                   </p>
                 </div>
@@ -320,19 +320,19 @@ function SkillPageContent() {
                 {skill.questions.map((q, index) => (
                   <div
                     key={q.id}
-                    className="flex items-start justify-between rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-800/50"
+                    className="flex items-start justify-between rounded-lg border border-border-default bg-bg-secondary p-3"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                      <p className="text-sm font-medium text-content-secondary">
                         {q.question}
                       </p>
-                      <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100 truncate">
-                        {answers[q.id] || <span className="text-zinc-400 italic">Not answered</span>}
+                      <p className="mt-1 text-sm text-content-primary truncate">
+                        {answers[q.id] || <span className="text-content-tertiary italic">Not answered</span>}
                       </p>
                     </div>
                     <button
                       onClick={() => setCurrentStep(index)}
-                      className="ml-2 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                      className="ml-2 text-xs text-success-600 hover:text-success-700 dark:text-success-400"
                     >
                       Edit
                     </button>
@@ -343,17 +343,17 @@ function SkillPageContent() {
           ) : (
             /* Question Step */
             <>
-              <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="mb-4 text-xl font-semibold text-content-primary">
                 {currentQuestion.question}
               </h2>
 
               {/* Examples */}
               {currentQuestion.examples && currentQuestion.examples.length > 0 && (
-                <div className="mb-4 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
-                  <p className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                <div className="mb-4 rounded-lg bg-bg-secondary p-4">
+                  <p className="mb-2 text-sm font-medium text-content-secondary">
                     Examples:
                   </p>
-                  <ul className="space-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  <ul className="space-y-1 text-sm text-content-secondary">
                     {currentQuestion.examples.map((example, i) => (
                       <li key={i}>• {example}</li>
                     ))}
@@ -388,7 +388,7 @@ function SkillPageContent() {
 
           {/* Error */}
           {error && (
-            <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-400">
+            <div className="mt-4 rounded-lg bg-error-50 p-3 text-sm text-error-700 dark:bg-error-950/50 dark:text-error-400">
               {error}
             </div>
           )}
@@ -442,13 +442,13 @@ function SkillPageLoading() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-2xl space-y-6">
-        <div className="h-6 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-8 w-64 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-4 w-96 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="h-6 w-32 shimmer rounded" />
+        <div className="h-8 w-64 shimmer rounded" />
+        <div className="h-4 w-96 shimmer rounded" />
+        <div className="rounded-xl border border-border-default bg-bg-elevated p-6">
           <div className="space-y-4">
-            <div className="h-6 w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-            <div className="h-12 w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-6 w-full shimmer rounded" />
+            <div className="h-12 w-full shimmer rounded" />
           </div>
         </div>
       </div>

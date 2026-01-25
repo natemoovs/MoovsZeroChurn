@@ -78,7 +78,7 @@ export function OnboardingProgress({
   if (loading) {
     return (
       <div className="flex items-center justify-center p-4">
-        <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+        <Loader2 className="h-5 w-5 animate-spin text-content-tertiary" />
       </div>
     )
   }
@@ -88,10 +88,10 @@ export function OnboardingProgress({
   }
 
   const statusColors = {
-    complete: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    on_track: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    at_risk: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    stalled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    complete: "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400",
+    on_track: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
+    at_risk: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+    stalled: "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
   }
 
   const statusLabels = {
@@ -106,7 +106,7 @@ export function OnboardingProgress({
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <div className="mb-1 flex items-center justify-between text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="font-medium text-content-secondary">
               Onboarding
             </span>
             <span
@@ -118,22 +118,22 @@ export function OnboardingProgress({
               {statusLabels[status.status]}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+          <div className="h-2 overflow-hidden rounded-full bg-bg-tertiary">
             <div
               className={cn(
                 "h-full transition-all",
                 status.status === "complete"
-                  ? "bg-emerald-500"
+                  ? "bg-success-500"
                   : status.status === "stalled"
-                  ? "bg-red-500"
+                  ? "bg-error-500"
                   : status.status === "at_risk"
-                  ? "bg-amber-500"
-                  : "bg-blue-500"
+                  ? "bg-warning-500"
+                  : "bg-info-500"
               )}
               style={{ width: `${status.progress}%` }}
             />
           </div>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-xs text-content-secondary">
             {status.progress}% complete
             {status.nextMilestone && ` • Next: ${status.nextMilestone.name}`}
           </p>
@@ -147,10 +147,10 @@ export function OnboardingProgress({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <h3 className="font-semibold text-content-primary">
             Onboarding Progress
           </h3>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-content-secondary">
             {status.progress}% complete •{" "}
             {status.milestones.filter((m) => m.completedAt).length} of{" "}
             {status.milestones.length} milestones
@@ -167,17 +167,17 @@ export function OnboardingProgress({
       </div>
 
       {/* Progress Bar */}
-      <div className="h-2.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+      <div className="h-2.5 overflow-hidden rounded-full bg-bg-tertiary">
         <div
           className={cn(
             "h-full transition-all duration-500",
             status.status === "complete"
-              ? "bg-emerald-500"
+              ? "bg-success-500"
               : status.status === "stalled"
-              ? "bg-red-500"
+              ? "bg-error-500"
               : status.status === "at_risk"
-              ? "bg-amber-500"
-              : "bg-blue-500"
+              ? "bg-warning-500"
+              : "bg-info-500"
           )}
           style={{ width: `${status.progress}%` }}
         />
@@ -191,10 +191,10 @@ export function OnboardingProgress({
             className={cn(
               "flex items-center gap-3 rounded-lg border p-3",
               milestone.completedAt
-                ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30"
+                ? "border-success-200 bg-success-50 dark:border-success-900 dark:bg-success-950/30"
                 : milestone.isOverdue
-                ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
-                : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+                ? "border-error-200 bg-error-50 dark:border-error-900 dark:bg-error-950/30"
+                : "border-border-default bg-bg-elevated"
             )}
           >
             {/* Icon */}
@@ -202,10 +202,10 @@ export function OnboardingProgress({
               className={cn(
                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
                 milestone.completedAt
-                  ? "bg-emerald-500 text-white"
+                  ? "bg-success-500 text-white"
                   : milestone.isOverdue
-                  ? "bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400"
-                  : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"
+                  ? "bg-error-100 text-error-600 dark:bg-error-900/50 dark:text-error-400"
+                  : "bg-bg-tertiary text-content-tertiary"
               )}
             >
               {completing === milestone.id ? (
@@ -225,19 +225,19 @@ export function OnboardingProgress({
                 className={cn(
                   "font-medium",
                   milestone.completedAt
-                    ? "text-emerald-700 dark:text-emerald-400"
+                    ? "text-success-700 dark:text-success-400"
                     : milestone.isOverdue
-                    ? "text-red-700 dark:text-red-400"
-                    : "text-zinc-900 dark:text-zinc-100"
+                    ? "text-error-700 dark:text-error-400"
+                    : "text-content-primary"
                 )}
               >
                 {milestone.name}
               </p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-content-secondary">
                 {milestone.completedAt ? (
                   `Completed ${new Date(milestone.completedAt).toLocaleDateString()}`
                 ) : milestone.isOverdue ? (
-                  <span className="text-red-600 dark:text-red-400">
+                  <span className="text-error-600 dark:text-error-400">
                     Overdue (target: {milestone.targetDays} days)
                   </span>
                 ) : (
@@ -251,7 +251,7 @@ export function OnboardingProgress({
               <button
                 onClick={() => handleComplete(milestone.id)}
                 disabled={completing === milestone.id}
-                className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+                className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-success-600 hover:bg-success-100 dark:text-success-400 dark:hover:bg-success-900/30"
               >
                 Mark Complete
               </button>
@@ -262,14 +262,14 @@ export function OnboardingProgress({
 
       {/* Next Steps */}
       {status.nextMilestone && status.daysToNextDeadline !== null && (
-        <div className="flex items-center gap-2 rounded-lg bg-zinc-100 p-3 text-sm dark:bg-zinc-800">
-          <Clock className="h-4 w-4 text-zinc-500" />
-          <span className="text-zinc-600 dark:text-zinc-400">
+        <div className="flex items-center gap-2 rounded-lg bg-bg-tertiary p-3 text-sm">
+          <Clock className="h-4 w-4 text-content-secondary" />
+          <span className="text-content-secondary">
             Next: <strong>{status.nextMilestone.name}</strong>
             {status.daysToNextDeadline > 0 ? (
               <> — {status.daysToNextDeadline} days remaining</>
             ) : (
-              <span className="text-red-600 dark:text-red-400">
+              <span className="text-error-600 dark:text-error-400">
                 {" "}
                 — Overdue by {Math.abs(status.daysToNextDeadline)} days
               </span>

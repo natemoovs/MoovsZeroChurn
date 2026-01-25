@@ -40,12 +40,12 @@ const skillColors: Record<string, { bg: string; icon: string }> = {
     icon: "text-primary-600 dark:text-primary-400",
   },
   "portfolio-health": {
-    bg: "bg-purple-100 dark:bg-purple-950",
-    icon: "text-purple-600 dark:text-purple-400",
+    bg: "bg-primary-100 dark:bg-primary-950",
+    icon: "text-primary-600 dark:text-primary-400",
   },
   "pipeline-health": {
-    bg: "bg-indigo-100 dark:bg-indigo-950",
-    icon: "text-indigo-600 dark:text-indigo-400",
+    bg: "bg-info-100 dark:bg-info-950",
+    icon: "text-info-600 dark:text-info-400",
   },
   "churn-risk": {
     bg: "bg-error-100 dark:bg-error-950",
@@ -60,12 +60,12 @@ const skillColors: Record<string, { bg: string; icon: string }> = {
     icon: "text-success-600 dark:text-success-400",
   },
   "bug": {
-    bg: "bg-orange-100 dark:bg-orange-950",
-    icon: "text-orange-600 dark:text-orange-400",
+    bg: "bg-warning-100 dark:bg-warning-950",
+    icon: "text-warning-600 dark:text-warning-400",
   },
   "feedback": {
-    bg: "bg-cyan-100 dark:bg-cyan-950",
-    icon: "text-cyan-600 dark:text-cyan-400",
+    bg: "bg-accent-100 dark:bg-accent-950",
+    icon: "text-accent-600 dark:text-accent-400",
   },
 }
 

@@ -337,10 +337,10 @@ export default function TasksPage() {
   }
 
   const priorityColors = {
-    urgent: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    high: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-    medium: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    low: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    urgent: "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
+    high: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+    medium: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
+    low: "bg-bg-tertiary text-content-secondary",
   }
 
   const statusIcons = {
@@ -356,24 +356,24 @@ export default function TasksPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-2xl font-bold text-content-primary">
               Tasks
             </h1>
-            <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-content-secondary">
               Manage your CSM action items and playbook tasks
             </p>
-            <p className="mt-1 hidden text-xs text-zinc-400 sm:block dark:text-zinc-500">
-              <kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">j</kbd>/<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">k</kbd> navigate
-              {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">x</kbd> select
-              {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">↵</kbd> complete
-              {" "}<kbd className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">c</kbd> create
+            <p className="mt-1 hidden text-xs text-content-tertiary sm:block dark:text-content-secondary">
+              <kbd className="rounded bg-bg-tertiary px-1">j</kbd>/<kbd className="rounded bg-bg-tertiary px-1">k</kbd> navigate
+              {" "}<kbd className="rounded bg-bg-tertiary px-1">x</kbd> select
+              {" "}<kbd className="rounded bg-bg-tertiary px-1">↵</kbd> complete
+              {" "}<kbd className="rounded bg-bg-tertiary px-1">c</kbd> create
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={syncFromNotion}
               disabled={syncing}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 rounded-lg border border-border-default px-3 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover disabled:opacity-50"
               title="Sync tasks from Notion"
             >
               <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />
@@ -381,7 +381,7 @@ export default function TasksPage() {
             </button>
             <button
               onClick={() => setShowNewTask(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700"
             >
               <Plus className="h-4 w-4" />
               New Task
@@ -429,24 +429,24 @@ export default function TasksPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Search */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-tertiary" />
             <input
               type="text"
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated py-2 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Assignee Filter */}
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-zinc-400" />
+              <Users className="h-4 w-4 text-content-tertiary" />
               <select
                 value={assigneeFilter}
                 onChange={(e) => setAssigneeFilter(e.target.value)}
-                className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className="rounded-lg border border-border-default bg-bg-elevated px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
                 <option value="mine">My Tasks</option>
                 <option value="all">All Tasks</option>
@@ -460,8 +460,8 @@ export default function TasksPage() {
 
             {/* Status Filter */}
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-zinc-400" />
-              <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
+              <Filter className="h-4 w-4 text-content-tertiary" />
+              <div className="flex gap-1 rounded-lg bg-bg-tertiary p-1">
                 {(["all", "pending", "in_progress", "completed"] as const).map((f) => (
                   <button
                     key={f}
@@ -469,8 +469,8 @@ export default function TasksPage() {
                     className={cn(
                       "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                       filter === f
-                        ? "bg-white text-zinc-900 shadow dark:bg-zinc-700 dark:text-zinc-100"
-                        : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                        ? "bg-bg-elevated text-content-primary shadow"
+                        : "text-content-secondary hover:text-content-primary"
                     )}
                   >
                     {f === "in_progress" ? "In Progress" : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -483,20 +483,20 @@ export default function TasksPage() {
 
         {/* Bulk Actions Bar */}
         {selectedTasks.size > 0 && (
-          <div className="flex items-center justify-between rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20">
+          <div className="flex items-center justify-between rounded-lg bg-success-50 p-3 dark:bg-success-900/20">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedTasks(new Set())}
-                className="rounded p-1 text-zinc-500 hover:bg-white hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="rounded p-1 text-content-secondary hover:bg-surface-hover hover:text-content-primary"
               >
                 <X className="h-4 w-4" />
               </button>
-              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+              <span className="text-sm font-medium text-success-700 dark:text-success-400">
                 {selectedTasks.size} task{selectedTasks.size !== 1 ? "s" : ""} selected
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">Reassign to:</span>
+              <span className="text-sm text-content-secondary">Reassign to:</span>
               <select
                 onChange={(e) => {
                   if (e.target.value) {
@@ -505,7 +505,7 @@ export default function TasksPage() {
                   }
                 }}
                 disabled={bulkAssigning}
-                className="rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50 dark:border-emerald-800 dark:bg-zinc-900 dark:text-zinc-100"
+                className="rounded-lg border border-success-200 bg-bg-elevated px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50 dark:border-success-800"
                 defaultValue=""
               >
                 <option value="" disabled>
@@ -518,7 +518,7 @@ export default function TasksPage() {
                 ))}
               </select>
               {bulkAssigning && (
-                <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+                <Loader2 className="h-4 w-4 animate-spin text-success-600" />
               )}
             </div>
           </div>
@@ -528,12 +528,12 @@ export default function TasksPage() {
         {loading ? (
           <TaskListSkeleton />
         ) : filteredTasks.length === 0 ? (
-          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="rounded-xl border border-border-default bg-bg-elevated p-12 text-center">
+            <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-content-tertiary" />
+            <h3 className="text-lg font-semibold text-content-primary">
               No tasks found
             </h3>
-            <p className="mt-2 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-2 text-content-secondary">
               {searchQuery
                 ? "No tasks match your search"
                 : assigneeFilter === "mine"
@@ -550,15 +550,15 @@ export default function TasksPage() {
               <div className="flex items-center gap-3 px-4 py-2">
                 <button
                   onClick={selectAllTasks}
-                  className="flex-shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  className="flex-shrink-0 text-content-tertiary hover:text-content-secondary"
                 >
                   {selectedTasks.size === filteredTasks.length && filteredTasks.length > 0 ? (
-                    <CheckSquare className="h-5 w-5 text-emerald-500" />
+                    <CheckSquare className="h-5 w-5 text-success-500" />
                   ) : (
                     <Square className="h-5 w-5" />
                   )}
                 </button>
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                <span className="text-sm text-content-secondary">
                   {selectedTasks.size === filteredTasks.length && filteredTasks.length > 0
                     ? "Deselect all"
                     : "Select all"}
@@ -649,14 +649,14 @@ export default function TasksPage() {
                             className={cn(
                               "text-left font-medium hover:underline",
                               task.status === "completed"
-                                ? "text-zinc-500 line-through dark:text-zinc-400"
-                                : "text-zinc-900 dark:text-zinc-100"
+                                ? "text-content-secondary line-through dark:text-content-tertiary"
+                                : "text-content-primary"
                             )}
                           >
                             {task.title}
                           </button>
                           {task.description && (
-                            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                            <p className="mt-1 text-sm text-content-secondary line-clamp-2">
                               {task.description}
                             </p>
                           )}
@@ -674,10 +674,10 @@ export default function TasksPage() {
                       </div>
 
                       {/* Meta */}
-                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-content-secondary">
                         <Link
                           href={`/accounts/${task.companyId}`}
-                          className="flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400"
+                          className="flex items-center gap-1 hover:text-success-600 dark:hover:text-success-400"
                         >
                           <Building2 className="h-4 w-4" />
                           {task.companyName}
@@ -688,7 +688,7 @@ export default function TasksPage() {
                           <span
                             className={cn(
                               "flex items-center gap-1",
-                              isOverdue && "text-red-600 dark:text-red-400"
+                              isOverdue && "text-error-600 dark:text-error-400"
                             )}
                           >
                             <Calendar className="h-4 w-4" />
@@ -707,7 +707,7 @@ export default function TasksPage() {
                                 updateTaskAssignee(task.id, e.target.value)
                               }
                             }}
-                            className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-zinc-500 focus:ring-1 focus:ring-emerald-500 dark:text-zinc-400"
+                            className="rounded border-0 bg-transparent py-0 pl-0 pr-6 text-sm text-content-secondary focus:ring-1 focus:ring-success-500 dark:text-content-tertiary"
                           >
                             <option value="">
                               {getAssigneeDisplayName(task)}
@@ -721,7 +721,7 @@ export default function TasksPage() {
                         </div>
 
                         {task.playbook && (
-                          <span className="rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                          <span className="rounded bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
                             {task.playbook.name}
                           </span>
                         )}
@@ -805,20 +805,20 @@ function StatCard({
   color: "zinc" | "yellow" | "blue" | "green" | "red"
 }) {
   const colors = {
-    zinc: "text-zinc-500",
-    yellow: "text-yellow-500",
-    blue: "text-blue-500",
-    green: "text-emerald-500",
-    red: "text-red-500",
+    zinc: "text-content-secondary",
+    yellow: "text-warning-500",
+    blue: "text-info-500",
+    green: "text-success-500",
+    red: "text-error-500",
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-xl border border-border-default bg-bg-elevated p-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">{label}</span>
+        <span className="text-sm text-content-secondary">{label}</span>
         <Icon className={cn("h-5 w-5", colors[color])} />
       </div>
-      <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <p className="mt-2 text-2xl font-bold text-content-primary">
         {value}
       </p>
     </div>
@@ -865,15 +865,15 @@ function NewTaskModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900">
-        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
+      <div className="w-full max-w-lg rounded-xl bg-bg-elevated p-6 shadow-xl">
+        <h2 className="mb-4 text-lg font-semibold text-content-primary">
           New Task
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Company ID *
             </label>
             <input
@@ -882,14 +882,14 @@ function NewTaskModal({
               onChange={(e) =>
                 setFormData({ ...formData, companyId: e.target.value })
               }
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               placeholder="HubSpot Company ID"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Company Name *
             </label>
             <input
@@ -898,14 +898,14 @@ function NewTaskModal({
               onChange={(e) =>
                 setFormData({ ...formData, companyName: e.target.value })
               }
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               placeholder="Company name"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Task Title *
             </label>
             <input
@@ -914,14 +914,14 @@ function NewTaskModal({
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               placeholder="What needs to be done?"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="mb-1 block text-sm font-medium text-content-primary">
               Description
             </label>
             <textarea
@@ -930,14 +930,14 @@ function NewTaskModal({
                 setFormData({ ...formData, description: e.target.value })
               }
               rows={3}
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               placeholder="Additional details..."
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1 block text-sm font-medium text-content-primary">
                 Priority
               </label>
               <select
@@ -945,7 +945,7 @@ function NewTaskModal({
                 onChange={(e) =>
                   setFormData({ ...formData, priority: e.target.value })
                 }
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -955,7 +955,7 @@ function NewTaskModal({
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-1 block text-sm font-medium text-content-primary">
                 Due Date
               </label>
               <input
@@ -964,7 +964,7 @@ function NewTaskModal({
                 onChange={(e) =>
                   setFormData({ ...formData, dueDate: e.target.value })
                 }
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-lg border border-border-default bg-bg-elevated px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
             </div>
           </div>
@@ -973,14 +973,14 @@ function NewTaskModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-lg border border-border-default px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || !formData.companyId || !formData.title}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
             >
               {saving ? "Creating..." : "Create Task"}
             </button>
@@ -997,7 +997,7 @@ function TaskListSkeleton() {
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="h-24 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800"
+          className="h-24 shimmer rounded-xl"
         />
       ))}
     </div>

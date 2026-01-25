@@ -83,19 +83,19 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
   const getColor = (type: ActivityItem["type"]) => {
     switch (type) {
       case "task_completed":
-        return "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+        return "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
       case "health_change":
-        return "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+        return "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400"
       case "renewal":
-        return "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+        return "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400"
       case "expansion":
-        return "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+        return "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
       case "note":
-        return "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+        return "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
       case "escalation":
-        return "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+        return "bg-error-100 text-error-600 dark:bg-error-900/30 dark:text-error-400"
       default:
-        return "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+        return "bg-bg-tertiary text-content-secondary"
     }
   }
 
@@ -107,10 +107,10 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
             key={i}
             className="flex gap-3 animate-pulse"
           >
-            <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+            <div className="h-10 w-10 rounded-full bg-bg-tertiary" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-700" />
-              <div className="h-3 w-1/2 rounded bg-zinc-200 dark:bg-zinc-700" />
+              <div className="h-4 w-3/4 rounded bg-bg-tertiary" />
+              <div className="h-3 w-1/2 rounded bg-bg-tertiary" />
             </div>
           </div>
         ))}
@@ -119,29 +119,29 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="card-sf">
       {showHeader && (
-        <div className="flex items-center justify-between border-b border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-b border-border-default p-4">
           <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-zinc-500" />
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+            <Activity className="h-5 w-5 text-content-secondary" />
+            <h3 className="font-semibold text-content-primary">
               Activity Feed
             </h3>
           </div>
           <button
             onClick={fetchActivities}
-            className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+            className="rounded-lg p-2 text-content-tertiary transition-colors hover:bg-surface-hover hover:text-content-secondary"
           >
             <RefreshCw className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+      <div className="divide-y divide-border-default">
         {activities.length === 0 ? (
           <div className="p-8 text-center">
-            <Activity className="mx-auto mb-3 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
-            <p className="text-sm text-zinc-500">No recent activity</p>
+            <Activity className="mx-auto mb-3 h-8 w-8 text-content-tertiary" />
+            <p className="text-sm text-content-secondary">No recent activity</p>
           </div>
         ) : (
           activities.map((activity) => {
@@ -149,7 +149,7 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
             return (
               <div
                 key={activity.id}
-                className="flex gap-3 p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                className="flex gap-3 p-4 transition-colors hover:bg-surface-hover"
               >
                 <div
                   className={cn(
@@ -160,19 +160,19 @@ export function ActivityFeed({ limit = 20, companyId, showHeader = true }: Activ
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-zinc-900 dark:text-zinc-100">
+                  <p className="text-sm text-content-primary">
                     {activity.title}
                   </p>
                   {activity.description && (
-                    <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                    <p className="mt-0.5 text-sm text-content-secondary line-clamp-2">
                       {activity.description}
                     </p>
                   )}
-                  <div className="mt-1 flex items-center gap-2 text-xs text-zinc-400">
+                  <div className="mt-1 flex items-center gap-2 text-xs text-content-tertiary">
                     {activity.companyName && (
                       <Link
                         href={`/accounts/${activity.companyId}`}
-                        className="hover:text-emerald-600 hover:underline"
+                        className="hover:text-success-600 hover:underline"
                       >
                         {activity.companyName}
                       </Link>

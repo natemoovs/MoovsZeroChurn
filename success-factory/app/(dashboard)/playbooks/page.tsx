@@ -246,7 +246,7 @@ export default function PlaybooksPage() {
                             className={cn(
                               "rounded px-1.5 py-0.5 text-xs font-medium",
                               action.priority === "urgent" && "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400",
-                              action.priority === "high" && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+                              action.priority === "high" && "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
                               action.priority === "medium" && "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
                               action.priority === "low" && "bg-bg-secondary text-content-secondary"
                             )}
