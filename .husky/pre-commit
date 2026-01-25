@@ -2,10 +2,24 @@
 
 cd success-factory
 
-# Run ESLint on staged files
-echo "🔍 Running ESLint..."
-npm run lint --silent || {
-  echo "❌ ESLint failed. Please fix errors before committing."
+# Run lint-staged (ESLint + Prettier on staged files only)
+echo "🔍 Running lint-staged..."
+npx lint-staged || {
+  echo "❌ Lint-staged failed. Please fix errors before committing."
+  exit 1
+}
+
+# Run TypeScript type check
+echo "📘 Running TypeScript check..."
+npm run typecheck --silent || {
+  echo "❌ TypeScript check failed. Please fix type errors before committing."
+  exit 1
+}
+
+# Run secrets detection on staged files
+echo "🔐 Checking for secrets..."
+git diff --cached --name-only --diff-filter=ACM | xargs -r npx secretlint 2>/dev/null || {
+  echo "❌ Secrets detected! Please remove sensitive data before committing."
   exit 1
 }
 
