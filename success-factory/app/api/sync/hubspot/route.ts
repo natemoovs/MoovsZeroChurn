@@ -1134,6 +1134,12 @@ export async function POST(request: NextRequest) {
       companiesWithMilestones,
       // Debug info for troubleshooting Card 1469 sync
       debug: {
+        stats: {
+          totalFromMetabase: metabaseOperators.length,
+          synced,
+          skippedChurned,
+          failed,
+        },
         metabaseColumns: {
           original: metabaseDebugInfo.originalColumns.slice(0, 10), // First 10 columns
           normalized: metabaseDebugInfo.normalizedColumns.slice(0, 10),
