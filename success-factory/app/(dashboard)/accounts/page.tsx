@@ -103,7 +103,7 @@ function AccountsContent() {
             placeholder="Search accounts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="input-sf h-10 w-full pr-4 pl-12"
+            className="input-sf h-10 w-full !pr-4 !pl-12"
           />
         </div>
 
