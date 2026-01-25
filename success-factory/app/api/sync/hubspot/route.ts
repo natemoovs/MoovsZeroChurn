@@ -24,9 +24,8 @@ interface MetabaseAccountData {
   mrr: number | null
   plan: string | null // Lago Plan Name (e.g., "Pro (Annual)")
   planCode: string | null // Lago Plan Code (e.g., "pro-annual")
-  billingStatus: string | null
+  billingStatus: string | null // Lago Waterfall Event: new, churn, expansion_moovs, contraction_moovs, reactivation, plan_change
   subscriptionLifetimeDays: number | null // Lago Lifetime Days
-  waterfallEvent: string | null // Lago Waterfall Event
   // Usage
   totalTrips: number
   tripsLast30Days: number
@@ -155,9 +154,8 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
     mrr: (row.CALCULATED_MRR as number) || null,
     plan: (row.LAGO_PLAN_NAME as string) || null,
     planCode: (row.LAGO_PLAN_CODE as string) || null,
-    billingStatus: (row.LAGO_STATUS as string) || (row.LAGO_CUSTOMER_STATUS as string) || null,
+    billingStatus: (row.LAGO_WATERFALL_EVENT as string) || null, // new, churn, expansion_moovs, etc.
     subscriptionLifetimeDays: (row.LAGO_LIFETIME_DAYS as number) || null,
-    waterfallEvent: (row.LAGO_WATERFALL_EVENT as string) || null,
     // Usage
     totalTrips: (row.R_TOTAL_RESERVATIONS_COUNT as number) || 0,
     tripsLast30Days: (row.R_LAST_30_DAYS_RESERVATIONS_COUNT as number) || 0,
