@@ -1,7 +1,20 @@
 #!/bin/sh
 
-# Run color audit on staged files
-cd success-factory && node scripts/audit-colors.js
+cd success-factory
 
-# If the audit passes, continue with the commit
-exit $?
+# Run ESLint on staged files
+echo "🔍 Running ESLint..."
+npm run lint --silent || {
+  echo "❌ ESLint failed. Please fix errors before committing."
+  exit 1
+}
+
+# Run color audit
+echo "🎨 Running color audit..."
+node scripts/audit-colors.js || {
+  echo "❌ Color audit failed. Please use semantic color tokens."
+  exit 1
+}
+
+echo "✅ Pre-commit checks passed!"
+exit 0
