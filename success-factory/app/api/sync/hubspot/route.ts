@@ -103,8 +103,31 @@ async function fetchMetabaseData(): Promise<MetabaseAccountData[]> {
   const rows = metabase.rowsToObjects<Record<string, unknown>>(result)
 
   // Log column names for debugging
-  console.log("Metabase CSM_MOOVS columns:", Object.keys(rows[0] || {}))
-  console.log("Sample row:", JSON.stringify(rows[0] || {}).slice(0, 500))
+  const columns = Object.keys(rows[0] || {})
+  console.log("Metabase CSM_MOOVS columns:", columns.join(", "))
+
+  // Log specific columns we're looking for
+  const expectedColumns = [
+    "P_VEHICLES_TOTAL", "P_DRIVERS_COUNT", "P_TOTAL_MEMBERS", "P_SETUP_SCORE",
+    "R_LAST_30_DAYS_RESERVATIONS_COUNT", "DA_ENGAGEMENT_STATUS", "CALCULATED_MRR"
+  ]
+  const missingColumns = expectedColumns.filter(col => !columns.includes(col))
+  if (missingColumns.length > 0) {
+    console.warn("⚠️ Missing expected columns:", missingColumns.join(", "))
+  }
+
+  // Log sample row with key fields
+  const sampleRow = rows[0] || {}
+  console.log("Sample row key fields:", {
+    company: sampleRow.P_COMPANY_NAME,
+    vehiclesTotal: sampleRow.P_VEHICLES_TOTAL,
+    driversCount: sampleRow.P_DRIVERS_COUNT,
+    membersCount: sampleRow.P_TOTAL_MEMBERS,
+    setupScore: sampleRow.P_SETUP_SCORE,
+    tripsLast30: sampleRow.R_LAST_30_DAYS_RESERVATIONS_COUNT,
+    engagementStatus: sampleRow.DA_ENGAGEMENT_STATUS,
+    mrr: sampleRow.CALCULATED_MRR,
+  })
 
   return rows.map((row) => ({
     // Identity - from CSM_MOOVS fields
@@ -1051,6 +1074,22 @@ export async function POST(request: NextRequest) {
       console.error("Milestone detection failed (non-critical):", err)
     }
 
+    // Get a sample synced record to verify data
+    const sampleRecord = await prisma.hubSpotCompany.findFirst({
+      where: { vehiclesTotal: { not: null } },
+      select: {
+        name: true,
+        vehiclesTotal: true,
+        driversCount: true,
+        membersCount: true,
+        setupScore: true,
+        tripsLast30Days: true,
+        engagementStatus: true,
+        mrr: true,
+      },
+      orderBy: { hubspotUpdatedAt: "desc" },
+    })
+
     return NextResponse.json({
       success: true,
       totalOperators: metabaseOperators.length,
@@ -1062,6 +1101,8 @@ export async function POST(request: NextRequest) {
       stripeMatches,
       milestonesDetected,
       companiesWithMilestones,
+      // Debug: sample synced record with Card 1469 fields
+      sampleRecord,
     })
   } catch (error) {
     console.error("Sync failed:", error)
