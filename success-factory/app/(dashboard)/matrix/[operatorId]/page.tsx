@@ -26,12 +26,22 @@ import {
   Clock,
   RefreshCw,
   ChevronRight,
+  Phone,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // ============================================================================
 // Types
 // ============================================================================
+
+interface ContactInfo {
+  id: string
+  firstName: string | null
+  lastName: string | null
+  email: string | null
+  phone: string | null
+  jobTitle: string | null
+}
 
 interface OperatorData {
   // Core identifiers
@@ -77,6 +87,9 @@ interface OperatorData {
   ownerName: string | null
   ownerEmail: string | null
 
+  // Team/Contacts
+  contacts: ContactInfo[]
+
   // Timestamps
   lastSyncedAt: string | null
 }
@@ -99,7 +112,7 @@ interface MonthlyChargeSummary {
   failedCount: number
 }
 
-type TabId = "overview" | "payments" | "risk" | "features" | "activity"
+type TabId = "overview" | "payments" | "risk" | "features" | "activity" | "tickets" | "emails"
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: Building2 },
@@ -107,6 +120,8 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "risk", label: "Risk", icon: Shield },
   { id: "features", label: "Features", icon: Settings },
   { id: "activity", label: "Activity", icon: BarChart3 },
+  { id: "tickets", label: "Tickets", icon: FileText },
+  { id: "emails", label: "Emails", icon: Mail },
 ]
 
 // ============================================================================
@@ -128,7 +143,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
       className="text-content-tertiary hover:text-content-primary inline-flex items-center gap-1 text-xs transition-colors"
       title={`Copy ${label}`}
     >
-      {copied ? <Check className="h-3 w-3 text-success-500" /> : <Copy className="h-3 w-3" />}
+      {copied ? <Check className="text-success-500 h-3 w-3" /> : <Copy className="h-3 w-3" />}
       <span className="sr-only">Copy {label}</span>
     </button>
   )
@@ -211,7 +226,9 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
           label="Total Trips"
           value={operator.totalTrips?.toLocaleString() || "—"}
           icon={TrendingUp}
-          subtext={operator.tripsLast30Days ? `${operator.tripsLast30Days} last 30 days` : undefined}
+          subtext={
+            operator.tripsLast30Days ? `${operator.tripsLast30Days} last 30 days` : undefined
+          }
         />
         <StatCard
           label="Fleet Size"
@@ -375,6 +392,65 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
         </div>
       )}
 
+      {/* Team/Contacts */}
+      <div className="card-sf p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-content-primary font-semibold">Team Members</h3>
+          <div className="text-content-tertiary text-sm">
+            {operator.membersCount ? `${operator.membersCount} total` : ""}
+          </div>
+        </div>
+        {operator.contacts.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {operator.contacts.slice(0, 6).map((contact) => (
+              <div
+                key={contact.id}
+                className="bg-bg-secondary flex items-start gap-3 rounded-lg p-3"
+              >
+                <div className="bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium">
+                  {contact.firstName?.[0] || contact.email?.[0]?.toUpperCase() || "?"}
+                  {contact.lastName?.[0] || ""}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-content-primary truncate text-sm font-medium">
+                    {contact.firstName || contact.lastName
+                      ? `${contact.firstName || ""} ${contact.lastName || ""}`.trim()
+                      : contact.email || "Unknown"}
+                  </p>
+                  {contact.jobTitle && (
+                    <p className="text-content-tertiary truncate text-xs">{contact.jobTitle}</p>
+                  )}
+                  {contact.email && (
+                    <a
+                      href={`mailto:${contact.email}`}
+                      className="text-primary-600 hover:text-primary-700 block truncate text-xs"
+                    >
+                      {contact.email}
+                    </a>
+                  )}
+                  {contact.phone && (
+                    <a href={`tel:${contact.phone}`} className="text-content-secondary text-xs">
+                      {contact.phone}
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-6 text-center">
+            <Users className="text-content-tertiary mx-auto mb-2 h-8 w-8" />
+            <p className="text-content-secondary text-sm">No contacts on file</p>
+            <p className="text-content-tertiary mt-1 text-xs">Contacts are synced from HubSpot</p>
+          </div>
+        )}
+        {operator.contacts.length > 6 && (
+          <p className="text-content-tertiary mt-3 text-center text-xs">
+            +{operator.contacts.length - 6} more contacts
+          </p>
+        )}
+      </div>
+
       {/* Quick Links */}
       <div className="card-sf p-5">
         <h3 className="text-content-primary mb-4 font-semibold">Quick Links</h3>
@@ -426,7 +502,9 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
             className="border-border-default hover:bg-surface-hover flex items-center gap-3 rounded-lg border p-3 transition-colors"
           >
             <FileText className="text-content-tertiary h-5 w-5" />
-            <span className="text-content-primary flex-1 text-sm font-medium">Full Account View</span>
+            <span className="text-content-primary flex-1 text-sm font-medium">
+              Full Account View
+            </span>
             <ChevronRight className="text-content-tertiary h-4 w-4" />
           </Link>
         </div>
@@ -546,7 +624,9 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
           label="Success Rate"
           value={`${totals.successRate.toFixed(1)}%`}
           icon={TrendingUp}
-          variant={totals.successRate >= 95 ? "success" : totals.successRate >= 80 ? "warning" : "danger"}
+          variant={
+            totals.successRate >= 95 ? "success" : totals.successRate >= 80 ? "warning" : "danger"
+          }
         />
         <StatCard
           label="Failed"
@@ -616,7 +696,10 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                       </span>
                     </td>
                     <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
-                      ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      $
+                      {charge.total_dollars_charged.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
                     </td>
                   </tr>
                 ))}
@@ -626,9 +709,7 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
         )}
         {charges.length > 25 && (
           <div className="border-border-default border-t px-4 py-3 text-center">
-            <p className="text-content-secondary text-sm">
-              Showing 25 of {charges.length} charges
-            </p>
+            <p className="text-content-secondary text-sm">Showing 25 of {charges.length} charges</p>
           </div>
         )}
       </div>
@@ -789,7 +870,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
           <h3 className="text-content-primary mb-4 font-semibold">Risk Indicators</h3>
           <div className="space-y-3">
             {riskData.failed_payments_count > 5 && (
-              <div className="flex items-start gap-3 rounded-lg bg-error-50 p-3 dark:bg-error-950/30">
+              <div className="bg-error-50 dark:bg-error-950/30 flex items-start gap-3 rounded-lg p-3">
                 <AlertTriangle className="text-error-600 dark:text-error-400 mt-0.5 h-5 w-5 shrink-0" />
                 <div>
                   <p className="text-error-700 dark:text-error-400 text-sm font-medium">
@@ -802,7 +883,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
               </div>
             )}
             {riskData.dispute_count > 0 && (
-              <div className="flex items-start gap-3 rounded-lg bg-warning-50 p-3 dark:bg-warning-950/30">
+              <div className="bg-warning-50 dark:bg-warning-950/30 flex items-start gap-3 rounded-lg p-3">
                 <FileText className="text-warning-600 dark:text-warning-400 mt-0.5 h-5 w-5 shrink-0" />
                 <div>
                   <p className="text-warning-700 dark:text-warning-400 text-sm font-medium">
@@ -815,7 +896,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
               </div>
             )}
             {riskData.risk_level === "low" && riskData.failed_payments_count === 0 && (
-              <div className="flex items-start gap-3 rounded-lg bg-success-50 p-3 dark:bg-success-950/30">
+              <div className="bg-success-50 dark:bg-success-950/30 flex items-start gap-3 rounded-lg p-3">
                 <Check className="text-success-600 dark:text-success-400 mt-0.5 h-5 w-5 shrink-0" />
                 <div>
                   <p className="text-success-700 dark:text-success-400 text-sm font-medium">
@@ -860,18 +941,14 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
         />
         <StatCard label="Vehicles" value={operator.vehiclesTotal?.toString() || "—"} icon={Car} />
         <StatCard label="Drivers" value={operator.driversCount?.toString() || "—"} icon={Users} />
-        <StatCard
-          label="Members"
-          value={operator.membersCount?.toString() || "—"}
-          icon={Users}
-        />
+        <StatCard label="Members" value={operator.membersCount?.toString() || "—"} icon={Users} />
       </div>
 
       {/* Placeholder */}
       <div className="card-sf p-8 text-center">
         <Settings className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
         <h3 className="text-content-primary text-lg font-medium">Feature Configuration</h3>
-        <p className="text-content-secondary mt-2 max-w-md mx-auto">
+        <p className="text-content-secondary mx-auto mt-2 max-w-md">
           Configure PostgreSQL read-only credentials to view operator settings, feature flags, promo
           codes, and zones.
         </p>
@@ -881,7 +958,60 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
   )
 }
 
+interface ReservationsApiResponse {
+  operatorId: string
+  monthlyData: Array<{
+    operator_id: string
+    operator_name: string
+    created_month: string
+    total_trips: number
+    total_amount: number
+  }>
+  totals: {
+    totalTrips: number
+    totalAmount: number
+    monthsWithData: number
+  }
+  currentMonth: {
+    total_trips: number
+    total_amount: number
+  }
+}
+
 function ActivityTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<ReservationsApiResponse | null>(null)
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/reservations`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch reservations")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Activity Stats */}
@@ -909,18 +1039,611 @@ function ActivityTab({ operator }: { operator: OperatorData }) {
           value={operator.tripsLast30Days?.toString() || "—"}
           icon={TrendingUp}
         />
-        <StatCard label="Engagement" value={operator.engagementStatus || "—"} icon={BarChart3} />
-        <StatCard label="Emails Sent" value="—" icon={Mail} subtext="Last 30 days" />
+        <StatCard
+          label="Total Trips"
+          value={
+            data?.totals.totalTrips.toLocaleString() || operator.totalTrips?.toLocaleString() || "—"
+          }
+          icon={BarChart3}
+        />
+        <StatCard
+          label="Total Revenue"
+          value={
+            data?.totals.totalAmount
+              ? `$${data.totals.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+              : "—"
+          }
+          icon={DollarSign}
+        />
       </div>
 
-      {/* Placeholder */}
-      <div className="card-sf p-8 text-center">
-        <BarChart3 className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-        <h3 className="text-content-primary text-lg font-medium">Activity & Communication</h3>
-        <p className="text-content-secondary mt-2 max-w-md mx-auto">
-          Configure SendGrid and Snowflake to view email history, SMS logs, and detailed activity
-          timeline.
-        </p>
+      {/* Monthly Trip Chart */}
+      {data && data.monthlyData.length > 0 ? (
+        <div className="card-sf p-5">
+          <h3 className="text-content-primary mb-4 font-semibold">Monthly Trip Volume</h3>
+          <div className="space-y-3">
+            {data.monthlyData.slice(0, 12).map((month) => {
+              const maxTrips = Math.max(...data.monthlyData.slice(0, 12).map((m) => m.total_trips))
+              const percentage = maxTrips > 0 ? (month.total_trips / maxTrips) * 100 : 0
+
+              return (
+                <div key={month.created_month} className="flex items-center gap-4">
+                  <span className="text-content-secondary w-20 text-sm">{month.created_month}</span>
+                  <div className="bg-bg-tertiary h-6 flex-1 overflow-hidden rounded-full">
+                    <div
+                      className="bg-primary-500 h-full rounded-full transition-all"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                  <div className="w-32 text-right">
+                    <span className="text-content-primary text-sm font-medium">
+                      {month.total_trips.toLocaleString()} trips
+                    </span>
+                  </div>
+                  <div className="text-content-secondary w-24 text-right text-sm">
+                    ${month.total_amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="card-sf p-8 text-center">
+          <BarChart3 className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+          <h3 className="text-content-primary text-lg font-medium">Trip History</h3>
+          <p className="text-content-secondary mx-auto mt-2 max-w-md">
+            {error || "No trip data available for this operator."}
+          </p>
+        </div>
+      )}
+
+      {/* Engagement Status */}
+      <div className="card-sf p-5">
+        <h3 className="text-content-primary mb-4 font-semibold">Engagement Summary</h3>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="bg-bg-tertiary rounded-lg p-4">
+            <div className="text-content-secondary mb-1 text-sm">Engagement Status</div>
+            <div
+              className={cn(
+                "text-lg font-semibold",
+                operator.engagementStatus?.toLowerCase().includes("active")
+                  ? "text-success-600 dark:text-success-500"
+                  : operator.engagementStatus?.toLowerCase().includes("inactive")
+                    ? "text-error-600 dark:text-error-500"
+                    : "text-content-primary"
+              )}
+            >
+              {operator.engagementStatus || "Unknown"}
+            </div>
+          </div>
+          <div className="bg-bg-tertiary rounded-lg p-4">
+            <div className="text-content-secondary mb-1 text-sm">Last Trip</div>
+            <div className="text-content-primary text-lg font-semibold">
+              {operator.lastTripCreatedAt
+                ? new Date(operator.lastTripCreatedAt).toLocaleDateString()
+                : "—"}
+            </div>
+          </div>
+          <div className="bg-bg-tertiary rounded-lg p-4">
+            <div className="text-content-secondary mb-1 text-sm">Avg Trips/Month</div>
+            <div className="text-content-primary text-lg font-semibold">
+              {data && data.totals.monthsWithData > 0
+                ? Math.round(data.totals.totalTrips / data.totals.monthsWithData).toLocaleString()
+                : "—"}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface TicketsApiResponse {
+  operatorId: string
+  tickets: Array<{
+    id: string
+    title: string
+    status: string | null
+    priority: string | null
+    stage: string | null
+    tags: string[]
+    createdAt: string
+    updatedAt: string
+    url: string
+  }>
+  stats: {
+    total: number
+    open: number
+    closed: number
+    highPriority: number
+  }
+}
+
+function TicketsTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<TicketsApiResponse | null>(null)
+
+  useEffect(() => {
+    if (!operator.operatorId || !operator.name) {
+      setLoading(false)
+      return
+    }
+
+    const encodedName = encodeURIComponent(operator.name)
+    fetch(`/api/operator-hub/${operator.operatorId}/tickets?name=${encodedName}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch tickets")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [operator.operatorId, operator.name])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  const getStatusColor = (status: string | null) => {
+    const lowerStatus = status?.toLowerCase() || ""
+    if (
+      lowerStatus.includes("done") ||
+      lowerStatus.includes("completed") ||
+      lowerStatus.includes("closed")
+    ) {
+      return "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+    }
+    if (lowerStatus.includes("progress") || lowerStatus.includes("review")) {
+      return "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+    }
+    if (
+      lowerStatus.includes("backlog") ||
+      lowerStatus.includes("todo") ||
+      lowerStatus.includes("not started")
+    ) {
+      return "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+    }
+    return "bg-bg-tertiary text-content-tertiary"
+  }
+
+  const getPriorityColor = (priority: string | null) => {
+    const lowerPriority = priority?.toLowerCase() || ""
+    if (lowerPriority === "urgent" || lowerPriority === "critical") {
+      return "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+    }
+    if (lowerPriority === "high") {
+      return "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+    }
+    if (lowerPriority === "medium") {
+      return "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+    }
+    return "bg-bg-tertiary text-content-tertiary"
+  }
+
+  const stats = data?.stats || { total: 0, open: 0, closed: 0, highPriority: 0 }
+  const tickets = data?.tickets || []
+
+  return (
+    <div className="space-y-6">
+      {/* Ticket Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Total Tickets" value={stats.total.toString()} icon={FileText} />
+        <StatCard
+          label="Open"
+          value={stats.open.toString()}
+          icon={Clock}
+          variant={stats.open > 5 ? "warning" : "default"}
+        />
+        <StatCard label="Closed" value={stats.closed.toString()} icon={Check} variant="success" />
+        <StatCard
+          label="High Priority"
+          value={stats.highPriority.toString()}
+          icon={AlertTriangle}
+          variant={stats.highPriority > 0 ? "danger" : "default"}
+        />
+      </div>
+
+      {/* Tickets Table */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Support Tickets</h3>
+          <a
+            href={`https://www.notion.so/${process.env.NEXT_PUBLIC_NOTION_TICKETS_DB || "13b8aeaa375980f88d7cdd2f627d2578"}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-600 hover:text-primary-700 flex items-center gap-1 text-sm"
+          >
+            View in Notion
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+        {tickets.length === 0 ? (
+          <div className="p-8 text-center">
+            <FileText className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+            <h3 className="text-content-primary text-lg font-medium">No Tickets Found</h3>
+            <p className="text-content-secondary mx-auto mt-2 max-w-md">
+              {error
+                ? error
+                : "No support tickets found for this operator. Tickets are matched by operator name in Notion."}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px]">
+              <thead className="bg-bg-secondary">
+                <tr className="border-border-default border-b">
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Ticket
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Status
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Priority
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Tags
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Created
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {tickets.map((ticket) => (
+                  <tr key={ticket.id} className="border-border-default border-b">
+                    <td className="px-4 py-3">
+                      <a
+                        href={ticket.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-content-primary hover:text-primary-600 flex items-center gap-2 text-sm font-medium"
+                      >
+                        <span className="max-w-[300px] truncate">{ticket.title || "Untitled"}</span>
+                        <ExternalLink className="text-content-tertiary h-3 w-3 shrink-0" />
+                      </a>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={cn(
+                          "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+                          getStatusColor(ticket.status)
+                        )}
+                      >
+                        {ticket.status || "Unknown"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {ticket.priority && (
+                        <span
+                          className={cn(
+                            "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+                            getPriorityColor(ticket.priority)
+                          )}
+                        >
+                          {ticket.priority}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {ticket.tags.slice(0, 3).map((tag, i) => (
+                          <span
+                            key={i}
+                            className="bg-bg-tertiary text-content-secondary rounded px-1.5 py-0.5 text-xs"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {ticket.tags.length > 3 && (
+                          <span className="text-content-tertiary text-xs">
+                            +{ticket.tags.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-right text-sm">
+                      {new Date(ticket.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface EmailsApiResponse {
+  operatorId: string
+  emails: Array<{
+    id: string
+    subject: string
+    timestamp: string
+  }>
+  calls: Array<{
+    id: string
+    disposition: string
+    duration: number
+    timestamp: string
+  }>
+  meetings: Array<{
+    id: string
+    title: string
+    startTime: string
+    endTime: string
+  }>
+  notes: Array<{
+    id: string
+    body: string
+    timestamp: string
+  }>
+  stats: {
+    totalEmails: number
+    totalCalls: number
+    totalMeetings: number
+    emailsLast30Days: number
+    emailsLast7Days: number
+  }
+}
+
+function EmailsTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<EmailsApiResponse | null>(null)
+  const [filter, setFilter] = useState<"all" | "emails" | "calls" | "meetings" | "notes">("all")
+
+  useEffect(() => {
+    // Use HubSpot ID for the API call
+    fetch(`/api/operator-hub/${operator.hubspotId}/emails`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch emails")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [operator.hubspotId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  const stats = data?.stats || {
+    totalEmails: 0,
+    totalCalls: 0,
+    totalMeetings: 0,
+    emailsLast30Days: 0,
+    emailsLast7Days: 0,
+  }
+
+  // Combine all activities into a unified timeline
+  const allActivities: Array<{
+    id: string
+    type: "email" | "call" | "meeting" | "note"
+    title: string
+    description?: string
+    timestamp: string
+  }> = []
+
+  if (data) {
+    // Add emails
+    data.emails.forEach((email) => {
+      allActivities.push({
+        id: email.id,
+        type: "email",
+        title: email.subject || "No subject",
+        timestamp: email.timestamp,
+      })
+    })
+
+    // Add calls
+    data.calls.forEach((call) => {
+      allActivities.push({
+        id: call.id,
+        type: "call",
+        title: `Call - ${call.disposition || "Completed"}`,
+        description: call.duration > 0 ? `${Math.round(call.duration / 60)} min` : undefined,
+        timestamp: call.timestamp,
+      })
+    })
+
+    // Add meetings
+    data.meetings.forEach((meeting) => {
+      allActivities.push({
+        id: meeting.id,
+        type: "meeting",
+        title: meeting.title || "Meeting",
+        timestamp: meeting.startTime,
+      })
+    })
+
+    // Add notes
+    data.notes.forEach((note) => {
+      allActivities.push({
+        id: note.id,
+        type: "note",
+        title: "Note",
+        description: note.body?.slice(0, 100) + (note.body?.length > 100 ? "..." : ""),
+        timestamp: note.timestamp,
+      })
+    })
+  }
+
+  // Sort by timestamp descending
+  allActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+  // Filter activities - convert plural filter to singular activity type
+  const filterTypeMap: Record<typeof filter, "email" | "call" | "meeting" | "note" | null> = {
+    all: null,
+    emails: "email",
+    calls: "call",
+    meetings: "meeting",
+    notes: "note",
+  }
+  const filterType = filterTypeMap[filter]
+  const filteredActivities =
+    filterType === null ? allActivities : allActivities.filter((a) => a.type === filterType)
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "email":
+        return Mail
+      case "call":
+        return Phone
+      case "meeting":
+        return Calendar
+      case "note":
+        return FileText
+      default:
+        return Clock
+    }
+  }
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case "email":
+        return "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
+      case "call":
+        return "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+      case "meeting":
+        return "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400"
+      case "note":
+        return "bg-bg-tertiary text-content-secondary"
+      default:
+        return "bg-bg-tertiary text-content-tertiary"
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Communication Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Total Emails"
+          value={stats.totalEmails.toString()}
+          icon={Mail}
+          subtext={`${stats.emailsLast7Days} last 7 days`}
+        />
+        <StatCard label="Calls" value={stats.totalCalls.toString()} icon={Phone} />
+        <StatCard label="Meetings" value={stats.totalMeetings.toString()} icon={Calendar} />
+        <StatCard
+          label="Recent Activity"
+          value={stats.emailsLast30Days.toString()}
+          icon={Clock}
+          subtext="emails in 30 days"
+          variant={
+            stats.emailsLast30Days > 5
+              ? "success"
+              : stats.emailsLast30Days === 0
+                ? "warning"
+                : "default"
+          }
+        />
+      </div>
+
+      {/* Activity Timeline */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Communication History</h3>
+          <div className="flex gap-1">
+            {[
+              { key: "all", label: "All" },
+              { key: "emails", label: "Emails" },
+              { key: "calls", label: "Calls" },
+              { key: "meetings", label: "Meetings" },
+              { key: "notes", label: "Notes" },
+            ].map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key as typeof filter)}
+                className={cn(
+                  "rounded-lg px-3 py-1 text-xs font-medium transition-colors",
+                  filter === f.key
+                    ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                    : "text-content-secondary hover:bg-bg-secondary"
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filteredActivities.length === 0 ? (
+          <div className="p-8 text-center">
+            <Mail className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+            <h3 className="text-content-primary text-lg font-medium">No Communication History</h3>
+            <p className="text-content-secondary mx-auto mt-2 max-w-md">
+              {error ? error : "No communication history found for this operator in HubSpot."}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-border-default divide-y">
+            {filteredActivities.slice(0, 25).map((activity) => {
+              const ActivityIcon = getActivityIcon(activity.type)
+              return (
+                <div key={`${activity.type}-${activity.id}`} className="flex items-start gap-4 p-4">
+                  <div className={cn("rounded-lg p-2", getActivityColor(activity.type))}>
+                    <ActivityIcon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-content-primary truncate text-sm font-medium">
+                        {activity.title}
+                      </p>
+                      <span className="text-content-tertiary shrink-0 text-xs">
+                        {new Date(activity.timestamp).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          year:
+                            new Date(activity.timestamp).getFullYear() !== new Date().getFullYear()
+                              ? "numeric"
+                              : undefined,
+                        })}
+                      </span>
+                    </div>
+                    {activity.description && (
+                      <p className="text-content-secondary mt-1 text-sm">{activity.description}</p>
+                    )}
+                    <span className="text-content-tertiary mt-1 text-xs capitalize">
+                      {activity.type}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        {filteredActivities.length > 25 && (
+          <div className="border-border-default border-t px-4 py-3 text-center">
+            <p className="text-content-secondary text-sm">
+              Showing 25 of {filteredActivities.length} activities
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -964,7 +1687,7 @@ export default function OperatorDetailPage() {
           subscriptionStatus: data.subscriptionStatus || "active",
           healthScore: data.healthScore,
           numericHealthScore: data.numericHealthScore || null,
-          paymentHealth: data.paymentHealth,
+          paymentHealth: data.paymentHealth?.paymentStatus || null,
           riskSignals: data.riskSignals || [],
           positiveSignals: data.positiveSignals || [],
           totalTrips: data.totalTrips,
@@ -981,6 +1704,7 @@ export default function OperatorDetailPage() {
           country: data.country,
           ownerName: data.ownerName,
           ownerEmail: data.ownerEmail,
+          contacts: data.contacts || [],
           lastSyncedAt: data.lastSyncedAt,
         })
         setLoading(false)
@@ -1007,7 +1731,9 @@ export default function OperatorDetailPage() {
         <div className="flex flex-col items-center justify-center py-16">
           <AlertTriangle className="text-warning-500 mb-4 h-12 w-12" />
           <h2 className="text-content-primary text-xl font-semibold">Operator not found</h2>
-          <p className="text-content-secondary mt-2">{error || "Unable to load operator details"}</p>
+          <p className="text-content-secondary mt-2">
+            {error || "Unable to load operator details"}
+          </p>
           <button
             onClick={() => router.back()}
             className="btn-primary mt-6 inline-flex items-center gap-2"
@@ -1122,6 +1848,8 @@ export default function OperatorDetailPage() {
           {activeTab === "risk" && <RiskTab operator={operator} />}
           {activeTab === "features" && <FeaturesTab operator={operator} />}
           {activeTab === "activity" && <ActivityTab operator={operator} />}
+          {activeTab === "tickets" && <TicketsTab operator={operator} />}
+          {activeTab === "emails" && <EmailsTab operator={operator} />}
         </div>
       </div>
     </DashboardLayout>
