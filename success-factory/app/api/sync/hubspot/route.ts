@@ -662,6 +662,81 @@ function calculateWeightedHealthScore(
 }
 
 /**
+ * Deduplicate Metabase records - keep the row with the most/best data
+ * Score each row and keep the highest-scoring one for each unique recordId
+ */
+function deduplicateMetabaseRecords(
+  records: MetabaseAccountData[],
+  hubspotById: Map<string, HubSpotCompany>,
+  hubspotByName: Map<string, HubSpotCompany>,
+  hubspotByDomain: Map<string, HubSpotCompany>
+): MetabaseAccountData[] {
+  // Group records by their unique key (recordId)
+  const grouped = new Map<string, MetabaseAccountData[]>()
+
+  for (const record of records) {
+    // Calculate the recordId the same way the sync does
+    let hsCompany: HubSpotCompany | undefined
+    if (record.hubspotCompanyId) {
+      hsCompany = hubspotById.get(record.hubspotCompanyId)
+    }
+    if (!hsCompany && record.companyName) {
+      hsCompany = hubspotByName.get(record.companyName.toLowerCase())
+    }
+    if (!hsCompany && record.email) {
+      const domain = record.email.split("@")[1]?.toLowerCase()
+      if (domain) {
+        hsCompany = hubspotByDomain.get(domain)
+      }
+    }
+
+    const recordId =
+      hsCompany?.id ||
+      `operator-${record.operatorId || record.companyName.replace(/\s+/g, "-").toLowerCase()}`
+
+    if (!grouped.has(recordId)) {
+      grouped.set(recordId, [])
+    }
+    grouped.get(recordId)!.push(record)
+  }
+
+  // For each group, pick the best record
+  const deduped: MetabaseAccountData[] = []
+  for (const [_recordId, group] of grouped) {
+    if (group.length === 1) {
+      deduped.push(group[0])
+    } else {
+      // Score each record - higher is better
+      const scored = group.map((record) => {
+        let score = 0
+        // Prefer records with MRR
+        if (record.mrr && record.mrr > 0) score += 100
+        // Prefer records with more trips
+        score += Math.min(record.totalTrips, 100)
+        // Prefer records with recent activity
+        if (record.daysSinceLastActivity !== null && record.daysSinceLastActivity < 30) score += 50
+        // Prefer records with more data fields populated
+        if (record.plan) score += 10
+        if (record.email) score += 10
+        if (record.operatorId) score += 10
+        if (record.stripeAccountId) score += 10
+        if (record.hubspotCompanyId) score += 20
+        if (record.vehiclesTotal) score += 5
+        if (record.membersCount) score += 5
+        if (record.tripsLast30Days > 0) score += 20
+        return { record, score }
+      })
+
+      // Sort by score descending and take the best
+      scored.sort((a, b) => b.score - a.score)
+      deduped.push(scored[0].record)
+    }
+  }
+
+  return deduped
+}
+
+/**
  * Sync operators to database - METABASE FIRST
  * POST /api/sync/hubspot
  *
@@ -774,7 +849,15 @@ export async function POST(request: NextRequest) {
     }
 
     // =========================================================================
-    // STEP 4: Process each METABASE operator (master list)
+    // STEP 4: Deduplicate Metabase data BEFORE processing
+    // Keep the row with the most data (highest score based on key fields)
+    // =========================================================================
+    const deduplicatedOperators = deduplicateMetabaseRecords(metabaseOperators, hubspotById, hubspotByName, hubspotByDomain)
+    const duplicatesFound = metabaseOperators.length - deduplicatedOperators.length
+    console.log(`Deduplicated: ${metabaseOperators.length} → ${deduplicatedOperators.length} (${duplicatesFound} duplicates removed)`)
+
+    // =========================================================================
+    // STEP 5: Process each DEDUPLICATED operator
     // =========================================================================
     let synced = 0
     let failed = 0
@@ -784,6 +867,9 @@ export async function POST(request: NextRequest) {
     let skippedChurned = 0
     let firstError: string | null = null
     let firstErrorCompany: string | null = null
+
+    // Track unique companies for reporting
+    const seenRecordIds = new Set<string>()
 
     // CSM Assignment based on MRR
     const CSM_ASSIGNMENTS = {
@@ -801,7 +887,7 @@ export async function POST(request: NextRequest) {
       return isNaN(date.getTime()) ? null : date
     }
 
-    for (const mbData of metabaseOperators) {
+    for (const mbData of deduplicatedOperators) {
       try {
         // =====================================================================
         // FILTER: Skip churned/terminated accounts - they shouldn't be in active portfolio
@@ -867,6 +953,9 @@ export async function POST(request: NextRequest) {
           hsCompany?.id ||
           `operator-${mbData.operatorId || mbData.companyName.replace(/\s+/g, "-").toLowerCase()}`
         const companyName = mbData.companyName || hsCompany?.properties.name || "Unknown"
+
+        // Track unique companies for reporting
+        seenRecordIds.add(recordId)
 
         // Calculate weighted health score
         const health = calculateWeightedHealthScore(
@@ -1092,6 +1181,7 @@ export async function POST(request: NextRequest) {
     )
     console.log(`  - ${hubspotMatches} with HubSpot data, ${noHubspotRecord} without HubSpot`)
     console.log(`  - ${stripeMatches} with Stripe payment data`)
+    console.log(`  - ${duplicatesFound} duplicate records in Metabase (same company multiple rows)`)
 
     // Auto-detect onboarding milestones from synced data
     let milestonesDetected = 0
@@ -1135,6 +1225,8 @@ export async function POST(request: NextRequest) {
       success: true,
       totalOperators: metabaseOperators.length,
       activeOperatorsSynced: synced,
+      uniqueCompanies: seenRecordIds.size,
+      duplicatesInMetabase: duplicatesFound,
       churnedSkipped: skippedChurned,
       recordsFailed: failed,
       hubspotMatches,
@@ -1147,6 +1239,8 @@ export async function POST(request: NextRequest) {
         stats: {
           totalFromMetabase: metabaseOperators.length,
           synced,
+          uniqueCompanies: seenRecordIds.size,
+          duplicatesInMetabase: duplicatesFound,
           skippedChurned,
           failed,
           firstError: firstError ? `${firstErrorCompany}: ${firstError}` : null,
