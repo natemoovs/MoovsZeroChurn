@@ -36,12 +36,12 @@ interface WinbackStats {
 export async function GET() {
   try {
     // Fetch all churned companies
+    // Source of truth: healthScore = "churned" (set by sync from LAGO_WATERFALL_EVENT)
     const churnedCompanies = await prisma.hubSpotCompany.findMany({
       where: {
         OR: [
           { healthScore: "churned" },
           { subscriptionStatus: { contains: "churn", mode: "insensitive" } },
-          { billingStatus: { contains: "churn", mode: "insensitive" } },
         ],
       },
       orderBy: { mrr: "desc" },
@@ -69,11 +69,11 @@ export async function GET() {
       let churnedAt: string | null = null
       let daysSinceChurn: number | null = null
 
-      // Use subscription end date or last snapshot as churn date
-      if (company.subscriptionEndDate) {
-        churnedAt = company.subscriptionEndDate.toISOString()
+      // Use contract end date or last snapshot as churn date
+      if (company.contractEndDate) {
+        churnedAt = company.contractEndDate.toISOString()
         daysSinceChurn = Math.floor(
-          (Date.now() - company.subscriptionEndDate.getTime()) / (1000 * 60 * 60 * 24)
+          (Date.now() - company.contractEndDate.getTime()) / (1000 * 60 * 60 * 24)
         )
       } else if (snapshot?.createdAt) {
         churnedAt = snapshot.createdAt.toISOString()
@@ -82,28 +82,18 @@ export async function GET() {
         )
       }
 
-      // Calculate subscription lifetime
-      let subscriptionLifetimeDays: number | null = null
-      if (company.subscriptionStartDate && company.subscriptionEndDate) {
-        subscriptionLifetimeDays = Math.floor(
-          (company.subscriptionEndDate.getTime() - company.subscriptionStartDate.getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      } else if (company.subscriptionStartDate) {
-        // If no end date, calculate until now
-        subscriptionLifetimeDays = Math.floor(
-          (Date.now() - company.subscriptionStartDate.getTime()) / (1000 * 60 * 60 * 24)
-        )
-      }
+      // Use the subscriptionLifetimeDays field from the model
+      const subscriptionLifetimeDays = company.subscriptionLifetimeDays
 
       // Build risk signals from snapshot or derive from company data
       const riskSignals: string[] = []
       if (snapshot?.riskSignals) {
         riskSignals.push(...(snapshot.riskSignals as string[]))
       }
-      if (company.totalTrips === 0) {
+      const trips = company.totalTrips ?? 0
+      if (trips === 0) {
         riskSignals.push("Zero usage")
-      } else if (company.totalTrips < 10) {
+      } else if (trips < 10) {
         riskSignals.push("Low usage")
       }
 
@@ -114,7 +104,7 @@ export async function GET() {
         domain: company.domain,
         mrr: company.mrr,
         plan: company.plan,
-        totalTrips: company.totalTrips,
+        totalTrips: trips,
         primaryContactEmail: company.primaryContactEmail,
         primaryContactName: company.primaryContactName,
         churnedAt,
