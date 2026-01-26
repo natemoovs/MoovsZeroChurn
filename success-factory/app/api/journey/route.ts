@@ -182,6 +182,20 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // Sync churned status to HubSpotCompany for consistency
+      if (stage === "churned") {
+        await prisma.hubSpotCompany.updateMany({
+          where: { hubspotId: companyId },
+          data: { subscriptionStatus: "churned" },
+        })
+      } else if (existing.stage === "churned" && stage !== "churned") {
+        // If moving out of churned (win-back), update status
+        await prisma.hubSpotCompany.updateMany({
+          where: { hubspotId: companyId, subscriptionStatus: "churned" },
+          data: { subscriptionStatus: "active" },
+        })
+      }
+
       // Trigger playbooks if stage has a trigger
       const trigger = STAGE_TO_TRIGGER[stage]
       if (trigger) {

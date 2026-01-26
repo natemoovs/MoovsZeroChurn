@@ -121,12 +121,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Analyze each account
+    // Get churned journeys to exclude
+    const churnedJourneys = await prisma.customerJourney.findMany({
+      where: {
+        companyId: { in: renewalAccounts.map((a) => a.id) },
+        stage: "churned",
+      },
+      select: { companyId: true },
+    })
+    const churnedCompanyIds = new Set(churnedJourneys.map((j) => j.companyId))
+
+    // Analyze each account (skip churned - they shouldn't be in renewal risk)
     const analyses: AccountAnalysis[] = []
     for (const account of renewalAccounts) {
+      // Skip churned accounts
+      if (churnedCompanyIds.has(account.id)) {
+        console.log(`[Renewal Risk Agent] Skipping ${account.name} - marked as churned`)
+        continue
+      }
+
       const nameLower = account.name.toLowerCase()
       const usageData = metabaseMap.get(nameLower) || null
       const paymentHealth = stripeMap.get(nameLower) || null
+
+      // Also skip if Metabase shows them as churned
+      if (usageData?.churnStatus?.toLowerCase().includes("churn")) {
+        console.log(`[Renewal Risk Agent] Skipping ${account.name} - churned in usage data`)
+        continue
+      }
 
       const { riskScore, riskFactors, positiveSignals } = calculateRiskScore(
         account,
