@@ -150,7 +150,7 @@ export default function SettingsPage() {
     deletedTasks?: string[]
   } | null>(null)
   const [syncDebug, setSyncDebug] = useState<{
-    stats?: { totalFromMetabase: number; synced: number; skippedChurned: number; failed: number; firstError?: string | null }
+    stats?: { totalFromMetabase: number; synced: number; uniqueCompanies?: number; duplicatesInMetabase?: number; skippedChurned: number; failed: number; firstError?: string | null }
     metabaseColumns?: { original: string[]; normalized: string[]; missing: string[] }
     sampleFromMetabase?: Record<string, unknown> | null
     sampleFromDatabase?: Record<string, unknown> | null
@@ -739,6 +739,12 @@ export default function SettingsPage() {
                     <div><span className="font-medium">Skipped (churned):</span> {syncDebug.stats.skippedChurned}</div>
                     <div><span className="font-medium">Failed:</span> {syncDebug.stats.failed}</div>
                   </div>
+                  {(syncDebug.stats.duplicatesInMetabase ?? 0) > 0 && (
+                    <div className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded text-yellow-800 dark:text-yellow-200 text-xs">
+                      <span className="font-medium">⚠️ Duplicates in Metabase:</span> {syncDebug.stats.duplicatesInMetabase} rows are duplicates of other companies (same operatorId or name). <br />
+                      <span className="text-yellow-600 dark:text-yellow-400">Unique companies: {syncDebug.stats.uniqueCompanies}</span>
+                    </div>
+                  )}
                   {syncDebug.stats.firstError && (
                     <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded text-red-800 dark:text-red-200 text-xs break-all">
                       <span className="font-medium">First error:</span> {syncDebug.stats.firstError}
