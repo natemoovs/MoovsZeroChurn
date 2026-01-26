@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { hubspot, metabase, getConfiguredIntegrations } from "@/lib/integrations"
+import { prisma } from "@/lib/db"
 
 /**
  * Smart Alert Prioritization
@@ -64,11 +65,19 @@ export async function GET(request: NextRequest) {
 
   try {
     // Fetch all data sources in parallel
-    const [companies, metabaseData, stripeCustomers] = await Promise.all([
+    const [companies, metabaseData, stripeCustomers, churnedJourneys] = await Promise.all([
       hubspot.searchCompanies("*").catch(() => []),
       fetchMetabaseData(),
       configured.stripe ? fetchStripeAtRiskCustomers() : Promise.resolve([]),
+      // Get churned journeys to exclude from at-risk alerts
+      prisma.customerJourney.findMany({
+        where: { stage: "churned" },
+        select: { companyId: true },
+      }),
     ])
+
+    // Build set of churned company IDs to exclude
+    const churnedCompanyIds = new Set(churnedJourneys.map((j) => j.companyId))
 
     // Build lookup maps
     const metabaseMap = new Map<string, MetabaseAccount>()
@@ -89,10 +98,21 @@ export async function GET(request: NextRequest) {
     const alerts: PrioritizedAlert[] = []
 
     for (const company of companies) {
+      // Skip churned companies - they shouldn't be in at-risk alerts
+      if (churnedCompanyIds.has(company.id)) {
+        continue
+      }
+
       const companyName = company.properties.name?.toLowerCase() || ""
       const domain = company.properties.domain?.toLowerCase() || ""
 
       const mbData = metabaseMap.get(companyName)
+
+      // Also skip if Metabase shows them as churned
+      if (mbData?.churnStatus?.toLowerCase().includes("churn")) {
+        continue
+      }
+
       const stripeData = stripeMap.get(domain) || (domain ? stripeMap.get(domain) : null)
 
       const alert = analyzeCompany(company, mbData, stripeData)

@@ -303,16 +303,32 @@ export async function GET(request: NextRequest) {
   const riskLevel = searchParams.get("riskLevel") // high, medium, low
 
   try {
-    // Get companies
+    // Get companies (exclude already churned - they shouldn't be in at-risk predictions)
     const companies = await prisma.hubSpotCompany.findMany({
-      where: companyId ? { hubspotId: companyId } : { mrr: { gt: 0 } },
+      where: companyId
+        ? { hubspotId: companyId }
+        : {
+            mrr: { gt: 0 },
+            subscriptionStatus: { not: "churned" },
+          },
       orderBy: { mrr: "desc" },
     })
+
+    // Also filter out companies with churned journey stage
+    const churnedJourneys = await prisma.customerJourney.findMany({
+      where: {
+        companyId: { in: companies.map((c) => c.hubspotId) },
+        stage: "churned",
+      },
+      select: { companyId: true },
+    })
+    const churnedCompanyIds = new Set(churnedJourneys.map((j) => j.companyId))
+    const activeCompanies = companies.filter((c) => !churnedCompanyIds.has(c.hubspotId))
 
     // Get NPS scores
     const npsSurveys = await prisma.nPSSurvey.findMany({
       where: {
-        companyId: { in: companies.map((c) => c.hubspotId) },
+        companyId: { in: activeCompanies.map((c) => c.hubspotId) },
         score: { not: null },
       },
       orderBy: { respondedAt: "desc" },
@@ -328,7 +344,7 @@ export async function GET(request: NextRequest) {
     // Get stakeholders
     const stakeholders = await prisma.stakeholder.findMany({
       where: {
-        companyId: { in: companies.map((c) => c.hubspotId) },
+        companyId: { in: activeCompanies.map((c) => c.hubspotId) },
         isActive: true,
       },
     })
@@ -342,7 +358,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate predictions
-    let predictions = companies.map((company) => {
+    let predictions = activeCompanies.map((company) => {
       const nps = npsMap.get(company.hubspotId) ?? null
       const stakeholderInfo = stakeholderMap.get(company.hubspotId) || {
         count: 0,

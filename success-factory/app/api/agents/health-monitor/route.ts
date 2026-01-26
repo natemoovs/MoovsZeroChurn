@@ -146,9 +146,26 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Create tasks for significant declines
+    // Get churned journeys to exclude from at-risk task creation
+    const churnedJourneys = await prisma.customerJourney.findMany({
+      where: { stage: "churned" },
+      select: { companyId: true },
+    })
+    const churnedCompanyIds = new Set(churnedJourneys.map((j) => j.companyId))
+
+    // Create tasks for significant declines (skip churned accounts)
     const tasksCreated: string[] = []
     for (const change of healthChanges) {
+      // Skip churned accounts - they shouldn't get at-risk tasks
+      if (churnedCompanyIds.has(change.companyId)) {
+        continue
+      }
+
+      // Also skip if risk signals include "Churned" (from Metabase)
+      if (change.riskSignals.some((r) => r.toLowerCase().includes("churned"))) {
+        continue
+      }
+
       if (
         change.changeType === "declined" ||
         (change.changeType === "new" && change.currentHealth === "red")
