@@ -91,12 +91,22 @@ export type {
   BillingHealthSummary,
 } from "./lago"
 
+export { snowflake } from "./snowflake"
+export type {
+  SnowflakeQueryResult,
+  OperatorDetails,
+  PlatformCharge,
+  ReservationOverview,
+  RiskOverview,
+} from "./snowflake"
+
 // Import clients for unified export
 import { hubspot } from "./hubspot"
 import { stripe } from "./stripe"
 import { notion } from "./notion"
 import { metabase } from "./metabase"
 import { lago } from "./lago"
+import { snowflake } from "./snowflake"
 
 /**
  * Unified integrations client
@@ -109,6 +119,7 @@ export const integrations = {
   notion,
   metabase,
   lago,
+  snowflake,
 }
 
 /**
@@ -120,6 +131,7 @@ export function getConfiguredIntegrations(): {
   notion: boolean
   metabase: boolean
   lago: boolean
+  snowflake: boolean
 } {
   return {
     hubspot: !!process.env.HUBSPOT_ACCESS_TOKEN,
@@ -127,6 +139,7 @@ export function getConfiguredIntegrations(): {
     notion: !!process.env.NOTION_API_KEY,
     metabase: !!(process.env.METABASE_URL && process.env.METABASE_API_KEY),
     lago: !!process.env.LAGO_API_KEY,
+    snowflake: !!(process.env.SNOWFLAKE_ACCOUNT && process.env.SNOWFLAKE_USERNAME && process.env.SNOWFLAKE_PASSWORD),
   }
 }
 
@@ -145,6 +158,11 @@ export function getMissingIntegrations(): string[] {
     if (!process.env.METABASE_API_KEY) missing.push("METABASE_API_KEY")
   }
   if (!configured.lago) missing.push("LAGO_API_KEY")
+  if (!configured.snowflake) {
+    if (!process.env.SNOWFLAKE_ACCOUNT) missing.push("SNOWFLAKE_ACCOUNT")
+    if (!process.env.SNOWFLAKE_USERNAME) missing.push("SNOWFLAKE_USERNAME")
+    if (!process.env.SNOWFLAKE_PASSWORD) missing.push("SNOWFLAKE_PASSWORD")
+  }
 
   return missing
 }

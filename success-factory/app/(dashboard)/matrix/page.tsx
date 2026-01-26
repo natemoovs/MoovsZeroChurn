@@ -149,8 +149,8 @@ export default function OperatorHubPage() {
 
   const handleRowClick = (result: OperatorResult) => {
     setSelectedRow(result.id)
-    // Navigate to account details page
-    router.push(`/accounts/${result.hubspotId}`)
+    // Navigate to Operator Hub detail page
+    router.push(`/matrix/${result.hubspotId}`)
   }
 
   const SortIcon = ({ field }: { field: SortField }) => {
