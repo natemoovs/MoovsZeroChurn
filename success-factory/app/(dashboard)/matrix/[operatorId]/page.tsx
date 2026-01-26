@@ -610,7 +610,7 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
               href={`https://${operator.domain}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-primary-500 hover:bg-primary-600 text-white flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+              className="bg-primary-500 hover:bg-primary-600 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors"
             >
               <Globe className="h-4 w-4" />
               Open Customer Portal
@@ -1270,6 +1270,290 @@ interface PlatformDataApiResponse {
   }
 }
 
+// ============================================================================
+// Add Member Modal
+// ============================================================================
+
+const MEMBER_ROLES = [
+  { value: "owner", label: "Owner" },
+  { value: "admin", label: "Admin" },
+  { value: "member", label: "Member" },
+  { value: "dispatcher", label: "Dispatcher" },
+  { value: "driver_manager", label: "Driver Manager" },
+  { value: "accountant", label: "Accountant" },
+]
+
+function AddMemberModal({
+  operatorId,
+  isOpen,
+  onClose,
+  onSuccess,
+}: {
+  operatorId: string
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [email, setEmail] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [roleSlug, setRoleSlug] = useState("member")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/operator-hub/${operatorId}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, firstName, lastName, roleSlug }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add member")
+      }
+
+      // Reset form and close
+      setEmail("")
+      setFirstName("")
+      setLastName("")
+      setRoleSlug("member")
+      onSuccess()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add member")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-bg-primary border-border-default w-full max-w-md rounded-lg border shadow-xl">
+        <div className="border-border-default flex items-center justify-between border-b p-4">
+          <h2 className="text-content-primary text-lg font-semibold">Add New Member</h2>
+          <button
+            onClick={onClose}
+            className="text-content-secondary hover:text-content-primary rounded p-1"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4">
+          {error && (
+            <div className="bg-error-50 text-error-700 dark:bg-error-900/30 dark:text-error-400 mb-4 rounded-md p-3 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="email"
+                className="text-content-primary mb-1 block text-sm font-medium"
+              >
+                Email <span className="text-error-500">*</span>
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                placeholder="email@example.com"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="firstName"
+                  className="text-content-primary mb-1 block text-sm font-medium"
+                >
+                  First Name
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                  placeholder="John"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="lastName"
+                  className="text-content-primary mb-1 block text-sm font-medium"
+                >
+                  Last Name
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="role" className="text-content-primary mb-1 block text-sm font-medium">
+                Role
+              </label>
+              <select
+                id="role"
+                value={roleSlug}
+                onChange={(e) => setRoleSlug(e.target.value)}
+                className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+              >
+                {MEMBER_ROLES.map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-content-secondary hover:text-content-primary rounded-md px-4 py-2 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !email}
+              className="bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              Add Member
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// Edit Role Dropdown
+// ============================================================================
+
+function EditRoleDropdown({
+  currentRole,
+  memberId,
+  operatorId,
+  onSuccess,
+}: {
+  currentRole: string | null
+  memberId: string
+  operatorId: string
+  onSuccess: () => void
+}) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [selectedRole, setSelectedRole] = useState(currentRole || "member")
+
+  const handleSave = async () => {
+    if (selectedRole === currentRole) {
+      setIsEditing(false)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/operator-hub/${operatorId}/members`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: memberId, roleSlug: selectedRole }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to update role")
+      }
+
+      onSuccess()
+      setIsEditing(false)
+    } catch (err) {
+      console.error("Failed to update role:", err)
+      alert(err instanceof Error ? err.message : "Failed to update role")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-2">
+        <select
+          value={selectedRole}
+          onChange={(e) => setSelectedRole(e.target.value)}
+          className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 rounded border px-2 py-1 text-xs focus:outline-none"
+          disabled={loading}
+        >
+          {MEMBER_ROLES.map((role) => (
+            <option key={role.value} value={role.value}>
+              {role.label}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="text-primary-600 hover:text-primary-700 dark:text-primary-400 text-xs font-medium"
+        >
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+        </button>
+        <button
+          onClick={() => {
+            setIsEditing(false)
+            setSelectedRole(currentRole || "member")
+          }}
+          disabled={loading}
+          className="text-content-tertiary hover:text-content-secondary text-xs"
+        >
+          ✕
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      onClick={() => setIsEditing(true)}
+      className="bg-bg-tertiary text-content-secondary hover:bg-bg-secondary group flex items-center gap-1 rounded px-2 py-0.5 text-xs capitalize"
+    >
+      {(currentRole || "member").replace(/_/g, " ")}
+      <Edit3 className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+    </button>
+  )
+}
+
 function FeaturesTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -1279,31 +1563,34 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
   const [configSection, setConfigSection] = useState<
     "promos" | "zones" | "rules" | "contacts" | "bank" | "subscriptions"
   >("promos")
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false)
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!operator.operatorId) {
       setLoading(false)
       return
     }
 
-    // Fetch both members and platform data in parallel
-    Promise.all([
-      fetch(`/api/operator-hub/${operator.operatorId}/members`)
-        .then((res) => (res.ok ? res.json() : null))
-        .catch(() => null),
-      fetch(`/api/operator-hub/${operator.operatorId}/platform-data`)
-        .then((res) => (res.ok ? res.json() : null))
-        .catch(() => null),
-    ])
-      .then(([membersData, configData]) => {
-        setData(membersData)
-        setPlatformData(configData)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err.message)
-        setLoading(false)
-      })
+    try {
+      const [membersData, configData] = await Promise.all([
+        fetch(`/api/operator-hub/${operator.operatorId}/members`)
+          .then((res) => (res.ok ? res.json() : null))
+          .catch(() => null),
+        fetch(`/api/operator-hub/${operator.operatorId}/platform-data`)
+          .then((res) => (res.ok ? res.json() : null))
+          .catch(() => null),
+      ])
+      setData(membersData)
+      setPlatformData(configData)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load data")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
   }, [operator.operatorId])
 
   if (loading) {
@@ -1340,22 +1627,14 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                 : "default"
           }
         />
-        <StatCard
-          label="Members"
-          value={stats.totalMembers.toString()}
-          icon={Users}
-        />
+        <StatCard label="Members" value={stats.totalMembers.toString()} icon={Users} />
         <StatCard
           label="Drivers"
           value={stats.totalDrivers.toString()}
           icon={Users}
           subtext={`${stats.activeDrivers} active`}
         />
-        <StatCard
-          label="Vehicles"
-          value={stats.totalVehicles.toString()}
-          icon={Car}
-        />
+        <StatCard label="Vehicles" value={stats.totalVehicles.toString()} icon={Car} />
       </div>
 
       {/* Section Tabs */}
@@ -1384,6 +1663,22 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
         {/* Members Section */}
         {activeSection === "members" && (
           <div>
+            {/* Add Member Button */}
+            {operator.operatorId && (
+              <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
+                <span className="text-content-secondary text-sm">
+                  {data?.members.length || 0} platform members
+                </span>
+                <button
+                  onClick={() => setShowAddMemberModal(true)}
+                  className="bg-primary-600 hover:bg-primary-700 flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-white"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Member
+                </button>
+              </div>
+            )}
+
             {!data || data.members.length === 0 ? (
               <div className="p-8 text-center">
                 <Users className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
@@ -1391,6 +1686,15 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                 <p className="text-content-secondary mx-auto mt-2 max-w-md">
                   {error || "Platform member data is not available for this operator."}
                 </p>
+                {operator.operatorId && (
+                  <button
+                    onClick={() => setShowAddMemberModal(true)}
+                    className="bg-primary-600 hover:bg-primary-700 mt-4 inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium text-white"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add First Member
+                  </button>
+                )}
               </div>
             ) : (
               <div className="divide-border-default divide-y">
@@ -1410,14 +1714,23 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                         <p className="text-content-secondary truncate text-xs">{member.email}</p>
                       )}
                     </div>
-                    <div className="text-right">
-                      {member.role && (
-                        <span className="bg-bg-tertiary text-content-secondary rounded px-2 py-0.5 text-xs capitalize">
-                          {member.role.replace(/_/g, " ")}
-                        </span>
+                    <div className="flex flex-col items-end gap-1">
+                      {operator.operatorId ? (
+                        <EditRoleDropdown
+                          currentRole={member.role}
+                          memberId={member.id}
+                          operatorId={operator.operatorId}
+                          onSuccess={fetchData}
+                        />
+                      ) : (
+                        member.role && (
+                          <span className="bg-bg-tertiary text-content-secondary rounded px-2 py-0.5 text-xs capitalize">
+                            {member.role.replace(/_/g, " ")}
+                          </span>
+                        )
                       )}
                       {member.lastLoginAt && (
-                        <p className="text-content-tertiary mt-1 text-xs">
+                        <p className="text-content-tertiary text-xs">
                           Last login: {new Date(member.lastLoginAt).toLocaleDateString()}
                         </p>
                       )}
@@ -1684,19 +1997,13 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                     </div>
                     <div className="text-right text-xs">
                       {zone.baseFare !== null && (
-                        <p className="text-content-primary">
-                          Base: ${zone.baseFare.toFixed(2)}
-                        </p>
+                        <p className="text-content-primary">Base: ${zone.baseFare.toFixed(2)}</p>
                       )}
                       {zone.perMileRate !== null && (
-                        <p className="text-content-secondary">
-                          ${zone.perMileRate.toFixed(2)}/mi
-                        </p>
+                        <p className="text-content-secondary">${zone.perMileRate.toFixed(2)}/mi</p>
                       )}
                       {zone.minimumFare !== null && (
-                        <p className="text-content-tertiary">
-                          Min: ${zone.minimumFare.toFixed(2)}
-                        </p>
+                        <p className="text-content-tertiary">Min: ${zone.minimumFare.toFixed(2)}</p>
                       )}
                     </div>
                   </div>
@@ -1749,7 +2056,9 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                       )}
                     </div>
                     {rule.priority !== null && (
-                      <span className="text-content-tertiary text-xs">Priority: {rule.priority}</span>
+                      <span className="text-content-tertiary text-xs">
+                        Priority: {rule.priority}
+                      </span>
                     )}
                   </div>
                 ))}
@@ -1847,7 +2156,9 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                           <span className="text-content-secondary">{account.accountName}</span>
                         )}
                         {account.accountType && (
-                          <span className="text-content-tertiary capitalize">{account.accountType}</span>
+                          <span className="text-content-tertiary capitalize">
+                            {account.accountType}
+                          </span>
                         )}
                         {account.lastFour && (
                           <span className="text-content-tertiary font-mono">
@@ -1869,7 +2180,9 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
             {!platformData?.subscriptionLog || platformData.subscriptionLog.length === 0 ? (
               <div className="p-8 text-center">
                 <Receipt className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-                <h3 className="text-content-primary text-lg font-medium">No Subscription History</h3>
+                <h3 className="text-content-primary text-lg font-medium">
+                  No Subscription History
+                </h3>
                 <p className="text-content-secondary mx-auto mt-2 max-w-md">
                   No subscription events recorded for this operator.
                 </p>
@@ -1892,9 +2205,7 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                           <span className="text-content-secondary">{event.planName}</span>
                         )}
                         {event.previousPlan && (
-                          <span className="text-content-tertiary">
-                            from {event.previousPlan}
-                          </span>
+                          <span className="text-content-tertiary">from {event.previousPlan}</span>
                         )}
                         {event.amount !== null && (
                           <span className="text-success-600 dark:text-success-400">
@@ -1915,6 +2226,16 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
           </div>
         )}
       </div>
+
+      {/* Add Member Modal */}
+      {operator.operatorId && (
+        <AddMemberModal
+          operatorId={operator.operatorId}
+          isOpen={showAddMemberModal}
+          onClose={() => setShowAddMemberModal(false)}
+          onSuccess={fetchData}
+        />
+      )}
     </div>
   )
 }

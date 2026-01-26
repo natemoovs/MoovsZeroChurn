@@ -900,6 +900,135 @@ async function getOperatorSubscriptionLog(operatorId: string): Promise<Subscript
 }
 
 // ============================================================================
+// Write Operations (CRUD) - Requires Direct Connection
+// ============================================================================
+
+export interface AddMemberInput {
+  operatorId: string
+  email: string
+  firstName?: string
+  lastName?: string
+  roleSlug?: string
+}
+
+export interface AddMemberResult {
+  userId: string
+  success: boolean
+}
+
+/**
+ * Check if write operations are available (requires direct Snowflake connection)
+ */
+function isWriteEnabled(): boolean {
+  return isDirectConfigured
+}
+
+/**
+ * Execute a write query with parameterized binds (direct connection only)
+ */
+async function executeWriteQuery(
+  sql: string,
+  binds: (string | number | boolean | null)[] = []
+): Promise<{ rowCount: number; success: boolean }> {
+  if (!isDirectConfigured) {
+    throw new Error("Write operations require direct Snowflake connection")
+  }
+
+  const connection = await getDirectConnection()
+
+  return new Promise((resolve, reject) => {
+    connection.execute({
+      sqlText: sql,
+      binds,
+      complete: (err, _stmt, rows) => {
+        if (err) {
+          console.error("Snowflake write query error:", err.message)
+          console.error("SQL:", sql)
+          reject(err)
+        } else {
+          resolve({
+            rowCount: rows?.length || 0,
+            success: true,
+          })
+        }
+      },
+    })
+  })
+}
+
+/**
+ * Add a new member/user to an operator
+ */
+async function addOperatorMember(input: AddMemberInput): Promise<AddMemberResult> {
+  const userId = crypto.randomUUID()
+
+  const sql = `
+    INSERT INTO POSTGRES_SWOOP.USER (
+      USER_ID,
+      OPERATOR_ID,
+      EMAIL,
+      FIRST_NAME,
+      LAST_NAME,
+      ROLE_SLUG,
+      CREATED_AT,
+      UPDATED_AT
+    ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())
+  `
+
+  await executeWriteQuery(sql, [
+    userId,
+    input.operatorId,
+    input.email,
+    input.firstName || null,
+    input.lastName || null,
+    input.roleSlug || "member",
+  ])
+
+  return { userId, success: true }
+}
+
+export interface UpdateMemberRoleInput {
+  userId: string
+  operatorId: string
+  roleSlug: string
+}
+
+/**
+ * Update a member's role
+ */
+async function updateMemberRole(input: UpdateMemberRoleInput): Promise<boolean> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.USER
+    SET ROLE_SLUG = ?,
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE USER_ID = ?
+      AND OPERATOR_ID = ?
+      AND REMOVED_AT IS NULL
+  `
+
+  const result = await executeWriteQuery(sql, [input.roleSlug, input.userId, input.operatorId])
+
+  return result.success
+}
+
+/**
+ * Remove a member (soft delete)
+ */
+async function removeMember(userId: string, operatorId: string): Promise<boolean> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.USER
+    SET REMOVED_AT = CURRENT_TIMESTAMP(),
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE USER_ID = ?
+      AND OPERATOR_ID = ?
+      AND REMOVED_AT IS NULL
+  `
+
+  const result = await executeWriteQuery(sql, [userId, operatorId])
+  return result.success
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -937,6 +1066,12 @@ export const snowflakeClient = {
   getTopOperatorsByRevenue,
   getFailedInvoices,
   getInactiveAccounts,
+
+  // Write operations (CRUD)
+  isWriteEnabled,
+  addOperatorMember,
+  updateMemberRole,
+  removeMember,
 }
 
 // Default export for consistency with other integrations
