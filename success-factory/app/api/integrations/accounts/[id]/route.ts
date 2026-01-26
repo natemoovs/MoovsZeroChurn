@@ -384,7 +384,7 @@ async function fetchMetabaseDataForCompany(
  * Attempts to find customer by domain-based email pattern
  */
 async function fetchStripeData(companyDomainEmail: string | null): Promise<PaymentHealth | null> {
-  if (!process.env.STRIPE_SECRET_KEY || !companyDomainEmail) {
+  if (!process.env.STRIPE_PLATFORM_SECRET_KEY || !companyDomainEmail) {
     return null
   }
 

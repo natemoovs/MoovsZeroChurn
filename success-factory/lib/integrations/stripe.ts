@@ -1,11 +1,18 @@
 /**
  * Stripe Billing Integration Client
  *
- * Requires STRIPE_SECRET_KEY environment variable
+ * Supports two Stripe accounts:
+ *   - STRIPE_PLATFORM_SECRET_KEY: Moovs platform account (subscriptions, billing)
+ *   - STRIPE_CONNECTED_ACCOUNT_SECRET_KEY: For accessing operator connected accounts
+ *
  * API Docs: https://stripe.com/docs/api
  */
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
+// Platform account key (for subscriptions/billing)
+const STRIPE_PLATFORM_SECRET_KEY = process.env.STRIPE_PLATFORM_SECRET_KEY
+// Connected account key (for operator accounts)
+const STRIPE_CONNECTED_ACCOUNT_SECRET_KEY = process.env.STRIPE_CONNECTED_ACCOUNT_SECRET_KEY
+
 const BASE_URL = "https://api.stripe.com/v1"
 
 // ============================================================================
@@ -212,21 +219,35 @@ export interface StripeError {
 // Helper Functions
 // ============================================================================
 
-function getHeaders(): HeadersInit {
-  if (!STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY environment variable is not set")
+type StripeAccountType = "platform" | "connected"
+
+function getHeaders(accountType: StripeAccountType = "platform"): HeadersInit {
+  const key =
+    accountType === "platform" ? STRIPE_PLATFORM_SECRET_KEY : STRIPE_CONNECTED_ACCOUNT_SECRET_KEY
+
+  if (!key) {
+    const envVar =
+      accountType === "platform"
+        ? "STRIPE_PLATFORM_SECRET_KEY"
+        : "STRIPE_CONNECTED_ACCOUNT_SECRET_KEY"
+    throw new Error(`${envVar} environment variable is not set`)
   }
+
   return {
-    Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+    Authorization: `Bearer ${key}`,
     "Content-Type": "application/x-www-form-urlencoded",
   }
 }
 
-async function stripeFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function stripeFetch<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  accountType: StripeAccountType = "platform"
+): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      ...getHeaders(),
+      ...getHeaders(accountType),
       ...options.headers,
     },
   })
@@ -339,10 +360,139 @@ export async function getRecentCharges(
 }
 
 // ============================================================================
+// Connected Account Functions (for operator Stripe accounts)
+// ============================================================================
+
+export interface StripeConnectedAccount {
+  id: string
+  object: "account"
+  business_profile: {
+    name: string | null
+    url: string | null
+  } | null
+  charges_enabled: boolean
+  payouts_enabled: boolean
+  details_submitted: boolean
+  email: string | null
+  created: number
+  default_currency: string | null
+  country: string | null
+  capabilities: Record<string, "active" | "inactive" | "pending">
+  requirements: {
+    currently_due: string[]
+    eventually_due: string[]
+    past_due: string[]
+    disabled_reason: string | null
+  } | null
+}
+
+export interface StripeBalance {
+  object: "balance"
+  available: Array<{
+    amount: number
+    currency: string
+  }>
+  pending: Array<{
+    amount: number
+    currency: string
+  }>
+}
+
+export interface StripePayout {
+  id: string
+  object: "payout"
+  amount: number
+  currency: string
+  arrival_date: number
+  status: "paid" | "pending" | "in_transit" | "canceled" | "failed"
+  created: number
+  description: string | null
+  failure_message: string | null
+}
+
+/**
+ * Get connected account details by account ID
+ * Uses the connected account key
+ */
+export async function getConnectedAccount(accountId: string): Promise<StripeConnectedAccount> {
+  return stripeFetch<StripeConnectedAccount>(`/accounts/${accountId}`, {}, "connected")
+}
+
+/**
+ * Get balance for a connected account
+ */
+export async function getConnectedAccountBalance(accountId: string): Promise<StripeBalance> {
+  return stripeFetch<StripeBalance>(
+    `/balance`,
+    {
+      headers: {
+        "Stripe-Account": accountId,
+      },
+    },
+    "connected"
+  )
+}
+
+/**
+ * Get payouts for a connected account
+ */
+export async function getConnectedAccountPayouts(
+  accountId: string,
+  options: { limit?: number } = {}
+): Promise<StripePayout[]> {
+  const params = toFormData({ limit: options.limit || 50 })
+  const result = await stripeFetch<StripeListResponse<StripePayout>>(
+    `/payouts?${params}`,
+    {
+      headers: {
+        "Stripe-Account": accountId,
+      },
+    },
+    "connected"
+  )
+  return result.data
+}
+
+/**
+ * Get charges for a connected account (their customer payments)
+ */
+export async function getConnectedAccountCharges(
+  accountId: string,
+  options: { limit?: number } = {}
+): Promise<StripeCharge[]> {
+  const params = toFormData({ limit: options.limit || 50 })
+  const result = await stripeFetch<StripeListResponse<StripeCharge>>(
+    `/charges?${params}`,
+    {
+      headers: {
+        "Stripe-Account": accountId,
+      },
+    },
+    "connected"
+  )
+  return result.data
+}
+
+/**
+ * Check if platform account is configured
+ */
+export function isPlatformConfigured(): boolean {
+  return !!STRIPE_PLATFORM_SECRET_KEY
+}
+
+/**
+ * Check if connected account access is configured
+ */
+export function isConnectedConfigured(): boolean {
+  return !!STRIPE_CONNECTED_ACCOUNT_SECRET_KEY
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
 export const stripe = {
+  // Platform account (subscriptions/billing)
   getCustomer,
   getCustomerByEmail,
   getSubscriptions,
@@ -350,4 +500,14 @@ export const stripe = {
   getPaymentHistory,
   listCustomers,
   getRecentCharges,
+
+  // Connected accounts (operator Stripe accounts)
+  getConnectedAccount,
+  getConnectedAccountBalance,
+  getConnectedAccountPayouts,
+  getConnectedAccountCharges,
+
+  // Config checks
+  isPlatformConfigured,
+  isConnectedConfigured,
 }

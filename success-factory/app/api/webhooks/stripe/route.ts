@@ -16,7 +16,7 @@ import { inngest } from "@/lib/inngest/client"
 let stripeClient: Stripe | null = null
 function getStripe(): Stripe {
   if (!stripeClient) {
-    stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+    stripeClient = new Stripe(process.env.STRIPE_PLATFORM_SECRET_KEY || "", {
       apiVersion: "2025-12-15.clover",
     })
   }

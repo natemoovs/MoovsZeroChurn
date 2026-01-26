@@ -448,7 +448,7 @@ export async function GET() {
         churned: churnedCompanies.length,
         configured: {
           hubspot: true,
-          stripe: !!process.env.STRIPE_SECRET_KEY,
+          stripe: !!process.env.STRIPE_PLATFORM_SECRET_KEY,
           metabase: !!process.env.METABASE_URL,
         },
       },
