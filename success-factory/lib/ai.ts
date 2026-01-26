@@ -85,12 +85,31 @@ function mapModel(anthropicModel: string): string {
   return MODEL_MAP[anthropicModel] || DEFAULT_GATEWAY_MODEL
 }
 
+// Tool use block type (Anthropic.ToolUseBlock compatible)
+export interface ToolUseBlock {
+  type: "tool_use"
+  id: string
+  name: string
+  input: Record<string, unknown>
+}
+
+// Tool result block type (Anthropic.ToolResultBlockParam compatible)
+export interface ToolResultBlockParam {
+  type: "tool_result"
+  tool_use_id: string
+  content: string
+}
+
+// Content block types (Anthropic.ContentBlock compatible)
+export type TextBlock = { type: "text"; text: string }
+export type ContentBlock = TextBlock | ToolUseBlock
+
 // Anthropic-compatible types for backward compatibility
 export interface AnthropicMessage {
   id: string
   type: "message"
   role: "assistant"
-  content: Array<{ type: "text"; text: string }>
+  content: ContentBlock[]
   model: string
   stop_reason: "end_turn" | "tool_use" | "max_tokens" | null
   usage: {
@@ -108,22 +127,7 @@ export interface AnthropicTool {
 // Message parameter type (Anthropic.MessageParam compatible)
 export type MessageParam = {
   role: "user" | "assistant"
-  content: string | Array<{ type: "text"; text: string } | ToolResultBlockParam>
-}
-
-// Tool use block type (Anthropic.ToolUseBlock compatible)
-export interface ToolUseBlock {
-  type: "tool_use"
-  id: string
-  name: string
-  input: Record<string, unknown>
-}
-
-// Tool result block type (Anthropic.ToolResultBlockParam compatible)
-export interface ToolResultBlockParam {
-  type: "tool_result"
-  tool_use_id: string
-  content: string
+  content: string | ContentBlock[] | ToolResultBlockParam[]
 }
 
 export interface AnthropicMessageParams {
