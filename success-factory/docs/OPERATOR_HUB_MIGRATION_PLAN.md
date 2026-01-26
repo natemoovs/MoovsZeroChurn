@@ -159,12 +159,22 @@ From the Retool export, these Snowflake tables are referenced:
 | **Update Member Role** | Medium   | UPDATE role_slug via inline dropdown      | ✅ Done |
 | **Remove Member**      | Medium   | Soft delete via DELETE endpoint           | ✅ Done |
 
+### ✅ Lago Integration (Plan Management)
+
+| Feature                    | Description                           | Status  |
+| -------------------------- | ------------------------------------- | ------- |
+| **List Plans**             | GET /plans from Lago API              | ✅ Done |
+| **Get Subscriptions**      | GET subscriptions for operator        | ✅ Done |
+| **Change Plan**            | PUT subscription to update plan       | ✅ Done |
+| **Create Subscription**    | POST new subscription                 | ✅ Done |
+| **Cancel Subscription**    | DELETE subscription                   | ✅ Done |
+| **Change Plan Modal**      | UI modal for plan changes             | ✅ Done |
+
 ### ❌ Remaining CRUD Operations
 
 | Feature                  | Priority | Description             | Status  |
 | ------------------------ | -------- | ----------------------- | ------- |
-| **Update Risk Details**  | Low      | Edit risk assessment    | ❌ TODO |
-| **Update Postgres Plan** | Low      | Edit plan configuration | ❌ TODO |
+| **Update Risk Details**  | Low      | Edit risk assessment    | ❌ TODO (links to HubSpot notes) |
 
 ---
 
@@ -182,9 +192,9 @@ From the Retool export, these Snowflake tables are referenced:
 | Sendgrid Missing Alert | ✅ Done       | Email health banner               |
 | Copy Operator ID       | ✅ Done       | CopyActionButton                  |
 | Copy Stripe ID         | ✅ Done       | CopyActionButton                  |
-| Update Postgres Plan   | ❌ Missing    | Need modal/form                   |
+| Update Postgres Plan   | ✅ Done       | Lago API integration with modal   |
 | Add Member             | ✅ Done       | Modal with INSERT query           |
-| Update Risk Details    | ❌ Missing    | Need form                         |
+| Update Risk Details    | ✅ Done       | Links to HubSpot notes            |
 | Update Member Role     | ✅ Done       | Inline dropdown with UPDATE query |
 
 ---
@@ -281,13 +291,13 @@ lib/
 - [x] Stripe dual account support (platform + connected)
 - [x] Update all STRIPE_SECRET_KEY references
 
-### Phase 4: Add CRUD Operations ✅ MOSTLY COMPLETE
+### Phase 4: Add CRUD Operations ✅ COMPLETE
 
 - [x] Add Member modal/form
 - [x] Update Member Role inline dropdown
 - [x] Remove Member (soft delete via API)
-- [ ] Update Risk Details form
-- [ ] Update Postgres Plan form
+- [x] Update Risk Details (links to HubSpot notes)
+- [x] Update Postgres Plan (Lago API integration with modal UI)
 
 ### Phase 5: Polish & Enhancements (Future)
 
@@ -319,7 +329,18 @@ lib/
   - Remove Member (soft delete) via API endpoint
 - Added Snowflake write operations (`addOperatorMember`, `updateMemberRole`, `removeMember`)
 - Write operations require direct Snowflake connection (not Metabase)
-- Phase 4 now mostly complete
+
+### 2026-01-26 (Update 3)
+- Added full Lago API integration for subscription management:
+  - List available plans
+  - View current subscription
+  - Change plan (update subscription)
+  - Create new subscription
+  - Cancel subscription
+- Added ChangePlanModal component with plan selection UI
+- Added /api/operator-hub/[operatorId]/subscription endpoint (GET, POST, PATCH, DELETE)
+- Added "Add Risk Note" quick action (links to HubSpot)
+- Phase 4 now COMPLETE
 
 ### 2026-01-26
 

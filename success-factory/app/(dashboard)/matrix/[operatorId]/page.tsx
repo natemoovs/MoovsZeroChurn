@@ -357,6 +357,12 @@ function EmailHealthAlert({ operatorId }: { operatorId: string | null }) {
 
 function OverviewTab({ operator }: { operator: OperatorData }) {
   const location = [operator.city, operator.state, operator.country].filter(Boolean).join(", ")
+  const [showChangePlanModal, setShowChangePlanModal] = useState(false)
+
+  const handlePlanChangeSuccess = () => {
+    // Refresh the page to get updated plan info
+    window.location.reload()
+  }
 
   return (
     <div className="space-y-6">
@@ -685,6 +691,28 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
             <History className="h-4 w-4" />
             View Matrix History
           </Link>
+
+          {/* Manage Subscription - opens plan change modal */}
+          {operator.operatorId && (
+            <button
+              onClick={() => setShowChangePlanModal(true)}
+              className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+            >
+              <CreditCardIcon className="h-4 w-4" />
+              Change Plan
+            </button>
+          )}
+
+          {/* Risk Assessment Note - links to HubSpot notes with risk context */}
+          <a
+            href={`https://app.hubspot.com/contacts/8796840/company/${operator.hubspotId}/notes`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <Shield className="h-4 w-4" />
+            Add Risk Note
+          </a>
         </div>
       </div>
 
@@ -746,6 +774,18 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
           </Link>
         </div>
       </div>
+
+      {/* Change Plan Modal */}
+      {operator.operatorId && (
+        <ChangePlanModal
+          operatorId={operator.operatorId}
+          operatorName={operator.name}
+          currentPlan={operator.plan}
+          isOpen={showChangePlanModal}
+          onClose={() => setShowChangePlanModal(false)}
+          onSuccess={handlePlanChangeSuccess}
+        />
+      )}
     </div>
   )
 }
@@ -1551,6 +1591,291 @@ function EditRoleDropdown({
       {(currentRole || "member").replace(/_/g, " ")}
       <Edit3 className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
     </button>
+  )
+}
+
+// ============================================================================
+// Change Plan Modal
+// ============================================================================
+
+interface SubscriptionData {
+  operatorId: string
+  currentSubscription: {
+    id: string
+    lagoId: string
+    planCode: string
+    planName: string | null
+    status: string
+    startedAt: string
+    billingTime: string
+    interval: string | null
+    amountCents: number | null
+    currency: string | null
+  } | null
+  availablePlans: Array<{
+    code: string
+    name: string
+    interval: string
+    amountCents: number
+    currency: string
+  }>
+}
+
+function ChangePlanModal({
+  operatorId,
+  operatorName,
+  currentPlan,
+  isOpen,
+  onClose,
+  onSuccess,
+}: {
+  operatorId: string
+  operatorName: string
+  currentPlan: string | null
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<SubscriptionData | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<string>("")
+
+  useEffect(() => {
+    if (isOpen && operatorId) {
+      setLoading(true)
+      setError(null)
+      fetch(`/api/operator-hub/${operatorId}/subscription`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to load subscription data")
+          return res.json()
+        })
+        .then((result) => {
+          setData(result)
+          setSelectedPlan(result.currentSubscription?.planCode || "")
+          setLoading(false)
+        })
+        .catch((err) => {
+          setError(err.message)
+          setLoading(false)
+        })
+    }
+  }, [isOpen, operatorId])
+
+  const handleChangePlan = async () => {
+    if (!selectedPlan || !data?.currentSubscription) return
+
+    setSaving(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/operator-hub/${operatorId}/subscription`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subscriptionId: data.currentSubscription.id,
+          planCode: selectedPlan,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to change plan")
+      }
+
+      onSuccess()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to change plan")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCreateSubscription = async () => {
+    if (!selectedPlan) return
+
+    setSaving(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/operator-hub/${operatorId}/subscription`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planCode: selectedPlan,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create subscription")
+      }
+
+      onSuccess()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create subscription")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  const formatPrice = (cents: number, currency: string) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
+    }).format(cents / 100)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-bg-primary border-border-default w-full max-w-lg rounded-lg border shadow-xl">
+        <div className="border-border-default flex items-center justify-between border-b p-4">
+          <div>
+            <h2 className="text-content-primary text-lg font-semibold">Change Plan</h2>
+            <p className="text-content-secondary text-sm">{operatorName}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-content-secondary hover:text-content-primary rounded p-1"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+            </div>
+          ) : error && !data ? (
+            <div className="bg-error-50 text-error-700 dark:bg-error-900/30 dark:text-error-400 rounded-md p-4 text-sm">
+              {error}
+            </div>
+          ) : (
+            <>
+              {error && (
+                <div className="bg-error-50 text-error-700 dark:bg-error-900/30 dark:text-error-400 mb-4 rounded-md p-3 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Current Plan */}
+              {data?.currentSubscription && (
+                <div className="bg-bg-secondary mb-4 rounded-lg p-4">
+                  <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">Current Plan</h4>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-content-primary font-medium">
+                        {data.currentSubscription.planName || data.currentSubscription.planCode}
+                      </p>
+                      <p className="text-content-secondary text-sm">
+                        {data.currentSubscription.amountCents && data.currentSubscription.currency
+                          ? `${formatPrice(data.currentSubscription.amountCents, data.currentSubscription.currency)}/${data.currentSubscription.interval}`
+                          : data.currentSubscription.interval || "—"}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                        data.currentSubscription.status === "active"
+                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                          : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                      )}
+                    >
+                      {data.currentSubscription.status}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Plan Selection */}
+              <div>
+                <label className="text-content-primary mb-2 block text-sm font-medium">
+                  {data?.currentSubscription ? "Select New Plan" : "Select Plan"}
+                </label>
+                {data?.availablePlans && data.availablePlans.length > 0 ? (
+                  <div className="space-y-2">
+                    {data.availablePlans.map((plan) => (
+                      <label
+                        key={plan.code}
+                        className={cn(
+                          "border-border-default flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors",
+                          selectedPlan === plan.code
+                            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                            : "hover:bg-bg-secondary"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="plan"
+                            value={plan.code}
+                            checked={selectedPlan === plan.code}
+                            onChange={(e) => setSelectedPlan(e.target.value)}
+                            className="text-primary-600"
+                          />
+                          <div>
+                            <p className="text-content-primary font-medium">{plan.name}</p>
+                            <p className="text-content-tertiary text-xs">{plan.code}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-content-primary font-medium">
+                            {formatPrice(plan.amountCents, plan.currency)}
+                          </p>
+                          <p className="text-content-tertiary text-xs">per {plan.interval}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-content-tertiary text-sm">No plans available</p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="border-border-default flex justify-end gap-3 border-t p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-content-secondary hover:text-content-primary rounded-md px-4 py-2 text-sm font-medium"
+          >
+            Cancel
+          </button>
+          {data?.currentSubscription ? (
+            <button
+              onClick={handleChangePlan}
+              disabled={saving || !selectedPlan || selectedPlan === data.currentSubscription.planCode}
+              className="bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
+            >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Change Plan
+            </button>
+          ) : (
+            <button
+              onClick={handleCreateSubscription}
+              disabled={saving || !selectedPlan}
+              className="bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
+            >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Create Subscription
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 

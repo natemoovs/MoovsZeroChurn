@@ -449,15 +449,170 @@ export async function getBillingHealth(operatorId: string): Promise<BillingHealt
 }
 
 // ============================================================================
+// Plan Management
+// ============================================================================
+
+/**
+ * List all available plans
+ */
+export async function listPlans(
+  page = 1,
+  perPage = 100
+): Promise<{
+  plans: LagoPlan[]
+  meta: { current_page: number; total_pages: number; total_count: number }
+}> {
+  if (!LAGO_API_KEY) {
+    return { plans: [], meta: { current_page: 1, total_pages: 0, total_count: 0 } }
+  }
+
+  const result = await lagoFetch<{
+    plans: LagoPlan[]
+    meta: { current_page: number; total_pages: number; total_count: number }
+  }>(`/plans?page=${page}&per_page=${perPage}`)
+
+  return result
+}
+
+/**
+ * Get a specific plan by code
+ */
+export async function getPlan(planCode: string): Promise<LagoPlan | null> {
+  if (!LAGO_API_KEY) {
+    return null
+  }
+
+  try {
+    const result = await lagoFetch<{ plan: LagoPlan }>(`/plans/${planCode}`)
+    return result.plan
+  } catch (err) {
+    console.log(`Failed to get Lago plan ${planCode}:`, err)
+    return null
+  }
+}
+
+export interface UpdateSubscriptionInput {
+  externalCustomerId: string
+  subscriptionExternalId: string
+  planCode: string
+  name?: string
+}
+
+/**
+ * Update a subscription (change plan)
+ * This terminates the current subscription and creates a new one with the new plan
+ */
+export async function updateSubscription(input: UpdateSubscriptionInput): Promise<LagoSubscription | null> {
+  if (!LAGO_API_KEY) {
+    throw new Error("LAGO_API_KEY is not configured")
+  }
+
+  try {
+    const result = await lagoFetch<{ subscription: LagoSubscription }>(`/subscriptions/${input.subscriptionExternalId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        subscription: {
+          plan_code: input.planCode,
+          name: input.name,
+        },
+      }),
+    })
+    return result.subscription
+  } catch (err) {
+    console.error(`Failed to update subscription:`, err)
+    throw err
+  }
+}
+
+export interface CreateSubscriptionInput {
+  externalCustomerId: string
+  planCode: string
+  externalId?: string
+  name?: string
+  billingTime?: "calendar" | "anniversary"
+}
+
+/**
+ * Create a new subscription for a customer
+ */
+export async function createSubscription(input: CreateSubscriptionInput): Promise<LagoSubscription | null> {
+  if (!LAGO_API_KEY) {
+    throw new Error("LAGO_API_KEY is not configured")
+  }
+
+  try {
+    const result = await lagoFetch<{ subscription: LagoSubscription }>("/subscriptions", {
+      method: "POST",
+      body: JSON.stringify({
+        subscription: {
+          external_customer_id: input.externalCustomerId,
+          plan_code: input.planCode,
+          external_id: input.externalId || `sub_${input.externalCustomerId}_${Date.now()}`,
+          name: input.name,
+          billing_time: input.billingTime || "calendar",
+        },
+      }),
+    })
+    return result.subscription
+  } catch (err) {
+    console.error(`Failed to create subscription:`, err)
+    throw err
+  }
+}
+
+/**
+ * Cancel a subscription
+ */
+export async function cancelSubscription(subscriptionExternalId: string): Promise<LagoSubscription | null> {
+  if (!LAGO_API_KEY) {
+    throw new Error("LAGO_API_KEY is not configured")
+  }
+
+  try {
+    const result = await lagoFetch<{ subscription: LagoSubscription }>(`/subscriptions/${subscriptionExternalId}`, {
+      method: "DELETE",
+    })
+    return result.subscription
+  } catch (err) {
+    console.error(`Failed to cancel subscription:`, err)
+    throw err
+  }
+}
+
+/**
+ * Check if Lago is configured
+ */
+export function isConfigured(): boolean {
+  return !!LAGO_API_KEY
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
 export const lago = {
+  // Configuration
+  isConfigured,
+
+  // Customers
   getCustomer,
   listCustomers,
+
+  // Invoices
   getInvoices,
   getInvoice,
-  getSubscriptions,
   getOverdueInvoices,
+
+  // Subscriptions
+  getSubscriptions,
+  createSubscription,
+  updateSubscription,
+  cancelSubscription,
+
+  // Plans
+  listPlans,
+  getPlan,
+
+  // Analysis
   getBillingHealth,
 }
