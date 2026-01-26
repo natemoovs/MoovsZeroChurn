@@ -633,24 +633,244 @@ Once we start building, I'll create exportable JSON templates for each workflow 
 
 ---
 
+## n8n AI Prompts
+
+> Copy-paste these prompts into n8n AI to create each workflow quickly.
+
+### Endpoint Status - ALL READY! ✅
+
+| Integration | Endpoint | Status |
+|-------------|----------|--------|
+| **Stripe** | `/api/webhooks/n8n/stripe` | ✅ Ready |
+| **HubSpot** | `/api/webhooks/n8n/hubspot` | ✅ Ready |
+| **Intercom** | `/api/webhooks/n8n/intercom` | ✅ Ready |
+| **Calendly** | `/api/webhooks/n8n/calendly` | ✅ Ready |
+| **Quo (Phone)** | `/api/webhooks/n8n/quo` | ✅ Ready |
+| **Snowflake** | `/api/webhooks/n8n/usage-metrics` | ✅ Ready |
+| **Slack** | Outbound only | ✅ Ready (use Slack node) |
+| **Gmail** | Outbound only | ✅ Ready (use Gmail node) |
+
+**All endpoints built!** Just create the n8n workflows using the prompts below.
+
+---
+
+### Prompt 1: Stripe → Success Factory ✅ DONE
+
+```
+Create a workflow that:
+
+1. Triggers on Stripe webhook events:
+   - invoice.payment_failed
+   - invoice.payment_succeeded
+   - customer.subscription.updated
+   - customer.subscription.deleted
+   - charge.dispute.created
+
+2. For each event, extract:
+   - Event type (map to: payment_failed, payment_succeeded, subscription_updated, subscription_canceled, dispute_created)
+   - Customer ID
+   - Customer email
+   - Amount (convert from cents to dollars)
+   - MRR (for subscription events, calculate monthly value)
+   - Failure message (for payment_failed)
+   - Cancel reason (for subscription_canceled)
+
+3. Send POST request to:
+   URL: https://success-factory.vercel.app/api/webhooks/n8n/stripe
+   Headers: x-webhook-secret = {{$env.N8N_WEBHOOK_SECRET}}
+   Body: { "event": "<type>", "customerId": "<id>", "customerEmail": "<email>", "amount": <dollars>, "mrr": <mrr>, "failureMessage": "<msg>", "cancelReason": "<reason>" }
+
+Use Stripe Trigger node and HTTP Request node.
+```
+
+---
+
+### Prompt 2: HubSpot → Success Factory
+
+```
+Create a workflow that:
+
+1. Triggers on HubSpot webhook events:
+   - company.propertyChange (when company properties update)
+   - deal.propertyChange (when deal stage changes)
+
+2. For company changes, extract:
+   - Company ID, Company name, Changed properties array
+
+3. For deal stage changes, extract:
+   - Deal ID, Associated company ID, Previous stage, New stage, Deal amount
+
+4. Send POST request to:
+   URL: https://success-factory.vercel.app/api/webhooks/n8n/hubspot
+   Headers: x-webhook-secret = {{$env.N8N_WEBHOOK_SECRET}}
+   Body: { "event": "<type>", "companyId": "<id>", "companyName": "<name>", "dealId": "<deal_id>", "previousStage": "<prev>", "newStage": "<new>", "changedProperties": [...] }
+
+Use HubSpot Trigger node and HTTP Request node.
+```
+
+---
+
+### Prompt 3: Intercom → Success Factory
+
+```
+Create a workflow that:
+
+1. Triggers on Intercom webhook events:
+   - conversation.created (new support ticket)
+   - conversation.closed (ticket resolved)
+   - conversation.rated (CSAT rating)
+
+2. For each event, extract:
+   - Conversation ID, Contact email, Contact name, Company name
+   - Subject, Rating (1-5), Response time, Message count
+
+3. Send POST request to:
+   URL: https://success-factory.vercel.app/api/webhooks/n8n/intercom
+   Headers: x-webhook-secret = {{$env.N8N_WEBHOOK_SECRET}}
+   Body: { "event": "<type>", "conversationId": "<id>", "contactEmail": "<email>", "companyName": "<company>", "rating": <1-5>, "responseTimeMinutes": <mins> }
+
+Use Intercom Trigger node and HTTP Request node.
+```
+
+---
+
+### Prompt 4: Calendly → Success Factory
+
+```
+Create a workflow that:
+
+1. Triggers on Calendly webhook events:
+   - invitee.created (meeting scheduled)
+   - invitee.canceled (meeting canceled)
+
+2. For each event, extract:
+   - Event ID, Invitee email, Invitee name
+   - Meeting type, Scheduled time, Duration, Cancel reason (if canceled)
+
+3. Send POST request to:
+   URL: https://success-factory.vercel.app/api/webhooks/n8n/calendly
+   Headers: x-webhook-secret = {{$env.N8N_WEBHOOK_SECRET}}
+   Body: { "event": "meeting_scheduled" or "meeting_canceled", "inviteeEmail": "<email>", "inviteeName": "<name>", "meetingType": "<type>", "scheduledAt": "<iso_time>", "durationMinutes": <mins>, "cancelReason": "<reason>" }
+
+Use Calendly Trigger node and HTTP Request node.
+```
+
+---
+
+### Prompt 5: Quo (Phone - formerly OpenPhone) → Success Factory
+
+```
+Create a workflow that:
+
+1. Triggers on Quo/OpenPhone webhook events:
+   - call.completed (call ended)
+   - call.missed (missed call)
+   - message.received (SMS received)
+   - voicemail.received
+
+2. For call events, extract:
+   - Call ID, From number, To number, Duration (seconds)
+   - Direction (inbound/outbound), Recording URL, Outcome
+
+3. For SMS, extract:
+   - Message ID, From/To numbers, Message body
+
+4. Send POST request to:
+   URL: https://success-factory.vercel.app/api/webhooks/n8n/quo
+   Headers: x-webhook-secret = {{$env.N8N_WEBHOOK_SECRET}}
+   Body: { "event": "<type>", "fromNumber": "<from>", "toNumber": "<to>", "durationSeconds": <secs>, "direction": "<dir>", "recordingUrl": "<url>", "messageBody": "<sms_text>" }
+
+Use HTTP Request node with Quo API credentials.
+```
+
+---
+
+### Prompt 6: Snowflake Daily Sync → Success Factory
+
+```
+Create a workflow that:
+
+1. Triggers on schedule: Every day at 5 AM UTC
+
+2. Run Snowflake query:
+   SELECT MOOVS_COMPANY_NAME, COMPANY_ID, ALL_TRIPS_COUNT,
+          DAYS_SINCE_LAST_IDENTIFY, CHURN_STATUS, TOTAL_MRR_NUMERIC, LAGO_PLAN_NAME
+   FROM <schema>.<table>
+   WHERE MOOVS_COMPANY_NAME IS NOT NULL
+
+3. For each row, POST to:
+   URL: https://success-factory.vercel.app/api/webhooks/n8n/usage-metrics
+   Headers: x-webhook-secret = {{$env.N8N_WEBHOOK_SECRET}}
+   Body: { "companyName": "<name>", "totalTrips": <trips>, "daysSinceLastLogin": <days>, "churnStatus": "<status>", "mrr": <mrr>, "plan": "<plan>" }
+
+Use Schedule Trigger, Snowflake node, SplitInBatches, and HTTP Request node.
+```
+
+---
+
+### Prompt 7: Slack Alerts (Outbound from Success Factory)
+
+```
+Create a workflow that:
+
+1. Triggers on webhook: https://moovs.app.n8n.cloud/webhook/slack-alert
+
+2. Expects POST body:
+   { "alertType": "<type>", "companyName": "<name>", "urgency": "critical|high|medium", "message": "<msg>" }
+
+3. Post to Slack #cs-alerts channel:
+   - 🚨 for critical
+   - ⚠️ for high
+   - ℹ️ for medium
+   - Include company name and message
+
+Use Webhook Trigger and Slack node (Swoop Helper BOT credentials).
+```
+
+---
+
+### Prompt 8: Daily CSM Digest Email
+
+```
+Create a workflow that:
+
+1. Triggers on schedule: Every day at 8 AM
+
+2. Fetch from Success Factory:
+   - GET /api/alerts/prioritized?limit=10
+   - GET /api/dashboard/stats
+
+3. Format email with:
+   - Summary stats
+   - Top priority alerts
+   - Link to dashboard
+
+4. Send via Gmail to CSM team
+
+Use Schedule Trigger, HTTP Request nodes, and Gmail node.
+```
+
+---
+
 ## Questions to Resolve
 
-1. **Quo API** - What is this service? Could be valuable.
+1. ~~**Quo API**~~ - ✅ Phone system (formerly OpenPhone) - for call/SMS tracking
 2. **Firestream** - Analytics service?
 3. **blend.ai** - AI service we could leverage?
 4. **Apify** - Web scraping for competitor intel?
-5. **Snowflake schema** - What table powers Metabase query 948? (Snowflake = raw data for Metabase)
+5. **Snowflake schema** - What table powers Metabase query 948?
 6. ~~**n8n hosting**~~ - ✅ Using n8n Cloud: `https://moovs.app.n8n.cloud`
 
 ---
 
 ## Next Steps
 
-1. Review this plan and prioritize workflows
-2. Get Snowflake schema documentation
-3. Set up webhook URLs in n8n
-4. Start with Phase 1: Stripe integration (highest ROI)
+1. ✅ Build Stripe webhook endpoint - DONE
+2. 🔨 Build remaining webhook endpoints (HubSpot, Intercom, Calendly, Quo, Snowflake)
+3. 🔜 Create each n8n workflow using prompts above
+4. 🔜 Test with real data
+5. 🔜 Activate workflows
 
 ---
 
-*Sleep well! We'll tackle this tomorrow. 🌙*
+*Get some sleep! Endpoints will be ready when you wake up. 🌙*
