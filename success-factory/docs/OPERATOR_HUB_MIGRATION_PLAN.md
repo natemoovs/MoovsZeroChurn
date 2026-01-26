@@ -299,11 +299,11 @@ lib/
 - [x] Update Risk Details (links to HubSpot notes)
 - [x] Update Postgres Plan (Lago API integration with modal UI)
 
-### Phase 5: Polish & Enhancements 🔄 IN PROGRESS
+### Phase 5: Polish & Enhancements ✅ MOSTLY COMPLETE
 
 - [ ] Matrix History view (change log)
-- [ ] Enhanced email search
-- [x] Stripe live data integration (balance, payouts)
+- [x] Enhanced email search (search across all communications)
+- [x] Stripe live data integration (balance, payouts, charges)
 - [ ] Bulk operations
 
 ---
@@ -341,6 +341,18 @@ lib/
 - Added /api/operator-hub/[operatorId]/subscription endpoint (GET, POST, PATCH, DELETE)
 - Added "Add Risk Note" quick action (links to HubSpot)
 - Phase 4 now COMPLETE
+
+### 2026-01-26 (Update 4)
+- Added Stripe live data integration:
+  - StripeLiveDataCard component with expandable UI
+  - Shows balance (available/pending), recent payouts, and charges
+  - Account requirements warnings
+  - /api/operator-hub/[operatorId]/stripe endpoint
+- Added enhanced email search:
+  - Search input in EmailsTab
+  - Searches across email subjects, call notes, meeting titles
+  - Result count display
+- Phase 5 now mostly complete
 
 ### 2026-01-26
 
