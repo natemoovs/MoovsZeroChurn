@@ -313,6 +313,10 @@ model HubSpotCompany {
   // Contacts (primary)
   primaryContactName  String?
   primaryContactEmail String?
+  phone               String?  // Company phone number
+
+  // CSM Engagement tracking (separate from product usage)
+  lastActivityDate    DateTime? // Last CSM touchpoint (call, meeting, email)
 
   // Metadata
   industry            String?
