@@ -305,8 +305,15 @@ function calculateWeightedHealthScore(
   // =========================================================================
   // EARLY DETECTION: Is this account churned or severely inactive?
   // This affects what positive signals we can add
+  // SOURCE OF TRUTH: LAGO_WATERFALL_EVENT (billingStatus)
+  // DO NOT use HS_D_CHURN_STATUS - it's a deal field and unreliable!
   // =========================================================================
-  const isChurned = mbData?.churnStatus?.toLowerCase().includes("churn") || false
+  const billingEvent = mbData?.billingStatus?.toLowerCase() || ""
+
+  // Only Lago's billing event determines churn status
+  // Values: new, churn, expansion_moovs, contraction_moovs, reactivation, plan_change
+  const isChurned = billingEvent === "churn" || billingEvent.includes("terminated")
+
   const _isInactive = mbData?.engagementStatus?.toLowerCase().includes("inactive") || false // Used for future engagement analysis
   const isSeverelyInactive = (mbData?.daysSinceLastActivity ?? 0) > 90
 
@@ -710,21 +717,32 @@ function deduplicateMetabaseRecords(
       const scored = group.map((record) => {
         let score = 0
 
-        // CRITICAL: Active subscriptions MUST win over cancelled ones
-        const isChurned =
-          record.churnStatus?.toLowerCase().includes("churn") ||
-          record.churnStatus?.toLowerCase().includes("cancel") ||
-          record.billingStatus?.toLowerCase().includes("churn") ||
-          record.billingStatus?.toLowerCase().includes("cancel") ||
-          record.billingStatus?.toLowerCase().includes("terminated")
+        // LAGO_WATERFALL_EVENT is the SOURCE OF TRUTH for subscription status
+        // Values: new, churn, expansion_moovs, contraction_moovs, reactivation, plan_change
+        const billingEvent = record.billingStatus?.toLowerCase() || ""
+        const isActiveSubscription =
+          billingEvent === "new" ||
+          billingEvent === "expansion_moovs" ||
+          billingEvent === "reactivation" ||
+          billingEvent.includes("expansion")
 
-        // Massive boost for active accounts with MRR
-        if (record.mrr && record.mrr > 0 && !isChurned) {
-          score += 500 // Active paying customer - almost always the right record
+        const isChurnedSubscription =
+          billingEvent === "churn" ||
+          billingEvent.includes("terminated") ||
+          billingEvent.includes("cancel")
+
+        // Note: "plan_change" and "contraction_moovs" are neutral - they changed but still active
+        // HS_D_CHURN_STATUS is a deal field and often stale - don't rely on it for deduplication
+
+        // Massive boost for active subscriptions
+        if (isActiveSubscription && record.mrr && record.mrr > 0) {
+          score += 500 // Definitely the right record
+        } else if (record.mrr && record.mrr > 0 && !isChurnedSubscription) {
+          score += 400 // Has MRR and not marked as churned
         }
 
-        // Heavily penalize churned/cancelled records
-        if (isChurned) {
+        // Heavily penalize actually churned subscriptions (from Lago, not HubSpot deal)
+        if (isChurnedSubscription) {
           score -= 200
         }
 
@@ -911,22 +929,20 @@ export async function POST(request: NextRequest) {
       try {
         // =====================================================================
         // FILTER: Skip churned/terminated accounts - they shouldn't be in active portfolio
+        // SOURCE OF TRUTH: LAGO_WATERFALL_EVENT (billingStatus) - NOT HS_D_CHURN_STATUS
         // =====================================================================
-        const churnStatus = mbData.churnStatus?.toLowerCase() || ""
-        const billingStatus = mbData.billingStatus?.toLowerCase() || ""
+        const billingEvent = mbData.billingStatus?.toLowerCase() || ""
 
-        const isChurned =
-          churnStatus.includes("churn") ||
-          churnStatus.includes("cancelled") ||
-          churnStatus.includes("canceled")
-        const isTerminated =
-          billingStatus.includes("terminated") ||
-          billingStatus.includes("cancelled") ||
-          billingStatus.includes("canceled")
+        // Only skip if Lago says churned/terminated AND no MRR
+        const isLagoChurned =
+          billingEvent === "churn" ||
+          billingEvent.includes("terminated") ||
+          billingEvent.includes("cancelled") ||
+          billingEvent.includes("canceled")
 
-        // Skip if churned AND has no MRR (fully dead account)
-        // Keep if churned but still has MRR (might be pending cancellation)
-        if ((isChurned || isTerminated) && (!mbData.mrr || mbData.mrr <= 0)) {
+        // Skip if Lago says churned AND has no MRR (fully dead account)
+        // Keep if has MRR (active paying customer, regardless of old deal status)
+        if (isLagoChurned && (!mbData.mrr || mbData.mrr <= 0)) {
           skippedChurned++
           continue
         }
