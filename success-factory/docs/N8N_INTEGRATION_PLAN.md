@@ -560,15 +560,18 @@ model WebhookSubscription {
 ## Environment Variables Needed
 
 ```bash
+# n8n Cloud Instance
+N8N_CLOUD_URL=https://moovs.app.n8n.cloud
+
 # n8n Webhook URLs (set after creating workflows)
-N8N_WEBHOOK_BASE_URL=https://your-n8n-instance.com/webhook
+N8N_WEBHOOK_BASE_URL=https://moovs.app.n8n.cloud/webhook
 
 # Webhook secrets for validation
 N8N_WEBHOOK_SECRET=your-secret-here
 
 # Optional: n8n API for programmatic workflow management
 N8N_API_KEY=your-api-key
-N8N_API_URL=https://your-n8n-instance.com/api/v1
+N8N_API_URL=https://moovs.app.n8n.cloud/api/v1
 ```
 
 ---
@@ -630,7 +633,7 @@ Once we start building, I'll create exportable JSON templates for each workflow 
 3. **blend.ai** - AI service we could leverage?
 4. **Apify** - Web scraping for competitor intel?
 5. **Snowflake schema** - What tables/columns are available?
-6. **n8n hosting** - Self-hosted or n8n cloud?
+6. ~~**n8n hosting**~~ - ✅ Using n8n Cloud: `https://moovs.app.n8n.cloud`
 
 ---
 
