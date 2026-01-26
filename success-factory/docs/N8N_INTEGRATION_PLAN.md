@@ -239,20 +239,27 @@ This document outlines the complete integration strategy for connecting Success 
 
 ### 1.4 Snowflake → Success Factory
 
-**Purpose:** Replace Metabase for product usage data
+**Context:** Snowflake is the raw data source that Metabase queries. We can either:
+1. Keep using Metabase (queries already built)
+2. Go direct to Snowflake via n8n (real-time, no middleman)
 
-**Queries to Run:**
+**Recommendation:** Start with Metabase (already working), then migrate to direct Snowflake queries for real-time data.
+
+**Current Metabase Query ID:** 948 (used throughout Success Factory)
+
+**Equivalent Snowflake Query (to recreate):**
 ```sql
--- Daily usage metrics per company
+-- Daily usage metrics per company (matches Metabase query 948)
 SELECT
-  company_name,
-  company_id,
-  COUNT(*) as total_trips,
-  MAX(last_login) as last_activity,
-  DATEDIFF(day, MAX(last_login), CURRENT_DATE()) as days_since_login,
-  churn_status
-FROM usage_events
-GROUP BY company_name, company_id
+  MOOVS_COMPANY_NAME as company_name,
+  COMPANY_ID as company_id,
+  ALL_TRIPS_COUNT as total_trips,
+  DAYS_SINCE_LAST_IDENTIFY as days_since_login,
+  CHURN_STATUS as churn_status,
+  TOTAL_MRR_NUMERIC as mrr,
+  LAGO_PLAN_NAME as plan
+FROM <schema>.<table>  -- Need to confirm table name
+WHERE ...
 ```
 
 **n8n Workflow:**
@@ -632,7 +639,7 @@ Once we start building, I'll create exportable JSON templates for each workflow 
 2. **Firestream** - Analytics service?
 3. **blend.ai** - AI service we could leverage?
 4. **Apify** - Web scraping for competitor intel?
-5. **Snowflake schema** - What tables/columns are available?
+5. **Snowflake schema** - What table powers Metabase query 948? (Snowflake = raw data for Metabase)
 6. ~~**n8n hosting**~~ - ✅ Using n8n Cloud: `https://moovs.app.n8n.cloud`
 
 ---
