@@ -388,7 +388,7 @@ interface StripeCustomer {
 }
 
 async function fetchStripeData(): Promise<StripeCustomer[]> {
-  if (!process.env.STRIPE_SECRET_KEY) {
+  if (!process.env.STRIPE_PLATFORM_SECRET_KEY) {
     return []
   }
 

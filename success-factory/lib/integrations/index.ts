@@ -140,7 +140,7 @@ export function getConfiguredIntegrations(): {
 } {
   return {
     hubspot: !!process.env.HUBSPOT_ACCESS_TOKEN,
-    stripe: !!process.env.STRIPE_SECRET_KEY,
+    stripe: !!process.env.STRIPE_PLATFORM_SECRET_KEY,
     notion: !!process.env.NOTION_API_KEY,
     metabase: !!(process.env.METABASE_URL && process.env.METABASE_API_KEY),
     lago: !!process.env.LAGO_API_KEY,
@@ -156,7 +156,7 @@ export function getMissingIntegrations(): string[] {
   const missing: string[] = []
 
   if (!configured.hubspot) missing.push("HUBSPOT_ACCESS_TOKEN")
-  if (!configured.stripe) missing.push("STRIPE_SECRET_KEY")
+  if (!configured.stripe) missing.push("STRIPE_PLATFORM_SECRET_KEY")
   if (!configured.notion) missing.push("NOTION_API_KEY")
   if (!configured.metabase) {
     if (!process.env.METABASE_URL) missing.push("METABASE_URL")

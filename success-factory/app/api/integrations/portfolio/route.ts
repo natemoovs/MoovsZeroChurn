@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
       segment,
       configured: {
         hubspot: true, // Data comes from synced DB
-        stripe: !!process.env.STRIPE_SECRET_KEY,
+        stripe: !!process.env.STRIPE_PLATFORM_SECRET_KEY,
         metabase: !!process.env.METABASE_URL,
       },
       sync: {

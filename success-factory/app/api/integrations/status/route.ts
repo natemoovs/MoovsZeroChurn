@@ -13,8 +13,8 @@ export async function GET() {
     stripe: {
       name: "Stripe",
       description: "Payment data, subscriptions, invoices",
-      configured: !!process.env.STRIPE_SECRET_KEY,
-      envVar: "STRIPE_SECRET_KEY",
+      configured: !!process.env.STRIPE_PLATFORM_SECRET_KEY,
+      envVar: "STRIPE_PLATFORM_SECRET_KEY",
       docsUrl: "https://dashboard.stripe.com/apikeys",
     },
     notion: {

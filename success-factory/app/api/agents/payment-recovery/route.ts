@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: "STRIPE_SECRET_KEY not configured" }, { status: 500 })
+  if (!process.env.STRIPE_PLATFORM_SECRET_KEY) {
+    return NextResponse.json({ error: "STRIPE_PLATFORM_SECRET_KEY not configured" }, { status: 500 })
   }
 
   console.log("[Payment Recovery Agent] Starting payment failure scan...")

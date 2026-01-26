@@ -265,7 +265,7 @@ async function fetchUsageData(companyName: string): Promise<Customer360["usage"]
 }
 
 async function fetchBillingData(domain: string): Promise<Customer360["billing"]> {
-  if (!process.env.STRIPE_SECRET_KEY) {
+  if (!process.env.STRIPE_PLATFORM_SECRET_KEY) {
     return null
   }
 
