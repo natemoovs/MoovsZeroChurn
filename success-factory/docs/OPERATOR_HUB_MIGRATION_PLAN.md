@@ -73,29 +73,27 @@ From the Retool export, these Snowflake tables are referenced:
 | Quick Actions | OverviewTab | Basic actions |
 | Email Health Alert | OverviewTab | Sendgrid status |
 
-### ❌ Missing / Broken Features
+### ✅ Fixed Issues
 
-#### Critical - Data Not Loading
-1. **operatorId not returned from accounts API**
+1. **operatorId now returned from accounts API** ✅
    - File: `/api/integrations/accounts/[id]/route.ts`
-   - Fix: Add `operatorId` and `stripeAccountId` to response
-   - Impact: Features tab, Quick Actions, all platform data queries
+   - Added `operatorId` and `stripeAccountId` to response
 
-2. **Copy Operator ID / Stripe ID not working**
-   - Issue: `operator.operatorId` is null
-   - Depends on: Fix #1 above
+2. **Copy Operator ID / Stripe ID working** ✅
+   - Now properly displays and copies IDs
 
-3. **HubSpot link goes wrong place**
-   - Current: `/contacts/8796840/company/{id}`
-   - Should verify correct format for deals vs companies
+3. **HubSpot link label fixed** ✅
+   - Changed from "Open HubSpot Deal" to "View in HubSpot" (links to company)
+
+### ❌ Missing / Broken Features
 
 #### Missing Features from Retool
 
-| Feature | Priority | Description |
-|---------|----------|-------------|
-| **Promo Codes** | High | View/search promo codes |
-| **Price Zones** | High | View pricing zones |
-| **Business Rules** | High | View configured rules |
+| Feature | Priority | Description | Status |
+|---------|----------|-------------|--------|
+| **Promo Codes** | High | View/search promo codes | ✅ Done |
+| **Price Zones** | High | View pricing zones | ✅ Done |
+| **Business Rules** | High | View configured rules | ✅ Done |
 | **Contacts** | Medium | Platform contacts (not HubSpot) |
 | **Bank Account Info** | Medium | Stripe Financial Connections |
 | **Sendgrid Email Search** | Medium | Search email logs |
