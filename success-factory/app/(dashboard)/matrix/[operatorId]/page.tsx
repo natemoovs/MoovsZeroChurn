@@ -914,6 +914,14 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
         />
       </div>
 
+      {/* Stripe Connected Account Live Data */}
+      {operator.stripeAccountId && operator.operatorId && (
+        <StripeLiveDataCard
+          stripeAccountId={operator.stripeAccountId}
+          operatorId={operator.operatorId}
+        />
+      )}
+
       {/* Charges Table */}
       <div className="card-sf overflow-hidden">
         <div className="border-border-default border-b px-4 py-3">
@@ -1002,6 +1010,287 @@ interface RiskApiResponse {
   avg_transaction_amount: number | null
   last_failed_payment_date: string | null
   risk_level: "low" | "medium" | "high" | "unknown"
+}
+
+// ============================================================================
+// Stripe Live Data Component
+// ============================================================================
+
+interface StripeLiveData {
+  operatorId: string
+  stripeAccountId: string
+  account: {
+    id: string
+    businessName: string | null
+    email: string | null
+    country: string | null
+    defaultCurrency: string | null
+    chargesEnabled: boolean
+    payoutsEnabled: boolean
+    detailsSubmitted: boolean
+    createdAt: string
+    requirements: {
+      currentlyDue: string[]
+      pastDue: string[]
+      disabledReason: string | null
+    }
+  }
+  balance: {
+    available: number
+    pending: number
+    total: number
+    currency: string
+  }
+  payouts: Array<{
+    id: string
+    amount: number
+    currency: string
+    status: string
+    arrivalDate: string
+    createdAt: string
+  }>
+  charges: {
+    recent: Array<{
+      id: string
+      amount: number
+      currency: string
+      status: string
+      description: string | null
+      createdAt: string
+      paymentMethod: { brand: string; last4: string } | null
+    }>
+    stats: {
+      totalCount: number
+      successCount: number
+      totalVolume: number
+      avgAmount: number
+      currency: string
+    }
+  }
+}
+
+function StripeLiveDataCard({ stripeAccountId, operatorId }: { stripeAccountId: string; operatorId: string }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<StripeLiveData | null>(null)
+  const [expanded, setExpanded] = useState(false)
+
+  useEffect(() => {
+    if (!stripeAccountId || !operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operatorId}/stripe?stripeAccountId=${stripeAccountId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch Stripe data")
+        return res.json()
+      })
+      .then((result) => {
+        setData(result)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [stripeAccountId, operatorId])
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(amount / 100)
+  }
+
+  if (loading) {
+    return (
+      <div className="card-sf p-4">
+        <div className="flex items-center gap-3">
+          <Loader2 className="text-primary-500 h-5 w-5 animate-spin" />
+          <span className="text-content-secondary text-sm">Loading Stripe data...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="card-sf p-4">
+        <div className="flex items-center gap-3">
+          <CreditCard className="text-content-tertiary h-5 w-5" />
+          <div>
+            <p className="text-content-primary text-sm font-medium">Stripe Connected Account</p>
+            <p className="text-content-tertiary text-xs">{error || "Data not available"}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="card-sf overflow-hidden">
+      {/* Header - always visible */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="hover:bg-bg-secondary flex w-full items-center justify-between p-4 transition-colors"
+      >
+        <div className="flex items-center gap-4">
+          <div className="bg-primary-100 dark:bg-primary-900/30 rounded-lg p-2">
+            <CreditCard className="text-primary-600 dark:text-primary-400 h-5 w-5" />
+          </div>
+          <div className="text-left">
+            <p className="text-content-primary text-sm font-medium">
+              Stripe Balance: {formatCurrency(data.balance.available, data.balance.currency)}
+            </p>
+            <p className="text-content-secondary text-xs">
+              {data.balance.pending > 0 && `${formatCurrency(data.balance.pending, data.balance.currency)} pending • `}
+              {data.account.chargesEnabled ? "Charges enabled" : "Charges disabled"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {data.account.requirements.pastDue.length > 0 && (
+            <span className="bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400 rounded-full px-2 py-0.5 text-xs font-medium">
+              Action Required
+            </span>
+          )}
+          <ChevronRight
+            className={cn(
+              "text-content-tertiary h-5 w-5 transition-transform",
+              expanded && "rotate-90"
+            )}
+          />
+        </div>
+      </button>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div className="border-border-default border-t">
+          {/* Balance & Account Status */}
+          <div className="grid gap-4 p-4 sm:grid-cols-3">
+            <div className="bg-bg-secondary rounded-lg p-3">
+              <p className="text-content-tertiary text-xs">Available Balance</p>
+              <p className="text-content-primary text-lg font-semibold">
+                {formatCurrency(data.balance.available, data.balance.currency)}
+              </p>
+            </div>
+            <div className="bg-bg-secondary rounded-lg p-3">
+              <p className="text-content-tertiary text-xs">Pending Balance</p>
+              <p className="text-content-primary text-lg font-semibold">
+                {formatCurrency(data.balance.pending, data.balance.currency)}
+              </p>
+            </div>
+            <div className="bg-bg-secondary rounded-lg p-3">
+              <p className="text-content-tertiary text-xs">Recent Volume ({data.charges.stats.totalCount} charges)</p>
+              <p className="text-content-primary text-lg font-semibold">
+                {formatCurrency(data.charges.stats.totalVolume, data.charges.stats.currency)}
+              </p>
+            </div>
+          </div>
+
+          {/* Recent Payouts */}
+          {data.payouts.length > 0 && (
+            <div className="border-border-default border-t px-4 py-3">
+              <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">Recent Payouts</h4>
+              <div className="space-y-2">
+                {data.payouts.slice(0, 5).map((payout) => (
+                  <div key={payout.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          payout.status === "paid"
+                            ? "bg-success-500"
+                            : payout.status === "pending" || payout.status === "in_transit"
+                              ? "bg-warning-500"
+                              : "bg-error-500"
+                        )}
+                      />
+                      <span className="text-content-primary">
+                        {formatCurrency(payout.amount, payout.currency)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-content-tertiary text-xs capitalize">{payout.status}</span>
+                      <span className="text-content-tertiary text-xs">
+                        {new Date(payout.arrivalDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recent Charges */}
+          {data.charges.recent.length > 0 && (
+            <div className="border-border-default border-t px-4 py-3">
+              <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">Recent Charges</h4>
+              <div className="space-y-2">
+                {data.charges.recent.slice(0, 5).map((charge) => (
+                  <div key={charge.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          charge.status === "succeeded" ? "bg-success-500" : "bg-error-500"
+                        )}
+                      />
+                      <span className="text-content-primary">
+                        {formatCurrency(charge.amount, charge.currency)}
+                      </span>
+                      {charge.paymentMethod && (
+                        <span className="text-content-tertiary text-xs">
+                          {charge.paymentMethod.brand} •••• {charge.paymentMethod.last4}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-content-tertiary text-xs">
+                      {new Date(charge.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Requirements Warning */}
+          {data.account.requirements.pastDue.length > 0 && (
+            <div className="border-border-default bg-error-50 dark:bg-error-950/30 border-t p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="text-error-600 dark:text-error-400 mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="text-error-700 dark:text-error-400 text-sm font-medium">Action Required</p>
+                  <p className="text-error-600 dark:text-error-500 mt-1 text-xs">
+                    {data.account.requirements.pastDue.length} requirement(s) past due.{" "}
+                    {data.account.requirements.disabledReason && (
+                      <>Reason: {data.account.requirements.disabledReason}</>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer Links */}
+          <div className="border-border-default flex items-center justify-between border-t p-4">
+            <span className="text-content-tertiary text-xs">
+              Account: {data.account.id.slice(0, 20)}...
+            </span>
+            <a
+              href={`https://dashboard.stripe.com/connect/accounts/${data.account.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 flex items-center gap-1 text-xs font-medium"
+            >
+              View in Stripe <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function RiskTab({ operator }: { operator: OperatorData }) {
