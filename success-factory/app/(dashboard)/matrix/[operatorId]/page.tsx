@@ -36,6 +36,12 @@ import {
   History,
   CreditCard as CreditCardIcon,
   Edit3,
+  Tag,
+  MapPin,
+  Zap,
+  Percent,
+  Landmark,
+  Receipt,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -617,7 +623,7 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
             className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
           >
             <ExternalLink className="h-4 w-4" />
-            Open HubSpot Deal
+            View in HubSpot
           </a>
 
           {/* Copy Actions */}
@@ -1189,11 +1195,90 @@ interface MembersApiResponse {
   }
 }
 
+interface PlatformDataApiResponse {
+  operatorId: string
+  promoCodes: Array<{
+    id: string
+    code: string
+    description: string | null
+    discountType: string | null
+    discountValue: number | null
+    validFrom: string | null
+    validUntil: string | null
+    usageLimit: number | null
+    timesUsed: number | null
+    isActive: boolean | null
+    createdAt: string | null
+  }>
+  priceZones: Array<{
+    id: string
+    name: string | null
+    type: string | null
+    baseFare: number | null
+    perMileRate: number | null
+    perMinuteRate: number | null
+    minimumFare: number | null
+    createdAt: string | null
+  }>
+  rules: Array<{
+    id: string
+    name: string | null
+    type: string | null
+    conditions: string | null
+    actions: string | null
+    isActive: boolean | null
+    priority: number | null
+    createdAt: string | null
+  }>
+  contacts: Array<{
+    id: string
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+    phone: string | null
+    companyName: string | null
+    notes: string | null
+    createdAt: string | null
+  }>
+  bankAccounts: Array<{
+    id: string
+    institutionName: string | null
+    accountName: string | null
+    accountType: string | null
+    lastFour: string | null
+    status: string | null
+    createdAt: string | null
+  }>
+  subscriptionLog: Array<{
+    id: string
+    eventType: string | null
+    planName: string | null
+    previousPlan: string | null
+    amount: number | null
+    eventDate: string | null
+    notes: string | null
+  }>
+  stats: {
+    totalPromoCodes: number
+    activePromoCodes: number
+    totalZones: number
+    totalRules: number
+    activeRules: number
+    totalContacts: number
+    totalBankAccounts: number
+    totalSubscriptionEvents: number
+  }
+}
+
 function FeaturesTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<MembersApiResponse | null>(null)
+  const [platformData, setPlatformData] = useState<PlatformDataApiResponse | null>(null)
   const [activeSection, setActiveSection] = useState<"members" | "drivers" | "vehicles">("members")
+  const [configSection, setConfigSection] = useState<
+    "promos" | "zones" | "rules" | "contacts" | "bank" | "subscriptions"
+  >("promos")
 
   useEffect(() => {
     if (!operator.operatorId) {
@@ -1201,13 +1286,18 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
       return
     }
 
-    fetch(`/api/operator-hub/${operator.operatorId}/members`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch platform data")
-        return res.json()
-      })
-      .then((data) => {
-        setData(data)
+    // Fetch both members and platform data in parallel
+    Promise.all([
+      fetch(`/api/operator-hub/${operator.operatorId}/members`)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null),
+      fetch(`/api/operator-hub/${operator.operatorId}/platform-data`)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null),
+    ])
+      .then(([membersData, configData]) => {
+        setData(membersData)
+        setPlatformData(configData)
         setLoading(false)
       })
       .catch((err) => {
@@ -1431,6 +1521,391 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                     {vehicle.capacity && (
                       <span className="text-content-secondary text-sm">
                         {vehicle.capacity} seats
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Platform Configuration */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default flex border-b">
+          {[
+            {
+              key: "promos",
+              label: "Promos",
+              count: platformData?.promoCodes.length || 0,
+              icon: Tag,
+            },
+            {
+              key: "zones",
+              label: "Zones",
+              count: platformData?.priceZones.length || 0,
+              icon: MapPin,
+            },
+            {
+              key: "rules",
+              label: "Rules",
+              count: platformData?.rules.length || 0,
+              icon: Zap,
+            },
+            {
+              key: "contacts",
+              label: "Contacts",
+              count: platformData?.contacts?.length || 0,
+              icon: Building2,
+            },
+            {
+              key: "bank",
+              label: "Bank",
+              count: platformData?.bankAccounts?.length || 0,
+              icon: Landmark,
+            },
+            {
+              key: "subscriptions",
+              label: "History",
+              count: platformData?.subscriptionLog?.length || 0,
+              icon: Receipt,
+            },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setConfigSection(tab.key as typeof configSection)}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
+                configSection === tab.key
+                  ? "border-primary-500 text-primary-600 dark:text-primary-400 border-b-2 bg-white dark:bg-transparent"
+                  : "text-content-secondary hover:text-content-primary"
+              )}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
+
+        {/* Promo Codes Section */}
+        {configSection === "promos" && (
+          <div>
+            {!platformData || platformData.promoCodes.length === 0 ? (
+              <div className="p-8 text-center">
+                <Tag className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">No Promo Codes</h3>
+                <p className="text-content-secondary mx-auto mt-2 max-w-md">
+                  No promo codes configured for this operator.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-border-default divide-y">
+                {platformData.promoCodes.map((promo) => (
+                  <div key={promo.id} className="flex items-center gap-4 p-4">
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+                        promo.isActive
+                          ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+                          : "bg-bg-tertiary text-content-tertiary"
+                      )}
+                    >
+                      <Percent className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-content-primary font-mono text-sm font-medium">
+                          {promo.code}
+                        </p>
+                        {!promo.isActive && (
+                          <span className="bg-bg-tertiary text-content-tertiary rounded px-1.5 py-0.5 text-xs">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                      {promo.description && (
+                        <p className="text-content-secondary mt-0.5 text-xs">{promo.description}</p>
+                      )}
+                      <div className="mt-1 flex gap-3 text-xs">
+                        {promo.discountType && promo.discountValue !== null && (
+                          <span className="text-success-600 dark:text-success-400">
+                            {promo.discountType === "percentage"
+                              ? `${promo.discountValue}% off`
+                              : `$${promo.discountValue} off`}
+                          </span>
+                        )}
+                        {promo.usageLimit !== null && promo.timesUsed !== null && (
+                          <span className="text-content-tertiary">
+                            Used {promo.timesUsed}/{promo.usageLimit}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {promo.validUntil && (
+                      <span className="text-content-tertiary text-xs">
+                        Expires {new Date(promo.validUntil).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Price Zones Section */}
+        {configSection === "zones" && (
+          <div>
+            {!platformData || platformData.priceZones.length === 0 ? (
+              <div className="p-8 text-center">
+                <MapPin className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">No Price Zones</h3>
+                <p className="text-content-secondary mx-auto mt-2 max-w-md">
+                  No price zones configured for this operator.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-border-default divide-y">
+                {platformData.priceZones.map((zone) => (
+                  <div key={zone.id} className="flex items-center gap-4 p-4">
+                    <div className="bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                      <MapPin className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-content-primary text-sm font-medium">
+                        {zone.name || "Unnamed Zone"}
+                      </p>
+                      {zone.type && (
+                        <p className="text-content-secondary mt-0.5 text-xs capitalize">
+                          {zone.type}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right text-xs">
+                      {zone.baseFare !== null && (
+                        <p className="text-content-primary">
+                          Base: ${zone.baseFare.toFixed(2)}
+                        </p>
+                      )}
+                      {zone.perMileRate !== null && (
+                        <p className="text-content-secondary">
+                          ${zone.perMileRate.toFixed(2)}/mi
+                        </p>
+                      )}
+                      {zone.minimumFare !== null && (
+                        <p className="text-content-tertiary">
+                          Min: ${zone.minimumFare.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Business Rules Section */}
+        {configSection === "rules" && (
+          <div>
+            {!platformData || platformData.rules.length === 0 ? (
+              <div className="p-8 text-center">
+                <Zap className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">No Business Rules</h3>
+                <p className="text-content-secondary mx-auto mt-2 max-w-md">
+                  No business rules configured for this operator.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-border-default divide-y">
+                {platformData.rules.map((rule) => (
+                  <div key={rule.id} className="flex items-center gap-4 p-4">
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+                        rule.isActive
+                          ? "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400"
+                          : "bg-bg-tertiary text-content-tertiary"
+                      )}
+                    >
+                      <Zap className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-content-primary text-sm font-medium">
+                          {rule.name || "Unnamed Rule"}
+                        </p>
+                        {!rule.isActive && (
+                          <span className="bg-bg-tertiary text-content-tertiary rounded px-1.5 py-0.5 text-xs">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                      {rule.type && (
+                        <p className="text-content-secondary mt-0.5 text-xs capitalize">
+                          {rule.type.replace(/_/g, " ")}
+                        </p>
+                      )}
+                    </div>
+                    {rule.priority !== null && (
+                      <span className="text-content-tertiary text-xs">Priority: {rule.priority}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Platform Contacts Section */}
+        {configSection === "contacts" && (
+          <div>
+            {!platformData?.contacts || platformData.contacts.length === 0 ? (
+              <div className="p-8 text-center">
+                <Building2 className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">No Platform Contacts</h3>
+                <p className="text-content-secondary mx-auto mt-2 max-w-md">
+                  No contacts saved in the operator&apos;s platform.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-border-default divide-y">
+                {platformData.contacts.map((contact) => (
+                  <div key={contact.id} className="flex items-center gap-4 p-4">
+                    <div className="bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                      <Building2 className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-content-primary text-sm font-medium">
+                        {[contact.firstName, contact.lastName].filter(Boolean).join(" ") ||
+                          contact.email ||
+                          "Unknown Contact"}
+                      </p>
+                      {contact.companyName && (
+                        <p className="text-content-secondary text-xs">{contact.companyName}</p>
+                      )}
+                      <div className="mt-1 flex gap-3 text-xs">
+                        {contact.email && (
+                          <a
+                            href={`mailto:${contact.email}`}
+                            className="text-primary-600 hover:text-primary-700"
+                          >
+                            {contact.email}
+                          </a>
+                        )}
+                        {contact.phone && (
+                          <span className="text-content-tertiary">{contact.phone}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Bank Accounts Section */}
+        {configSection === "bank" && (
+          <div>
+            {!platformData?.bankAccounts || platformData.bankAccounts.length === 0 ? (
+              <div className="p-8 text-center">
+                <Landmark className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">No Bank Accounts</h3>
+                <p className="text-content-secondary mx-auto mt-2 max-w-md">
+                  No bank accounts connected via Stripe Financial Connections.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-border-default divide-y">
+                {platformData.bankAccounts.map((account) => (
+                  <div key={account.id} className="flex items-center gap-4 p-4">
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+                        account.status === "active"
+                          ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+                          : "bg-bg-tertiary text-content-tertiary"
+                      )}
+                    >
+                      <Landmark className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-content-primary text-sm font-medium">
+                          {account.institutionName || "Unknown Bank"}
+                        </p>
+                        {account.status && account.status !== "active" && (
+                          <span className="bg-bg-tertiary text-content-tertiary rounded px-1.5 py-0.5 text-xs capitalize">
+                            {account.status}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 flex gap-3 text-xs">
+                        {account.accountName && (
+                          <span className="text-content-secondary">{account.accountName}</span>
+                        )}
+                        {account.accountType && (
+                          <span className="text-content-tertiary capitalize">{account.accountType}</span>
+                        )}
+                        {account.lastFour && (
+                          <span className="text-content-tertiary font-mono">
+                            ····{account.lastFour}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Subscription History Section */}
+        {configSection === "subscriptions" && (
+          <div>
+            {!platformData?.subscriptionLog || platformData.subscriptionLog.length === 0 ? (
+              <div className="p-8 text-center">
+                <Receipt className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">No Subscription History</h3>
+                <p className="text-content-secondary mx-auto mt-2 max-w-md">
+                  No subscription events recorded for this operator.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-border-default divide-y">
+                {platformData.subscriptionLog.map((event) => (
+                  <div key={event.id} className="flex items-center gap-4 p-4">
+                    <div className="bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                      <Receipt className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-content-primary text-sm font-medium capitalize">
+                          {event.eventType?.replace(/_/g, " ") || "Event"}
+                        </p>
+                      </div>
+                      <div className="mt-0.5 flex gap-3 text-xs">
+                        {event.planName && (
+                          <span className="text-content-secondary">{event.planName}</span>
+                        )}
+                        {event.previousPlan && (
+                          <span className="text-content-tertiary">
+                            from {event.previousPlan}
+                          </span>
+                        )}
+                        {event.amount !== null && (
+                          <span className="text-success-600 dark:text-success-400">
+                            ${event.amount.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {event.eventDate && (
+                      <span className="text-content-tertiary text-xs">
+                        {new Date(event.eventDate).toLocaleDateString()}
                       </span>
                     )}
                   </div>

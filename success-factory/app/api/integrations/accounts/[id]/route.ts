@@ -17,6 +17,9 @@ interface AccountDetail {
   state: string | null
   country: string | null
   description: string | null
+  // Platform identifiers
+  operatorId: string | null
+  stripeAccountId: string | null
   // Lifecycle
   lifecycleStage: string | null
   customerSince: string | null
@@ -53,6 +56,9 @@ interface AccountDetail {
   paymentHealth: PaymentHealth | null
   // Data source indicator
   hasHubSpotRecord: boolean
+  // Timestamps
+  lastSyncedAt: string | null
+  lastTripCreatedAt: string | null
 }
 
 interface ContactInfo {
@@ -244,6 +250,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       state: company?.properties.state || syncedCompany?.state || null,
       country: company?.properties.country || syncedCompany?.country || null,
       description: company?.properties.description || null,
+      // Platform identifiers (from synced Metabase data)
+      operatorId: syncedCompany?.operatorId || null,
+      stripeAccountId: syncedCompany?.stripeAccountId || null,
       // Lifecycle
       lifecycleStage:
         company?.properties.lifecyclestage || syncedCompany?.subscriptionStatus || null,
@@ -315,6 +324,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       paymentHealth,
       // Data source - true if we have actual HubSpot data OR synced record indicates HubSpot match
       hasHubSpotRecord: !!company || syncedCompany?.hasHubSpotRecord === true,
+      // Timestamps
+      lastSyncedAt: syncedCompany?.lastSyncedAt?.toISOString() || null,
+      lastTripCreatedAt: syncedCompany?.lastTripCreatedAt?.toISOString() || null,
     }
 
     return NextResponse.json(accountDetail)
