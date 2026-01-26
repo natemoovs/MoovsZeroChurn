@@ -150,7 +150,7 @@ export default function SettingsPage() {
     deletedTasks?: string[]
   } | null>(null)
   const [syncDebug, setSyncDebug] = useState<{
-    stats?: { totalFromMetabase: number; synced: number; uniqueCompanies?: number; duplicatesInMetabase?: number; skippedChurned: number; failed: number; firstError?: string | null }
+    stats?: { totalFromMetabase: number; synced: number; uniqueCompanies?: number; duplicatesInMetabase?: number; churnedImported?: number; failed: number; firstError?: string | null }
     metabaseColumns?: { original: string[]; normalized: string[]; missing: string[] }
     sampleFromMetabase?: Record<string, unknown> | null
     sampleFromDatabase?: Record<string, unknown> | null
@@ -736,7 +736,7 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <div><span className="font-medium">From Metabase:</span> {syncDebug.stats.totalFromMetabase}</div>
                     <div><span className="font-medium">Synced:</span> {syncDebug.stats.synced}</div>
-                    <div><span className="font-medium">Skipped (churned):</span> {syncDebug.stats.skippedChurned}</div>
+                    <div><span className="font-medium">Churned (win-back):</span> {syncDebug.stats.churnedImported ?? 0}</div>
                     <div><span className="font-medium">Failed:</span> {syncDebug.stats.failed}</div>
                   </div>
                   {(syncDebug.stats.duplicatesInMetabase ?? 0) > 0 && (

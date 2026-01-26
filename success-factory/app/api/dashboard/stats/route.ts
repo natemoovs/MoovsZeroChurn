@@ -49,9 +49,12 @@ export async function GET() {
         _sum: { mrr: true },
       }),
 
-      // At-risk customers (red health score)
+      // At-risk customers (red health score, EXCLUDING churned)
       prisma.hubSpotCompany.findMany({
-        where: { healthScore: "red" },
+        where: {
+          healthScore: "red",
+          subscriptionStatus: { not: { contains: "churn" } },
+        },
         select: {
           id: true,
           hubspotId: true,

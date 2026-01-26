@@ -634,7 +634,11 @@ function calculateWeightedHealthScore(
 
   // Convert to health category
   let healthScore: string
-  if (numericScore >= 80) {
+
+  // CHURNED gets its own category - NOT mixed with at-risk
+  if (isChurned) {
+    healthScore = "churned"
+  } else if (numericScore >= 80) {
     healthScore = "green"
   } else if (numericScore >= 60) {
     healthScore = "yellow"
@@ -646,11 +650,10 @@ function calculateWeightedHealthScore(
     healthScore = "unknown"
   }
 
-  // Override to red for critical signals
+  // Override to red for critical signals (but NOT churned - they have their own category)
   if (
-    riskSignals.some(
-      (r) => r.includes("Churned") || r.includes("Critical payment") || r.includes("dispute")
-    )
+    !isChurned &&
+    riskSignals.some((r) => r.includes("Critical payment") || r.includes("dispute"))
   ) {
     healthScore = "red"
   }
@@ -928,23 +931,21 @@ export async function POST(request: NextRequest) {
     for (const mbData of deduplicatedOperators) {
       try {
         // =====================================================================
-        // FILTER: Skip churned/terminated accounts - they shouldn't be in active portfolio
-        // SOURCE OF TRUTH: LAGO_WATERFALL_EVENT (billingStatus) - NOT HS_D_CHURN_STATUS
+        // CHURNED ACCOUNTS: Import them for win-back campaigns
+        // They get healthScore = "churned" and are filtered from at-risk views
+        // SOURCE OF TRUTH: LAGO_WATERFALL_EVENT (billingStatus)
         // =====================================================================
         const billingEvent = mbData.billingStatus?.toLowerCase() || ""
 
-        // Only skip if Lago says churned/terminated AND no MRR
         const isLagoChurned =
           billingEvent === "churn" ||
           billingEvent.includes("terminated") ||
           billingEvent.includes("cancelled") ||
           billingEvent.includes("canceled")
 
-        // Skip if Lago says churned AND has no MRR (fully dead account)
-        // Keep if has MRR (active paying customer, regardless of old deal status)
+        // Track churned count but DON'T skip - import for win-back campaigns
         if (isLagoChurned && (!mbData.mrr || mbData.mrr <= 0)) {
-          skippedChurned++
-          continue
+          skippedChurned++ // Renamed to "churnedCount" in response
         }
 
         // Find matching HubSpot company (for enrichment)
@@ -1213,7 +1214,7 @@ export async function POST(request: NextRequest) {
     // They are filtered out in portfolio views, not deleted
 
     console.log(
-      `Sync completed: ${synced} synced, ${failed} failed, ${skippedChurned} churned skipped`
+      `Sync completed: ${synced} synced, ${failed} failed, ${skippedChurned} churned (for win-back)`
     )
     console.log(`  - ${hubspotMatches} with HubSpot data, ${noHubspotRecord} without HubSpot`)
     console.log(`  - ${stripeMatches} with Stripe payment data`)
@@ -1263,7 +1264,7 @@ export async function POST(request: NextRequest) {
       activeOperatorsSynced: synced,
       uniqueCompanies: seenRecordIds.size,
       duplicatesInMetabase: duplicatesFound,
-      churnedSkipped: skippedChurned,
+      churnedImported: skippedChurned, // Churned accounts imported for win-back campaigns
       recordsFailed: failed,
       hubspotMatches,
       noHubspotRecord,
@@ -1277,7 +1278,7 @@ export async function POST(request: NextRequest) {
           synced,
           uniqueCompanies: seenRecordIds.size,
           duplicatesInMetabase: duplicatesFound,
-          skippedChurned,
+          churnedImported: skippedChurned,
           failed,
           firstError: firstError ? `${firstErrorCompany}: ${firstError}` : null,
         },
