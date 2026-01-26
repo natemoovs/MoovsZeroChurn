@@ -435,15 +435,61 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
   )
 }
 
+interface ChargesApiResponse {
+  source: string
+  charges: Array<{
+    charge_id: string
+    operator_id: string
+    operator_name: string
+    created_date: string
+    status: string
+    total_dollars_charged: number
+    fee_amount: number
+    net_amount: number
+    description: string | null
+    customer_email: string | null
+  }>
+  summary: Array<{
+    charge_month: string
+    status: string
+    total_charges: number
+    charge_count: number
+  }>
+  totals: {
+    totalVolume: number
+    totalCount: number
+    successCount: number
+    successVolume: number
+    failedCount: number
+    failedVolume: number
+    successRate: number
+  }
+}
+
 function PaymentsTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
-  const [charges, setCharges] = useState<PlatformCharge[]>([])
-  const [summary, setSummary] = useState<MonthlyChargeSummary[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<ChargesApiResponse | null>(null)
 
   useEffect(() => {
-    // TODO: Fetch from Snowflake API when credentials are configured
-    // For now, show placeholder
-    setLoading(false)
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/charges`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch charges")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
   }, [operator.operatorId])
 
   if (loading) {
@@ -454,33 +500,195 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
     )
   }
 
+  if (error || !data) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Total Volume" value="—" icon={DollarSign} subtext="All time" />
+          <StatCard label="This Month" value="—" icon={Calendar} />
+          <StatCard label="Success Rate" value="—" icon={Check} />
+          <StatCard label="Failed Payments" value="—" icon={AlertTriangle} />
+        </div>
+        <div className="card-sf p-8 text-center">
+          <CreditCard className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+          <h3 className="text-content-primary text-lg font-medium">Payment History</h3>
+          <p className="text-content-secondary mx-auto mt-2 max-w-md">
+            {error || "Configure Metabase to view platform charges and payment history."}
+          </p>
+          <p className="text-content-tertiary mt-4 text-sm">
+            Required: METABASE_URL, METABASE_API_KEY
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const { charges, totals } = data
+
   return (
     <div className="space-y-6">
       {/* Payment Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Volume" value="—" icon={DollarSign} subtext="All time" />
-        <StatCard label="This Month" value="—" icon={Calendar} />
-        <StatCard label="Success Rate" value="—" icon={Check} />
-        <StatCard label="Failed Payments" value="—" icon={AlertTriangle} />
+        <StatCard
+          label="Total Volume"
+          value={`$${totals.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          icon={DollarSign}
+          subtext={`${totals.totalCount} charges`}
+        />
+        <StatCard
+          label="Successful"
+          value={`$${totals.successVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          icon={Check}
+          variant="success"
+          subtext={`${totals.successCount} charges`}
+        />
+        <StatCard
+          label="Success Rate"
+          value={`${totals.successRate.toFixed(1)}%`}
+          icon={TrendingUp}
+          variant={totals.successRate >= 95 ? "success" : totals.successRate >= 80 ? "warning" : "danger"}
+        />
+        <StatCard
+          label="Failed"
+          value={`$${totals.failedVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          icon={AlertTriangle}
+          variant={totals.failedCount > 0 ? "danger" : "default"}
+          subtext={`${totals.failedCount} charges`}
+        />
       </div>
 
-      {/* Placeholder for charges table */}
-      <div className="card-sf p-8 text-center">
-        <CreditCard className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-        <h3 className="text-content-primary text-lg font-medium">Payment History</h3>
-        <p className="text-content-secondary mt-2 max-w-md mx-auto">
-          Configure Snowflake credentials to view platform charges, payment history, and monthly
-          summaries for this operator.
-        </p>
-        <p className="text-content-tertiary mt-4 text-sm">
-          Required: SNOWFLAKE_ACCOUNT, SNOWFLAKE_USERNAME, SNOWFLAKE_PASSWORD
-        </p>
+      {/* Charges Table */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Recent Charges</h3>
+        </div>
+        {charges.length === 0 ? (
+          <div className="p-8 text-center">
+            <CreditCard className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+            <p className="text-content-secondary">No charges found for this operator.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px]">
+              <thead className="bg-bg-secondary">
+                <tr className="border-border-default border-b">
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Date
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Description
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Customer
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Status
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {charges.slice(0, 25).map((charge) => (
+                  <tr key={charge.charge_id} className="border-border-default border-b">
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {new Date(charge.created_date).toLocaleDateString()}
+                    </td>
+                    <td className="text-content-primary max-w-[200px] truncate px-4 py-3 text-sm">
+                      {charge.description || "Platform charge"}
+                    </td>
+                    <td className="text-content-secondary max-w-[200px] truncate px-4 py-3 text-sm">
+                      {charge.customer_email || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                          charge.status === "succeeded" || charge.status === "paid"
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : charge.status === "failed"
+                              ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                              : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                        )}
+                      >
+                        {charge.status}
+                      </span>
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                      ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {charges.length > 25 && (
+          <div className="border-border-default border-t px-4 py-3 text-center">
+            <p className="text-content-secondary text-sm">
+              Showing 25 of {charges.length} charges
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
+interface RiskApiResponse {
+  operator_id: string
+  risk_score: number | null
+  failed_payments_count: number
+  dispute_count: number
+  avg_transaction_amount: number | null
+  last_failed_payment_date: string | null
+  risk_level: "low" | "medium" | "high" | "unknown"
+}
+
 function RiskTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<RiskApiResponse | null>(null)
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/risk`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch risk data")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  const riskData = data || {
+    risk_score: null,
+    failed_payments_count: 0,
+    dispute_count: 0,
+    avg_transaction_amount: null,
+    last_failed_payment_date: null,
+    risk_level: "unknown" as const,
+  }
+
   return (
     <div className="space-y-6">
       {/* Risk Stats */}
@@ -499,19 +707,133 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                   : "default"
           }
         />
-        <StatCard label="Risk Score" value="—" icon={AlertTriangle} subtext="Avg transaction risk" />
-        <StatCard label="Failed Payments" value="—" icon={CreditCard} subtext="Last 90 days" />
-        <StatCard label="Disputes" value="—" icon={FileText} />
+        <StatCard
+          label="Risk Level"
+          value={riskData.risk_level}
+          icon={AlertTriangle}
+          variant={
+            riskData.risk_level === "low"
+              ? "success"
+              : riskData.risk_level === "medium"
+                ? "warning"
+                : riskData.risk_level === "high"
+                  ? "danger"
+                  : "default"
+          }
+        />
+        <StatCard
+          label="Failed Payments"
+          value={riskData.failed_payments_count.toString()}
+          icon={CreditCard}
+          variant={riskData.failed_payments_count > 0 ? "danger" : "default"}
+          subtext={
+            riskData.last_failed_payment_date
+              ? `Last: ${new Date(riskData.last_failed_payment_date).toLocaleDateString()}`
+              : undefined
+          }
+        />
+        <StatCard
+          label="Disputes"
+          value={riskData.dispute_count.toString()}
+          icon={FileText}
+          variant={riskData.dispute_count > 0 ? "danger" : "default"}
+        />
       </div>
 
-      {/* Placeholder */}
-      <div className="card-sf p-8 text-center">
-        <Shield className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-        <h3 className="text-content-primary text-lg font-medium">Risk Overview</h3>
-        <p className="text-content-secondary mt-2 max-w-md mx-auto">
-          Configure Snowflake credentials to view detailed risk analysis, bank account information,
-          and dispute history.
-        </p>
+      {/* Risk Details */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Risk Score Card */}
+        <div className="card-sf p-5">
+          <h3 className="text-content-primary mb-4 font-semibold">Risk Analysis</h3>
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-content-secondary">Overall Risk Level</dt>
+              <dd>
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
+                    riskData.risk_level === "low"
+                      ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                      : riskData.risk_level === "medium"
+                        ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                        : riskData.risk_level === "high"
+                          ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                          : "bg-bg-tertiary text-content-tertiary"
+                  )}
+                >
+                  {riskData.risk_level}
+                </span>
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-content-secondary">Avg Transaction</dt>
+              <dd className="text-content-primary">
+                {riskData.avg_transaction_amount !== null
+                  ? `$${riskData.avg_transaction_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                  : "—"}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-content-secondary">Failed Payments</dt>
+              <dd className="text-content-primary">{riskData.failed_payments_count}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-content-secondary">Disputes</dt>
+              <dd className="text-content-primary">{riskData.dispute_count}</dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* Risk Signals */}
+        <div className="card-sf p-5">
+          <h3 className="text-content-primary mb-4 font-semibold">Risk Indicators</h3>
+          <div className="space-y-3">
+            {riskData.failed_payments_count > 5 && (
+              <div className="flex items-start gap-3 rounded-lg bg-error-50 p-3 dark:bg-error-950/30">
+                <AlertTriangle className="text-error-600 dark:text-error-400 mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="text-error-700 dark:text-error-400 text-sm font-medium">
+                    High Failed Payment Count
+                  </p>
+                  <p className="text-error-600 dark:text-error-500 text-xs">
+                    {riskData.failed_payments_count} failed payments detected
+                  </p>
+                </div>
+              </div>
+            )}
+            {riskData.dispute_count > 0 && (
+              <div className="flex items-start gap-3 rounded-lg bg-warning-50 p-3 dark:bg-warning-950/30">
+                <FileText className="text-warning-600 dark:text-warning-400 mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="text-warning-700 dark:text-warning-400 text-sm font-medium">
+                    Disputes Detected
+                  </p>
+                  <p className="text-warning-600 dark:text-warning-500 text-xs">
+                    {riskData.dispute_count} dispute(s) on record
+                  </p>
+                </div>
+              </div>
+            )}
+            {riskData.risk_level === "low" && riskData.failed_payments_count === 0 && (
+              <div className="flex items-start gap-3 rounded-lg bg-success-50 p-3 dark:bg-success-950/30">
+                <Check className="text-success-600 dark:text-success-400 mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="text-success-700 dark:text-success-400 text-sm font-medium">
+                    Good Standing
+                  </p>
+                  <p className="text-success-600 dark:text-success-500 text-xs">
+                    No significant risk indicators
+                  </p>
+                </div>
+              </div>
+            )}
+            {error && (
+              <div className="text-content-tertiary text-center text-sm">
+                Unable to load full risk analysis. {error}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

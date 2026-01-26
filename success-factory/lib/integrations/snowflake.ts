@@ -1,32 +1,13 @@
 /**
- * Snowflake Direct Integration Client
+ * Snowflake Integration Client (via Metabase)
  *
- * Requires environment variables:
- * - SNOWFLAKE_ACCOUNT (e.g., "xy12345.us-east-1")
- * - SNOWFLAKE_USERNAME
- * - SNOWFLAKE_PASSWORD
- * - SNOWFLAKE_DATABASE (default: "MOZART_NEW")
- * - SNOWFLAKE_WAREHOUSE (default: "COMPUTE_WH")
- * - SNOWFLAKE_SCHEMA (default: "PUBLIC")
+ * Uses Metabase's custom SQL query capability to run Snowflake queries.
+ * This avoids the Turbopack compatibility issues with the native snowflake-sdk.
+ *
+ * Requires METABASE_URL and METABASE_API_KEY environment variables.
  */
 
-import snowflake from "snowflake-sdk"
-
-// ============================================================================
-// Configuration
-// ============================================================================
-
-const config = {
-  account: process.env.SNOWFLAKE_ACCOUNT || "",
-  username: process.env.SNOWFLAKE_USERNAME || "",
-  password: process.env.SNOWFLAKE_PASSWORD || "",
-  database: process.env.SNOWFLAKE_DATABASE || "MOZART_NEW",
-  warehouse: process.env.SNOWFLAKE_WAREHOUSE || "COMPUTE_WH",
-  schema: process.env.SNOWFLAKE_SCHEMA || "PUBLIC",
-}
-
-// Connection pool
-let connectionPool: snowflake.Connection | null = null
+import { metabase } from "./metabase"
 
 // ============================================================================
 // Types
@@ -87,79 +68,41 @@ export interface RiskOverview {
   last_failed_payment_date: string | null
 }
 
+export interface MonthlySummary {
+  charge_month: string
+  status: string
+  total_charges: number
+  charge_count: number
+}
+
 // ============================================================================
-// Connection Management
+// Configuration Check
 // ============================================================================
 
 function isConfigured(): boolean {
-  return !!(config.account && config.username && config.password)
-}
-
-async function getConnection(): Promise<snowflake.Connection> {
-  if (!isConfigured()) {
-    throw new Error(
-      "Snowflake not configured. Set SNOWFLAKE_ACCOUNT, SNOWFLAKE_USERNAME, and SNOWFLAKE_PASSWORD"
-    )
-  }
-
-  if (connectionPool) {
-    return connectionPool
-  }
-
-  return new Promise((resolve, reject) => {
-    const connection = snowflake.createConnection({
-      account: config.account,
-      username: config.username,
-      password: config.password,
-      database: config.database,
-      warehouse: config.warehouse,
-      schema: config.schema,
-    })
-
-    connection.connect((err, conn) => {
-      if (err) {
-        reject(new Error(`Snowflake connection failed: ${err.message}`))
-      } else {
-        connectionPool = conn
-        resolve(conn)
-      }
-    })
-  })
+  // Uses Metabase to query Snowflake, so check Metabase config
+  return !!(process.env.METABASE_URL && process.env.METABASE_API_KEY)
 }
 
 // ============================================================================
-// Query Execution
+// Query Execution (via Metabase)
 // ============================================================================
 
 async function executeQuery<T = Record<string, unknown>>(
-  sql: string,
-  binds: (string | number | boolean | null)[] = []
+  sql: string
 ): Promise<SnowflakeQueryResult<T>> {
   const startTime = Date.now()
-  const connection = await getConnection()
 
-  return new Promise((resolve, reject) => {
-    connection.execute({
-      sqlText: sql,
-      binds,
-      complete: (err, stmt, rows) => {
-        if (err) {
-          reject(new Error(`Snowflake query failed: ${err.message}`))
-          return
-        }
+  const result = await metabase.runCustomQuery(metabase.METABASE_DATABASE_ID, sql)
+  const rows = metabase.rowsToObjects<T>(result)
+  const columns = metabase.getColumnNames(result)
 
-        const columns = stmt.getColumns().map((col) => col.getName())
-        const executionTime = Date.now() - startTime
-
-        resolve({
-          rows: (rows || []) as T[],
-          columns,
-          rowCount: rows?.length || 0,
-          executionTime,
-        })
-      },
-    })
-  })
+  return {
+    rows,
+    columns,
+    rowCount: rows.length,
+    executionTime: Date.now() - startTime,
+  }
 }
 
 // ============================================================================
@@ -170,6 +113,9 @@ async function executeQuery<T = Record<string, unknown>>(
  * Search operators by various fields (replaces Retool's search functionality)
  */
 async function searchOperators(searchTerm: string, limit = 50): Promise<OperatorDetails[]> {
+  const searchPattern = `%${searchTerm.replace(/'/g, "''")}%`
+  const escapedTerm = searchTerm.replace(/'/g, "''")
+
   const sql = `
     SELECT
       LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -189,23 +135,15 @@ async function searchOperators(searchTerm: string, limit = 50): Promise<Operator
       P_SETUP_SCORE as setup_score
     FROM MOOVS.CSM_MOOVS
     WHERE
-      LOWER(P_COMPANY_NAME) LIKE LOWER(?)
-      OR LOWER(HS_C_PROPERTY_NAME) LIKE LOWER(?)
-      OR LAGO_EXTERNAL_CUSTOMER_ID = ?
-      OR STRIPE_CONNECT_ACCOUNT_ID = ?
+      LOWER(P_COMPANY_NAME) LIKE LOWER('${searchPattern}')
+      OR LOWER(HS_C_PROPERTY_NAME) LIKE LOWER('${searchPattern}')
+      OR LAGO_EXTERNAL_CUSTOMER_ID = '${escapedTerm}'
+      OR STRIPE_CONNECT_ACCOUNT_ID = '${escapedTerm}'
     ORDER BY CALCULATED_MRR DESC NULLS LAST
-    LIMIT ?
+    LIMIT ${limit}
   `
 
-  const searchPattern = `%${searchTerm}%`
-  const result = await executeQuery<OperatorDetails>(sql, [
-    searchPattern,
-    searchPattern,
-    searchTerm,
-    searchTerm,
-    limit,
-  ])
-
+  const result = await executeQuery<OperatorDetails>(sql)
   return result.rows
 }
 
@@ -213,6 +151,8 @@ async function searchOperators(searchTerm: string, limit = 50): Promise<Operator
  * Get detailed operator info by operator ID
  */
 async function getOperatorById(operatorId: string): Promise<OperatorDetails | null> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
   const sql = `
     SELECT
       LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
@@ -231,11 +171,11 @@ async function getOperatorById(operatorId: string): Promise<OperatorDetails | nu
       P_DRIVERS_COUNT as drivers_count,
       P_SETUP_SCORE as setup_score
     FROM MOOVS.CSM_MOOVS
-    WHERE LAGO_EXTERNAL_CUSTOMER_ID = ?
+    WHERE LAGO_EXTERNAL_CUSTOMER_ID = '${escapedId}'
     LIMIT 1
   `
 
-  const result = await executeQuery<OperatorDetails>(sql, [operatorId])
+  const result = await executeQuery<OperatorDetails>(sql)
   return result.rows[0] || null
 }
 
@@ -246,6 +186,8 @@ async function getOperatorPlatformCharges(
   operatorId: string,
   limit = 100
 ): Promise<PlatformCharge[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
   const sql = `
     SELECT
       CHARGE_ID as charge_id,
@@ -254,75 +196,64 @@ async function getOperatorPlatformCharges(
       CREATED_DATE as created_date,
       STATUS as status,
       TOTAL_DOLLARS_CHARGED as total_dollars_charged,
-      FEE_AMOUNT as fee_amount,
-      NET_AMOUNT as net_amount,
+      COALESCE(FEE_AMOUNT, 0) as fee_amount,
+      COALESCE(NET_AMOUNT, 0) as net_amount,
       DESCRIPTION as description,
       CUSTOMER_EMAIL as customer_email
     FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE OPERATOR_ID = ?
+    WHERE OPERATOR_ID = '${escapedId}'
     ORDER BY CREATED_DATE DESC
-    LIMIT ?
+    LIMIT ${limit}
   `
 
-  const result = await executeQuery<PlatformCharge>(sql, [operatorId, limit])
+  const result = await executeQuery<PlatformCharge>(sql)
   return result.rows
 }
 
 /**
  * Get monthly platform charges summary
  */
-async function getMonthlyChargesSummary(operatorId: string): Promise<
-  {
-    charge_month: string
-    status: string
-    total_charges: number
-    charge_count: number
-  }[]
-> {
+async function getMonthlyChargesSummary(operatorId: string): Promise<MonthlySummary[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
   const sql = `
     SELECT
-      DATE_TRUNC('month', CREATED_DATE) as charge_month,
+      TO_VARCHAR(DATE_TRUNC('month', CREATED_DATE), 'YYYY-MM') as charge_month,
       STATUS as status,
       SUM(TOTAL_DOLLARS_CHARGED) as total_charges,
       COUNT(*) as charge_count
     FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE OPERATOR_ID = ?
+    WHERE OPERATOR_ID = '${escapedId}'
     GROUP BY DATE_TRUNC('month', CREATED_DATE), STATUS
     ORDER BY charge_month DESC, STATUS
+    LIMIT 24
   `
 
-  const result = await executeQuery<{
-    charge_month: string
-    status: string
-    total_charges: number
-    charge_count: number
-  }>(sql, [operatorId])
-
+  const result = await executeQuery<MonthlySummary>(sql)
   return result.rows
 }
 
 /**
  * Get reservations overview for an operator
  */
-async function getReservationsOverview(
-  operatorId: string
-): Promise<ReservationOverview[]> {
+async function getReservationsOverview(operatorId: string): Promise<ReservationOverview[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
   const sql = `
     SELECT
-      r.operator_id,
-      o.name AS operator_name,
-      DATE_TRUNC('month', r.created_at) AS created_month,
+      OPERATOR_ID as operator_id,
+      OPERATOR_NAME as operator_name,
+      TO_VARCHAR(DATE_TRUNC('month', CREATED_AT), 'YYYY-MM') AS created_month,
       COUNT(*) AS total_trips,
-      SUM(r.total_amount) AS total_amount
-    FROM MOZART_NEW.RESERVATIONS r
-    LEFT JOIN MOZART_NEW.OPERATORS o ON r.operator_id = o.id
-    WHERE r.operator_id = ?
-    GROUP BY r.operator_id, o.name, DATE_TRUNC('month', r.created_at)
+      SUM(TOTAL_AMOUNT) AS total_amount
+    FROM MOZART_NEW.RESERVATIONS
+    WHERE OPERATOR_ID = '${escapedId}'
+    GROUP BY OPERATOR_ID, OPERATOR_NAME, DATE_TRUNC('month', CREATED_AT)
     ORDER BY created_month DESC
     LIMIT 24
   `
 
-  const result = await executeQuery<ReservationOverview>(sql, [operatorId])
+  const result = await executeQuery<ReservationOverview>(sql)
   return result.rows
 }
 
@@ -330,6 +261,8 @@ async function getReservationsOverview(
  * Get risk overview for an operator
  */
 async function getRiskOverview(operatorId: string): Promise<RiskOverview | null> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
   const sql = `
     SELECT
       OPERATOR_ID as operator_id,
@@ -339,11 +272,11 @@ async function getRiskOverview(operatorId: string): Promise<RiskOverview | null>
       AVG(TOTAL_DOLLARS_CHARGED) as avg_transaction_amount,
       MAX(CASE WHEN STATUS = 'failed' THEN CREATED_DATE END) as last_failed_payment_date
     FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE OPERATOR_ID = ?
+    WHERE OPERATOR_ID = '${escapedId}'
     GROUP BY OPERATOR_ID
   `
 
-  const result = await executeQuery<RiskOverview>(sql, [operatorId])
+  const result = await executeQuery<RiskOverview>(sql)
   return result.rows[0] || null
 }
 
@@ -378,7 +311,7 @@ async function getTopOperatorsByRevenue(
     WHERE ${periodFilter}
     GROUP BY OPERATOR_ID, OPERATOR_NAME
     ORDER BY total_charged DESC
-    LIMIT ?
+    LIMIT ${limit}
   `
 
   const result = await executeQuery<{
@@ -386,7 +319,7 @@ async function getTopOperatorsByRevenue(
     operator_name: string
     total_charged: number
     total_trips: number
-  }>(sql, [limit])
+  }>(sql)
 
   return result.rows
 }
@@ -394,9 +327,7 @@ async function getTopOperatorsByRevenue(
 /**
  * Get failed invoices across all operators (for alerts)
  */
-async function getFailedInvoices(
-  limit = 50
-): Promise<
+async function getFailedInvoices(limit = 50): Promise<
   {
     operator_id: string
     operator_name: string
@@ -417,7 +348,7 @@ async function getFailedInvoices(
     FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
     WHERE STATUS = 'failed'
     ORDER BY CREATED_DATE DESC
-    LIMIT ?
+    LIMIT ${limit}
   `
 
   const result = await executeQuery<{
@@ -427,7 +358,7 @@ async function getFailedInvoices(
     amount: number
     failed_at: string
     failure_reason: string | null
-  }>(sql, [limit])
+  }>(sql)
 
   return result.rows
 }
@@ -456,10 +387,10 @@ async function getInactiveAccounts(
       CALCULATED_MRR as mrr
     FROM MOOVS.CSM_MOOVS
     WHERE
-      DATEDIFF('day', R_LAST_TRIP_CREATED_AT, CURRENT_DATE) > ?
+      DATEDIFF('day', R_LAST_TRIP_CREATED_AT, CURRENT_DATE) > ${daysSinceLastActivity}
       AND LAGO_STATUS = 'active'
     ORDER BY CALCULATED_MRR DESC NULLS LAST
-    LIMIT ?
+    LIMIT ${limit}
   `
 
   const result = await executeQuery<{
@@ -468,7 +399,7 @@ async function getInactiveAccounts(
     last_activity_date: string | null
     days_inactive: number
     mrr: number | null
-  }>(sql, [daysSinceLastActivity, limit])
+  }>(sql)
 
   return result.rows
 }

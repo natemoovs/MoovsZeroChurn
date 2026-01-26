@@ -98,6 +98,7 @@ export type {
   PlatformCharge,
   ReservationOverview,
   RiskOverview,
+  MonthlySummary,
 } from "./snowflake"
 
 // Import clients for unified export
@@ -139,7 +140,7 @@ export function getConfiguredIntegrations(): {
     notion: !!process.env.NOTION_API_KEY,
     metabase: !!(process.env.METABASE_URL && process.env.METABASE_API_KEY),
     lago: !!process.env.LAGO_API_KEY,
-    snowflake: !!(process.env.SNOWFLAKE_ACCOUNT && process.env.SNOWFLAKE_USERNAME && process.env.SNOWFLAKE_PASSWORD),
+    snowflake: !!(process.env.METABASE_URL && process.env.METABASE_API_KEY), // Uses Metabase to query Snowflake
   }
 }
 
@@ -158,10 +159,9 @@ export function getMissingIntegrations(): string[] {
     if (!process.env.METABASE_API_KEY) missing.push("METABASE_API_KEY")
   }
   if (!configured.lago) missing.push("LAGO_API_KEY")
-  if (!configured.snowflake) {
-    if (!process.env.SNOWFLAKE_ACCOUNT) missing.push("SNOWFLAKE_ACCOUNT")
-    if (!process.env.SNOWFLAKE_USERNAME) missing.push("SNOWFLAKE_USERNAME")
-    if (!process.env.SNOWFLAKE_PASSWORD) missing.push("SNOWFLAKE_PASSWORD")
+  // Snowflake uses Metabase as backend, so same env vars needed
+  if (!configured.snowflake && !configured.metabase) {
+    // Already added METABASE_URL and METABASE_API_KEY above
   }
 
   return missing
