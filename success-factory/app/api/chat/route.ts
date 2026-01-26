@@ -1,16 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAnthropicClient, AI_MODEL, TOKEN_LIMITS, extractText } from "@/lib/ai"
+import {
+  getClawdbotClient,
+  TOKEN_LIMITS,
+  convertToOpenAITools,
+  extractText,
+  extractToolCalls,
+  requiresToolExecution,
+  createStreamingChatCompletion,
+  DEFAULT_MODEL,
+  type ChatMessage,
+  type ClawdbotTool,
+} from "@/lib/clawdbot"
 import { skillTools, executeTool } from "@/lib/skills/tools"
 import { requireAuth } from "@/lib/auth/api-middleware"
 import { createLogger } from "@/lib/logger"
-import type Anthropic from "@anthropic-ai/sdk"
+import type OpenAI from "openai"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
 
 const logger = createLogger("chat")
 
-interface ChatMessage {
+interface InputMessage {
   role: "user" | "assistant"
   content: string
 }
@@ -33,6 +44,9 @@ Format your responses with markdown for readability. Use bullet points for lists
 
 If asked about something you can't help with, politely explain your capabilities.`
 
+// Convert Anthropic-style tools to OpenAI format
+const openAITools: ClawdbotTool[] = convertToOpenAITools(skillTools)
+
 /**
  * Chat endpoint with streaming and tool use
  * POST /api/chat
@@ -44,7 +58,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { messages, stream = true } = (await request.json()) as {
-      messages: ChatMessage[]
+      messages: InputMessage[]
       stream?: boolean
     }
 
@@ -52,7 +66,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Messages are required" }, { status: 400 })
     }
 
-    const anthropic = getAnthropicClient()
+    const client = getClawdbotClient()
     // Use request origin for internal API calls (works in both local and production)
     const origin = request.headers.get("origin") || request.headers.get("host")
     const protocol = request.headers.get("x-forwarded-proto") || "https"
@@ -60,16 +74,19 @@ export async function POST(request: NextRequest) {
       ? origin
       : `${protocol}://${origin || "localhost:3000"}`
 
-    // Convert to Anthropic message format
-    const anthropicMessages: Anthropic.MessageParam[] = messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }))
+    // Convert to OpenAI message format with system prompt
+    const openAIMessages: ChatMessage[] = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...messages.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+    ]
 
     if (stream) {
-      return streamingResponse(anthropic, anthropicMessages, baseUrl)
+      return streamingResponse(client, openAIMessages, baseUrl)
     } else {
-      return nonStreamingResponse(anthropic, anthropicMessages, baseUrl)
+      return nonStreamingResponse(client, openAIMessages, baseUrl)
     }
   } catch (error) {
     logger.error(error, { endpoint: "/api/chat" })
@@ -81,8 +98,8 @@ export async function POST(request: NextRequest) {
 }
 
 async function streamingResponse(
-  anthropic: Anthropic,
-  messages: Anthropic.MessageParam[],
+  client: OpenAI,
+  messages: ChatMessage[],
   baseUrl: string
 ) {
   const encoder = new TextEncoder()
@@ -101,106 +118,128 @@ async function streamingResponse(
         while (iterations < MAX_ITERATIONS) {
           iterations++
 
-          // Create streaming message
-          const stream = await anthropic.messages.create({
-            model: AI_MODEL,
-            max_tokens: TOKEN_LIMITS.toolUse,
-            system: SYSTEM_PROMPT,
-            tools: skillTools,
+          // Create streaming completion
+          const stream = await createStreamingChatCompletion(client, {
+            model: DEFAULT_MODEL,
             messages: currentMessages,
-            stream: true,
+            tools: openAITools,
+            max_tokens: TOKEN_LIMITS.toolUse,
           })
 
           let fullText = ""
-          let toolUseBlocks: Array<{
+          let toolCalls: Array<{
             id: string
             name: string
-            input: Record<string, unknown>
+            arguments: string
           }> = []
-          let currentToolUse: {
+          let currentToolCall: {
+            index: number
             id: string
             name: string
-            inputJson: string
+            arguments: string
           } | null = null
+          let finishReason: string | null = null
 
-          for await (const event of stream) {
-            if (event.type === "content_block_start") {
-              if (event.content_block.type === "tool_use") {
-                currentToolUse = {
-                  id: event.content_block.id,
-                  name: event.content_block.name,
-                  inputJson: "",
+          for await (const chunk of stream) {
+            const delta = chunk.choices[0]?.delta
+            finishReason = chunk.choices[0]?.finish_reason || finishReason
+
+            // Handle text content
+            if (delta?.content) {
+              fullText += delta.content
+              send({ type: "text", content: delta.content })
+            }
+
+            // Handle tool calls
+            if (delta?.tool_calls) {
+              for (const tc of delta.tool_calls) {
+                if (tc.index !== undefined) {
+                  if (tc.id) {
+                    // New tool call starting
+                    if (currentToolCall) {
+                      toolCalls.push({
+                        id: currentToolCall.id,
+                        name: currentToolCall.name,
+                        arguments: currentToolCall.arguments,
+                      })
+                    }
+                    currentToolCall = {
+                      index: tc.index,
+                      id: tc.id,
+                      name: tc.function?.name || "",
+                      arguments: tc.function?.arguments || "",
+                    }
+                    if (tc.function?.name) {
+                      send({ type: "tool_start", name: tc.function.name })
+                    }
+                  } else if (currentToolCall && tc.index === currentToolCall.index) {
+                    // Continue building current tool call
+                    if (tc.function?.name) {
+                      currentToolCall.name += tc.function.name
+                    }
+                    if (tc.function?.arguments) {
+                      currentToolCall.arguments += tc.function.arguments
+                    }
+                  }
                 }
-                send({ type: "tool_start", name: event.content_block.name })
               }
-            } else if (event.type === "content_block_delta") {
-              if (event.delta.type === "text_delta") {
-                fullText += event.delta.text
-                send({ type: "text", content: event.delta.text })
-              } else if (event.delta.type === "input_json_delta" && currentToolUse) {
-                currentToolUse.inputJson += event.delta.partial_json
-              }
-            } else if (event.type === "content_block_stop") {
-              if (currentToolUse) {
-                try {
-                  const input = JSON.parse(currentToolUse.inputJson || "{}")
-                  toolUseBlocks.push({
-                    id: currentToolUse.id,
-                    name: currentToolUse.name,
-                    input,
-                  })
-                } catch {
-                  // Ignore parse errors
-                }
-                currentToolUse = null
-              }
-            } else if (event.type === "message_stop") {
-              // Message complete
             }
           }
 
+          // Finalize last tool call
+          if (currentToolCall) {
+            toolCalls.push({
+              id: currentToolCall.id,
+              name: currentToolCall.name,
+              arguments: currentToolCall.arguments,
+            })
+          }
+
           // If we have tool calls, execute them and continue
-          if (toolUseBlocks.length > 0) {
-            // Add assistant message with tool use
+          if (toolCalls.length > 0 && finishReason === "tool_calls") {
+            // Add assistant message with tool calls
             currentMessages.push({
               role: "assistant",
-              content: [
-                ...(fullText ? [{ type: "text" as const, text: fullText }] : []),
-                ...toolUseBlocks.map((tool) => ({
-                  type: "tool_use" as const,
-                  id: tool.id,
-                  name: tool.name,
-                  input: tool.input,
-                })),
-              ],
+              content: fullText || "",
+              tool_calls: toolCalls.map((tc) => ({
+                id: tc.id,
+                type: "function" as const,
+                function: {
+                  name: tc.name,
+                  arguments: tc.arguments,
+                },
+              })),
             })
 
             // Execute tools and get results
-            const toolResults: Anthropic.ToolResultBlockParam[] = []
-            for (const tool of toolUseBlocks) {
-              send({ type: "tool_executing", name: tool.name })
-              const result = await executeTool(tool.name, tool.input, baseUrl)
+            for (const toolCall of toolCalls) {
+              send({ type: "tool_executing", name: toolCall.name })
+
+              let args: Record<string, unknown> = {}
+              try {
+                args = JSON.parse(toolCall.arguments || "{}")
+              } catch {
+                // Ignore parse errors
+              }
+
+              const result = await executeTool(toolCall.name, args, baseUrl)
               send({
                 type: "tool_result",
-                name: tool.name,
+                name: toolCall.name,
                 success: result.success,
               })
 
-              toolResults.push({
-                type: "tool_result",
-                tool_use_id: tool.id,
+              // Add tool result message
+              currentMessages.push({
+                role: "tool",
                 content: JSON.stringify(result.success ? result.data : { error: result.error }),
+                tool_call_id: toolCall.id,
               })
             }
 
-            // Add tool results
-            currentMessages.push({
-              role: "user",
-              content: toolResults,
-            })
-
             // Reset for next iteration
-            toolUseBlocks = []
+            toolCalls = []
+            currentToolCall = null
           } else {
             // No more tool calls, we're done
             break
@@ -229,8 +268,8 @@ async function streamingResponse(
 }
 
 async function nonStreamingResponse(
-  anthropic: Anthropic,
-  messages: Anthropic.MessageParam[],
+  client: OpenAI,
+  messages: ChatMessage[],
   baseUrl: string
 ) {
   const currentMessages = [...messages]
@@ -241,48 +280,47 @@ async function nonStreamingResponse(
   while (iterations < MAX_ITERATIONS) {
     iterations++
 
-    const response = await anthropic.messages.create({
-      model: AI_MODEL,
+    const response = await client.chat.completions.create({
+      model: DEFAULT_MODEL,
+      messages: currentMessages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+      tools: openAITools,
       max_tokens: TOKEN_LIMITS.toolUse,
-      system: SYSTEM_PROMPT,
-      tools: skillTools,
-      messages: currentMessages,
     })
 
-    // Extract text and tool use blocks
-    const textBlocks = response.content.filter((b) => b.type === "text")
-    const toolBlocks = response.content.filter((b) => b.type === "tool_use")
+    const message = response.choices[0]?.message
+    finalText += message?.content || ""
 
-    finalText += textBlocks.map((b) => extractText({ content: [b] } as Anthropic.Message)).join("")
+    if (requiresToolExecution(response)) {
+      const toolCalls = extractToolCalls(response)
 
-    if (toolBlocks.length > 0 && response.stop_reason === "tool_use") {
       // Add assistant message
       currentMessages.push({
         role: "assistant",
-        content: response.content,
+        content: message?.content || "",
+        tool_calls: message?.tool_calls?.map((tc) => {
+          // Handle both standard and custom tool call types
+          const funcInfo = "function" in tc ? tc.function : null
+          return {
+            id: tc.id,
+            type: "function" as const,
+            function: {
+              name: funcInfo?.name || "",
+              arguments: funcInfo?.arguments || "{}",
+            },
+          }
+        }),
       })
 
       // Execute tools
-      const toolResults: Anthropic.ToolResultBlockParam[] = []
-      for (const block of toolBlocks) {
-        if (block.type === "tool_use") {
-          const result = await executeTool(
-            block.name,
-            block.input as Record<string, unknown>,
-            baseUrl
-          )
-          toolResults.push({
-            type: "tool_result",
-            tool_use_id: block.id,
-            content: JSON.stringify(result.success ? result.data : { error: result.error }),
-          })
-        }
-      }
+      for (const toolCall of toolCalls) {
+        const result = await executeTool(toolCall.name, toolCall.arguments, baseUrl)
 
-      currentMessages.push({
-        role: "user",
-        content: toolResults,
-      })
+        currentMessages.push({
+          role: "tool",
+          content: JSON.stringify(result.success ? result.data : { error: result.error }),
+          tool_call_id: toolCall.id,
+        })
+      }
     } else {
       // Done
       break
