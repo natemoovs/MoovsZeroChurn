@@ -111,19 +111,19 @@ From the Retool export, these Snowflake tables are referenced:
 | Retool Action | Native Status | Notes |
 |--------------|---------------|-------|
 | Open Customer Portal | ✅ Done | Uses domain |
-| Open HubSpot Deal | ⚠️ Verify | Link format |
-| Add HubSpot Note | ⚠️ Link only | No API integration |
+| View in HubSpot | ✅ Done | Links to company page |
+| Add HubSpot Note | ✅ Done | Links to notes tab |
+| Copy Stripe Login Link | ✅ Done | Stripe Express link |
+| View Moovs Chat Logs | ✅ Done | Intercom link |
+| Search Email Logs | ✅ Done | Tab link |
+| View Matrix History | ✅ Done | Activity tab link |
+| Sendgrid Missing Alert | ✅ Done | Email health banner |
+| Copy Operator ID | ✅ Done | Fixed API |
+| Copy Stripe ID | ✅ Done | Fixed API |
 | Update Postgres Plan | ❌ Missing | Need modal/form |
 | Add Member | ❌ Missing | INSERT query needed |
 | Update Risk Details | ❌ Missing | Form needed |
-| Copy Request Payment Link | ❌ Missing | Generate Stripe link |
-| View Moovs Chat Logs | ✅ Done | Intercom link |
-| Search Email Logs | ⚠️ Tab link | No search UI |
-| View Matrix History | ⚠️ Tab link | No history view |
 | Update Member Role | ❌ Missing | UPDATE query |
-| Sendgrid Missing Alert | ✅ Done | Email health banner |
-| Copy Operator ID | ⚠️ Broken | Needs API fix |
-| Copy Stripe ID | ⚠️ Broken | Needs API fix |
 
 ---
 

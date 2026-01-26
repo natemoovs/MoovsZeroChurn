@@ -692,6 +692,118 @@ async function getOperatorSettings(operatorId: string): Promise<Record<string, u
 }
 
 // ============================================================================
+// Additional Data: Contacts, Bank Accounts, Subscription History
+// ============================================================================
+
+export interface PlatformContact {
+  contact_id: string
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  phone: string | null
+  company_name: string | null
+  notes: string | null
+  created_at: string | null
+}
+
+export interface BankAccount {
+  account_id: string
+  institution_name: string | null
+  account_name: string | null
+  account_type: string | null
+  last_four: string | null
+  status: string | null
+  created_at: string | null
+}
+
+export interface SubscriptionLogEntry {
+  log_id: string
+  event_type: string | null
+  plan_name: string | null
+  previous_plan: string | null
+  amount: number | null
+  event_date: string | null
+  notes: string | null
+}
+
+/**
+ * Get platform contacts for an operator (distinct from HubSpot contacts)
+ */
+async function getOperatorContacts(operatorId: string): Promise<PlatformContact[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      contact_id,
+      first_name,
+      last_name,
+      email,
+      phone,
+      company_name,
+      notes,
+      created_at
+    FROM SWOOP.CONTACT
+    WHERE operator_id = '${escapedId}'
+      AND removed_at IS NULL
+    ORDER BY created_at DESC
+    LIMIT 100
+  `
+
+  const result = await executeQuery<PlatformContact>(sql)
+  return result.rows
+}
+
+/**
+ * Get bank accounts (Stripe Financial Connections) for an operator
+ */
+async function getOperatorBankAccounts(operatorId: string): Promise<BankAccount[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      stripe_financial_connections_account_id as account_id,
+      institution_name,
+      display_name as account_name,
+      subcategory as account_type,
+      last4 as last_four,
+      status,
+      created_at
+    FROM SWOOP.STRIPE_FINANCIAL_CONNECTIONS_ACCOUNT
+    WHERE operator_id = '${escapedId}'
+    ORDER BY created_at DESC
+    LIMIT 20
+  `
+
+  const result = await executeQuery<BankAccount>(sql)
+  return result.rows
+}
+
+/**
+ * Get subscription history/log for an operator
+ */
+async function getOperatorSubscriptionLog(operatorId: string): Promise<SubscriptionLogEntry[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      subscription_log_id as log_id,
+      event_type,
+      plan_name,
+      previous_plan_name as previous_plan,
+      amount,
+      created_at as event_date,
+      notes
+    FROM POSTGRES_SWOOP.SUBSCRIPTION_LOG
+    WHERE operator_id = '${escapedId}'
+    ORDER BY created_at DESC
+    LIMIT 50
+  `
+
+  const result = await executeQuery<SubscriptionLogEntry>(sql)
+  return result.rows
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -719,6 +831,11 @@ export const snowflakeClient = {
   getOperatorPriceZones,
   getOperatorRules,
   getOperatorSettings,
+
+  // More platform data
+  getOperatorContacts,
+  getOperatorBankAccounts,
+  getOperatorSubscriptionLog,
 
   // Dashboard/analytics queries
   getTopOperatorsByRevenue,

@@ -22,12 +22,16 @@ export async function GET(
     }
 
     // Fetch all platform data in parallel
-    const [promoCodes, priceZones, rules, settings] = await Promise.all([
-      snowflake.getOperatorPromoCodes(operatorId).catch(() => []),
-      snowflake.getOperatorPriceZones(operatorId).catch(() => []),
-      snowflake.getOperatorRules(operatorId).catch(() => []),
-      snowflake.getOperatorSettings(operatorId).catch(() => null),
-    ])
+    const [promoCodes, priceZones, rules, settings, contacts, bankAccounts, subscriptionLog] =
+      await Promise.all([
+        snowflake.getOperatorPromoCodes(operatorId).catch(() => []),
+        snowflake.getOperatorPriceZones(operatorId).catch(() => []),
+        snowflake.getOperatorRules(operatorId).catch(() => []),
+        snowflake.getOperatorSettings(operatorId).catch(() => null),
+        snowflake.getOperatorContacts(operatorId).catch(() => []),
+        snowflake.getOperatorBankAccounts(operatorId).catch(() => []),
+        snowflake.getOperatorSubscriptionLog(operatorId).catch(() => []),
+      ])
 
     // Calculate stats
     const activePromoCodes = promoCodes.filter((p) => p.is_active).length
@@ -68,6 +72,34 @@ export async function GET(
         priority: r.priority,
         createdAt: r.created_at,
       })),
+      contacts: contacts.map((c) => ({
+        id: c.contact_id,
+        firstName: c.first_name,
+        lastName: c.last_name,
+        email: c.email,
+        phone: c.phone,
+        companyName: c.company_name,
+        notes: c.notes,
+        createdAt: c.created_at,
+      })),
+      bankAccounts: bankAccounts.map((b) => ({
+        id: b.account_id,
+        institutionName: b.institution_name,
+        accountName: b.account_name,
+        accountType: b.account_type,
+        lastFour: b.last_four,
+        status: b.status,
+        createdAt: b.created_at,
+      })),
+      subscriptionLog: subscriptionLog.map((s) => ({
+        id: s.log_id,
+        eventType: s.event_type,
+        planName: s.plan_name,
+        previousPlan: s.previous_plan,
+        amount: s.amount,
+        eventDate: s.event_date,
+        notes: s.notes,
+      })),
       settings,
       stats: {
         totalPromoCodes: promoCodes.length,
@@ -75,6 +107,9 @@ export async function GET(
         totalZones: priceZones.length,
         totalRules: rules.length,
         activeRules,
+        totalContacts: contacts.length,
+        totalBankAccounts: bankAccounts.length,
+        totalSubscriptionEvents: subscriptionLog.length,
         hasSettings: !!settings,
       },
     })
