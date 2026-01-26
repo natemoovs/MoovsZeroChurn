@@ -617,7 +617,7 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
             className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
           >
             <ExternalLink className="h-4 w-4" />
-            Open HubSpot Deal
+            View in HubSpot
           </a>
 
           {/* Copy Actions */}

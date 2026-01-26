@@ -553,6 +553,145 @@ async function getOperatorEmailLog(operatorId: string, limit = 50): Promise<Oper
 }
 
 // ============================================================================
+// Additional Platform Data (Promo Codes, Zones, Rules)
+// ============================================================================
+
+export interface PromoCode {
+  promo_code_id: string
+  code: string
+  description: string | null
+  discount_type: string | null
+  discount_value: number | null
+  valid_from: string | null
+  valid_until: string | null
+  usage_limit: number | null
+  times_used: number | null
+  is_active: boolean | null
+  created_at: string | null
+}
+
+export interface PriceZone {
+  zone_id: string
+  name: string | null
+  zone_type: string | null
+  base_fare: number | null
+  per_mile_rate: number | null
+  per_minute_rate: number | null
+  minimum_fare: number | null
+  created_at: string | null
+}
+
+export interface BusinessRule {
+  rule_id: string
+  name: string | null
+  rule_type: string | null
+  conditions: string | null
+  actions: string | null
+  is_active: boolean | null
+  priority: number | null
+  created_at: string | null
+}
+
+/**
+ * Get promo codes for an operator
+ */
+async function getOperatorPromoCodes(operatorId: string): Promise<PromoCode[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      promo_code_id,
+      code,
+      promo_label as description,
+      promo_type as discount_type,
+      promo_value as discount_value,
+      valid_start as valid_from,
+      valid_end as valid_until,
+      total_usage_limit as usage_limit,
+      current_usage_count as times_used,
+      CASE WHEN removed_at IS NULL THEN TRUE ELSE FALSE END as is_active,
+      created_at
+    FROM SWOOP.PROMO_CODE
+    WHERE operator_id = '${escapedId}'
+    ORDER BY created_at DESC
+    LIMIT 100
+  `
+
+  const result = await executeQuery<PromoCode>(sql)
+  return result.rows
+}
+
+/**
+ * Get price zones for an operator
+ */
+async function getOperatorPriceZones(operatorId: string): Promise<PriceZone[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      price_zone_id as zone_id,
+      name,
+      zone_type,
+      base_fare,
+      per_mile_rate,
+      per_minute_rate,
+      minimum_fare,
+      created_at
+    FROM SWOOP.PRICE_ZONE
+    WHERE operator_id = '${escapedId}'
+      AND removed_at IS NULL
+    ORDER BY name
+    LIMIT 100
+  `
+
+  const result = await executeQuery<PriceZone>(sql)
+  return result.rows
+}
+
+/**
+ * Get business rules for an operator
+ */
+async function getOperatorRules(operatorId: string): Promise<BusinessRule[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      rule_id,
+      name,
+      rule_type,
+      conditions,
+      actions,
+      CASE WHEN removed_at IS NULL THEN TRUE ELSE FALSE END as is_active,
+      priority,
+      created_at
+    FROM SWOOP.RULE
+    WHERE operator_id = '${escapedId}'
+    ORDER BY priority, name
+    LIMIT 100
+  `
+
+  const result = await executeQuery<BusinessRule>(sql)
+  return result.rows
+}
+
+/**
+ * Get operator settings
+ */
+async function getOperatorSettings(operatorId: string): Promise<Record<string, unknown> | null> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT *
+    FROM POSTGRES_SWOOP.OPERATOR_SETTINGS
+    WHERE operator_id = '${escapedId}'
+    LIMIT 1
+  `
+
+  const result = await executeQuery<Record<string, unknown>>(sql)
+  return result.rows[0] || null
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -574,6 +713,12 @@ export const snowflakeClient = {
   getOperatorDrivers,
   getOperatorVehicles,
   getOperatorEmailLog,
+
+  // Additional platform data
+  getOperatorPromoCodes,
+  getOperatorPriceZones,
+  getOperatorRules,
+  getOperatorSettings,
 
   // Dashboard/analytics queries
   getTopOperatorsByRevenue,
