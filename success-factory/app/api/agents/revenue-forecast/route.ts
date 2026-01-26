@@ -68,9 +68,10 @@ export async function POST(request: NextRequest) {
   console.log("[Revenue Forecast] Starting forecast generation...")
 
   try {
-    // Step 1: Get current portfolio snapshot
+    // Step 1: Get current portfolio snapshot (exclude churned)
     const companies = await prisma.hubSpotCompany.findMany({
       where: {
+        healthScore: { not: "churned" },
         subscriptionStatus: { in: ["active", "past_due"] },
       },
       select: {

@@ -39,6 +39,9 @@ export async function GET(request: NextRequest) {
 
     if (health && health !== "all") {
       where.healthScore = health
+    } else {
+      // By default, exclude churned from the main list (they have their own section)
+      where.healthScore = { not: "churned" }
     }
 
     if (ownerId) {

@@ -14,10 +14,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const months = parseInt(searchParams.get("months") || "3")
 
-    // Get all active accounts with MRR
+    // Get all active accounts with MRR (exclude churned)
     const accounts = await prisma.hubSpotCompany.findMany({
       where: {
         mrr: { gt: 0 },
+        healthScore: { not: "churned" },
         subscriptionStatus: { notIn: ["churned", "cancelled"] },
       },
       select: {
