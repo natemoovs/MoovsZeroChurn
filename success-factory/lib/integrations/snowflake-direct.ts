@@ -427,6 +427,97 @@ async function getOperatorSettings(operatorId: string): Promise<Record<string, u
 }
 
 // ============================================================================
+// Write Operations (CRUD)
+// ============================================================================
+
+export interface AddMemberInput {
+  operatorId: string
+  email: string
+  firstName?: string
+  lastName?: string
+  roleSlug?: string
+}
+
+export interface AddMemberResult {
+  userId: string
+  success: boolean
+}
+
+/**
+ * Add a new member/user to an operator
+ * Generates a UUID for the user and inserts into POSTGRES_SWOOP.USER
+ */
+async function addOperatorMember(input: AddMemberInput): Promise<AddMemberResult> {
+  // Generate a UUID for the new user
+  const userId = crypto.randomUUID()
+
+  const sql = `
+    INSERT INTO POSTGRES_SWOOP.USER (
+      USER_ID,
+      OPERATOR_ID,
+      EMAIL,
+      FIRST_NAME,
+      LAST_NAME,
+      ROLE_SLUG,
+      CREATED_AT,
+      UPDATED_AT
+    ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())
+  `
+
+  await executeQuery(sql, [
+    userId,
+    input.operatorId,
+    input.email,
+    input.firstName || null,
+    input.lastName || null,
+    input.roleSlug || "member",
+  ])
+
+  return { userId, success: true }
+}
+
+export interface UpdateMemberRoleInput {
+  userId: string
+  operatorId: string
+  roleSlug: string
+}
+
+/**
+ * Update a member's role
+ */
+async function updateMemberRole(input: UpdateMemberRoleInput): Promise<boolean> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.USER
+    SET ROLE_SLUG = ?,
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE USER_ID = ?
+      AND OPERATOR_ID = ?
+      AND REMOVED_AT IS NULL
+  `
+
+  const result = await executeQuery(sql, [input.roleSlug, input.userId, input.operatorId])
+
+  return result.rowCount > 0
+}
+
+/**
+ * Remove a member (soft delete)
+ */
+async function removeMember(userId: string, operatorId: string): Promise<boolean> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.USER
+    SET REMOVED_AT = CURRENT_TIMESTAMP(),
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE USER_ID = ?
+      AND OPERATOR_ID = ?
+      AND REMOVED_AT IS NULL
+  `
+
+  const result = await executeQuery(sql, [userId, operatorId])
+  return result.rowCount > 0
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -448,6 +539,11 @@ export const snowflakeDirect = {
   getOperatorBankAccounts,
   getOperatorSubscriptionLog,
   getOperatorSettings,
+
+  // Write operations
+  addOperatorMember,
+  updateMemberRole,
+  removeMember,
 }
 
 export default snowflakeDirect

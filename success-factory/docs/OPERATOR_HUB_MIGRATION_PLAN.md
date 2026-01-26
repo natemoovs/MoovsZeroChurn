@@ -1,6 +1,7 @@
 # Operator Hub Migration Plan - Moovs Matrix to Native Tool
 
 ## Overview
+
 This document tracks the migration from the Retool "Moovs Matrix" app to a native Next.js implementation in Success Factory.
 
 ---
@@ -37,9 +38,11 @@ NOTION_TICKETS_DB_ID=xxx
 ## Retool Feature Analysis
 
 ### Data Sources / Tables Used
+
 From the Retool export, these Snowflake tables are referenced:
 
 **Core Operator Data:**
+
 - `MOOVS.CSM_MOOVS` - Main operator overview (MRR, trips, engagement) ✅
 - `MOZART.CSM_COMBINED_NEW` - Combined CSM view
 - `SWOOP.OPERATOR` - Operator details
@@ -47,21 +50,25 @@ From the Retool export, these Snowflake tables are referenced:
 - `SWOOP.OPERATOR_LIMIT` - Operator limits
 
 **Platform Data (POSTGRES_SWOOP):**
+
 - `POSTGRES_SWOOP.USER` - Platform members/users ✅
 - `POSTGRES_SWOOP.DRIVER` - Drivers ✅
 - `POSTGRES_SWOOP.OPERATOR_SETTINGS` - Settings ✅
 - `POSTGRES_SWOOP.SUBSCRIPTION_LOG` - Subscription history ✅
 
 **Financial/Payment Data:**
+
 - `MOZART_NEW.MOOVS_PLATFORM_CHARGES` - Stripe charges ✅
 - `MOZART_NEW.ALL_SUBSCRIPTIONS` - Lago subscriptions
 - `FACT.LAGO_FEES` - Lago fees
 - `FACT.MOOVS_RISK_OVERVIEW` - Risk metrics ✅
 
 **Reservations/Activity:**
+
 - `FACT.MOOVS_OPERATOR_RESERVATIONS` - Reservation data ✅
 
 **Additional Features:**
+
 - `SWOOP.PROMO_CODE` - Promo codes ✅
 - `SWOOP.PRICE_ZONE` - Pricing zones ✅
 - `SWOOP.RULE` - Business rules ✅
@@ -75,13 +82,13 @@ From the Retool export, these Snowflake tables are referenced:
 
 ## External Links in Retool
 
-| Link | Description | Status |
-|------|-------------|--------|
-| `https://customer.moovs.app/{name_slug}/new/info` | Customer Portal | ✅ Done |
-| `https://dashboard.stripe.com/connect/accounts/{stripeId}/activity` | Stripe Dashboard | ✅ Done |
-| `https://analytics.june.so/a/829/objects/2321/object/{operatorId}` | June Analytics | ✅ Done |
+| Link                                                                          | Description        | Status  |
+| ----------------------------------------------------------------------------- | ------------------ | ------- |
+| `https://customer.moovs.app/{name_slug}/new/info`                             | Customer Portal    | ✅ Done |
+| `https://dashboard.stripe.com/connect/accounts/{stripeId}/activity`           | Stripe Dashboard   | ✅ Done |
+| `https://analytics.june.so/a/829/objects/2321/object/{operatorId}`            | June Analytics     | ✅ Done |
 | `https://swoop.metabaseapp.com/public/dashboard/...?operator_id={operatorId}` | Metabase Dashboard | ✅ Done |
-| HubSpot Company/Deal | HubSpot Record | ✅ Done |
+| HubSpot Company/Deal                                                          | HubSpot Record     | ✅ Done |
 
 ---
 
@@ -89,22 +96,22 @@ From the Retool export, these Snowflake tables are referenced:
 
 ### ✅ Completed Features
 
-| Feature | Location | Notes |
-|---------|----------|-------|
-| Operator Search | `/matrix` | Search-as-you-type with 300ms debounce |
-| Operator Detail Page | `/matrix/[operatorId]` | Tab-based UI |
-| Overview Tab | Overview section | Key metrics, health, signals |
-| Payments Tab | PaymentsTab component | Charges from Snowflake |
-| Risk Tab | RiskTab component | Risk metrics |
-| Activity Tab | ActivityTab component | Monthly trips |
-| Tickets Tab | TicketsTab component | Notion integration |
-| Emails Tab | EmailsTab component | HubSpot activity |
-| Features Tab | FeaturesTab component | Members/Drivers/Vehicles + Platform Data |
-| Quick Links | OverviewTab | External dashboards |
-| Quick Actions | OverviewTab | All actions working |
-| Email Health Alert | OverviewTab | Sendgrid status |
-| Direct Snowflake | `lib/integrations/snowflake.ts` | With Metabase fallback |
-| Stripe Dual Keys | `lib/integrations/stripe.ts` | Platform + Connected accounts |
+| Feature              | Location                        | Notes                                    |
+| -------------------- | ------------------------------- | ---------------------------------------- |
+| Operator Search      | `/matrix`                       | Search-as-you-type with 300ms debounce   |
+| Operator Detail Page | `/matrix/[operatorId]`          | Tab-based UI                             |
+| Overview Tab         | Overview section                | Key metrics, health, signals             |
+| Payments Tab         | PaymentsTab component           | Charges from Snowflake                   |
+| Risk Tab             | RiskTab component               | Risk metrics                             |
+| Activity Tab         | ActivityTab component           | Monthly trips                            |
+| Tickets Tab          | TicketsTab component            | Notion integration                       |
+| Emails Tab           | EmailsTab component             | HubSpot activity                         |
+| Features Tab         | FeaturesTab component           | Members/Drivers/Vehicles + Platform Data |
+| Quick Links          | OverviewTab                     | External dashboards                      |
+| Quick Actions        | OverviewTab                     | All actions working                      |
+| Email Health Alert   | OverviewTab                     | Sendgrid status                          |
+| Direct Snowflake     | `lib/integrations/snowflake.ts` | With Metabase fallback                   |
+| Stripe Dual Keys     | `lib/integrations/stripe.ts`    | Platform + Connected accounts            |
 
 ### ✅ Completed Infrastructure
 
@@ -132,47 +139,63 @@ From the Retool export, these Snowflake tables are referenced:
 
 ### ✅ Platform Data Features (FeaturesTab)
 
-| Sub-Tab | Data Source | Status |
-|---------|-------------|--------|
-| Members | `POSTGRES_SWOOP.USER` | ✅ Done |
-| Drivers | `POSTGRES_SWOOP.DRIVER` | ✅ Done |
-| Vehicles | `SWOOP.VEHICLE` | ✅ Done |
-| Promos | `SWOOP.PROMO_CODE` | ✅ Done |
-| Zones | `SWOOP.PRICE_ZONE` | ✅ Done |
-| Rules | `SWOOP.RULE` | ✅ Done |
-| Contacts | `SWOOP.CONTACT` | ✅ Done |
-| Bank | `SWOOP.STRIPE_FINANCIAL_CONNECTIONS_ACCOUNT` | ✅ Done |
-| History | `POSTGRES_SWOOP.SUBSCRIPTION_LOG` | ✅ Done |
+| Sub-Tab  | Data Source                                  | Status  |
+| -------- | -------------------------------------------- | ------- |
+| Members  | `POSTGRES_SWOOP.USER`                        | ✅ Done |
+| Drivers  | `POSTGRES_SWOOP.DRIVER`                      | ✅ Done |
+| Vehicles | `SWOOP.VEHICLE`                              | ✅ Done |
+| Promos   | `SWOOP.PROMO_CODE`                           | ✅ Done |
+| Zones    | `SWOOP.PRICE_ZONE`                           | ✅ Done |
+| Rules    | `SWOOP.RULE`                                 | ✅ Done |
+| Contacts | `SWOOP.CONTACT`                              | ✅ Done |
+| Bank     | `SWOOP.STRIPE_FINANCIAL_CONNECTIONS_ACCOUNT` | ✅ Done |
+| History  | `POSTGRES_SWOOP.SUBSCRIPTION_LOG`            | ✅ Done |
 
-### ❌ Missing Features (CRUD Operations)
+### ✅ Completed CRUD Operations
 
-| Feature | Priority | Description | Status |
-|---------|----------|-------------|--------|
-| **Add Member** | Medium | INSERT into POSTGRES_SWOOP.USER | ❌ TODO |
-| **Update Member Role** | Medium | UPDATE role_slug | ❌ TODO |
-| **Update Risk Details** | Low | Edit risk assessment | ❌ TODO |
-| **Update Postgres Plan** | Low | Edit plan configuration | ❌ TODO |
+| Feature                | Priority | Description                               | Status  |
+| ---------------------- | -------- | ----------------------------------------- | ------- |
+| **Add Member**         | Medium   | INSERT into POSTGRES_SWOOP.USER via modal | ✅ Done |
+| **Update Member Role** | Medium   | UPDATE role_slug via inline dropdown      | ✅ Done |
+| **Remove Member**      | Medium   | Soft delete via DELETE endpoint           | ✅ Done |
+
+### ✅ Lago Integration (Plan Management)
+
+| Feature                    | Description                           | Status  |
+| -------------------------- | ------------------------------------- | ------- |
+| **List Plans**             | GET /plans from Lago API              | ✅ Done |
+| **Get Subscriptions**      | GET subscriptions for operator        | ✅ Done |
+| **Change Plan**            | PUT subscription to update plan       | ✅ Done |
+| **Create Subscription**    | POST new subscription                 | ✅ Done |
+| **Cancel Subscription**    | DELETE subscription                   | ✅ Done |
+| **Change Plan Modal**      | UI modal for plan changes             | ✅ Done |
+
+### ❌ Remaining CRUD Operations
+
+| Feature                  | Priority | Description             | Status  |
+| ------------------------ | -------- | ----------------------- | ------- |
+| **Update Risk Details**  | Low      | Edit risk assessment    | ❌ TODO (links to HubSpot notes) |
 
 ---
 
 ## Quick Actions Comparison
 
-| Retool Action | Native Status | Notes |
-|--------------|---------------|-------|
-| Open Customer Portal | ✅ Done | Uses domain |
-| View in HubSpot | ✅ Done | Links to company page |
-| Add HubSpot Note | ✅ Done | Links to notes tab |
-| Copy Stripe Login Link | ✅ Done | Stripe Express link |
-| View Moovs Chat Logs | ✅ Done | Intercom link |
-| Search Email Logs | ✅ Done | Sendgrid tab link |
-| View Matrix History | ✅ Done | Activity tab link |
-| Sendgrid Missing Alert | ✅ Done | Email health banner |
-| Copy Operator ID | ✅ Done | CopyActionButton |
-| Copy Stripe ID | ✅ Done | CopyActionButton |
-| Update Postgres Plan | ❌ Missing | Need modal/form |
-| Add Member | ❌ Missing | Need modal + INSERT |
-| Update Risk Details | ❌ Missing | Need form |
-| Update Member Role | ❌ Missing | Need UPDATE query |
+| Retool Action          | Native Status | Notes                             |
+| ---------------------- | ------------- | --------------------------------- |
+| Open Customer Portal   | ✅ Done       | Uses domain                       |
+| View in HubSpot        | ✅ Done       | Links to company page             |
+| Add HubSpot Note       | ✅ Done       | Links to notes tab                |
+| Copy Stripe Login Link | ✅ Done       | Stripe Express link               |
+| View Moovs Chat Logs   | ✅ Done       | Intercom link                     |
+| Search Email Logs      | ✅ Done       | Sendgrid tab link                 |
+| View Matrix History    | ✅ Done       | Activity tab link                 |
+| Sendgrid Missing Alert | ✅ Done       | Email health banner               |
+| Copy Operator ID       | ✅ Done       | CopyActionButton                  |
+| Copy Stripe ID         | ✅ Done       | CopyActionButton                  |
+| Update Postgres Plan   | ✅ Done       | Lago API integration with modal   |
+| Add Member             | ✅ Done       | Modal with INSERT query           |
+| Update Risk Details    | ✅ Done       | Links to HubSpot notes            |
+| Update Member Role     | ✅ Done       | Inline dropdown with UPDATE query |
 
 ---
 
@@ -212,36 +235,48 @@ lib/
 
 ### Core Queries (`lib/integrations/snowflake.ts`)
 
-| Function | Table | Status |
-|----------|-------|--------|
-| `searchOperators` | MOOVS.CSM_MOOVS | ✅ |
-| `getOperatorById` | MOOVS.CSM_MOOVS | ✅ |
-| `getOperatorPlatformCharges` | MOZART_NEW.MOOVS_PLATFORM_CHARGES | ✅ |
-| `getMonthlyChargesSummary` | MOZART_NEW.MOOVS_PLATFORM_CHARGES | ✅ |
-| `getReservationsOverview` | MOZART_NEW.RESERVATIONS | ✅ |
-| `getRiskOverview` | MOZART_NEW.MOOVS_PLATFORM_CHARGES | ✅ |
-| `getOperatorMembers` | POSTGRES_SWOOP.USER | ✅ |
-| `getOperatorDrivers` | POSTGRES_SWOOP.DRIVER | ✅ |
-| `getOperatorVehicles` | SWOOP.VEHICLE | ✅ |
-| `getOperatorEmailLog` | POSTGRES_SWOOP.EMAIL_LOG | ✅ |
-| `getOperatorPromoCodes` | SWOOP.PROMO_CODE | ✅ |
-| `getOperatorPriceZones` | SWOOP.PRICE_ZONE | ✅ |
-| `getOperatorRules` | SWOOP.RULE | ✅ |
-| `getOperatorSettings` | POSTGRES_SWOOP.OPERATOR_SETTINGS | ✅ |
-| `getOperatorContacts` | SWOOP.CONTACT | ✅ |
-| `getOperatorBankAccounts` | SWOOP.STRIPE_FINANCIAL_CONNECTIONS_ACCOUNT | ✅ |
-| `getOperatorSubscriptionLog` | POSTGRES_SWOOP.SUBSCRIPTION_LOG | ✅ |
+| Function                     | Table                                      | Status |
+| ---------------------------- | ------------------------------------------ | ------ |
+| `searchOperators`            | MOOVS.CSM_MOOVS                            | ✅     |
+| `getOperatorById`            | MOOVS.CSM_MOOVS                            | ✅     |
+| `getOperatorPlatformCharges` | MOZART_NEW.MOOVS_PLATFORM_CHARGES          | ✅     |
+| `getMonthlyChargesSummary`   | MOZART_NEW.MOOVS_PLATFORM_CHARGES          | ✅     |
+| `getReservationsOverview`    | MOZART_NEW.RESERVATIONS                    | ✅     |
+| `getRiskOverview`            | MOZART_NEW.MOOVS_PLATFORM_CHARGES          | ✅     |
+| `getOperatorMembers`         | POSTGRES_SWOOP.USER                        | ✅     |
+| `getOperatorDrivers`         | POSTGRES_SWOOP.DRIVER                      | ✅     |
+| `getOperatorVehicles`        | SWOOP.VEHICLE                              | ✅     |
+| `getOperatorEmailLog`        | POSTGRES_SWOOP.EMAIL_LOG                   | ✅     |
+| `getOperatorPromoCodes`      | SWOOP.PROMO_CODE                           | ✅     |
+| `getOperatorPriceZones`      | SWOOP.PRICE_ZONE                           | ✅     |
+| `getOperatorRules`           | SWOOP.RULE                                 | ✅     |
+| `getOperatorSettings`        | POSTGRES_SWOOP.OPERATOR_SETTINGS           | ✅     |
+| `getOperatorContacts`        | SWOOP.CONTACT                              | ✅     |
+| `getOperatorBankAccounts`    | SWOOP.STRIPE_FINANCIAL_CONNECTIONS_ACCOUNT | ✅     |
+| `getOperatorSubscriptionLog` | POSTGRES_SWOOP.SUBSCRIPTION_LOG            | ✅     |
+
+### Write Operations (`lib/integrations/snowflake.ts`)
+
+| Function            | Table                             | Status |
+| ------------------- | --------------------------------- | ------ |
+| `addOperatorMember` | POSTGRES_SWOOP.USER (INSERT)      | ✅     |
+| `updateMemberRole`  | POSTGRES_SWOOP.USER (UPDATE)      | ✅     |
+| `removeMember`      | POSTGRES_SWOOP.USER (soft DELETE) | ✅     |
+
+> **Note:** Write operations require direct Snowflake connection (not Metabase fallback).
 
 ---
 
 ## Implementation Plan
 
 ### Phase 1: Fix Critical Bugs ✅ COMPLETE
+
 - [x] Update `/api/integrations/accounts/[id]` to return `operatorId` and `stripeAccountId`
 - [x] Verify HubSpot link format
 - [x] Test Copy buttons work
 
 ### Phase 2: Add Missing Platform Data ✅ COMPLETE
+
 - [x] Add Promo Codes query and tab/section
 - [x] Add Price Zones query and display
 - [x] Add Business Rules display
@@ -250,21 +285,25 @@ lib/
 - [x] Add Subscription History
 
 ### Phase 3: Infrastructure Improvements ✅ COMPLETE
+
 - [x] Direct Snowflake connection (bypass Metabase)
 - [x] Search-as-you-type with debouncing
 - [x] Stripe dual account support (platform + connected)
 - [x] Update all STRIPE_SECRET_KEY references
 
-### Phase 4: Add CRUD Operations 🔄 IN PROGRESS
-- [ ] Add Member modal/form
-- [ ] Update Member Role modal
-- [ ] Update Risk Details form
-- [ ] Update Postgres Plan form
+### Phase 4: Add CRUD Operations ✅ COMPLETE
 
-### Phase 5: Polish & Enhancements (Future)
+- [x] Add Member modal/form
+- [x] Update Member Role inline dropdown
+- [x] Remove Member (soft delete via API)
+- [x] Update Risk Details (links to HubSpot notes)
+- [x] Update Postgres Plan (Lago API integration with modal UI)
+
+### Phase 5: Polish & Enhancements ✅ MOSTLY COMPLETE
+
 - [ ] Matrix History view (change log)
-- [ ] Enhanced email search
-- [ ] Stripe live data integration (balance, payouts)
+- [x] Enhanced email search (search across all communications)
+- [x] Stripe live data integration (balance, payouts, charges)
 - [ ] Bulk operations
 
 ---
@@ -282,7 +321,41 @@ lib/
 
 ## Changelog
 
+### 2026-01-26 (Update 2)
+
+- Added CRUD operations for platform members:
+  - Add Member modal with form validation
+  - Update Member Role with inline dropdown editing
+  - Remove Member (soft delete) via API endpoint
+- Added Snowflake write operations (`addOperatorMember`, `updateMemberRole`, `removeMember`)
+- Write operations require direct Snowflake connection (not Metabase)
+
+### 2026-01-26 (Update 3)
+- Added full Lago API integration for subscription management:
+  - List available plans
+  - View current subscription
+  - Change plan (update subscription)
+  - Create new subscription
+  - Cancel subscription
+- Added ChangePlanModal component with plan selection UI
+- Added /api/operator-hub/[operatorId]/subscription endpoint (GET, POST, PATCH, DELETE)
+- Added "Add Risk Note" quick action (links to HubSpot)
+- Phase 4 now COMPLETE
+
+### 2026-01-26 (Update 4)
+- Added Stripe live data integration:
+  - StripeLiveDataCard component with expandable UI
+  - Shows balance (available/pending), recent payouts, and charges
+  - Account requirements warnings
+  - /api/operator-hub/[operatorId]/stripe endpoint
+- Added enhanced email search:
+  - Search input in EmailsTab
+  - Searches across email subjects, call notes, meeting titles
+  - Result count display
+- Phase 5 now mostly complete
+
 ### 2026-01-26
+
 - Added direct Snowflake connection with Metabase fallback
 - Implemented search-as-you-type with 300ms debounce
 - Updated Stripe integration for dual account support

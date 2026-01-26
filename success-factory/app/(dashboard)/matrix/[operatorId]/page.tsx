@@ -357,6 +357,12 @@ function EmailHealthAlert({ operatorId }: { operatorId: string | null }) {
 
 function OverviewTab({ operator }: { operator: OperatorData }) {
   const location = [operator.city, operator.state, operator.country].filter(Boolean).join(", ")
+  const [showChangePlanModal, setShowChangePlanModal] = useState(false)
+
+  const handlePlanChangeSuccess = () => {
+    // Refresh the page to get updated plan info
+    window.location.reload()
+  }
 
   return (
     <div className="space-y-6">
@@ -610,7 +616,7 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
               href={`https://${operator.domain}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-primary-500 hover:bg-primary-600 text-white flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+              className="bg-primary-500 hover:bg-primary-600 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors"
             >
               <Globe className="h-4 w-4" />
               Open Customer Portal
@@ -685,6 +691,28 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
             <History className="h-4 w-4" />
             View Matrix History
           </Link>
+
+          {/* Manage Subscription - opens plan change modal */}
+          {operator.operatorId && (
+            <button
+              onClick={() => setShowChangePlanModal(true)}
+              className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+            >
+              <CreditCardIcon className="h-4 w-4" />
+              Change Plan
+            </button>
+          )}
+
+          {/* Risk Assessment Note - links to HubSpot notes with risk context */}
+          <a
+            href={`https://app.hubspot.com/contacts/8796840/company/${operator.hubspotId}/notes`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <Shield className="h-4 w-4" />
+            Add Risk Note
+          </a>
         </div>
       </div>
 
@@ -746,6 +774,18 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
           </Link>
         </div>
       </div>
+
+      {/* Change Plan Modal */}
+      {operator.operatorId && (
+        <ChangePlanModal
+          operatorId={operator.operatorId}
+          operatorName={operator.name}
+          currentPlan={operator.plan}
+          isOpen={showChangePlanModal}
+          onClose={() => setShowChangePlanModal(false)}
+          onSuccess={handlePlanChangeSuccess}
+        />
+      )}
     </div>
   )
 }
@@ -874,6 +914,14 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
         />
       </div>
 
+      {/* Stripe Connected Account Live Data */}
+      {operator.stripeAccountId && operator.operatorId && (
+        <StripeLiveDataCard
+          stripeAccountId={operator.stripeAccountId}
+          operatorId={operator.operatorId}
+        />
+      )}
+
       {/* Charges Table */}
       <div className="card-sf overflow-hidden">
         <div className="border-border-default border-b px-4 py-3">
@@ -962,6 +1010,287 @@ interface RiskApiResponse {
   avg_transaction_amount: number | null
   last_failed_payment_date: string | null
   risk_level: "low" | "medium" | "high" | "unknown"
+}
+
+// ============================================================================
+// Stripe Live Data Component
+// ============================================================================
+
+interface StripeLiveData {
+  operatorId: string
+  stripeAccountId: string
+  account: {
+    id: string
+    businessName: string | null
+    email: string | null
+    country: string | null
+    defaultCurrency: string | null
+    chargesEnabled: boolean
+    payoutsEnabled: boolean
+    detailsSubmitted: boolean
+    createdAt: string
+    requirements: {
+      currentlyDue: string[]
+      pastDue: string[]
+      disabledReason: string | null
+    }
+  }
+  balance: {
+    available: number
+    pending: number
+    total: number
+    currency: string
+  }
+  payouts: Array<{
+    id: string
+    amount: number
+    currency: string
+    status: string
+    arrivalDate: string
+    createdAt: string
+  }>
+  charges: {
+    recent: Array<{
+      id: string
+      amount: number
+      currency: string
+      status: string
+      description: string | null
+      createdAt: string
+      paymentMethod: { brand: string; last4: string } | null
+    }>
+    stats: {
+      totalCount: number
+      successCount: number
+      totalVolume: number
+      avgAmount: number
+      currency: string
+    }
+  }
+}
+
+function StripeLiveDataCard({ stripeAccountId, operatorId }: { stripeAccountId: string; operatorId: string }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<StripeLiveData | null>(null)
+  const [expanded, setExpanded] = useState(false)
+
+  useEffect(() => {
+    if (!stripeAccountId || !operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operatorId}/stripe?stripeAccountId=${stripeAccountId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch Stripe data")
+        return res.json()
+      })
+      .then((result) => {
+        setData(result)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [stripeAccountId, operatorId])
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(amount / 100)
+  }
+
+  if (loading) {
+    return (
+      <div className="card-sf p-4">
+        <div className="flex items-center gap-3">
+          <Loader2 className="text-primary-500 h-5 w-5 animate-spin" />
+          <span className="text-content-secondary text-sm">Loading Stripe data...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="card-sf p-4">
+        <div className="flex items-center gap-3">
+          <CreditCard className="text-content-tertiary h-5 w-5" />
+          <div>
+            <p className="text-content-primary text-sm font-medium">Stripe Connected Account</p>
+            <p className="text-content-tertiary text-xs">{error || "Data not available"}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="card-sf overflow-hidden">
+      {/* Header - always visible */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="hover:bg-bg-secondary flex w-full items-center justify-between p-4 transition-colors"
+      >
+        <div className="flex items-center gap-4">
+          <div className="bg-primary-100 dark:bg-primary-900/30 rounded-lg p-2">
+            <CreditCard className="text-primary-600 dark:text-primary-400 h-5 w-5" />
+          </div>
+          <div className="text-left">
+            <p className="text-content-primary text-sm font-medium">
+              Stripe Balance: {formatCurrency(data.balance.available, data.balance.currency)}
+            </p>
+            <p className="text-content-secondary text-xs">
+              {data.balance.pending > 0 && `${formatCurrency(data.balance.pending, data.balance.currency)} pending • `}
+              {data.account.chargesEnabled ? "Charges enabled" : "Charges disabled"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {data.account.requirements.pastDue.length > 0 && (
+            <span className="bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400 rounded-full px-2 py-0.5 text-xs font-medium">
+              Action Required
+            </span>
+          )}
+          <ChevronRight
+            className={cn(
+              "text-content-tertiary h-5 w-5 transition-transform",
+              expanded && "rotate-90"
+            )}
+          />
+        </div>
+      </button>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div className="border-border-default border-t">
+          {/* Balance & Account Status */}
+          <div className="grid gap-4 p-4 sm:grid-cols-3">
+            <div className="bg-bg-secondary rounded-lg p-3">
+              <p className="text-content-tertiary text-xs">Available Balance</p>
+              <p className="text-content-primary text-lg font-semibold">
+                {formatCurrency(data.balance.available, data.balance.currency)}
+              </p>
+            </div>
+            <div className="bg-bg-secondary rounded-lg p-3">
+              <p className="text-content-tertiary text-xs">Pending Balance</p>
+              <p className="text-content-primary text-lg font-semibold">
+                {formatCurrency(data.balance.pending, data.balance.currency)}
+              </p>
+            </div>
+            <div className="bg-bg-secondary rounded-lg p-3">
+              <p className="text-content-tertiary text-xs">Recent Volume ({data.charges.stats.totalCount} charges)</p>
+              <p className="text-content-primary text-lg font-semibold">
+                {formatCurrency(data.charges.stats.totalVolume, data.charges.stats.currency)}
+              </p>
+            </div>
+          </div>
+
+          {/* Recent Payouts */}
+          {data.payouts.length > 0 && (
+            <div className="border-border-default border-t px-4 py-3">
+              <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">Recent Payouts</h4>
+              <div className="space-y-2">
+                {data.payouts.slice(0, 5).map((payout) => (
+                  <div key={payout.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          payout.status === "paid"
+                            ? "bg-success-500"
+                            : payout.status === "pending" || payout.status === "in_transit"
+                              ? "bg-warning-500"
+                              : "bg-error-500"
+                        )}
+                      />
+                      <span className="text-content-primary">
+                        {formatCurrency(payout.amount, payout.currency)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-content-tertiary text-xs capitalize">{payout.status}</span>
+                      <span className="text-content-tertiary text-xs">
+                        {new Date(payout.arrivalDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recent Charges */}
+          {data.charges.recent.length > 0 && (
+            <div className="border-border-default border-t px-4 py-3">
+              <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">Recent Charges</h4>
+              <div className="space-y-2">
+                {data.charges.recent.slice(0, 5).map((charge) => (
+                  <div key={charge.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          charge.status === "succeeded" ? "bg-success-500" : "bg-error-500"
+                        )}
+                      />
+                      <span className="text-content-primary">
+                        {formatCurrency(charge.amount, charge.currency)}
+                      </span>
+                      {charge.paymentMethod && (
+                        <span className="text-content-tertiary text-xs">
+                          {charge.paymentMethod.brand} •••• {charge.paymentMethod.last4}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-content-tertiary text-xs">
+                      {new Date(charge.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Requirements Warning */}
+          {data.account.requirements.pastDue.length > 0 && (
+            <div className="border-border-default bg-error-50 dark:bg-error-950/30 border-t p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="text-error-600 dark:text-error-400 mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="text-error-700 dark:text-error-400 text-sm font-medium">Action Required</p>
+                  <p className="text-error-600 dark:text-error-500 mt-1 text-xs">
+                    {data.account.requirements.pastDue.length} requirement(s) past due.{" "}
+                    {data.account.requirements.disabledReason && (
+                      <>Reason: {data.account.requirements.disabledReason}</>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer Links */}
+          <div className="border-border-default flex items-center justify-between border-t p-4">
+            <span className="text-content-tertiary text-xs">
+              Account: {data.account.id.slice(0, 20)}...
+            </span>
+            <a
+              href={`https://dashboard.stripe.com/connect/accounts/${data.account.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 flex items-center gap-1 text-xs font-medium"
+            >
+              View in Stripe <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function RiskTab({ operator }: { operator: OperatorData }) {
@@ -1270,6 +1599,575 @@ interface PlatformDataApiResponse {
   }
 }
 
+// ============================================================================
+// Add Member Modal
+// ============================================================================
+
+const MEMBER_ROLES = [
+  { value: "owner", label: "Owner" },
+  { value: "admin", label: "Admin" },
+  { value: "member", label: "Member" },
+  { value: "dispatcher", label: "Dispatcher" },
+  { value: "driver_manager", label: "Driver Manager" },
+  { value: "accountant", label: "Accountant" },
+]
+
+function AddMemberModal({
+  operatorId,
+  isOpen,
+  onClose,
+  onSuccess,
+}: {
+  operatorId: string
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [email, setEmail] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [roleSlug, setRoleSlug] = useState("member")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/operator-hub/${operatorId}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, firstName, lastName, roleSlug }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add member")
+      }
+
+      // Reset form and close
+      setEmail("")
+      setFirstName("")
+      setLastName("")
+      setRoleSlug("member")
+      onSuccess()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add member")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-bg-primary border-border-default w-full max-w-md rounded-lg border shadow-xl">
+        <div className="border-border-default flex items-center justify-between border-b p-4">
+          <h2 className="text-content-primary text-lg font-semibold">Add New Member</h2>
+          <button
+            onClick={onClose}
+            className="text-content-secondary hover:text-content-primary rounded p-1"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4">
+          {error && (
+            <div className="bg-error-50 text-error-700 dark:bg-error-900/30 dark:text-error-400 mb-4 rounded-md p-3 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="email"
+                className="text-content-primary mb-1 block text-sm font-medium"
+              >
+                Email <span className="text-error-500">*</span>
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                placeholder="email@example.com"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="firstName"
+                  className="text-content-primary mb-1 block text-sm font-medium"
+                >
+                  First Name
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                  placeholder="John"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="lastName"
+                  className="text-content-primary mb-1 block text-sm font-medium"
+                >
+                  Last Name
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="role" className="text-content-primary mb-1 block text-sm font-medium">
+                Role
+              </label>
+              <select
+                id="role"
+                value={roleSlug}
+                onChange={(e) => setRoleSlug(e.target.value)}
+                className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+              >
+                {MEMBER_ROLES.map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-content-secondary hover:text-content-primary rounded-md px-4 py-2 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !email}
+              className="bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              Add Member
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// Edit Role Dropdown
+// ============================================================================
+
+function EditRoleDropdown({
+  currentRole,
+  memberId,
+  operatorId,
+  onSuccess,
+}: {
+  currentRole: string | null
+  memberId: string
+  operatorId: string
+  onSuccess: () => void
+}) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [selectedRole, setSelectedRole] = useState(currentRole || "member")
+
+  const handleSave = async () => {
+    if (selectedRole === currentRole) {
+      setIsEditing(false)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/operator-hub/${operatorId}/members`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: memberId, roleSlug: selectedRole }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to update role")
+      }
+
+      onSuccess()
+      setIsEditing(false)
+    } catch (err) {
+      console.error("Failed to update role:", err)
+      alert(err instanceof Error ? err.message : "Failed to update role")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-2">
+        <select
+          value={selectedRole}
+          onChange={(e) => setSelectedRole(e.target.value)}
+          className="border-border-default bg-bg-secondary text-content-primary focus:border-primary-500 rounded border px-2 py-1 text-xs focus:outline-none"
+          disabled={loading}
+        >
+          {MEMBER_ROLES.map((role) => (
+            <option key={role.value} value={role.value}>
+              {role.label}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="text-primary-600 hover:text-primary-700 dark:text-primary-400 text-xs font-medium"
+        >
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+        </button>
+        <button
+          onClick={() => {
+            setIsEditing(false)
+            setSelectedRole(currentRole || "member")
+          }}
+          disabled={loading}
+          className="text-content-tertiary hover:text-content-secondary text-xs"
+        >
+          ✕
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      onClick={() => setIsEditing(true)}
+      className="bg-bg-tertiary text-content-secondary hover:bg-bg-secondary group flex items-center gap-1 rounded px-2 py-0.5 text-xs capitalize"
+    >
+      {(currentRole || "member").replace(/_/g, " ")}
+      <Edit3 className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+    </button>
+  )
+}
+
+// ============================================================================
+// Change Plan Modal
+// ============================================================================
+
+interface SubscriptionData {
+  operatorId: string
+  currentSubscription: {
+    id: string
+    lagoId: string
+    planCode: string
+    planName: string | null
+    status: string
+    startedAt: string
+    billingTime: string
+    interval: string | null
+    amountCents: number | null
+    currency: string | null
+  } | null
+  availablePlans: Array<{
+    code: string
+    name: string
+    interval: string
+    amountCents: number
+    currency: string
+  }>
+}
+
+function ChangePlanModal({
+  operatorId,
+  operatorName,
+  currentPlan,
+  isOpen,
+  onClose,
+  onSuccess,
+}: {
+  operatorId: string
+  operatorName: string
+  currentPlan: string | null
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<SubscriptionData | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<string>("")
+
+  useEffect(() => {
+    if (isOpen && operatorId) {
+      setLoading(true)
+      setError(null)
+      fetch(`/api/operator-hub/${operatorId}/subscription`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to load subscription data")
+          return res.json()
+        })
+        .then((result) => {
+          setData(result)
+          setSelectedPlan(result.currentSubscription?.planCode || "")
+          setLoading(false)
+        })
+        .catch((err) => {
+          setError(err.message)
+          setLoading(false)
+        })
+    }
+  }, [isOpen, operatorId])
+
+  const handleChangePlan = async () => {
+    if (!selectedPlan || !data?.currentSubscription) return
+
+    setSaving(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/operator-hub/${operatorId}/subscription`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subscriptionId: data.currentSubscription.id,
+          planCode: selectedPlan,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to change plan")
+      }
+
+      onSuccess()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to change plan")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCreateSubscription = async () => {
+    if (!selectedPlan) return
+
+    setSaving(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/operator-hub/${operatorId}/subscription`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planCode: selectedPlan,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create subscription")
+      }
+
+      onSuccess()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create subscription")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  const formatPrice = (cents: number, currency: string) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
+    }).format(cents / 100)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-bg-primary border-border-default w-full max-w-lg rounded-lg border shadow-xl">
+        <div className="border-border-default flex items-center justify-between border-b p-4">
+          <div>
+            <h2 className="text-content-primary text-lg font-semibold">Change Plan</h2>
+            <p className="text-content-secondary text-sm">{operatorName}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-content-secondary hover:text-content-primary rounded p-1"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+            </div>
+          ) : error && !data ? (
+            <div className="bg-error-50 text-error-700 dark:bg-error-900/30 dark:text-error-400 rounded-md p-4 text-sm">
+              {error}
+            </div>
+          ) : (
+            <>
+              {error && (
+                <div className="bg-error-50 text-error-700 dark:bg-error-900/30 dark:text-error-400 mb-4 rounded-md p-3 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Current Plan */}
+              {data?.currentSubscription && (
+                <div className="bg-bg-secondary mb-4 rounded-lg p-4">
+                  <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">Current Plan</h4>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-content-primary font-medium">
+                        {data.currentSubscription.planName || data.currentSubscription.planCode}
+                      </p>
+                      <p className="text-content-secondary text-sm">
+                        {data.currentSubscription.amountCents && data.currentSubscription.currency
+                          ? `${formatPrice(data.currentSubscription.amountCents, data.currentSubscription.currency)}/${data.currentSubscription.interval}`
+                          : data.currentSubscription.interval || "—"}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                        data.currentSubscription.status === "active"
+                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                          : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                      )}
+                    >
+                      {data.currentSubscription.status}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Plan Selection */}
+              <div>
+                <label className="text-content-primary mb-2 block text-sm font-medium">
+                  {data?.currentSubscription ? "Select New Plan" : "Select Plan"}
+                </label>
+                {data?.availablePlans && data.availablePlans.length > 0 ? (
+                  <div className="space-y-2">
+                    {data.availablePlans.map((plan) => (
+                      <label
+                        key={plan.code}
+                        className={cn(
+                          "border-border-default flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors",
+                          selectedPlan === plan.code
+                            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                            : "hover:bg-bg-secondary"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="plan"
+                            value={plan.code}
+                            checked={selectedPlan === plan.code}
+                            onChange={(e) => setSelectedPlan(e.target.value)}
+                            className="text-primary-600"
+                          />
+                          <div>
+                            <p className="text-content-primary font-medium">{plan.name}</p>
+                            <p className="text-content-tertiary text-xs">{plan.code}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-content-primary font-medium">
+                            {formatPrice(plan.amountCents, plan.currency)}
+                          </p>
+                          <p className="text-content-tertiary text-xs">per {plan.interval}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-content-tertiary text-sm">No plans available</p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="border-border-default flex justify-end gap-3 border-t p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-content-secondary hover:text-content-primary rounded-md px-4 py-2 text-sm font-medium"
+          >
+            Cancel
+          </button>
+          {data?.currentSubscription ? (
+            <button
+              onClick={handleChangePlan}
+              disabled={saving || !selectedPlan || selectedPlan === data.currentSubscription.planCode}
+              className="bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
+            >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Change Plan
+            </button>
+          ) : (
+            <button
+              onClick={handleCreateSubscription}
+              disabled={saving || !selectedPlan}
+              className="bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
+            >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Create Subscription
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function FeaturesTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -1279,31 +2177,34 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
   const [configSection, setConfigSection] = useState<
     "promos" | "zones" | "rules" | "contacts" | "bank" | "subscriptions"
   >("promos")
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false)
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!operator.operatorId) {
       setLoading(false)
       return
     }
 
-    // Fetch both members and platform data in parallel
-    Promise.all([
-      fetch(`/api/operator-hub/${operator.operatorId}/members`)
-        .then((res) => (res.ok ? res.json() : null))
-        .catch(() => null),
-      fetch(`/api/operator-hub/${operator.operatorId}/platform-data`)
-        .then((res) => (res.ok ? res.json() : null))
-        .catch(() => null),
-    ])
-      .then(([membersData, configData]) => {
-        setData(membersData)
-        setPlatformData(configData)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err.message)
-        setLoading(false)
-      })
+    try {
+      const [membersData, configData] = await Promise.all([
+        fetch(`/api/operator-hub/${operator.operatorId}/members`)
+          .then((res) => (res.ok ? res.json() : null))
+          .catch(() => null),
+        fetch(`/api/operator-hub/${operator.operatorId}/platform-data`)
+          .then((res) => (res.ok ? res.json() : null))
+          .catch(() => null),
+      ])
+      setData(membersData)
+      setPlatformData(configData)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load data")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
   }, [operator.operatorId])
 
   if (loading) {
@@ -1340,22 +2241,14 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                 : "default"
           }
         />
-        <StatCard
-          label="Members"
-          value={stats.totalMembers.toString()}
-          icon={Users}
-        />
+        <StatCard label="Members" value={stats.totalMembers.toString()} icon={Users} />
         <StatCard
           label="Drivers"
           value={stats.totalDrivers.toString()}
           icon={Users}
           subtext={`${stats.activeDrivers} active`}
         />
-        <StatCard
-          label="Vehicles"
-          value={stats.totalVehicles.toString()}
-          icon={Car}
-        />
+        <StatCard label="Vehicles" value={stats.totalVehicles.toString()} icon={Car} />
       </div>
 
       {/* Section Tabs */}
@@ -1384,6 +2277,22 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
         {/* Members Section */}
         {activeSection === "members" && (
           <div>
+            {/* Add Member Button */}
+            {operator.operatorId && (
+              <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
+                <span className="text-content-secondary text-sm">
+                  {data?.members.length || 0} platform members
+                </span>
+                <button
+                  onClick={() => setShowAddMemberModal(true)}
+                  className="bg-primary-600 hover:bg-primary-700 flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-white"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Member
+                </button>
+              </div>
+            )}
+
             {!data || data.members.length === 0 ? (
               <div className="p-8 text-center">
                 <Users className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
@@ -1391,6 +2300,15 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                 <p className="text-content-secondary mx-auto mt-2 max-w-md">
                   {error || "Platform member data is not available for this operator."}
                 </p>
+                {operator.operatorId && (
+                  <button
+                    onClick={() => setShowAddMemberModal(true)}
+                    className="bg-primary-600 hover:bg-primary-700 mt-4 inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium text-white"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add First Member
+                  </button>
+                )}
               </div>
             ) : (
               <div className="divide-border-default divide-y">
@@ -1410,14 +2328,23 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                         <p className="text-content-secondary truncate text-xs">{member.email}</p>
                       )}
                     </div>
-                    <div className="text-right">
-                      {member.role && (
-                        <span className="bg-bg-tertiary text-content-secondary rounded px-2 py-0.5 text-xs capitalize">
-                          {member.role.replace(/_/g, " ")}
-                        </span>
+                    <div className="flex flex-col items-end gap-1">
+                      {operator.operatorId ? (
+                        <EditRoleDropdown
+                          currentRole={member.role}
+                          memberId={member.id}
+                          operatorId={operator.operatorId}
+                          onSuccess={fetchData}
+                        />
+                      ) : (
+                        member.role && (
+                          <span className="bg-bg-tertiary text-content-secondary rounded px-2 py-0.5 text-xs capitalize">
+                            {member.role.replace(/_/g, " ")}
+                          </span>
+                        )
                       )}
                       {member.lastLoginAt && (
-                        <p className="text-content-tertiary mt-1 text-xs">
+                        <p className="text-content-tertiary text-xs">
                           Last login: {new Date(member.lastLoginAt).toLocaleDateString()}
                         </p>
                       )}
@@ -1684,19 +2611,13 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                     </div>
                     <div className="text-right text-xs">
                       {zone.baseFare !== null && (
-                        <p className="text-content-primary">
-                          Base: ${zone.baseFare.toFixed(2)}
-                        </p>
+                        <p className="text-content-primary">Base: ${zone.baseFare.toFixed(2)}</p>
                       )}
                       {zone.perMileRate !== null && (
-                        <p className="text-content-secondary">
-                          ${zone.perMileRate.toFixed(2)}/mi
-                        </p>
+                        <p className="text-content-secondary">${zone.perMileRate.toFixed(2)}/mi</p>
                       )}
                       {zone.minimumFare !== null && (
-                        <p className="text-content-tertiary">
-                          Min: ${zone.minimumFare.toFixed(2)}
-                        </p>
+                        <p className="text-content-tertiary">Min: ${zone.minimumFare.toFixed(2)}</p>
                       )}
                     </div>
                   </div>
@@ -1749,7 +2670,9 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                       )}
                     </div>
                     {rule.priority !== null && (
-                      <span className="text-content-tertiary text-xs">Priority: {rule.priority}</span>
+                      <span className="text-content-tertiary text-xs">
+                        Priority: {rule.priority}
+                      </span>
                     )}
                   </div>
                 ))}
@@ -1847,7 +2770,9 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                           <span className="text-content-secondary">{account.accountName}</span>
                         )}
                         {account.accountType && (
-                          <span className="text-content-tertiary capitalize">{account.accountType}</span>
+                          <span className="text-content-tertiary capitalize">
+                            {account.accountType}
+                          </span>
                         )}
                         {account.lastFour && (
                           <span className="text-content-tertiary font-mono">
@@ -1869,7 +2794,9 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
             {!platformData?.subscriptionLog || platformData.subscriptionLog.length === 0 ? (
               <div className="p-8 text-center">
                 <Receipt className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-                <h3 className="text-content-primary text-lg font-medium">No Subscription History</h3>
+                <h3 className="text-content-primary text-lg font-medium">
+                  No Subscription History
+                </h3>
                 <p className="text-content-secondary mx-auto mt-2 max-w-md">
                   No subscription events recorded for this operator.
                 </p>
@@ -1892,9 +2819,7 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                           <span className="text-content-secondary">{event.planName}</span>
                         )}
                         {event.previousPlan && (
-                          <span className="text-content-tertiary">
-                            from {event.previousPlan}
-                          </span>
+                          <span className="text-content-tertiary">from {event.previousPlan}</span>
                         )}
                         {event.amount !== null && (
                           <span className="text-success-600 dark:text-success-400">
@@ -1915,6 +2840,16 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
           </div>
         )}
       </div>
+
+      {/* Add Member Modal */}
+      {operator.operatorId && (
+        <AddMemberModal
+          operatorId={operator.operatorId}
+          isOpen={showAddMemberModal}
+          onClose={() => setShowAddMemberModal(false)}
+          onSuccess={fetchData}
+        />
+      )}
     </div>
   )
 }
@@ -2366,6 +3301,7 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<EmailsApiResponse | null>(null)
   const [filter, setFilter] = useState<"all" | "emails" | "calls" | "meetings" | "notes">("all")
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     // Use HubSpot ID for the API call
@@ -2465,8 +3401,22 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
     notes: "note",
   }
   const filterType = filterTypeMap[filter]
-  const filteredActivities =
-    filterType === null ? allActivities : allActivities.filter((a) => a.type === filterType)
+
+  // Filter by type and search query
+  const filteredActivities = allActivities.filter((a) => {
+    // Type filter
+    if (filterType !== null && a.type !== filterType) return false
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      const matchesTitle = a.title.toLowerCase().includes(query)
+      const matchesDescription = a.description?.toLowerCase().includes(query)
+      return matchesTitle || matchesDescription
+    }
+
+    return true
+  })
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -2527,30 +3477,70 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
 
       {/* Activity Timeline */}
       <div className="card-sf overflow-hidden">
-        <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
-          <h3 className="text-content-primary font-semibold">Communication History</h3>
-          <div className="flex gap-1">
-            {[
-              { key: "all", label: "All" },
-              { key: "emails", label: "Emails" },
-              { key: "calls", label: "Calls" },
-              { key: "meetings", label: "Meetings" },
-              { key: "notes", label: "Notes" },
-            ].map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key as typeof filter)}
-                className={cn(
-                  "rounded-lg px-3 py-1 text-xs font-medium transition-colors",
-                  filter === f.key
-                    ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
-                    : "text-content-secondary hover:bg-bg-secondary"
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
+        <div className="border-border-default space-y-3 border-b px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-content-primary font-semibold">Communication History</h3>
+            <div className="flex gap-1">
+              {[
+                { key: "all", label: "All" },
+                { key: "emails", label: "Emails" },
+                { key: "calls", label: "Calls" },
+                { key: "meetings", label: "Meetings" },
+                { key: "notes", label: "Notes" },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key as typeof filter)}
+                  className={cn(
+                    "rounded-lg px-3 py-1 text-xs font-medium transition-colors",
+                    filter === f.key
+                      ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                      : "text-content-secondary hover:bg-bg-secondary"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
+          {/* Search Input */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search emails, calls, meetings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border-border-default bg-bg-secondary text-content-primary placeholder:text-content-tertiary w-full rounded-lg border py-2 pl-9 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            <svg
+              className="text-content-tertiary absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="text-content-tertiary hover:text-content-secondary absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-content-tertiary text-xs">
+              Found {filteredActivities.length} result{filteredActivities.length !== 1 ? "s" : ""} for "{searchQuery}"
+            </p>
+          )}
         </div>
 
         {filteredActivities.length === 0 ? (
