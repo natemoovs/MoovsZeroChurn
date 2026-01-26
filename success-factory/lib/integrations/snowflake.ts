@@ -1,13 +1,68 @@
 /**
- * Snowflake Integration Client (via Metabase)
+ * Snowflake Integration Client
  *
- * Uses Metabase's custom SQL query capability to run Snowflake queries.
- * This avoids the Turbopack compatibility issues with the native snowflake-sdk.
+ * Supports two modes:
+ * 1. Direct connection via snowflake-sdk (preferred when SNOWFLAKE_* env vars are set)
+ * 2. Via Metabase custom SQL (fallback when only METABASE_* env vars are set)
  *
- * Requires METABASE_URL and METABASE_API_KEY environment variables.
+ * Direct connection env vars:
+ *   - SNOWFLAKE_ACCOUNT
+ *   - SNOWFLAKE_USERNAME
+ *   - SNOWFLAKE_PASSWORD
+ *   - SNOWFLAKE_DATABASE (default: MOZART_NEW)
+ *   - SNOWFLAKE_WAREHOUSE (default: COMPUTE_WH)
+ *
+ * Metabase fallback env vars:
+ *   - METABASE_URL
+ *   - METABASE_API_KEY
+ *   - SNOWFLAKE_DATABASE_ID (default: 2)
  */
 
 import { metabase } from "./metabase"
+
+// Snowflake database ID in Metabase (different from customer master view db=3)
+const SNOWFLAKE_DATABASE_ID = parseInt(process.env.SNOWFLAKE_DATABASE_ID || "2")
+
+// Check if direct Snowflake connection is configured
+const isDirectConfigured = !!(
+  process.env.SNOWFLAKE_ACCOUNT &&
+  process.env.SNOWFLAKE_USERNAME &&
+  process.env.SNOWFLAKE_PASSWORD
+)
+
+// Dynamic import for snowflake-sdk to avoid Turbopack bundling issues
+let snowflakeConnection: import("snowflake-sdk").Connection | null = null
+
+async function getDirectConnection(): Promise<import("snowflake-sdk").Connection> {
+  if (snowflakeConnection) {
+    return snowflakeConnection
+  }
+
+  // Dynamic import to avoid Turbopack issues
+  const snowflake = await import("snowflake-sdk")
+
+  return new Promise((resolve, reject) => {
+    const connection = snowflake.createConnection({
+      account: process.env.SNOWFLAKE_ACCOUNT!,
+      username: process.env.SNOWFLAKE_USERNAME!,
+      password: process.env.SNOWFLAKE_PASSWORD!,
+      database: process.env.SNOWFLAKE_DATABASE || "MOZART_NEW",
+      warehouse: process.env.SNOWFLAKE_WAREHOUSE || "COMPUTE_WH",
+      clientSessionKeepAlive: true,
+    })
+
+    connection.connect((err, conn) => {
+      if (err) {
+        console.error("Failed to connect to Snowflake:", err.message)
+        reject(err)
+      } else {
+        console.log("Successfully connected to Snowflake directly")
+        snowflakeConnection = conn
+        resolve(conn)
+      }
+    })
+  })
+}
 
 // ============================================================================
 // Types
@@ -80,12 +135,12 @@ export interface MonthlySummary {
 // ============================================================================
 
 function isConfigured(): boolean {
-  // Uses Metabase to query Snowflake, so check Metabase config
-  return !!(process.env.METABASE_URL && process.env.METABASE_API_KEY)
+  // Check if direct Snowflake or Metabase fallback is configured
+  return isDirectConfigured || !!(process.env.METABASE_URL && process.env.METABASE_API_KEY)
 }
 
 // ============================================================================
-// Query Execution (via Metabase)
+// Query Execution (Direct or via Metabase)
 // ============================================================================
 
 async function executeQuery<T = Record<string, unknown>>(
@@ -93,7 +148,48 @@ async function executeQuery<T = Record<string, unknown>>(
 ): Promise<SnowflakeQueryResult<T>> {
   const startTime = Date.now()
 
-  const result = await metabase.runCustomQuery(metabase.METABASE_DATABASE_ID, sql)
+  // Try direct connection first if configured
+  if (isDirectConfigured) {
+    try {
+      const connection = await getDirectConnection()
+
+      return new Promise((resolve, reject) => {
+        connection.execute({
+          sqlText: sql,
+          complete: (err, stmt, rows) => {
+            if (err) {
+              console.error("Snowflake direct query error:", err.message)
+              reject(err)
+            } else {
+              const stmtColumns = stmt.getColumns()
+              const columns = stmtColumns ? stmtColumns.map((col) => col.getName()) : []
+              // Snowflake returns rows with column names in UPPERCASE
+              // Normalize to lowercase to match expected interface
+              const normalizedRows = (rows || []).map((row) => {
+                const normalized: Record<string, unknown> = {}
+                for (const [key, value] of Object.entries(row as Record<string, unknown>)) {
+                  normalized[key.toLowerCase()] = value
+                }
+                return normalized as T
+              })
+              resolve({
+                rows: normalizedRows,
+                columns: columns.map((c) => c.toLowerCase()),
+                rowCount: normalizedRows.length,
+                executionTime: Date.now() - startTime,
+              })
+            }
+          },
+        })
+      })
+    } catch (error) {
+      console.error("Direct Snowflake connection failed, falling back to Metabase:", error)
+      // Fall through to Metabase
+    }
+  }
+
+  // Fallback to Metabase
+  const result = await metabase.runCustomQuery(SNOWFLAKE_DATABASE_ID, sql)
   const rows = metabase.rowsToObjects<T>(result)
   const columns = metabase.getColumnNames(result)
 
@@ -517,7 +613,7 @@ async function getOperatorVehicles(operatorId: string): Promise<OperatorVehicle[
       exterior_color as color,
       capacity,
       created_at
-    FROM POSTGRES_SWOOP.VEHICLE
+    FROM SWOOP.VEHICLE
     WHERE operator_id = '${escapedId}'
       AND removed_at IS NULL
     ORDER BY created_at DESC
