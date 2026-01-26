@@ -174,7 +174,7 @@ function formatSyncedCustomerData(company: {
   lines.push(`| **Drivers** | ${company.driversCount ?? "Unknown"} |`)
   lines.push(`| **Members** | ${company.membersCount ?? "Unknown"} |`)
   lines.push(
-    `| **Setup Score** | ${company.setupScore !== null ? `${Math.round((company.setupScore / 30) * 100)}% (${company.setupScore}/30)` : "Unknown"} |`
+    `| **Setup Score** | ${company.setupScore != null ? `${Math.round((company.setupScore / 30) * 100)}% (${company.setupScore}/30)` : "Unknown"} |`
   )
   lines.push("")
 
@@ -224,7 +224,7 @@ function formatSyncedCustomerData(company: {
   }
 
   // Segment determination
-  const segment = getSegmentFromPlan(company.plan)
+  const segment = getSegmentFromPlan(company.plan ?? null)
   lines.push("### Segment")
   lines.push("")
   lines.push(`- **Category:** ${segment}`)
