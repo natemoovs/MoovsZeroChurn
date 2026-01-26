@@ -91,12 +91,27 @@ export type {
   BillingHealthSummary,
 } from "./lago"
 
+export { snowflake } from "./snowflake"
+export type {
+  SnowflakeQueryResult,
+  OperatorDetails,
+  PlatformCharge,
+  ReservationOverview,
+  RiskOverview,
+  MonthlySummary,
+  OperatorMember,
+  OperatorDriver,
+  OperatorVehicle,
+  OperatorEmailLog,
+} from "./snowflake"
+
 // Import clients for unified export
 import { hubspot } from "./hubspot"
 import { stripe } from "./stripe"
 import { notion } from "./notion"
 import { metabase } from "./metabase"
 import { lago } from "./lago"
+import { snowflake } from "./snowflake"
 
 /**
  * Unified integrations client
@@ -109,6 +124,7 @@ export const integrations = {
   notion,
   metabase,
   lago,
+  snowflake,
 }
 
 /**
@@ -120,6 +136,7 @@ export function getConfiguredIntegrations(): {
   notion: boolean
   metabase: boolean
   lago: boolean
+  snowflake: boolean
 } {
   return {
     hubspot: !!process.env.HUBSPOT_ACCESS_TOKEN,
@@ -127,6 +144,7 @@ export function getConfiguredIntegrations(): {
     notion: !!process.env.NOTION_API_KEY,
     metabase: !!(process.env.METABASE_URL && process.env.METABASE_API_KEY),
     lago: !!process.env.LAGO_API_KEY,
+    snowflake: !!(process.env.METABASE_URL && process.env.METABASE_API_KEY), // Uses Metabase to query Snowflake
   }
 }
 
@@ -145,6 +163,10 @@ export function getMissingIntegrations(): string[] {
     if (!process.env.METABASE_API_KEY) missing.push("METABASE_API_KEY")
   }
   if (!configured.lago) missing.push("LAGO_API_KEY")
+  // Snowflake uses Metabase as backend, so same env vars needed
+  if (!configured.snowflake && !configured.metabase) {
+    // Already added METABASE_URL and METABASE_API_KEY above
+  }
 
   return missing
 }
