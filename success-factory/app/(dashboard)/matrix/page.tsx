@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import {
@@ -96,14 +96,20 @@ export default function OperatorHubPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
   const [selectedRow, setSelectedRow] = useState<string | null>(null)
 
-  const handleSearch = useCallback(async () => {
-    if (!searchQuery || searchQuery.length < 2) return
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query || query.length < 2) {
+      if (query.length === 0) {
+        setResults([])
+        setHasSearched(false)
+      }
+      return
+    }
 
     setIsLoading(true)
     setHasSearched(true)
 
     try {
-      const res = await fetch(`/api/customer/search?q=${encodeURIComponent(searchQuery)}&limit=50`)
+      const res = await fetch(`/api/customer/search?q=${encodeURIComponent(query)}&limit=50`)
       const data = await res.json()
       setResults(data.results || [])
     } catch (error) {
@@ -112,13 +118,29 @@ export default function OperatorHubPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [searchQuery])
+  }, [])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch()
+  // Debounced search effect - triggers search 300ms after user stops typing
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    // Clear any existing timeout
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
     }
-  }
+
+    // Set a new timeout for debounced search
+    debounceRef.current = setTimeout(() => {
+      handleSearch(searchQuery)
+    }, 300)
+
+    // Cleanup on unmount or when searchQuery changes
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [searchQuery, handleSearch])
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -175,37 +197,28 @@ export default function OperatorHubPage() {
 
         {/* Search Bar */}
         <div className="card-sf mb-6 p-4">
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="relative flex-1">
+          <div className="relative">
+            {isLoading ? (
+              <Loader2 className="text-primary-500 absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 animate-spin" />
+            ) : (
               <Search className="text-content-tertiary absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Enter company name, operator ID, Stripe account ID, domain, or city/state..."
-                className="input-sf h-12 w-full !pr-4 !pl-12 text-base"
-                autoFocus
-              />
-            </div>
-            <button
-              onClick={handleSearch}
-              disabled={isLoading || searchQuery.length < 2}
-              className="btn-primary h-12 px-6 disabled:opacity-50"
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Search
-                </>
-              )}
-            </button>
+            )}
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by company name, operator ID, Stripe account ID, domain, or city/state..."
+              className="input-sf h-12 w-full !pr-4 !pl-12 text-base"
+              autoFocus
+            />
+            {searchQuery.length > 0 && searchQuery.length < 2 && (
+              <span className="text-content-tertiary absolute top-1/2 right-3 -translate-y-1/2 text-xs">
+                Type {2 - searchQuery.length} more character{searchQuery.length === 1 ? "" : "s"}
+              </span>
+            )}
           </div>
           <p className="text-content-tertiary mt-2 text-xs">
-            Tip: Search is case-insensitive. You can search by partial match (e.g., &quot;acme&quot;
-            finds &quot;Acme Corp&quot;).
+            Results update as you type. Search is case-insensitive with partial matching.
           </p>
         </div>
 
@@ -245,7 +258,7 @@ export default function OperatorHubPage() {
                   Found <strong className="text-content-primary">{results.length}</strong> operators
                 </span>
                 <button
-                  onClick={handleSearch}
+                  onClick={() => handleSearch(searchQuery)}
                   className="text-content-secondary hover:text-content-primary flex items-center gap-1 text-sm transition-colors"
                 >
                   <RefreshCw className="h-4 w-4" />
