@@ -98,6 +98,7 @@ export interface ToolResultBlockParam {
   type: "tool_result"
   tool_use_id: string
   content: string
+  is_error?: boolean
 }
 
 // Content block types (Anthropic.ContentBlock compatible)
