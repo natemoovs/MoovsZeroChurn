@@ -31,9 +31,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.VERCEL_AI_GATEWAY_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 })
+    return NextResponse.json({ error: "VERCEL_AI_GATEWAY_API_KEY not configured" }, { status: 500 })
   }
 
   console.log("[QBR Prep Agent] Starting QBR prep scan...")

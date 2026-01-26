@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import Anthropic from "@anthropic-ai/sdk"
-import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS } from "@/lib/ai"
+import {
+  getAnthropicClient,
+  createMessage,
+  AI_MODEL,
+  TOKEN_LIMITS,
+  type AnthropicClient,
+} from "@/lib/ai"
 
 /**
  * Win-Back Agent
@@ -74,7 +79,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Win-Back Agent] Found ${candidates.length} win-back candidates`)
 
     // Initialize Anthropic if available
-    let anthropic: Anthropic | null = null
+    let anthropic: AnthropicClient | null = null
     try {
       anthropic = getAnthropicClient()
     } catch {
@@ -406,7 +411,7 @@ function formatChurnReason(reason: string): string {
 }
 
 async function generateWinBackOutreach(
-  anthropic: Anthropic,
+  anthropic: AnthropicClient,
   candidate: WinBackCandidate
 ): Promise<string> {
   try {

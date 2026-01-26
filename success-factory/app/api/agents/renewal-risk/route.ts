@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hubspot, metabase, stripe } from "@/lib/integrations"
-import Anthropic from "@anthropic-ai/sdk"
-import { getAnthropicClient, createMessage, AI_MODEL, TOKEN_LIMITS } from "@/lib/ai"
+import {
+  getAnthropicClient,
+  createMessage,
+  AI_MODEL,
+  TOKEN_LIMITS,
+  type AnthropicClient,
+} from "@/lib/ai"
 
 /**
  * Renewal Risk Agent
@@ -68,9 +73,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.VERCEL_AI_GATEWAY_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 })
+    return NextResponse.json({ error: "VERCEL_AI_GATEWAY_API_KEY not configured" }, { status: 500 })
   }
 
   console.log("[Renewal Risk Agent] Starting renewal risk analysis...")
@@ -473,7 +478,7 @@ function calculateRiskScore(
   return { riskScore: score, riskFactors, positiveSignals }
 }
 
-async function generatePlaybook(anthropic: Anthropic, analysis: AccountAnalysis): Promise<string> {
+async function generatePlaybook(anthropic: AnthropicClient, analysis: AccountAnalysis): Promise<string> {
   const context = `
 ## Account: ${analysis.account.name}
 - Renewal Date: ${analysis.account.renewalDate} (${analysis.account.daysUntilRenewal} days)

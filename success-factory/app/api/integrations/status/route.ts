@@ -55,8 +55,8 @@ export async function GET() {
     anthropic: {
       name: "Claude AI",
       description: "AI-powered analysis and skills",
-      configured: !!process.env.ANTHROPIC_API_KEY,
-      envVar: "ANTHROPIC_API_KEY",
+      configured: !!process.env.VERCEL_AI_GATEWAY_API_KEY,
+      envVar: "VERCEL_AI_GATEWAY_API_KEY",
       docsUrl: "https://console.anthropic.com/",
     },
   }

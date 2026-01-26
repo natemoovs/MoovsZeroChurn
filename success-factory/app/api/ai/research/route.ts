@@ -62,9 +62,9 @@ Be direct about risks. Don't sugarcoat.`,
 }
 
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.VERCEL_AI_GATEWAY_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 })
+    return NextResponse.json({ error: "VERCEL_AI_GATEWAY_API_KEY not configured" }, { status: 500 })
   }
 
   try {

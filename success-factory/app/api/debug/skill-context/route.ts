@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "(not set)",
       VERCEL_URL: process.env.VERCEL_URL || "(not set)",
       NODE_ENV: process.env.NODE_ENV,
-      hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+      hasAnthropicKey: !!process.env.VERCEL_AI_GATEWAY_API_KEY,
       hasMetabaseUrl: !!process.env.METABASE_URL,
       hasMetabaseKey: !!process.env.METABASE_API_KEY,
       hasHubspotToken: !!process.env.HUBSPOT_ACCESS_TOKEN,

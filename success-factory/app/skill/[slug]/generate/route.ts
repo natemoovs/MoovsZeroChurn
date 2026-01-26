@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
 import { getSkill } from "@/lib/skills"
 import { gatherContext } from "@/lib/skills/context"
 import { skillTools, executeTool } from "@/lib/skills/tools"
@@ -11,6 +10,10 @@ import {
   AI_MODEL,
   TOKEN_LIMITS,
   getErrorResponse,
+  type MessageParam,
+  type AnthropicClient,
+  type ToolUseBlock,
+  type ToolResultBlockParam,
 } from "@/lib/ai"
 
 // Maximum tool use iterations to prevent infinite loops
@@ -254,14 +257,14 @@ interface RouteContext {
  * Claude can call tools to gather data as needed, similar to MCP
  */
 async function generateWithTools(
-  anthropic: Anthropic,
+  anthropic: AnthropicClient,
   systemPrompt: string,
   userPrompt: string,
   baseUrl: string
 ): Promise<string> {
   console.log("[Tools] Starting dynamic generation with tool use")
 
-  const messages: Anthropic.MessageParam[] = [{ role: "user", content: userPrompt }]
+  const messages: MessageParam[] = [{ role: "user", content: userPrompt }]
 
   let iterations = 0
 
@@ -297,10 +300,10 @@ async function generateWithTools(
 
       // Find all tool use blocks and execute them
       const toolUseBlocks = response.content.filter(
-        (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
+        (block): block is ToolUseBlock => block.type === "tool_use"
       )
 
-      const toolResults: Anthropic.ToolResultBlockParam[] = []
+      const toolResults: ToolResultBlockParam[] = []
 
       for (const toolUse of toolUseBlocks) {
         console.log(`[Tools] Executing tool: ${toolUse.name}`)
@@ -394,7 +397,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         anthropic = getAnthropicClient()
       } catch {
         return NextResponse.json(
-          { error: "API key not configured. Please add ANTHROPIC_API_KEY to your environment." },
+          { error: "API key not configured. Please add VERCEL_AI_GATEWAY_API_KEY to your environment." },
           { status: 500 }
         )
       }
@@ -529,7 +532,7 @@ Output only the generated markdown content, nothing else.`
       anthropic = getAnthropicClient()
     } catch {
       return NextResponse.json(
-        { error: "API key not configured. Please add ANTHROPIC_API_KEY to your environment." },
+        { error: "API key not configured. Please add VERCEL_AI_GATEWAY_API_KEY to your environment." },
         { status: 500 }
       )
     }

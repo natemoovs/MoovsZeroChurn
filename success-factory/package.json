@@ -33,7 +33,6 @@
     ]
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.2",
     "@neondatabase/auth": "^0.1.0-beta.21",
     "@neondatabase/serverless": "^1.0.2",
     "@prisma/adapter-neon": "^7.2.0",

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import Anthropic from "@anthropic-ai/sdk"
+import { getAnthropicClient, AI_MODEL } from "@/lib/ai"
 import { CHURN_REASONS } from "../route"
 
 /**
@@ -38,9 +38,8 @@ export async function GET() {
  * Generate new pattern analysis from churn data
  */
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 })
+  if (!process.env.VERCEL_AI_GATEWAY_API_KEY) {
+    return NextResponse.json({ error: "VERCEL_AI_GATEWAY_API_KEY not configured" }, { status: 500 })
   }
 
   try {
@@ -152,11 +151,11 @@ ${records
   .join("")}
 `
 
-    // Generate patterns with Claude
-    const anthropic = new Anthropic({ apiKey })
+    // Generate patterns with Claude via Vercel AI Gateway
+    const client = getAnthropicClient()
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+    const message = await client.messages.create({
+      model: AI_MODEL,
       max_tokens: 2000,
       messages: [
         {
