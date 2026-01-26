@@ -21,13 +21,14 @@ interface DashboardData {
       companyId: string
       companyName: string
       domain: string | null
-      healthScore: "green" | "yellow" | "red" | "unknown"
+      healthScore: "green" | "yellow" | "red" | "churned" | "unknown"
       mrr: number | null
       plan: string | null
       riskSignals: string[]
       positiveSignals: string[]
     }>
     total: number
+    churned?: number
     configured: { hubspot: boolean; stripe: boolean; metabase: boolean }
   }
   tasks: {
@@ -192,21 +193,29 @@ export async function GET() {
     ])
 
     // Transform portfolio data
-    const summaries = companies.map((company) => ({
+    // Separate active companies from churned for proper counting
+    const activeCompanies = companies.filter(
+      (c) => c.healthScore !== "churned" && !c.subscriptionStatus?.toLowerCase().includes("churn")
+    )
+    const churnedCompanies = companies.filter(
+      (c) => c.healthScore === "churned" || c.subscriptionStatus?.toLowerCase().includes("churn")
+    )
+
+    const summaries = activeCompanies.map((company) => ({
       companyId: company.hubspotId,
       companyName: company.name,
       domain: company.domain,
-      healthScore: (company.healthScore as "green" | "yellow" | "red" | "unknown") || "unknown",
+      healthScore: (company.healthScore as "green" | "yellow" | "red" | "churned" | "unknown") || "unknown",
       mrr: company.mrr,
       plan: company.plan,
       riskSignals: company.riskSignals,
       positiveSignals: company.positiveSignals,
     }))
 
-    // Sort by health score (red first)
+    // Sort by health score (red first, churned last since they're filtered separately)
     summaries.sort((a, b) => {
-      const order = { red: 0, yellow: 1, unknown: 2, green: 3 }
-      return order[a.healthScore] - order[b.healthScore]
+      const order: Record<string, number> = { red: 0, yellow: 1, unknown: 2, green: 3, churned: 4 }
+      return (order[a.healthScore] ?? 4) - (order[b.healthScore] ?? 4)
     })
 
     // Transform tasks
@@ -404,9 +413,9 @@ export async function GET() {
       }
     }
 
-    // Count accounts with no champion (only paid accounts)
+    // Count accounts with no champion (only paid ACTIVE accounts, exclude churned)
     const paidCompanyIds = new Set(
-      companies.filter((c) => c.mrr && c.mrr > 0).map((c) => c.hubspotId)
+      activeCompanies.filter((c) => c.mrr && c.mrr > 0).map((c) => c.hubspotId)
     )
     const noChampion = Array.from(paidCompanyIds).filter((id) => !companyChampions.has(id)).length
     const singleThreaded = Array.from(companyContacts.entries()).filter(
@@ -435,7 +444,8 @@ export async function GET() {
     const data: DashboardData = {
       portfolio: {
         summaries,
-        total: companies.length,
+        total: activeCompanies.length,
+        churned: churnedCompanies.length,
         configured: {
           hubspot: true,
           stripe: !!process.env.STRIPE_SECRET_KEY,
