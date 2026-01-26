@@ -77,6 +77,6 @@ export default NEON_AUTH_ENABLED ? neonAuthWithDomainCheck : legacyPasswordAuth
 export const config = {
   // Exclude: static files, and API routes that handle their own auth
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/nps/respond|api/sync|api/health-history/snapshot|api/alerts/digest|api/alerts/email-digest|api/integrations|api/churn|api/ai|api/agents).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/nps/respond|api/sync|api/health-history/snapshot|api/alerts/digest|api/alerts/email-digest|api/integrations|api/churn|api/ai|api/agents|api/n8n|api/webhooks/n8n).*)",
   ],
 }
