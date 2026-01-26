@@ -94,17 +94,17 @@ From the Retool export, these Snowflake tables are referenced:
 | **Promo Codes** | High | View/search promo codes | ✅ Done |
 | **Price Zones** | High | View pricing zones | ✅ Done |
 | **Business Rules** | High | View configured rules | ✅ Done |
-| **Contacts** | Medium | Platform contacts (not HubSpot) |
-| **Bank Account Info** | Medium | Stripe Financial Connections |
-| **Sendgrid Email Search** | Medium | Search email logs |
-| **Subscription History** | Medium | Lago subscription changes |
-| **Operator Settings View** | Medium | View/edit settings |
-| **Matrix History** | Low | Change history view |
-| **Add Member** | Low | CRUD: Create member |
-| **Update Member Role** | Low | CRUD: Edit member |
-| **Update Risk Details** | Low | CRUD: Edit risk |
-| **Update Postgres Plan** | Low | CRUD: Edit plan |
-| **Add HubSpot Note** | Low | Create note via API |
+| **Contacts** | Medium | Platform contacts (not HubSpot) | ✅ Done |
+| **Bank Account Info** | Medium | Stripe Financial Connections | ✅ Done |
+| **Subscription History** | Medium | Lago subscription changes | ✅ Done |
+| **Sendgrid Email Search** | Medium | Search email logs | ✅ Done (tab link) |
+| **Operator Settings View** | Medium | View/edit settings | API ready, needs UI |
+| **Matrix History** | Low | Change history view | ⚠️ Activity tab |
+| **Add Member** | Low | CRUD: Create member | ❌ |
+| **Update Member Role** | Low | CRUD: Edit member | ❌ |
+| **Update Risk Details** | Low | CRUD: Edit risk | ❌ |
+| **Update Postgres Plan** | Low | CRUD: Edit plan | ❌ |
+| **Add HubSpot Note** | Low | Create note via API | ✅ Link only |
 
 #### Quick Actions Comparison
 
