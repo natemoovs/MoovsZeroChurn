@@ -405,6 +405,154 @@ async function getInactiveAccounts(
 }
 
 // ============================================================================
+// Operator Portal Data (from POSTGRES_SWOOP schema)
+// ============================================================================
+
+export interface OperatorMember {
+  user_id: string
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  role_slug: string | null
+  created_at: string | null
+  last_login_at: string | null
+}
+
+export interface OperatorDriver {
+  driver_id: string
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  phone: string | null
+  created_at: string | null
+  status: string | null
+}
+
+export interface OperatorVehicle {
+  vehicle_id: string
+  vehicle_name: string | null
+  vehicle_type: string | null
+  license_plate: string | null
+  color: string | null
+  capacity: number | null
+  created_at: string | null
+}
+
+export interface OperatorEmailLog {
+  email_log_id: string
+  to_email: string | null
+  subject: string | null
+  template_name: string | null
+  sent_at: string | null
+  status: string | null
+}
+
+/**
+ * Get members/users for an operator (from their platform)
+ */
+async function getOperatorMembers(operatorId: string): Promise<OperatorMember[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      user_id,
+      first_name,
+      last_name,
+      email,
+      role_slug,
+      created_at,
+      last_login_at
+    FROM POSTGRES_SWOOP.USER
+    WHERE operator_id = '${escapedId}'
+      AND removed_at IS NULL
+    ORDER BY last_name, first_name
+    LIMIT 100
+  `
+
+  const result = await executeQuery<OperatorMember>(sql)
+  return result.rows
+}
+
+/**
+ * Get drivers for an operator
+ */
+async function getOperatorDrivers(operatorId: string): Promise<OperatorDriver[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      d.driver_id,
+      d.first_name,
+      d.last_name,
+      d.email,
+      d.phone,
+      d.created_at,
+      CASE
+        WHEN d.removed_at IS NOT NULL THEN 'removed'
+        WHEN d.deactivated_at IS NOT NULL THEN 'inactive'
+        ELSE 'active'
+      END as status
+    FROM POSTGRES_SWOOP.DRIVER d
+    WHERE d.operator_id = '${escapedId}'
+    ORDER BY d.created_at DESC
+    LIMIT 100
+  `
+
+  const result = await executeQuery<OperatorDriver>(sql)
+  return result.rows
+}
+
+/**
+ * Get vehicles for an operator
+ */
+async function getOperatorVehicles(operatorId: string): Promise<OperatorVehicle[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      vehicle_id,
+      name as vehicle_name,
+      vehicle_type,
+      license_plate,
+      exterior_color as color,
+      capacity,
+      created_at
+    FROM POSTGRES_SWOOP.VEHICLE
+    WHERE operator_id = '${escapedId}'
+      AND removed_at IS NULL
+    ORDER BY created_at DESC
+    LIMIT 100
+  `
+
+  const result = await executeQuery<OperatorVehicle>(sql)
+  return result.rows
+}
+
+/**
+ * Get email log for an operator
+ */
+async function getOperatorEmailLog(operatorId: string, limit = 50): Promise<OperatorEmailLog[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      email_log_id,
+      to_email,
+      subject,
+      template_name,
+      created_at as sent_at,
+      status
+    FROM POSTGRES_SWOOP.EMAIL_LOG
+    WHERE operator_id = '${escapedId}'
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `
+
+  const result = await executeQuery<OperatorEmailLog>(sql)
+  return result.rows
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -420,6 +568,12 @@ export const snowflakeClient = {
   getMonthlyChargesSummary,
   getReservationsOverview,
   getRiskOverview,
+
+  // Operator portal data
+  getOperatorMembers,
+  getOperatorDrivers,
+  getOperatorVehicles,
+  getOperatorEmailLog,
 
   // Dashboard/analytics queries
   getTopOperatorsByRevenue,

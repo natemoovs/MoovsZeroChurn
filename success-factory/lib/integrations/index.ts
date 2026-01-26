@@ -99,6 +99,10 @@ export type {
   ReservationOverview,
   RiskOverview,
   MonthlySummary,
+  OperatorMember,
+  OperatorDriver,
+  OperatorVehicle,
+  OperatorEmailLog,
 } from "./snowflake"
 
 // Import clients for unified export

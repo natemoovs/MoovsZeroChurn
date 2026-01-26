@@ -27,6 +27,15 @@ import {
   RefreshCw,
   ChevronRight,
   Phone,
+  MessageSquare,
+  Link2,
+  Clipboard,
+  Globe,
+  Bell,
+  Plus,
+  History,
+  CreditCard as CreditCardIcon,
+  Edit3,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -149,6 +158,43 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   )
 }
 
+function CopyActionButton({
+  text,
+  label,
+  disabled,
+}: {
+  text: string
+  label: string
+  disabled?: boolean
+}) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    if (disabled || !text) return
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      disabled={disabled}
+      className={cn(
+        "flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
+        disabled
+          ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
+          : copied
+            ? "border-success-500 bg-success-50 text-success-700 dark:border-success-600 dark:bg-success-950/30 dark:text-success-400"
+            : "border-border-default hover:bg-surface-hover"
+      )}
+    >
+      {copied ? <Check className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
+      {copied ? "Copied!" : label}
+    </button>
+  )
+}
+
 function StatCard({
   label,
   value,
@@ -209,11 +255,108 @@ function getHealthColor(health: string | null) {
 // Tab Content Components
 // ============================================================================
 
+interface EmailHealthData {
+  status: "healthy" | "warning" | "critical" | "unknown"
+  hasRecentEmails: boolean
+  failedCount: number
+  successCount: number
+  message: string
+}
+
+function EmailHealthAlert({ operatorId }: { operatorId: string | null }) {
+  const [health, setHealth] = useState<EmailHealthData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operatorId}/email-logs?limit=100`)
+      .then((res) => {
+        if (!res.ok) return null
+        return res.json()
+      })
+      .then((data) => {
+        if (data?.health) {
+          setHealth(data.health)
+        }
+        setLoading(false)
+      })
+      .catch(() => {
+        setLoading(false)
+      })
+  }, [operatorId])
+
+  // Only show alert for warning or critical status
+  if (loading || !health || health.status === "healthy" || health.status === "unknown") {
+    return null
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-3 rounded-xl border p-4",
+        health.status === "critical"
+          ? "border-error-200 bg-error-50 dark:border-error-800 dark:bg-error-950/30"
+          : "border-warning-200 bg-warning-50 dark:border-warning-800 dark:bg-warning-950/30"
+      )}
+    >
+      <Bell
+        className={cn(
+          "mt-0.5 h-5 w-5 shrink-0",
+          health.status === "critical"
+            ? "text-error-600 dark:text-error-400"
+            : "text-warning-600 dark:text-warning-400"
+        )}
+      />
+      <div className="flex-1">
+        <h4
+          className={cn(
+            "font-semibold",
+            health.status === "critical"
+              ? "text-error-700 dark:text-error-400"
+              : "text-warning-700 dark:text-warning-400"
+          )}
+        >
+          {health.status === "critical" ? "Email Delivery Issue" : "Email Configuration Warning"}
+        </h4>
+        <p
+          className={cn(
+            "mt-1 text-sm",
+            health.status === "critical"
+              ? "text-error-600 dark:text-error-500"
+              : "text-warning-600 dark:text-warning-500"
+          )}
+        >
+          {health.message}
+        </p>
+        {health.failedCount > 0 && (
+          <p
+            className={cn(
+              "mt-1 text-xs",
+              health.status === "critical"
+                ? "text-error-600/80 dark:text-error-500/80"
+                : "text-warning-600/80 dark:text-warning-500/80"
+            )}
+          >
+            {health.failedCount} failed / {health.successCount} successful emails
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function OverviewTab({ operator }: { operator: OperatorData }) {
   const location = [operator.city, operator.state, operator.country].filter(Boolean).join(", ")
 
   return (
     <div className="space-y-6">
+      {/* Email Health Alert */}
+      <EmailHealthAlert operatorId={operator.operatorId} />
+
       {/* Key Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -449,6 +592,94 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
             +{operator.contacts.length - 6} more contacts
           </p>
         )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="card-sf p-5">
+        <h3 className="text-content-primary mb-4 font-semibold">Quick Actions</h3>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {/* External Portal Links */}
+          {operator.domain && (
+            <a
+              href={`https://${operator.domain}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-primary-500 hover:bg-primary-600 text-white flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+            >
+              <Globe className="h-4 w-4" />
+              Open Customer Portal
+            </a>
+          )}
+          <a
+            href={`https://app.hubspot.com/contacts/8796840/company/${operator.hubspotId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Open HubSpot Deal
+          </a>
+
+          {/* Copy Actions */}
+          <CopyActionButton
+            text={operator.operatorId || ""}
+            label="Copy Operator ID"
+            disabled={!operator.operatorId}
+          />
+          <CopyActionButton
+            text={operator.stripeAccountId || ""}
+            label="Copy Stripe ID"
+            disabled={!operator.stripeAccountId}
+          />
+
+          {/* HubSpot Actions */}
+          <a
+            href={`https://app.hubspot.com/contacts/8796840/company/${operator.hubspotId}/notes`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Add HubSpot Note
+          </a>
+
+          {/* Payment Link - generates Stripe Express Dashboard link */}
+          {operator.stripeAccountId && (
+            <CopyActionButton
+              text={`https://connect.stripe.com/express/${operator.stripeAccountId}`}
+              label="Copy Stripe Login Link"
+            />
+          )}
+
+          {/* View Actions */}
+          {operator.operatorId && (
+            <a
+              href={`https://app.intercom.com/a/apps/g54vvt0t/users/show?user_id=${operator.operatorId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+            >
+              <MessageSquare className="h-4 w-4" />
+              View Chat Logs
+            </a>
+          )}
+          <Link
+            href={`/matrix/${operator.hubspotId}?tab=emails`}
+            className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <Mail className="h-4 w-4" />
+            Search Email Logs
+          </Link>
+
+          {/* View Matrix History - navigates to activity tab with history focus */}
+          <Link
+            href={`/matrix/${operator.hubspotId}?tab=activity`}
+            className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <History className="h-4 w-4" />
+            View Matrix History
+          </Link>
+        </div>
       </div>
 
       {/* Quick Links */}
@@ -920,10 +1151,90 @@ function RiskTab({ operator }: { operator: OperatorData }) {
   )
 }
 
+interface MembersApiResponse {
+  operatorId: string
+  members: Array<{
+    id: string
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+    role: string | null
+    createdAt: string | null
+    lastLoginAt: string | null
+  }>
+  drivers: Array<{
+    id: string
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+    phone: string | null
+    status: string | null
+    createdAt: string | null
+  }>
+  vehicles: Array<{
+    id: string
+    name: string | null
+    type: string | null
+    licensePlate: string | null
+    color: string | null
+    capacity: number | null
+    createdAt: string | null
+  }>
+  stats: {
+    totalMembers: number
+    totalDrivers: number
+    activeDrivers: number
+    totalVehicles: number
+    memberRoles: Record<string, number>
+  }
+}
+
 function FeaturesTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<MembersApiResponse | null>(null)
+  const [activeSection, setActiveSection] = useState<"members" | "drivers" | "vehicles">("members")
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/members`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch platform data")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  const stats = data?.stats || {
+    totalMembers: operator.membersCount || 0,
+    totalDrivers: operator.driversCount || 0,
+    activeDrivers: 0,
+    totalVehicles: operator.vehiclesTotal || 0,
+    memberRoles: {},
+  }
+
   return (
     <div className="space-y-6">
-      {/* Feature Usage Stats */}
+      {/* Platform Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Setup Score"
@@ -939,20 +1250,195 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                 : "default"
           }
         />
-        <StatCard label="Vehicles" value={operator.vehiclesTotal?.toString() || "—"} icon={Car} />
-        <StatCard label="Drivers" value={operator.driversCount?.toString() || "—"} icon={Users} />
-        <StatCard label="Members" value={operator.membersCount?.toString() || "—"} icon={Users} />
+        <StatCard
+          label="Members"
+          value={stats.totalMembers.toString()}
+          icon={Users}
+        />
+        <StatCard
+          label="Drivers"
+          value={stats.totalDrivers.toString()}
+          icon={Users}
+          subtext={`${stats.activeDrivers} active`}
+        />
+        <StatCard
+          label="Vehicles"
+          value={stats.totalVehicles.toString()}
+          icon={Car}
+        />
       </div>
 
-      {/* Placeholder */}
-      <div className="card-sf p-8 text-center">
-        <Settings className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-        <h3 className="text-content-primary text-lg font-medium">Feature Configuration</h3>
-        <p className="text-content-secondary mx-auto mt-2 max-w-md">
-          Configure PostgreSQL read-only credentials to view operator settings, feature flags, promo
-          codes, and zones.
-        </p>
-        <p className="text-content-tertiary mt-4 text-sm">Required: MOOVS_POSTGRES_URL</p>
+      {/* Section Tabs */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default flex border-b">
+          {[
+            { key: "members", label: "Platform Members", count: data?.members.length || 0 },
+            { key: "drivers", label: "Drivers", count: data?.drivers.length || 0 },
+            { key: "vehicles", label: "Vehicles", count: data?.vehicles.length || 0 },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveSection(tab.key as typeof activeSection)}
+              className={cn(
+                "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+                activeSection === tab.key
+                  ? "border-primary-500 text-primary-600 dark:text-primary-400 border-b-2 bg-white dark:bg-transparent"
+                  : "text-content-secondary hover:text-content-primary"
+              )}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
+
+        {/* Members Section */}
+        {activeSection === "members" && (
+          <div>
+            {!data || data.members.length === 0 ? (
+              <div className="p-8 text-center">
+                <Users className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">No Members Found</h3>
+                <p className="text-content-secondary mx-auto mt-2 max-w-md">
+                  {error || "Platform member data is not available for this operator."}
+                </p>
+              </div>
+            ) : (
+              <div className="divide-border-default divide-y">
+                {data.members.map((member) => (
+                  <div key={member.id} className="flex items-center gap-4 p-4">
+                    <div className="bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium">
+                      {member.firstName?.[0] || member.email?.[0]?.toUpperCase() || "?"}
+                      {member.lastName?.[0] || ""}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-content-primary text-sm font-medium">
+                        {member.firstName || member.lastName
+                          ? `${member.firstName || ""} ${member.lastName || ""}`.trim()
+                          : member.email || "Unknown"}
+                      </p>
+                      {member.email && (
+                        <p className="text-content-secondary truncate text-xs">{member.email}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      {member.role && (
+                        <span className="bg-bg-tertiary text-content-secondary rounded px-2 py-0.5 text-xs capitalize">
+                          {member.role.replace(/_/g, " ")}
+                        </span>
+                      )}
+                      {member.lastLoginAt && (
+                        <p className="text-content-tertiary mt-1 text-xs">
+                          Last login: {new Date(member.lastLoginAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Drivers Section */}
+        {activeSection === "drivers" && (
+          <div>
+            {!data || data.drivers.length === 0 ? (
+              <div className="p-8 text-center">
+                <Users className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">No Drivers Found</h3>
+                <p className="text-content-secondary mx-auto mt-2 max-w-md">
+                  {error || "Driver data is not available for this operator."}
+                </p>
+              </div>
+            ) : (
+              <div className="divide-border-default divide-y">
+                {data.drivers.map((driver) => (
+                  <div key={driver.id} className="flex items-center gap-4 p-4">
+                    <div className="bg-success-100 dark:bg-success-900/30 text-success-600 dark:text-success-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium">
+                      {driver.firstName?.[0] || "D"}
+                      {driver.lastName?.[0] || ""}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-content-primary text-sm font-medium">
+                        {driver.firstName || driver.lastName
+                          ? `${driver.firstName || ""} ${driver.lastName || ""}`.trim()
+                          : "Unknown Driver"}
+                      </p>
+                      <div className="flex gap-3 text-xs">
+                        {driver.email && (
+                          <span className="text-content-secondary">{driver.email}</span>
+                        )}
+                        {driver.phone && (
+                          <span className="text-content-tertiary">{driver.phone}</span>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                        driver.status === "active"
+                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                          : driver.status === "inactive"
+                            ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                            : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                      )}
+                    >
+                      {driver.status || "unknown"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Vehicles Section */}
+        {activeSection === "vehicles" && (
+          <div>
+            {!data || data.vehicles.length === 0 ? (
+              <div className="p-8 text-center">
+                <Car className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <h3 className="text-content-primary text-lg font-medium">No Vehicles Found</h3>
+                <p className="text-content-secondary mx-auto mt-2 max-w-md">
+                  {error || "Vehicle data is not available for this operator."}
+                </p>
+              </div>
+            ) : (
+              <div className="divide-border-default divide-y">
+                {data.vehicles.map((vehicle) => (
+                  <div key={vehicle.id} className="flex items-center gap-4 p-4">
+                    <div className="bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                      <Car className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-content-primary text-sm font-medium">
+                        {vehicle.name || vehicle.type || "Unknown Vehicle"}
+                      </p>
+                      <div className="flex gap-3 text-xs">
+                        {vehicle.type && (
+                          <span className="text-content-secondary capitalize">{vehicle.type}</span>
+                        )}
+                        {vehicle.color && (
+                          <span className="text-content-tertiary capitalize">{vehicle.color}</span>
+                        )}
+                        {vehicle.licensePlate && (
+                          <span className="text-content-tertiary font-mono">
+                            {vehicle.licensePlate}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {vehicle.capacity && (
+                      <span className="text-content-secondary text-sm">
+                        {vehicle.capacity} seats
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
