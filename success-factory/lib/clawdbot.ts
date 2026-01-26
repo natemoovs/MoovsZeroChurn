@@ -11,7 +11,8 @@
 import OpenAI from "openai"
 
 // Vercel AI Gateway configuration
-const AI_GATEWAY_BASE_URL = "https://gateway.ai.vercel.com/v1"
+// See: https://vercel.com/docs/ai-gateway/openai-compat
+const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
 
 // Default model - Claude 3.5 Haiku via Vercel AI Gateway
 // Format: provider/model (e.g., "anthropic/claude-3-5-haiku-20241022")

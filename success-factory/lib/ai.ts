@@ -9,7 +9,8 @@
 import OpenAI from "openai"
 
 // Vercel AI Gateway configuration
-const AI_GATEWAY_BASE_URL = "https://gateway.ai.vercel.com/v1"
+// See: https://vercel.com/docs/ai-gateway/openai-compat
+const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
 
 // Model mapping: Anthropic model names to Vercel AI Gateway format
 const MODEL_MAP: Record<string, string> = {
