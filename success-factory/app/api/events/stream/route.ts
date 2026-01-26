@@ -121,6 +121,7 @@ async function getPortfolioStats() {
     select: {
       healthScore: true,
       mrr: true,
+      subscriptionStatus: true,
     },
   })
 
@@ -137,12 +138,20 @@ async function getPortfolioStats() {
   const now = new Date()
   const overdueTasks = tasks.filter((t) => t.dueDate && new Date(t.dueDate) < now).length
 
+  // Helper to check if company is churned
+  const isChurned = (c: { subscriptionStatus: string | null }) =>
+    c.subscriptionStatus?.toLowerCase().includes("churn")
+
+  // Exclude churned from active portfolio counts
+  const activeCompanies = companies.filter((c) => !isChurned(c))
+
   return {
-    totalAccounts: companies.length,
-    healthyAccounts: companies.filter((c) => c.healthScore === "green").length,
-    warningAccounts: companies.filter((c) => c.healthScore === "yellow").length,
-    atRiskAccounts: companies.filter((c) => c.healthScore === "red").length,
-    totalMrr: companies.reduce((sum, c) => sum + (c.mrr || 0), 0),
+    totalAccounts: activeCompanies.length,
+    healthyAccounts: activeCompanies.filter((c) => c.healthScore === "green").length,
+    warningAccounts: activeCompanies.filter((c) => c.healthScore === "yellow").length,
+    atRiskAccounts: activeCompanies.filter((c) => c.healthScore === "red").length,
+    churnedAccounts: companies.filter((c) => isChurned(c)).length,
+    totalMrr: activeCompanies.reduce((sum, c) => sum + (c.mrr || 0), 0),
     pendingTasks: tasks.filter((t) => t.status === "pending").length,
     inProgressTasks: tasks.filter((t) => t.status === "in_progress").length,
     overdueTasks,

@@ -634,7 +634,11 @@ function calculateWeightedHealthScore(
 
   // Convert to health category
   let healthScore: string
-  if (numericScore >= 80) {
+
+  // CHURNED gets its own category - NOT mixed with at-risk
+  if (isChurned) {
+    healthScore = "churned"
+  } else if (numericScore >= 80) {
     healthScore = "green"
   } else if (numericScore >= 60) {
     healthScore = "yellow"
@@ -646,11 +650,10 @@ function calculateWeightedHealthScore(
     healthScore = "unknown"
   }
 
-  // Override to red for critical signals
+  // Override to red for critical signals (but NOT churned - they have their own category)
   if (
-    riskSignals.some(
-      (r) => r.includes("Churned") || r.includes("Critical payment") || r.includes("dispute")
-    )
+    !isChurned &&
+    riskSignals.some((r) => r.includes("Critical payment") || r.includes("dispute"))
   ) {
     healthScore = "red"
   }
