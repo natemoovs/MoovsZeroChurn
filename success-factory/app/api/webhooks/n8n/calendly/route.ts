@@ -15,7 +15,7 @@ function validateWebhookSecret(request: NextRequest): boolean {
   return secret === expectedSecret
 }
 
-type CalendlyEventType = "meeting_scheduled" | "meeting_canceled"
+type CalendlyEventType = "meeting_scheduled" | "meeting_canceled" | "meeting_no_show" | "meeting_rescheduled"
 
 interface N8nCalendlyPayload {
   event: CalendlyEventType
@@ -75,6 +75,14 @@ export async function POST(request: NextRequest) {
         await handleMeetingCanceled(company, payload)
         break
 
+      case "meeting_no_show":
+        await handleMeetingNoShow(company, payload)
+        break
+
+      case "meeting_rescheduled":
+        await handleMeetingRescheduled(company, payload)
+        break
+
       default:
         console.log(`[n8n Calendly] Unhandled event: ${event}`)
     }
@@ -95,7 +103,7 @@ export async function GET() {
   return NextResponse.json({
     status: "ok",
     webhook: "n8n/calendly",
-    events: ["meeting_scheduled", "meeting_canceled"],
+    events: ["meeting_scheduled", "meeting_canceled", "meeting_no_show", "meeting_rescheduled"],
   })
 }
 
@@ -173,4 +181,77 @@ async function handleMeetingCanceled(
   }
 
   console.log(`[n8n Calendly] Meeting canceled for ${company.name}`)
+}
+
+async function handleMeetingNoShow(
+  company: { hubspotId: string; name: string },
+  payload: N8nCalendlyPayload
+) {
+  const { inviteeEmail, inviteeName, meetingType, scheduledAt } = payload
+
+  // Log activity - no-shows are important risk signals
+  await prisma.activityEvent.create({
+    data: {
+      companyId: company.hubspotId,
+      source: "calendly",
+      eventType: "meeting_no_show",
+      title: `Meeting no-show: ${meetingType || "Meeting"}`,
+      description: `${inviteeName || inviteeEmail} did not attend scheduled meeting${scheduledAt ? ` on ${new Date(scheduledAt).toLocaleDateString()}` : ""}`,
+      importance: "high",
+      occurredAt: new Date(),
+      metadata: { inviteeEmail, inviteeName, meetingType, scheduledAt },
+    },
+  })
+
+  // Check for multiple no-shows (serious risk signal)
+  const recentNoShows = await prisma.activityEvent.count({
+    where: {
+      companyId: company.hubspotId,
+      eventType: "meeting_no_show",
+      occurredAt: { gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) }, // 60 days
+    },
+  })
+
+  // Create task for no-shows - they need follow up
+  await prisma.task.create({
+    data: {
+      companyId: company.hubspotId,
+      companyName: company.name,
+      title: recentNoShows >= 2
+        ? `🚨 Repeated no-shows: ${company.name}`
+        : `📞 Follow up on no-show: ${company.name}`,
+      description: recentNoShows >= 2
+        ? `${recentNoShows} meeting no-shows in the last 60 days.\nContact: ${inviteeEmail}\n\nThis is a significant disengagement signal. Consider escalation.`
+        : `${inviteeName || inviteeEmail} missed their scheduled meeting.\n\nAction: Reach out to reschedule and confirm engagement.`,
+      priority: recentNoShows >= 2 ? "high" : "medium",
+      status: "pending",
+      dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+      metadata: { source: "n8n_calendly_webhook", event: "meeting_no_show", noShowCount: recentNoShows },
+    },
+  })
+
+  console.log(`[n8n Calendly] Meeting no-show for ${company.name}`)
+}
+
+async function handleMeetingRescheduled(
+  company: { hubspotId: string; name: string },
+  payload: N8nCalendlyPayload
+) {
+  const { inviteeEmail, inviteeName, meetingType, scheduledAt } = payload
+
+  // Log activity
+  await prisma.activityEvent.create({
+    data: {
+      companyId: company.hubspotId,
+      source: "calendly",
+      eventType: "meeting_rescheduled",
+      title: `Meeting rescheduled: ${meetingType || "Meeting"}`,
+      description: `${inviteeName || inviteeEmail} rescheduled${scheduledAt ? ` to ${new Date(scheduledAt).toLocaleDateString()}` : ""}`,
+      importance: "low",
+      occurredAt: new Date(),
+      metadata: { inviteeEmail, inviteeName, meetingType, scheduledAt },
+    },
+  })
+
+  console.log(`[n8n Calendly] Meeting rescheduled for ${company.name}`)
 }

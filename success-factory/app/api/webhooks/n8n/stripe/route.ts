@@ -34,6 +34,7 @@ type StripeEventType =
   | "payment_succeeded"
   | "subscription_updated"
   | "subscription_canceled"
+  | "subscription_scheduled_cancel"
   | "dispute_created"
 
 interface N8nStripePayload {
@@ -49,7 +50,11 @@ interface N8nStripePayload {
   failureMessage?: string
   attemptCount?: number
   cancelReason?: string
+  cancelAt?: string // ISO date when subscription will cancel
   disputeReason?: string
+  invoiceId?: string
+  subscriptionId?: string
+  planName?: string
   metadata?: Record<string, unknown>
 }
 
@@ -126,6 +131,10 @@ export async function POST(request: NextRequest) {
         await handleSubscriptionCanceled(company, payload)
         break
 
+      case "subscription_scheduled_cancel":
+        await handleSubscriptionScheduledCancel(company, payload)
+        break
+
       case "dispute_created":
         await handleDisputeCreated(company, payload)
         break
@@ -159,6 +168,7 @@ export async function GET() {
       "payment_succeeded",
       "subscription_updated",
       "subscription_canceled",
+      "subscription_scheduled_cancel",
       "dispute_created",
     ],
   })
@@ -414,6 +424,69 @@ async function handleSubscriptionCanceled(
   })
 
   console.log(`[n8n Stripe] Subscription canceled for ${company.name} - marked as churned`)
+}
+
+async function handleSubscriptionScheduledCancel(
+  company: { id: string; hubspotId: string; name: string },
+  payload: N8nStripePayload
+) {
+  const { cancelAt, cancelReason, mrr, planName } = payload
+
+  const cancelDate = cancelAt ? new Date(cancelAt) : null
+  const daysUntilCancel = cancelDate
+    ? Math.ceil((cancelDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null
+
+  // Update company status to at-risk
+  await prisma.hubSpotCompany.update({
+    where: { id: company.id },
+    data: {
+      subscriptionStatus: "canceling",
+    },
+  })
+
+  // Log activity
+  await prisma.activityEvent.create({
+    data: {
+      companyId: company.hubspotId,
+      source: "stripe",
+      eventType: "subscription_scheduled_cancel",
+      title: "Cancellation Scheduled",
+      description: `Subscription set to cancel${cancelDate ? ` on ${cancelDate.toLocaleDateString()}` : ""}${cancelReason ? `. Reason: ${cancelReason}` : ""}. At-risk MRR: $${mrr || 0}`,
+      importance: "critical",
+      occurredAt: new Date(),
+      metadata: {
+        cancelAt,
+        cancelReason,
+        mrr,
+        planName,
+        daysUntilCancel,
+        stripeCustomerId: payload.customerId,
+      },
+    },
+  })
+
+  // Create URGENT save opportunity task
+  await prisma.task.create({
+    data: {
+      companyId: company.hubspotId,
+      companyName: company.name,
+      title: `🚨 SAVE: ${company.name} scheduled to cancel${daysUntilCancel ? ` in ${daysUntilCancel} days` : ""}`,
+      description: `Customer has scheduled their subscription to cancel.\n${cancelDate ? `Cancel date: ${cancelDate.toLocaleDateString()}\n` : ""}${cancelReason ? `Reason: ${cancelReason}\n` : ""}At-risk MRR: $${mrr || 0}\n${planName ? `Plan: ${planName}\n` : ""}\n⚡ This is a SAVE OPPORTUNITY - reach out immediately to understand concerns and offer solutions.`,
+      priority: "urgent",
+      status: "pending",
+      dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Due tomorrow
+      metadata: {
+        source: "n8n_stripe_webhook",
+        event: "subscription_scheduled_cancel",
+        cancelAt,
+        mrr,
+        daysUntilCancel,
+      },
+    },
+  })
+
+  console.log(`[n8n Stripe] Subscription scheduled to cancel for ${company.name} - SAVE OPPORTUNITY`)
 }
 
 async function handleDisputeCreated(

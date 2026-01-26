@@ -662,23 +662,26 @@ Create a workflow that:
 1. Triggers on Stripe webhook events:
    - invoice.payment_failed
    - invoice.payment_succeeded
-   - customer.subscription.updated
+   - customer.subscription.updated (include when cancel_at_period_end is set)
    - customer.subscription.deleted
    - charge.dispute.created
 
 2. For each event, extract:
-   - Event type (map to: payment_failed, payment_succeeded, subscription_updated, subscription_canceled, dispute_created)
-   - Customer ID
-   - Customer email
+   - Event type (map to: payment_failed, payment_succeeded, subscription_updated, subscription_canceled, subscription_scheduled_cancel, dispute_created)
+   - Customer ID, Customer email
    - Amount (convert from cents to dollars)
    - MRR (for subscription events, calculate monthly value)
+   - Previous MRR (for detecting downgrades)
    - Failure message (for payment_failed)
-   - Cancel reason (for subscription_canceled)
+   - Cancel reason, cancelAt date (for cancellations - IMPORTANT: if cancel_at_period_end is true, use subscription_scheduled_cancel event)
+   - Plan name, Invoice ID, Subscription ID
 
 3. Send POST request to:
    URL: https://success-factory.vercel.app/api/webhooks/n8n/stripe
    Headers: x-webhook-secret = {{$env.N8N_WEBHOOK_SECRET}}
-   Body: { "event": "<type>", "customerId": "<id>", "customerEmail": "<email>", "amount": <dollars>, "mrr": <mrr>, "failureMessage": "<msg>", "cancelReason": "<reason>" }
+   Body: { "event": "<type>", "customerId": "<id>", "customerEmail": "<email>", "amount": <dollars>, "mrr": <mrr>, "previousMrr": <prev_mrr>, "failureMessage": "<msg>", "cancelReason": "<reason>", "cancelAt": "<iso_date>", "planName": "<plan>", "invoiceId": "<inv_id>", "subscriptionId": "<sub_id>" }
+
+IMPORTANT: For "subscription_scheduled_cancel" - this is when a customer has scheduled their subscription to end but it hasn't cancelled yet. This is a SAVE opportunity! Include the cancelAt date.
 
 Use Stripe Trigger node and HTTP Request node.
 ```
@@ -742,15 +745,27 @@ Create a workflow that:
 1. Triggers on Calendly webhook events:
    - invitee.created (meeting scheduled)
    - invitee.canceled (meeting canceled)
+   - invitee.no_show (IMPORTANT: customer didn't show up - this is a churn signal!)
+   - routing_form_submission (if you use rescheduling forms)
 
 2. For each event, extract:
    - Event ID, Invitee email, Invitee name
-   - Meeting type, Scheduled time, Duration, Cancel reason (if canceled)
+   - Meeting type, Scheduled time, Duration
+   - Cancel reason (if canceled)
+   - Host name
 
-3. Send POST request to:
+3. Map events to our types:
+   - invitee.created → meeting_scheduled
+   - invitee.canceled → meeting_canceled
+   - invitee.no_show → meeting_no_show
+   - rescheduled → meeting_rescheduled
+
+4. Send POST request to:
    URL: https://success-factory.vercel.app/api/webhooks/n8n/calendly
    Headers: x-webhook-secret = {{$env.N8N_WEBHOOK_SECRET}}
-   Body: { "event": "meeting_scheduled" or "meeting_canceled", "inviteeEmail": "<email>", "inviteeName": "<name>", "meetingType": "<type>", "scheduledAt": "<iso_time>", "durationMinutes": <mins>, "cancelReason": "<reason>" }
+   Body: { "event": "<type>", "eventId": "<id>", "inviteeEmail": "<email>", "inviteeName": "<name>", "meetingType": "<type>", "scheduledAt": "<iso_time>", "durationMinutes": <mins>, "hostName": "<host>", "cancelReason": "<reason>" }
+
+IMPORTANT: No-shows are important churn signals - make sure this event is captured!
 
 Use Calendly Trigger node and HTTP Request node.
 ```
@@ -792,18 +807,44 @@ Create a workflow that:
 
 1. Triggers on schedule: Every day at 5 AM UTC
 
-2. Run Snowflake query:
-   SELECT MOOVS_COMPANY_NAME, COMPANY_ID, ALL_TRIPS_COUNT,
-          DAYS_SINCE_LAST_IDENTIFY, CHURN_STATUS, TOTAL_MRR_NUMERIC, LAGO_PLAN_NAME
+2. Run Snowflake query (enhance based on available columns):
+   SELECT
+     MOOVS_COMPANY_NAME,
+     COMPANY_ID,
+     ALL_TRIPS_COUNT as totalTrips,
+     DAYS_SINCE_LAST_IDENTIFY as daysSinceLastLogin,
+     CHURN_STATUS,
+     TOTAL_MRR_NUMERIC as mrr,
+     LAGO_PLAN_NAME as plan,
+     -- If available, include these for better health signals:
+     -- TRIPS_THIS_MONTH, TRIPS_LAST_MONTH (for MoM trend)
+     -- ACTIVE_USERS (for adoption depth)
+     -- LAST_TRIP_DATE, LAST_LOGIN_DATE
    FROM <schema>.<table>
    WHERE MOOVS_COMPANY_NAME IS NOT NULL
 
 3. For each row, POST to:
    URL: https://success-factory.vercel.app/api/webhooks/n8n/usage-metrics
    Headers: x-webhook-secret = {{$env.N8N_WEBHOOK_SECRET}}
-   Body: { "companyName": "<name>", "totalTrips": <trips>, "daysSinceLastLogin": <days>, "churnStatus": "<status>", "mrr": <mrr>, "plan": "<plan>" }
+   Body: {
+     "companyName": "<name>",
+     "totalTrips": <trips>,
+     "daysSinceLastLogin": <days>,
+     "churnStatus": "<status>",
+     "mrr": <mrr>,
+     "plan": "<plan>",
+     // Optional enhanced fields (if available in Snowflake):
+     "tripsThisMonth": <this_month>,
+     "tripsLastMonth": <last_month>,
+     "activeUsers": <user_count>,
+     "lastTripDate": "<date>",
+     "lastLoginDate": "<date>"
+   }
 
-Use Schedule Trigger, Snowflake node, SplitInBatches, and HTTP Request node.
+TIP: Can send array of records in one request for efficiency:
+POST body: [ {record1}, {record2}, ... ]
+
+Use Schedule Trigger, Snowflake node, SplitInBatches (100 per batch), and HTTP Request node.
 ```
 
 ---

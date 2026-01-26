@@ -23,6 +23,13 @@ interface N8nUsageMetricsPayload {
   churnStatus: string | null
   mrr: number | null
   plan: string | null
+  // Enhanced fields (optional)
+  tripsThisMonth?: number
+  tripsLastMonth?: number
+  activeUsers?: number
+  lastTripDate?: string
+  lastLoginDate?: string
+  featureUsage?: Record<string, number> // e.g., { "quotes": 50, "dispatch": 30 }
 }
 
 // Can receive single object or array
@@ -147,14 +154,10 @@ export async function GET() {
     status: "ok",
     webhook: "n8n/usage-metrics",
     description: "Receives daily usage data from Snowflake",
-    expectedFields: [
-      "companyName",
-      "totalTrips",
-      "daysSinceLastLogin",
-      "churnStatus",
-      "mrr",
-      "plan",
-    ],
+    expectedFields: {
+      required: ["companyName", "totalTrips", "daysSinceLastLogin", "churnStatus", "mrr", "plan"],
+      optional: ["tripsThisMonth", "tripsLastMonth", "activeUsers", "lastTripDate", "lastLoginDate", "featureUsage"],
+    },
   })
 }
 
@@ -175,6 +178,21 @@ function buildRiskSignals(record: N8nUsageMetricsPayload): string[] {
     signals.push("Low usage")
   }
 
+  // Detect usage decline (MoM)
+  if (record.tripsThisMonth !== undefined && record.tripsLastMonth !== undefined && record.tripsLastMonth > 0) {
+    const decline = ((record.tripsLastMonth - record.tripsThisMonth) / record.tripsLastMonth) * 100
+    if (decline >= 50) {
+      signals.push(`Usage down ${Math.round(decline)}%`)
+    } else if (decline >= 25) {
+      signals.push(`Usage declining`)
+    }
+  }
+
+  // Single user dependency risk
+  if (record.activeUsers === 1 && record.mrr && record.mrr > 200) {
+    signals.push("Single user dependency")
+  }
+
   return signals
 }
 
@@ -189,6 +207,19 @@ function buildPositiveSignals(record: N8nUsageMetricsPayload): string[] {
   }
   if (record.mrr && record.mrr > 500) {
     signals.push("Good MRR")
+  }
+
+  // Detect usage growth (MoM)
+  if (record.tripsThisMonth !== undefined && record.tripsLastMonth !== undefined && record.tripsLastMonth > 0) {
+    const growth = ((record.tripsThisMonth - record.tripsLastMonth) / record.tripsLastMonth) * 100
+    if (growth >= 25) {
+      signals.push(`Usage up ${Math.round(growth)}%`)
+    }
+  }
+
+  // Multi-user adoption
+  if (record.activeUsers && record.activeUsers >= 3) {
+    signals.push(`${record.activeUsers} active users`)
   }
 
   return signals
