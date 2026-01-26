@@ -154,10 +154,16 @@ export class AnthropicClient {
       }
 
       for (const msg of params.messages) {
-        const content =
-          typeof msg.content === "string"
-            ? msg.content
-            : msg.content.map((c) => c.text).join("")
+        let content: string
+        if (typeof msg.content === "string") {
+          content = msg.content
+        } else {
+          // Extract text from content blocks, filtering out non-text blocks
+          content = msg.content
+            .filter((c): c is TextBlock => c.type === "text")
+            .map((c) => c.text)
+            .join("")
+        }
         openAIMessages.push({ role: msg.role, content })
       }
 
