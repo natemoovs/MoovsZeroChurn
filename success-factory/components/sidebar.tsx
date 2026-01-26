@@ -23,6 +23,7 @@ import {
   Activity,
   LayoutGrid,
   HelpCircle,
+  RotateCcw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -40,6 +41,7 @@ const navItems = [
   { href: "/tasks", icon: CheckSquare, label: "Tasks" },
   { href: "/playbooks", icon: Zap, label: "Playbooks" },
   { href: "/renewals", icon: CalendarClock, label: "Renewals" },
+  { href: "/winback", icon: RotateCcw, label: "Win-Back" },
   { href: "/skills", icon: Sparkles, label: "Skills" },
   { href: "/history", icon: History, label: "History" },
   { href: "/settings", icon: Settings, label: "Settings" },
