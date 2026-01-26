@@ -709,8 +709,28 @@ function deduplicateMetabaseRecords(
       // Score each record - higher is better
       const scored = group.map((record) => {
         let score = 0
-        // Prefer records with MRR
-        if (record.mrr && record.mrr > 0) score += 100
+
+        // CRITICAL: Active subscriptions MUST win over cancelled ones
+        const isChurned =
+          record.churnStatus?.toLowerCase().includes("churn") ||
+          record.churnStatus?.toLowerCase().includes("cancel") ||
+          record.billingStatus?.toLowerCase().includes("churn") ||
+          record.billingStatus?.toLowerCase().includes("cancel") ||
+          record.billingStatus?.toLowerCase().includes("terminated")
+
+        // Massive boost for active accounts with MRR
+        if (record.mrr && record.mrr > 0 && !isChurned) {
+          score += 500 // Active paying customer - almost always the right record
+        }
+
+        // Heavily penalize churned/cancelled records
+        if (isChurned) {
+          score -= 200
+        }
+
+        // Prefer records with higher MRR (pro > starter)
+        if (record.mrr && record.mrr > 0) score += Math.min(record.mrr, 100)
+
         // Prefer records with more trips
         score += Math.min(record.totalTrips, 100)
         // Prefer records with recent activity
