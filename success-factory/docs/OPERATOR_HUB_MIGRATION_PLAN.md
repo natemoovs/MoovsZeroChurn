@@ -299,11 +299,11 @@ lib/
 - [x] Update Risk Details (links to HubSpot notes)
 - [x] Update Postgres Plan (Lago API integration with modal UI)
 
-### Phase 5: Polish & Enhancements (Future)
+### Phase 5: Polish & Enhancements 🔄 IN PROGRESS
 
 - [ ] Matrix History view (change log)
 - [ ] Enhanced email search
-- [ ] Stripe live data integration (balance, payouts)
+- [x] Stripe live data integration (balance, payouts)
 - [ ] Bulk operations
 
 ---

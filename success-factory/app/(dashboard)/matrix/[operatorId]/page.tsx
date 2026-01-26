@@ -3301,6 +3301,7 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<EmailsApiResponse | null>(null)
   const [filter, setFilter] = useState<"all" | "emails" | "calls" | "meetings" | "notes">("all")
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     // Use HubSpot ID for the API call
@@ -3400,8 +3401,22 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
     notes: "note",
   }
   const filterType = filterTypeMap[filter]
-  const filteredActivities =
-    filterType === null ? allActivities : allActivities.filter((a) => a.type === filterType)
+
+  // Filter by type and search query
+  const filteredActivities = allActivities.filter((a) => {
+    // Type filter
+    if (filterType !== null && a.type !== filterType) return false
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      const matchesTitle = a.title.toLowerCase().includes(query)
+      const matchesDescription = a.description?.toLowerCase().includes(query)
+      return matchesTitle || matchesDescription
+    }
+
+    return true
+  })
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -3462,30 +3477,70 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
 
       {/* Activity Timeline */}
       <div className="card-sf overflow-hidden">
-        <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
-          <h3 className="text-content-primary font-semibold">Communication History</h3>
-          <div className="flex gap-1">
-            {[
-              { key: "all", label: "All" },
-              { key: "emails", label: "Emails" },
-              { key: "calls", label: "Calls" },
-              { key: "meetings", label: "Meetings" },
-              { key: "notes", label: "Notes" },
-            ].map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key as typeof filter)}
-                className={cn(
-                  "rounded-lg px-3 py-1 text-xs font-medium transition-colors",
-                  filter === f.key
-                    ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
-                    : "text-content-secondary hover:bg-bg-secondary"
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
+        <div className="border-border-default space-y-3 border-b px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-content-primary font-semibold">Communication History</h3>
+            <div className="flex gap-1">
+              {[
+                { key: "all", label: "All" },
+                { key: "emails", label: "Emails" },
+                { key: "calls", label: "Calls" },
+                { key: "meetings", label: "Meetings" },
+                { key: "notes", label: "Notes" },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key as typeof filter)}
+                  className={cn(
+                    "rounded-lg px-3 py-1 text-xs font-medium transition-colors",
+                    filter === f.key
+                      ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                      : "text-content-secondary hover:bg-bg-secondary"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
+          {/* Search Input */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search emails, calls, meetings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border-border-default bg-bg-secondary text-content-primary placeholder:text-content-tertiary w-full rounded-lg border py-2 pl-9 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            <svg
+              className="text-content-tertiary absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="text-content-tertiary hover:text-content-secondary absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-content-tertiary text-xs">
+              Found {filteredActivities.length} result{filteredActivities.length !== 1 ? "s" : ""} for "{searchQuery}"
+            </p>
+          )}
         </div>
 
         {filteredActivities.length === 0 ? (
