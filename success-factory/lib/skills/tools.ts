@@ -7,13 +7,13 @@
 
 import { hubspot, metabase, notion } from "@/lib/integrations"
 import { prisma } from "@/lib/db"
-import type Anthropic from "@anthropic-ai/sdk"
+import type { AnthropicTool } from "@/lib/ai"
 
 // ============================================================================
 // Tool Definitions (sent to Claude API)
 // ============================================================================
 
-export const skillTools: Anthropic.Tool[] = [
+export const skillTools: AnthropicTool[] = [
   {
     name: "get_portfolio_summary",
     description:

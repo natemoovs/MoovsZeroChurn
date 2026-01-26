@@ -92,32 +92,32 @@ async function getSyncedCustomerData(companyIdentifier: string) {
  * Format synced customer data as markdown for skill prompts
  */
 function formatSyncedCustomerData(company: {
-  hubspotId: string
+  hubspotId?: string
   name: string
-  domain: string | null
-  healthScore: string | null
-  mrr: number | null
-  plan: string | null
-  subscriptionStatus: string | null
-  riskSignals: string[]
-  positiveSignals: string[]
-  primaryContactEmail: string | null
-  primaryContactName: string | null
-  primaryContactPhone: string | null
-  hubspotCreatedAt: Date | null
-  lastLoginAt: Date | null
-  totalTrips: number | null
-  tripsLast30Days: number | null
-  engagementStatus: string | null
-  vehiclesTotal: number | null
-  driversCount: number | null
-  membersCount: number | null
-  setupScore: number | null
-  subscriptionLifetimeDays: number | null
-  daysSinceLastLogin: number | null
-  city: string | null
-  state: string | null
-  ownerName: string | null
+  domain?: string | null
+  healthScore?: string | null
+  mrr?: number | null
+  plan?: string | null
+  subscriptionStatus?: string | null
+  riskSignals?: string[]
+  positiveSignals?: string[]
+  primaryContactEmail?: string | null
+  primaryContactName?: string | null
+  primaryContactPhone?: string | null
+  hubspotCreatedAt?: Date | null
+  lastLoginAt?: Date | null
+  totalTrips?: number | null
+  tripsLast30Days?: number | null
+  engagementStatus?: string | null
+  vehiclesTotal?: number | null
+  driversCount?: number | null
+  membersCount?: number | null
+  setupScore?: number | null
+  subscriptionLifetimeDays?: number | null
+  daysSinceLastLogin?: number | null
+  city?: string | null
+  state?: string | null
+  ownerName?: string | null
 }): string {
   const lines: string[] = []
 
@@ -174,7 +174,7 @@ function formatSyncedCustomerData(company: {
   lines.push(`| **Drivers** | ${company.driversCount ?? "Unknown"} |`)
   lines.push(`| **Members** | ${company.membersCount ?? "Unknown"} |`)
   lines.push(
-    `| **Setup Score** | ${company.setupScore !== null ? `${Math.round((company.setupScore / 30) * 100)}% (${company.setupScore}/30)` : "Unknown"} |`
+    `| **Setup Score** | ${company.setupScore != null ? `${Math.round((company.setupScore / 30) * 100)}% (${company.setupScore}/30)` : "Unknown"} |`
   )
   lines.push("")
 
@@ -205,7 +205,7 @@ function formatSyncedCustomerData(company: {
   }
 
   // Health signals
-  if (company.positiveSignals.length > 0) {
+  if (company.positiveSignals && company.positiveSignals.length > 0) {
     lines.push("### Positive Signals")
     lines.push("")
     for (const signal of company.positiveSignals) {
@@ -214,7 +214,7 @@ function formatSyncedCustomerData(company: {
     lines.push("")
   }
 
-  if (company.riskSignals.length > 0) {
+  if (company.riskSignals && company.riskSignals.length > 0) {
     lines.push("### Risk Signals")
     lines.push("")
     for (const signal of company.riskSignals) {
@@ -224,7 +224,7 @@ function formatSyncedCustomerData(company: {
   }
 
   // Segment determination
-  const segment = getSegmentFromPlan(company.plan)
+  const segment = getSegmentFromPlan(company.plan ?? null)
   lines.push("### Segment")
   lines.push("")
   lines.push(`- **Category:** ${segment}`)
