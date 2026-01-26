@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-type HealthScore = "green" | "yellow" | "red" | "unknown"
+type HealthScore = "green" | "yellow" | "red" | "churned" | "unknown"
 
 interface HealthBadgeProps {
   score: HealthScore
@@ -32,6 +32,14 @@ const healthConfig = {
     dotColor: "bg-error-500",
     ringColor: "ring-error-500/20",
     glowClass: "glow-error",
+  },
+  churned: {
+    label: "Churned",
+    bgColor: "bg-gray-100 dark:bg-gray-800",
+    textColor: "text-gray-600 dark:text-gray-400",
+    dotColor: "bg-gray-500",
+    ringColor: "ring-gray-500/20",
+    glowClass: "",
   },
   unknown: {
     label: "Unknown",

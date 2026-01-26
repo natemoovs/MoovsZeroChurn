@@ -20,8 +20,10 @@ export async function GET() {
       recentChurns,
       topCustomers,
     ] = await Promise.all([
-      // Total customer count
-      prisma.hubSpotCompany.count(),
+      // Total customer count (excluding churned)
+      prisma.hubSpotCompany.count({
+        where: { healthScore: { not: "churned" } },
+      }),
 
       // Health score distribution
       prisma.hubSpotCompany.groupBy({
@@ -36,8 +38,9 @@ export async function GET() {
         _count: true,
       }),
 
-      // Average scores
+      // Average scores (excluding churned for MRR totals)
       prisma.hubSpotCompany.aggregate({
+        where: { healthScore: { not: "churned" } },
         _avg: {
           numericHealthScore: true,
           paymentScore: true,
