@@ -150,7 +150,15 @@ export default function SettingsPage() {
     deletedTasks?: string[]
   } | null>(null)
   const [syncDebug, setSyncDebug] = useState<{
-    stats?: { totalFromMetabase: number; synced: number; uniqueCompanies?: number; duplicatesInMetabase?: number; churnedImported?: number; failed: number; firstError?: string | null }
+    stats?: {
+      totalFromMetabase: number
+      synced: number
+      uniqueCompanies?: number
+      duplicatesInMetabase?: number
+      churnedImported?: number
+      failed: number
+      firstError?: string | null
+    }
     metabaseColumns?: { original: string[]; normalized: string[]; missing: string[] }
     sampleFromMetabase?: Record<string, unknown> | null
     sampleFromDatabase?: Record<string, unknown> | null
@@ -656,8 +664,8 @@ export default function SettingsPage() {
               <span className="bg-warning-500 h-1.5 w-1.5 rounded-full" />
               HubSpot
             </span>
-            <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
-              <span className="bg-purple-500 h-1.5 w-1.5 rounded-full" />
+            <span className="bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+              <span className="bg-accent-500 h-1.5 w-1.5 rounded-full" />
               Stripe
             </span>
             <span className="bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
@@ -728,49 +736,74 @@ export default function SettingsPage() {
 
           {/* Sync Debug Info */}
           {syncDebug && (
-            <div className="mt-4 space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
-              <h4 className="font-medium text-blue-900 dark:text-blue-100">Sync Debug Info</h4>
+            <div className="border-info-200 bg-info-50 dark:border-info-900 dark:bg-info-950/30 mt-4 space-y-3 rounded-lg border p-4">
+              <h4 className="text-info-900 dark:text-info-100 font-medium">Sync Debug Info</h4>
 
               {syncDebug.stats && (
-                <div className="text-sm space-y-2">
+                <div className="space-y-2 text-sm">
                   <div className="grid grid-cols-2 gap-2">
-                    <div><span className="font-medium">From Metabase:</span> {syncDebug.stats.totalFromMetabase}</div>
-                    <div><span className="font-medium">Synced:</span> {syncDebug.stats.synced}</div>
-                    <div><span className="font-medium">Churned (win-back):</span> {syncDebug.stats.churnedImported ?? 0}</div>
-                    <div><span className="font-medium">Failed:</span> {syncDebug.stats.failed}</div>
+                    <div>
+                      <span className="font-medium">From Metabase:</span>{" "}
+                      {syncDebug.stats.totalFromMetabase}
+                    </div>
+                    <div>
+                      <span className="font-medium">Synced:</span> {syncDebug.stats.synced}
+                    </div>
+                    <div>
+                      <span className="font-medium">Churned (win-back):</span>{" "}
+                      {syncDebug.stats.churnedImported ?? 0}
+                    </div>
+                    <div>
+                      <span className="font-medium">Failed:</span> {syncDebug.stats.failed}
+                    </div>
                   </div>
                   {(syncDebug.stats.duplicatesInMetabase ?? 0) > 0 && (
-                    <div className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded text-yellow-800 dark:text-yellow-200 text-xs">
-                      <span className="font-medium">⚠️ Duplicates in Metabase:</span> {syncDebug.stats.duplicatesInMetabase} rows are duplicates of other companies (same operatorId or name). <br />
-                      <span className="text-yellow-600 dark:text-yellow-400">Unique companies: {syncDebug.stats.uniqueCompanies}</span>
+                    <div className="bg-warning-100 dark:bg-warning-900/30 text-warning-800 dark:text-warning-200 mt-2 rounded p-2 text-xs">
+                      <span className="font-medium">⚠️ Duplicates in Metabase:</span>{" "}
+                      {syncDebug.stats.duplicatesInMetabase} rows are duplicates of other companies
+                      (same operatorId or name). <br />
+                      <span className="text-warning-600 dark:text-warning-400">
+                        Unique companies: {syncDebug.stats.uniqueCompanies}
+                      </span>
                     </div>
                   )}
                   {syncDebug.stats.firstError && (
-                    <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded text-red-800 dark:text-red-200 text-xs break-all">
+                    <div className="bg-error-100 dark:bg-error-900/30 text-error-800 dark:text-error-200 mt-2 rounded p-2 text-xs break-all">
                       <span className="font-medium">First error:</span> {syncDebug.stats.firstError}
                     </div>
                   )}
                 </div>
               )}
 
-              {syncDebug.metabaseColumns?.missing && syncDebug.metabaseColumns.missing.length > 0 && (
-                <div className="text-sm">
-                  <span className="font-medium text-red-600 dark:text-red-400">Missing columns: </span>
-                  <span className="text-red-700 dark:text-red-300">{syncDebug.metabaseColumns.missing.join(", ")}</span>
-                </div>
-              )}
+              {syncDebug.metabaseColumns?.missing &&
+                syncDebug.metabaseColumns.missing.length > 0 && (
+                  <div className="text-sm">
+                    <span className="text-error-600 dark:text-error-400 font-medium">
+                      Missing columns:{" "}
+                    </span>
+                    <span className="text-error-700 dark:text-error-300">
+                      {syncDebug.metabaseColumns.missing.join(", ")}
+                    </span>
+                  </div>
+                )}
 
               {syncDebug.metabaseColumns?.original && (
                 <div className="text-sm">
-                  <span className="font-medium text-blue-800 dark:text-blue-200">Original columns: </span>
-                  <span className="text-blue-700 dark:text-blue-300">{syncDebug.metabaseColumns.original.join(", ")}...</span>
+                  <span className="text-info-800 dark:text-info-200 font-medium">
+                    Original columns:{" "}
+                  </span>
+                  <span className="text-info-700 dark:text-info-300">
+                    {syncDebug.metabaseColumns.original.join(", ")}...
+                  </span>
                 </div>
               )}
 
               {syncDebug.sampleFromMetabase && (
                 <div className="text-sm">
-                  <p className="font-medium text-blue-800 dark:text-blue-200">Sample from Metabase:</p>
-                  <pre className="mt-1 overflow-x-auto rounded bg-blue-100 p-2 text-xs text-blue-900 dark:bg-blue-900/50 dark:text-blue-100">
+                  <p className="text-info-800 dark:text-info-200 font-medium">
+                    Sample from Metabase:
+                  </p>
+                  <pre className="bg-info-100 text-info-900 dark:bg-info-900/50 dark:text-info-100 mt-1 overflow-x-auto rounded p-2 text-xs">
                     {JSON.stringify(syncDebug.sampleFromMetabase, null, 2)}
                   </pre>
                 </div>
@@ -778,8 +811,10 @@ export default function SettingsPage() {
 
               {syncDebug.sampleFromDatabase && (
                 <div className="text-sm">
-                  <p className="font-medium text-blue-800 dark:text-blue-200">ATX Limousines in DB:</p>
-                  <pre className="mt-1 overflow-x-auto rounded bg-blue-100 p-2 text-xs text-blue-900 dark:bg-blue-900/50 dark:text-blue-100">
+                  <p className="text-info-800 dark:text-info-200 font-medium">
+                    ATX Limousines in DB:
+                  </p>
+                  <pre className="bg-info-100 text-info-900 dark:bg-info-900/50 dark:text-info-100 mt-1 overflow-x-auto rounded p-2 text-xs">
                     {JSON.stringify(syncDebug.sampleFromDatabase, null, 2)}
                   </pre>
                 </div>
@@ -787,14 +822,18 @@ export default function SettingsPage() {
 
               {syncDebug.anyRecordWithVehicles ? (
                 <div className="text-sm">
-                  <p className="font-medium text-green-800 dark:text-green-200">Record with vehicles found:</p>
-                  <pre className="mt-1 overflow-x-auto rounded bg-green-100 p-2 text-xs text-green-900 dark:bg-green-900/50 dark:text-green-100">
+                  <p className="text-success-800 dark:text-success-200 font-medium">
+                    Record with vehicles found:
+                  </p>
+                  <pre className="bg-success-100 text-success-900 dark:bg-success-900/50 dark:text-success-100 mt-1 overflow-x-auto rounded p-2 text-xs">
                     {JSON.stringify(syncDebug.anyRecordWithVehicles, null, 2)}
                   </pre>
                 </div>
               ) : (
                 <div className="text-sm">
-                  <p className="font-medium text-red-600 dark:text-red-400">No records have vehiclesTotal set!</p>
+                  <p className="text-error-600 dark:text-error-400 font-medium">
+                    No records have vehiclesTotal set!
+                  </p>
                 </div>
               )}
             </div>

@@ -18,7 +18,8 @@ npm run typecheck --silent || {
 
 # Run secrets detection on staged files
 echo "🔐 Checking for secrets..."
-git diff --cached --name-only --diff-filter=ACM | xargs -r npx secretlint 2>/dev/null || {
+# Use -z flag with git and -0 with xargs to handle filenames with special characters
+git diff --cached --name-only -z --diff-filter=ACM | xargs -0 -r npx secretlint 2>/dev/null || {
   echo "❌ Secrets detected! Please remove sensitive data before committing."
   exit 1
 }

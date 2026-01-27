@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
@@ -28,7 +28,6 @@ import {
   ChevronRight,
   Phone,
   MessageSquare,
-  Link2,
   Clipboard,
   Globe,
   Bell,
@@ -109,25 +108,17 @@ interface OperatorData {
   lastSyncedAt: string | null
 }
 
-interface PlatformCharge {
-  id: string
-  chargeId: string
-  amount: number
-  status: string
-  createdAt: string
-  description: string | null
-  customerEmail: string | null
-}
-
-interface MonthlyChargeSummary {
-  month: string
-  totalAmount: number
-  chargeCount: number
-  successCount: number
-  failedCount: number
-}
-
-type TabId = "overview" | "payments" | "risk" | "features" | "activity" | "tickets" | "emails"
+type TabId =
+  | "overview"
+  | "payments"
+  | "risk"
+  | "features"
+  | "activity"
+  | "trips"
+  | "tickets"
+  | "emails"
+  | "feedback"
+  | "history"
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: Building2 },
@@ -135,8 +126,11 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "risk", label: "Risk", icon: Shield },
   { id: "features", label: "Features", icon: Settings },
   { id: "activity", label: "Activity", icon: BarChart3 },
+  { id: "trips", label: "Trips", icon: Car },
   { id: "tickets", label: "Tickets", icon: FileText },
   { id: "emails", label: "Emails", icon: Mail },
+  { id: "feedback", label: "Feedback", icon: MessageSquare },
+  { id: "history", label: "History", icon: History },
 ]
 
 // ============================================================================
@@ -189,7 +183,7 @@ function CopyActionButton({
       className={cn(
         "flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
         disabled
-          ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
+          ? "cursor-not-allowed border-border-default bg-bg-tertiary text-content-tertiary"
           : copied
             ? "border-success-500 bg-success-50 text-success-700 dark:border-success-600 dark:bg-success-950/30 dark:text-success-400"
             : "border-border-default hover:bg-surface-hover"
@@ -675,6 +669,16 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
               View Chat Logs
             </a>
           )}
+          {/* OpenPhone - call history */}
+          <a
+            href="https://my.openphone.com/inbox/PN7CwuUc0S"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <Phone className="h-4 w-4" />
+            OpenPhone Inbox
+          </a>
           <Link
             href={`/matrix/${operator.hubspotId}?tab=emails`}
             className="border-border-default hover:bg-surface-hover flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
@@ -821,31 +825,72 @@ interface ChargesApiResponse {
   }
 }
 
+interface InvoicesApiResponse {
+  operatorId: string
+  invoices: Array<{
+    id: string
+    number: string
+    type: string
+    status: string
+    paymentStatus: string
+    currency: string
+    totalAmountCents: number
+    taxesAmountCents: number
+    issuingDate: string
+    paymentDueDate: string | null
+    paymentOverdue: boolean
+    fromDate: string | null
+    toDate: string | null
+    createdAt: string
+  }>
+  summary: {
+    totalInvoiced: number
+    totalPaid: number
+    totalPending: number
+    totalOverdue: number
+    invoiceCount: number
+    paidCount: number
+    pendingCount: number
+    overdueCount: number
+    failedCount: number
+    currency: string
+  }
+}
+
 function PaymentsTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, _setError] = useState<string | null>(null)
   const [data, setData] = useState<ChargesApiResponse | null>(null)
+  const [invoices, setInvoices] = useState<InvoicesApiResponse | null>(null)
+  const [invoicesLoading, setInvoicesLoading] = useState(true)
 
   useEffect(() => {
     if (!operator.operatorId) {
       setLoading(false)
+      setInvoicesLoading(false)
       return
     }
 
-    fetch(`/api/operator-hub/${operator.operatorId}/charges`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch charges")
-        return res.json()
-      })
-      .then((data) => {
-        setData(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err.message)
-        setLoading(false)
-      })
-  }, [operator.operatorId])
+    // Fetch charges and invoices in parallel
+    // Pass stripeAccountId to charges API so it can fallback to Stripe when Snowflake isn't available
+    const chargesUrl = operator.stripeAccountId
+      ? `/api/operator-hub/${operator.operatorId}/charges?stripeAccountId=${operator.stripeAccountId}`
+      : `/api/operator-hub/${operator.operatorId}/charges`
+
+    Promise.all([
+      fetch(chargesUrl)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null),
+      fetch(`/api/operator-hub/${operator.operatorId}/invoices`)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null),
+    ]).then(([chargesData, invoicesData]) => {
+      if (chargesData) setData(chargesData)
+      if (invoicesData) setInvoices(invoicesData)
+      setLoading(false)
+      setInvoicesLoading(false)
+    })
+  }, [operator.operatorId, operator.stripeAccountId])
 
   if (loading) {
     return (
@@ -855,64 +900,83 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
     )
   }
 
-  if (error || !data) {
-    return (
-      <div className="space-y-6">
+  const hasCharges = data && data.charges?.length > 0
+  const hasInvoices = invoices && invoices.invoices?.length > 0
+  const totals = data?.totals
+  const charges = data?.charges || []
+
+  return (
+    <div className="space-y-6">
+      {/* Payment Stats - show charges stats if available, otherwise invoice stats */}
+      {totals ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Total Volume"
+            value={`$${totals.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={DollarSign}
+            subtext={`${totals.totalCount} charges`}
+          />
+          <StatCard
+            label="Successful"
+            value={`$${totals.successVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={Check}
+            variant="success"
+            subtext={`${totals.successCount} charges`}
+          />
+          <StatCard
+            label="Success Rate"
+            value={`${totals.successRate.toFixed(1)}%`}
+            icon={TrendingUp}
+            variant={
+              totals.successRate >= 95 ? "success" : totals.successRate >= 80 ? "warning" : "danger"
+            }
+          />
+          <StatCard
+            label="Failed"
+            value={`$${totals.failedVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={AlertTriangle}
+            variant={totals.failedCount > 0 ? "danger" : "default"}
+            subtext={`${totals.failedCount} charges`}
+          />
+        </div>
+      ) : invoices?.summary ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Total Invoiced"
+            value={`$${(invoices.summary.totalInvoiced / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={FileText}
+            subtext={`${invoices.summary.invoiceCount} invoices`}
+          />
+          <StatCard
+            label="Total Paid"
+            value={`$${(invoices.summary.totalPaid / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={Check}
+            variant="success"
+            subtext={`${invoices.summary.paidCount} paid`}
+          />
+          <StatCard
+            label="Pending"
+            value={`$${(invoices.summary.totalPending / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={Clock}
+            variant={invoices.summary.pendingCount > 0 ? "warning" : "default"}
+            subtext={`${invoices.summary.pendingCount} pending`}
+          />
+          <StatCard
+            label="Overdue"
+            value={`$${(invoices.summary.totalOverdue / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={AlertTriangle}
+            variant={invoices.summary.overdueCount > 0 ? "danger" : "default"}
+            subtext={`${invoices.summary.overdueCount} overdue`}
+          />
+        </div>
+      ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Total Volume" value="—" icon={DollarSign} subtext="All time" />
           <StatCard label="This Month" value="—" icon={Calendar} />
           <StatCard label="Success Rate" value="—" icon={Check} />
           <StatCard label="Failed Payments" value="—" icon={AlertTriangle} />
         </div>
-        <div className="card-sf p-8 text-center">
-          <CreditCard className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-          <h3 className="text-content-primary text-lg font-medium">Payment History</h3>
-          <p className="text-content-secondary mx-auto mt-2 max-w-md">
-            {error || "Configure Metabase to view platform charges and payment history."}
-          </p>
-          <p className="text-content-tertiary mt-4 text-sm">
-            Required: METABASE_URL, METABASE_API_KEY
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  const { charges, totals } = data
-
-  return (
-    <div className="space-y-6">
-      {/* Payment Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Volume"
-          value={`$${totals.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={DollarSign}
-          subtext={`${totals.totalCount} charges`}
-        />
-        <StatCard
-          label="Successful"
-          value={`$${totals.successVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={Check}
-          variant="success"
-          subtext={`${totals.successCount} charges`}
-        />
-        <StatCard
-          label="Success Rate"
-          value={`${totals.successRate.toFixed(1)}%`}
-          icon={TrendingUp}
-          variant={
-            totals.successRate >= 95 ? "success" : totals.successRate >= 80 ? "warning" : "danger"
-          }
-        />
-        <StatCard
-          label="Failed"
-          value={`$${totals.failedVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={AlertTriangle}
-          variant={totals.failedCount > 0 ? "danger" : "default"}
-          subtext={`${totals.failedCount} charges`}
-        />
-      </div>
+      )}
 
       {/* Stripe Connected Account Live Data */}
       {operator.stripeAccountId && operator.operatorId && (
@@ -922,17 +986,97 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
         />
       )}
 
-      {/* Charges Table */}
-      <div className="card-sf overflow-hidden">
-        <div className="border-border-default border-b px-4 py-3">
-          <h3 className="text-content-primary font-semibold">Recent Charges</h3>
-        </div>
-        {charges.length === 0 ? (
-          <div className="p-8 text-center">
-            <CreditCard className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-            <p className="text-content-secondary">No charges found for this operator.</p>
+      {/* Lago Invoices Section */}
+      {invoicesLoading ? (
+        <div className="card-sf p-4">
+          <div className="flex items-center gap-3">
+            <Loader2 className="text-primary-500 h-5 w-5 animate-spin" />
+            <span className="text-content-secondary text-sm">Loading invoices...</span>
           </div>
-        ) : (
+        </div>
+      ) : hasInvoices ? (
+        <div className="card-sf overflow-hidden">
+          <div className="border-border-default border-b px-4 py-3">
+            <h3 className="text-content-primary font-semibold">Billing Invoices (Lago)</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px]">
+              <thead className="bg-bg-secondary">
+                <tr className="border-border-default border-b">
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Invoice #
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Date
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Period
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Status
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices!.invoices.slice(0, 15).map((invoice) => (
+                  <tr key={invoice.id} className="border-border-default border-b">
+                    <td className="text-content-primary px-4 py-3 text-sm font-medium">
+                      {invoice.number}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {new Date(invoice.issuingDate).toLocaleDateString()}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {invoice.fromDate && invoice.toDate
+                        ? `${new Date(invoice.fromDate).toLocaleDateString()} - ${new Date(invoice.toDate).toLocaleDateString()}`
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                          invoice.paymentStatus === "succeeded"
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : invoice.paymentStatus === "failed"
+                              ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                              : invoice.paymentOverdue
+                                ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                        )}
+                      >
+                        {invoice.paymentOverdue ? "Overdue" : invoice.paymentStatus}
+                      </span>
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                      $
+                      {(invoice.totalAmountCents / 100).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {invoices!.invoices.length > 15 && (
+            <div className="border-border-default border-t px-4 py-3 text-center">
+              <p className="text-content-secondary text-sm">
+                Showing 15 of {invoices!.invoices.length} invoices
+              </p>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Charges Table */}
+      {hasCharges ? (
+        <div className="card-sf overflow-hidden">
+          <div className="border-border-default border-b px-4 py-3">
+            <h3 className="text-content-primary font-semibold">Platform Charges</h3>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px]">
               <thead className="bg-bg-secondary">
@@ -991,13 +1135,26 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
               </tbody>
             </table>
           </div>
-        )}
-        {charges.length > 25 && (
-          <div className="border-border-default border-t px-4 py-3 text-center">
-            <p className="text-content-secondary text-sm">Showing 25 of {charges.length} charges</p>
-          </div>
-        )}
-      </div>
+          {charges.length > 25 && (
+            <div className="border-border-default border-t px-4 py-3 text-center">
+              <p className="text-content-secondary text-sm">
+                Showing 25 of {charges.length} charges
+              </p>
+            </div>
+          )}
+        </div>
+      ) : !hasInvoices ? (
+        <div className="card-sf p-8 text-center">
+          <CreditCard className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+          <h3 className="text-content-primary text-lg font-medium">Payment History</h3>
+          <p className="text-content-secondary mx-auto mt-2 max-w-md">
+            {error || "Configure data sources to view payment and invoice history."}
+          </p>
+          <p className="text-content-tertiary mt-4 text-sm">
+            Supported: Snowflake, Metabase, Lago, Stripe
+          </p>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -1069,7 +1226,13 @@ interface StripeLiveData {
   }
 }
 
-function StripeLiveDataCard({ stripeAccountId, operatorId }: { stripeAccountId: string; operatorId: string }) {
+function StripeLiveDataCard({
+  stripeAccountId,
+  operatorId,
+}: {
+  stripeAccountId: string
+  operatorId: string
+}) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<StripeLiveData | null>(null)
@@ -1144,7 +1307,8 @@ function StripeLiveDataCard({ stripeAccountId, operatorId }: { stripeAccountId: 
               Stripe Balance: {formatCurrency(data.balance.available, data.balance.currency)}
             </p>
             <p className="text-content-secondary text-xs">
-              {data.balance.pending > 0 && `${formatCurrency(data.balance.pending, data.balance.currency)} pending • `}
+              {data.balance.pending > 0 &&
+                `${formatCurrency(data.balance.pending, data.balance.currency)} pending • `}
               {data.account.chargesEnabled ? "Charges enabled" : "Charges disabled"}
             </p>
           </div>
@@ -1182,7 +1346,9 @@ function StripeLiveDataCard({ stripeAccountId, operatorId }: { stripeAccountId: 
               </p>
             </div>
             <div className="bg-bg-secondary rounded-lg p-3">
-              <p className="text-content-tertiary text-xs">Recent Volume ({data.charges.stats.totalCount} charges)</p>
+              <p className="text-content-tertiary text-xs">
+                Recent Volume ({data.charges.stats.totalCount} charges)
+              </p>
               <p className="text-content-primary text-lg font-semibold">
                 {formatCurrency(data.charges.stats.totalVolume, data.charges.stats.currency)}
               </p>
@@ -1192,7 +1358,9 @@ function StripeLiveDataCard({ stripeAccountId, operatorId }: { stripeAccountId: 
           {/* Recent Payouts */}
           {data.payouts.length > 0 && (
             <div className="border-border-default border-t px-4 py-3">
-              <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">Recent Payouts</h4>
+              <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">
+                Recent Payouts
+              </h4>
               <div className="space-y-2">
                 {data.payouts.slice(0, 5).map((payout) => (
                   <div key={payout.id} className="flex items-center justify-between text-sm">
@@ -1212,7 +1380,9 @@ function StripeLiveDataCard({ stripeAccountId, operatorId }: { stripeAccountId: 
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-content-tertiary text-xs capitalize">{payout.status}</span>
+                      <span className="text-content-tertiary text-xs capitalize">
+                        {payout.status}
+                      </span>
                       <span className="text-content-tertiary text-xs">
                         {new Date(payout.arrivalDate).toLocaleDateString()}
                       </span>
@@ -1226,7 +1396,9 @@ function StripeLiveDataCard({ stripeAccountId, operatorId }: { stripeAccountId: 
           {/* Recent Charges */}
           {data.charges.recent.length > 0 && (
             <div className="border-border-default border-t px-4 py-3">
-              <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">Recent Charges</h4>
+              <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">
+                Recent Charges
+              </h4>
               <div className="space-y-2">
                 {data.charges.recent.slice(0, 5).map((charge) => (
                   <div key={charge.id} className="flex items-center justify-between text-sm">
@@ -1261,7 +1433,9 @@ function StripeLiveDataCard({ stripeAccountId, operatorId }: { stripeAccountId: 
               <div className="flex items-start gap-3">
                 <AlertTriangle className="text-error-600 dark:text-error-400 mt-0.5 h-5 w-5 shrink-0" />
                 <div>
-                  <p className="text-error-700 dark:text-error-400 text-sm font-medium">Action Required</p>
+                  <p className="text-error-700 dark:text-error-400 text-sm font-medium">
+                    Action Required
+                  </p>
                   <p className="text-error-600 dark:text-error-500 mt-1 text-xs">
                     {data.account.requirements.pastDue.length} requirement(s) past due.{" "}
                     {data.account.requirements.disabledReason && (
@@ -1587,6 +1761,25 @@ interface PlatformDataApiResponse {
     eventDate: string | null
     notes: string | null
   }>
+  bankTransactions: Array<{
+    id: string
+    accountId: string | null
+    amount: number
+    currency: string | null
+    description: string | null
+    status: string | null
+    transactedAt: string | null
+    postedAt: string | null
+  }>
+  driverAppUsers: Array<{
+    driverId: string
+    appUserId: string | null
+    appVersion: string | null
+    deviceType: string | null
+    lastActiveAt: string | null
+    pushEnabled: boolean | null
+  }>
+  settings: Record<string, unknown> | null
   stats: {
     totalPromoCodes: number
     activePromoCodes: number
@@ -1596,6 +1789,9 @@ interface PlatformDataApiResponse {
     totalContacts: number
     totalBankAccounts: number
     totalSubscriptionEvents: number
+    totalBankTransactions: number
+    totalDriverAppUsers: number
+    hasSettings: boolean
   }
 }
 
@@ -1913,7 +2109,7 @@ interface SubscriptionData {
 function ChangePlanModal({
   operatorId,
   operatorName,
-  currentPlan,
+  currentPlan: _currentPlan,
   isOpen,
   onClose,
   onSuccess,
@@ -2036,7 +2232,12 @@ function ChangePlanModal({
           >
             <span className="sr-only">Close</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -2061,7 +2262,9 @@ function ChangePlanModal({
               {/* Current Plan */}
               {data?.currentSubscription && (
                 <div className="bg-bg-secondary mb-4 rounded-lg p-4">
-                  <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">Current Plan</h4>
+                  <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">
+                    Current Plan
+                  </h4>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-content-primary font-medium">
@@ -2146,7 +2349,9 @@ function ChangePlanModal({
           {data?.currentSubscription ? (
             <button
               onClick={handleChangePlan}
-              disabled={saving || !selectedPlan || selectedPlan === data.currentSubscription.planCode}
+              disabled={
+                saving || !selectedPlan || selectedPlan === data.currentSubscription.planCode
+              }
               className="bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -2179,7 +2384,7 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
   >("promos")
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!operator.operatorId) {
       setLoading(false)
       return
@@ -2201,11 +2406,11 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [operator.operatorId])
 
   useEffect(() => {
     fetchData()
-  }, [operator.operatorId])
+  }, [fetchData])
 
   if (loading) {
     return (
@@ -2729,60 +2934,136 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
           </div>
         )}
 
-        {/* Bank Accounts Section */}
+        {/* Bank Accounts & Transactions Section */}
         {configSection === "bank" && (
-          <div>
-            {!platformData?.bankAccounts || platformData.bankAccounts.length === 0 ? (
-              <div className="p-8 text-center">
-                <Landmark className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-                <h3 className="text-content-primary text-lg font-medium">No Bank Accounts</h3>
-                <p className="text-content-secondary mx-auto mt-2 max-w-md">
-                  No bank accounts connected via Stripe Financial Connections.
-                </p>
+          <div className="space-y-4">
+            {/* Bank Accounts */}
+            <div>
+              <div className="border-border-default bg-bg-secondary border-b px-4 py-2">
+                <h4 className="text-content-secondary text-xs font-semibold uppercase">
+                  Connected Accounts ({platformData?.bankAccounts?.length || 0})
+                </h4>
               </div>
-            ) : (
-              <div className="divide-border-default divide-y">
-                {platformData.bankAccounts.map((account) => (
-                  <div key={account.id} className="flex items-center gap-4 p-4">
-                    <div
-                      className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-                        account.status === "active"
-                          ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
-                          : "bg-bg-tertiary text-content-tertiary"
-                      )}
-                    >
-                      <Landmark className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-content-primary text-sm font-medium">
-                          {account.institutionName || "Unknown Bank"}
-                        </p>
-                        {account.status && account.status !== "active" && (
-                          <span className="bg-bg-tertiary text-content-tertiary rounded px-1.5 py-0.5 text-xs capitalize">
-                            {account.status}
-                          </span>
+              {!platformData?.bankAccounts || platformData.bankAccounts.length === 0 ? (
+                <div className="p-6 text-center">
+                  <Landmark className="text-content-tertiary mx-auto mb-2 h-8 w-8" />
+                  <p className="text-content-secondary text-sm">
+                    No bank accounts connected via Stripe Financial Connections.
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-border-default divide-y">
+                  {platformData.bankAccounts.map((account) => (
+                    <div key={account.id} className="flex items-center gap-4 p-4">
+                      <div
+                        className={cn(
+                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+                          account.status === "active"
+                            ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+                            : "bg-bg-tertiary text-content-tertiary"
                         )}
+                      >
+                        <Landmark className="h-5 w-5" />
                       </div>
-                      <div className="mt-0.5 flex gap-3 text-xs">
-                        {account.accountName && (
-                          <span className="text-content-secondary">{account.accountName}</span>
-                        )}
-                        {account.accountType && (
-                          <span className="text-content-tertiary capitalize">
-                            {account.accountType}
-                          </span>
-                        )}
-                        {account.lastFour && (
-                          <span className="text-content-tertiary font-mono">
-                            ····{account.lastFour}
-                          </span>
-                        )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-content-primary text-sm font-medium">
+                            {account.institutionName || "Unknown Bank"}
+                          </p>
+                          {account.status && account.status !== "active" && (
+                            <span className="bg-bg-tertiary text-content-tertiary rounded px-1.5 py-0.5 text-xs capitalize">
+                              {account.status}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-0.5 flex gap-3 text-xs">
+                          {account.accountName && (
+                            <span className="text-content-secondary">{account.accountName}</span>
+                          )}
+                          {account.accountType && (
+                            <span className="text-content-tertiary capitalize">
+                              {account.accountType}
+                            </span>
+                          )}
+                          {account.lastFour && (
+                            <span className="text-content-tertiary font-mono">
+                              ····{account.lastFour}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Bank Transactions */}
+            {platformData?.bankTransactions && platformData.bankTransactions.length > 0 && (
+              <div>
+                <div className="border-border-default bg-bg-secondary border-b px-4 py-2">
+                  <h4 className="text-content-secondary text-xs font-semibold uppercase">
+                    Recent Transactions ({platformData.bankTransactions.length})
+                  </h4>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[500px]">
+                    <thead className="bg-bg-secondary">
+                      <tr className="border-border-default border-b">
+                        <th className="text-content-secondary px-4 py-2 text-left text-xs font-semibold">
+                          Date
+                        </th>
+                        <th className="text-content-secondary px-4 py-2 text-left text-xs font-semibold">
+                          Description
+                        </th>
+                        <th className="text-content-secondary px-4 py-2 text-right text-xs font-semibold">
+                          Amount
+                        </th>
+                        <th className="text-content-secondary px-4 py-2 text-center text-xs font-semibold">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-border-default divide-y">
+                      {platformData.bankTransactions.slice(0, 20).map((tx) => (
+                        <tr key={tx.id}>
+                          <td className="text-content-secondary px-4 py-2 text-sm">
+                            {tx.transactedAt ? new Date(tx.transactedAt).toLocaleDateString() : "—"}
+                          </td>
+                          <td className="text-content-primary max-w-[200px] truncate px-4 py-2 text-sm">
+                            {tx.description || "Transaction"}
+                          </td>
+                          <td
+                            className={cn(
+                              "px-4 py-2 text-right text-sm font-medium",
+                              tx.amount > 0
+                                ? "text-success-600 dark:text-success-400"
+                                : "text-content-primary"
+                            )}
+                          >
+                            {tx.amount > 0 ? "+" : ""}
+                            {(tx.amount / 100).toLocaleString(undefined, {
+                              style: "currency",
+                              currency: tx.currency || "USD",
+                            })}
+                          </td>
+                          <td className="px-4 py-2 text-center">
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                                tx.status === "posted"
+                                  ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                  : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                              )}
+                            >
+                              {tx.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
@@ -3510,10 +3791,10 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
               placeholder="Search emails, calls, meetings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-border-default bg-bg-secondary text-content-primary placeholder:text-content-tertiary w-full rounded-lg border py-2 pl-9 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="border-border-default bg-bg-secondary text-content-primary placeholder:text-content-tertiary focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border py-2 pr-4 pl-9 text-sm focus:ring-1 focus:outline-none"
             />
             <svg
-              className="text-content-tertiary absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+              className="text-content-tertiary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -3528,17 +3809,23 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="text-content-tertiary hover:text-content-secondary absolute right-3 top-1/2 -translate-y-1/2"
+                className="text-content-tertiary hover:text-content-secondary absolute top-1/2 right-3 -translate-y-1/2"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             )}
           </div>
           {searchQuery && (
             <p className="text-content-tertiary text-xs">
-              Found {filteredActivities.length} result{filteredActivities.length !== 1 ? "s" : ""} for "{searchQuery}"
+              Found {filteredActivities.length} result{filteredActivities.length !== 1 ? "s" : ""}{" "}
+              for &ldquo;{searchQuery}&rdquo;
             </p>
           )}
         </div>
@@ -3592,6 +3879,583 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
           <div className="border-border-default border-t px-4 py-3 text-center">
             <p className="text-content-secondary text-sm">
               Showing 25 of {filteredActivities.length} activities
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// Trips Tab
+// ============================================================================
+
+interface TripsApiResponse {
+  operatorId: string
+  trips: Array<{
+    trip_id: string
+    request_id: string
+    status: string
+    pickup_location: string | null
+    dropoff_location: string | null
+    scheduled_at: string | null
+    completed_at: string | null
+    driver_name: string | null
+    passenger_name: string | null
+    total_amount: number | null
+  }>
+  analytics: Array<{
+    month: string
+    total_requests: number
+    completed_requests: number
+    cancelled_requests: number
+    total_revenue: number
+  }>
+  summary: {
+    totalTrips: number
+    completedTrips: number
+    cancelledTrips: number
+    completionRate: number
+    totalRevenue: number
+  }
+}
+
+function TripsTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<TripsApiResponse | null>(null)
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/trips`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch trips")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="card-sf p-8 text-center">
+        <Car className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+        <h3 className="text-content-primary text-lg font-medium">Trips & Requests</h3>
+        <p className="text-content-secondary mx-auto mt-2 max-w-md">
+          {error || "No trip data available for this operator."}
+        </p>
+      </div>
+    )
+  }
+
+  const { trips, analytics, summary } = data
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Total Trips"
+          value={summary.totalTrips.toString()}
+          icon={Car}
+          subtext="All time"
+        />
+        <StatCard
+          label="Completed"
+          value={summary.completedTrips.toString()}
+          icon={Check}
+          variant="success"
+          subtext={`${summary.completionRate.toFixed(1)}% rate`}
+        />
+        <StatCard
+          label="Cancelled"
+          value={summary.cancelledTrips.toString()}
+          icon={AlertTriangle}
+          variant={summary.cancelledTrips > 0 ? "warning" : "default"}
+        />
+        <StatCard
+          label="Total Revenue"
+          value={`$${summary.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+          icon={DollarSign}
+        />
+      </div>
+
+      {/* Monthly Analytics */}
+      {analytics.length > 0 && (
+        <div className="card-sf overflow-hidden">
+          <div className="border-border-default border-b px-4 py-3">
+            <h3 className="text-content-primary font-semibold">Monthly Analytics</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[500px]">
+              <thead className="bg-bg-secondary">
+                <tr className="border-border-default border-b">
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Month
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Requests
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Completed
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Cancelled
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Revenue
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.slice(0, 12).map((row) => (
+                  <tr key={row.month} className="border-border-default border-b">
+                    <td className="text-content-primary px-4 py-3 text-sm font-medium">
+                      {row.month}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-right text-sm">
+                      {row.total_requests}
+                    </td>
+                    <td className="text-success-600 dark:text-success-400 px-4 py-3 text-right text-sm">
+                      {row.completed_requests}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-right text-sm">
+                      {row.cancelled_requests}
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                      ${row.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Trips */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Recent Trips</h3>
+        </div>
+        {trips.length === 0 ? (
+          <div className="p-8 text-center">
+            <Car className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+            <p className="text-content-secondary">No trips found.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[800px]">
+              <thead className="bg-bg-secondary">
+                <tr className="border-border-default border-b">
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Date
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Passenger
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Driver
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Route
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Status
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {trips.slice(0, 25).map((trip) => (
+                  <tr key={trip.trip_id} className="border-border-default border-b">
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {trip.scheduled_at ? new Date(trip.scheduled_at).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-sm">
+                      {trip.passenger_name || "—"}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {trip.driver_name || "—"}
+                    </td>
+                    <td className="text-content-secondary max-w-[200px] truncate px-4 py-3 text-sm">
+                      {trip.pickup_location && trip.dropoff_location
+                        ? `${trip.pickup_location.split(",")[0]} → ${trip.dropoff_location.split(",")[0]}`
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                          trip.status === "completed"
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : trip.status === "cancelled"
+                              ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                              : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                        )}
+                      >
+                        {trip.status}
+                      </span>
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                      {trip.total_amount
+                        ? `$${trip.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {trips.length > 25 && (
+          <div className="border-border-default border-t px-4 py-3 text-center">
+            <p className="text-content-secondary text-sm">Showing 25 of {trips.length} trips</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// Feedback Tab
+// ============================================================================
+
+interface FeedbackApiResponse {
+  operatorId: string
+  feedback: Array<{
+    feedback_id: string
+    title: string | null
+    description: string | null
+    product_type: string | null
+    path: string | null
+    created_at: string
+    user_first_name: string | null
+    user_last_name: string | null
+    user_email: string | null
+  }>
+  count: number
+}
+
+function FeedbackTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<FeedbackApiResponse | null>(null)
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/feedback`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch feedback")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (error || !data || data.feedback.length === 0) {
+    return (
+      <div className="card-sf p-8 text-center">
+        <MessageSquare className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+        <h3 className="text-content-primary text-lg font-medium">Customer Feedback</h3>
+        <p className="text-content-secondary mx-auto mt-2 max-w-md">
+          {error || "No customer feedback has been submitted yet."}
+        </p>
+        <p className="text-content-tertiary mt-4 text-sm">
+          Feedback from the customer portal will appear here.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Total Feedback" value={data.count.toString()} icon={MessageSquare} />
+        <StatCard
+          label="Product Types"
+          value={[
+            ...new Set(data.feedback.map((f) => f.product_type).filter(Boolean)),
+          ].length.toString()}
+          icon={Tag}
+        />
+        <StatCard
+          label="Latest"
+          value={
+            data.feedback[0] ? new Date(data.feedback[0].created_at).toLocaleDateString() : "—"
+          }
+          icon={Calendar}
+        />
+      </div>
+
+      {/* Feedback List */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Customer Feedback</h3>
+        </div>
+        <div className="divide-border-default divide-y">
+          {data.feedback.map((item) => (
+            <div key={item.feedback_id} className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-content-primary font-medium">
+                      {item.title || "Untitled Feedback"}
+                    </h4>
+                    {item.product_type && (
+                      <span className="bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 rounded-full px-2 py-0.5 text-xs font-medium">
+                        {item.product_type}
+                      </span>
+                    )}
+                  </div>
+                  {item.description && (
+                    <p className="text-content-secondary mt-1 text-sm">{item.description}</p>
+                  )}
+                  <div className="mt-2 flex flex-wrap items-center gap-4 text-xs">
+                    <span className="text-content-tertiary">
+                      {item.user_first_name || item.user_last_name
+                        ? `${item.user_first_name || ""} ${item.user_last_name || ""}`.trim()
+                        : item.user_email || "Anonymous"}
+                    </span>
+                    {item.path && (
+                      <span className="text-content-tertiary">
+                        Path: <code className="bg-bg-tertiary rounded px-1">{item.path}</code>
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <span className="text-content-tertiary shrink-0 text-xs">
+                  {new Date(item.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// History Tab
+// ============================================================================
+
+interface HistoryEntry {
+  id: string
+  type: string
+  title: string
+  description: string
+  timestamp: string
+  metadata: {
+    eventType: string
+    planName: string | null
+    previousPlan: string | null
+    amount: number | null
+    notes: string | null
+  }
+}
+
+interface HistoryApiResponse {
+  operatorId: string
+  history: HistoryEntry[]
+  count: number
+}
+
+function HistoryTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<HistoryApiResponse | null>(null)
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/history`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch history")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case "subscription":
+        return <CreditCard className="h-4 w-4" />
+      case "plan_change":
+        return <TrendingUp className="h-4 w-4" />
+      case "payment":
+        return <DollarSign className="h-4 w-4" />
+      case "member":
+        return <Users className="h-4 w-4" />
+      case "settings":
+        return <Settings className="h-4 w-4" />
+      default:
+        return <History className="h-4 w-4" />
+    }
+  }
+
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case "subscription":
+        return "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
+      case "plan_change":
+        return "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+      case "payment":
+        return "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400"
+      case "member":
+        return "bg-accent-100 text-accent-600 dark:bg-accent-900/30 dark:text-accent-400"
+      default:
+        return "bg-surface-muted text-content-secondary"
+    }
+  }
+
+  if (error || !data || data.history.length === 0) {
+    return (
+      <div className="card-sf p-8 text-center">
+        <History className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+        <h3 className="text-content-primary text-lg font-medium">Change History</h3>
+        <p className="text-content-secondary mx-auto mt-2 max-w-md">
+          {error || "No history records found for this operator."}
+        </p>
+        <p className="text-content-tertiary mt-4 text-sm">
+          Subscription changes, plan updates, and other events will appear here.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          label="Total Events"
+          value={data.count.toString()}
+          icon={History}
+          subtext="All time"
+        />
+        <StatCard
+          label="Subscription Events"
+          value={data.history
+            .filter((h) => h.type === "subscription" || h.type === "plan_change")
+            .length.toString()}
+          icon={CreditCard}
+        />
+        <StatCard
+          label="Recent Activity"
+          value={data.history[0] ? new Date(data.history[0].timestamp).toLocaleDateString() : "—"}
+          icon={Calendar}
+          subtext="Last event"
+        />
+      </div>
+
+      {/* Timeline */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Activity Timeline</h3>
+        </div>
+        <div className="divide-border-default divide-y">
+          {data.history.slice(0, 50).map((entry) => (
+            <div key={entry.id} className="flex gap-4 px-4 py-4">
+              <div
+                className={cn(
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                  getEventColor(entry.type)
+                )}
+              >
+                {getEventIcon(entry.type)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-content-primary font-medium">{entry.title}</p>
+                    {entry.description && (
+                      <p className="text-content-secondary mt-0.5 text-sm">{entry.description}</p>
+                    )}
+                  </div>
+                  <span className="text-content-tertiary shrink-0 text-xs">
+                    {new Date(entry.timestamp).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year:
+                        new Date(entry.timestamp).getFullYear() !== new Date().getFullYear()
+                          ? "numeric"
+                          : undefined,
+                    })}
+                  </span>
+                </div>
+                {entry.metadata.amount && entry.metadata.amount > 0 && (
+                  <span className="text-content-secondary mt-1 inline-block text-sm">
+                    ${(entry.metadata.amount / 100).toFixed(2)}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        {data.history.length > 50 && (
+          <div className="border-border-default border-t px-4 py-3 text-center">
+            <p className="text-content-secondary text-sm">
+              Showing 50 of {data.history.length} events
             </p>
           </div>
         )}
@@ -3799,8 +4663,11 @@ export default function OperatorDetailPage() {
           {activeTab === "risk" && <RiskTab operator={operator} />}
           {activeTab === "features" && <FeaturesTab operator={operator} />}
           {activeTab === "activity" && <ActivityTab operator={operator} />}
+          {activeTab === "trips" && <TripsTab operator={operator} />}
           {activeTab === "tickets" && <TicketsTab operator={operator} />}
           {activeTab === "emails" && <EmailsTab operator={operator} />}
+          {activeTab === "feedback" && <FeedbackTab operator={operator} />}
+          {activeTab === "history" && <HistoryTab operator={operator} />}
         </div>
       </div>
     </DashboardLayout>

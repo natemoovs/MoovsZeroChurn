@@ -900,6 +900,229 @@ async function getOperatorSubscriptionLog(operatorId: string): Promise<Subscript
 }
 
 // ============================================================================
+// Additional Data Queries (for Retool parity)
+// ============================================================================
+
+export interface CustomerFeedback {
+  feedback_id: string
+  title: string | null
+  description: string | null
+  product_type: string | null
+  path: string | null
+  created_at: string
+  user_first_name: string | null
+  user_last_name: string | null
+  user_email: string | null
+}
+
+/**
+ * Get customer feedback for an operator
+ */
+async function getOperatorFeedback(operatorId: string): Promise<CustomerFeedback[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      cf.customer_feedback_id as feedback_id,
+      cf.title,
+      cf.description,
+      cf.product_type,
+      cf.path,
+      cf.created_at,
+      u.first_name as user_first_name,
+      u.last_name as user_last_name,
+      u.email as user_email
+    FROM SWOOP.CUSTOMER_FEEDBACK cf
+    LEFT JOIN SWOOP.USER u ON cf.user_id = u.user_id
+    WHERE cf.operator_id = '${escapedId}'
+    ORDER BY cf.created_at DESC
+    LIMIT 50
+  `
+
+  const result = await executeQuery<CustomerFeedback>(sql)
+  return result.rows
+}
+
+export interface BankTransaction {
+  transaction_id: string
+  account_id: string
+  amount: number
+  currency: string
+  description: string | null
+  status: string
+  transacted_at: string
+  posted_at: string | null
+}
+
+/**
+ * Get bank transactions for an operator
+ */
+async function getOperatorBankTransactions(operatorId: string): Promise<BankTransaction[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      t.stripe_financial_connections_transaction_id as transaction_id,
+      t.account_id,
+      t.amount,
+      t.currency,
+      t.description,
+      t.status,
+      t.transacted_at,
+      t.posted_at
+    FROM SWOOP.STRIPE_FINANCIAL_CONNECTIONS_TRANSACTION t
+    JOIN SWOOP.STRIPE_FINANCIAL_CONNECTIONS_ACCOUNT a
+      ON t.account_id = a.stripe_financial_connections_account_id
+    WHERE a.operator_id = '${escapedId}'
+    ORDER BY t.transacted_at DESC
+    LIMIT 100
+  `
+
+  const result = await executeQuery<BankTransaction>(sql)
+  return result.rows
+}
+
+export interface DriverAppUser {
+  driver_id: string
+  app_user_id: string | null
+  app_version: string | null
+  device_type: string | null
+  last_active_at: string | null
+  push_enabled: boolean | null
+}
+
+/**
+ * Get driver app usage data
+ */
+async function getOperatorDriverAppUsers(operatorId: string): Promise<DriverAppUser[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      d.driver_id,
+      dau.id as app_user_id,
+      dau.app_version,
+      dau.device_type,
+      dau.last_active_at,
+      dau.push_notifications_enabled as push_enabled
+    FROM POSTGRES_SWOOP.DRIVER d
+    LEFT JOIN MOZART_NEW.DRIVERAPP_USERS dau ON d.driver_id = dau.id
+    WHERE d.operator_id = '${escapedId}'
+    AND dau.id IS NOT NULL
+    ORDER BY dau.last_active_at DESC NULLS LAST
+  `
+
+  const result = await executeQuery<DriverAppUser>(sql)
+  return result.rows
+}
+
+export interface UserPermission {
+  user_id: string
+  permission_id: string
+  permission_name: string | null
+}
+
+/**
+ * Get user permissions for an operator's members
+ */
+async function getOperatorUserPermissions(operatorId: string): Promise<UserPermission[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      uap.user_id,
+      uap.access_permission_id as permission_id,
+      ap.name as permission_name
+    FROM SWOOP.USER_ACCESS_PERMISSION uap
+    JOIN SWOOP.ACCESS_PERMISSION ap ON uap.access_permission_id = ap.access_permission_id
+    JOIN SWOOP.USER u ON uap.user_id = u.user_id
+    WHERE u.operator_id = '${escapedId}'
+    AND u.removed_at IS NULL
+  `
+
+  const result = await executeQuery<UserPermission>(sql)
+  return result.rows
+}
+
+export interface RequestAnalytics {
+  month: string
+  total_requests: number
+  completed_requests: number
+  cancelled_requests: number
+  total_revenue: number
+}
+
+/**
+ * Get request/trip analytics for an operator
+ */
+async function getOperatorRequestAnalytics(operatorId: string): Promise<RequestAnalytics[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      TO_VARCHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') as month,
+      COUNT(*) as total_requests,
+      SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_requests,
+      SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_requests,
+      COALESCE(SUM(total_amount), 0) as total_revenue
+    FROM SWOOP.REQUEST
+    WHERE operator_id = '${escapedId}'
+    GROUP BY DATE_TRUNC('month', created_at)
+    ORDER BY month DESC
+    LIMIT 12
+  `
+
+  const result = await executeQuery<RequestAnalytics>(sql)
+  return result.rows
+}
+
+export interface TripSummary {
+  trip_id: string
+  request_id: string
+  status: string
+  pickup_location: string | null
+  dropoff_location: string | null
+  scheduled_at: string | null
+  completed_at: string | null
+  driver_name: string | null
+  passenger_name: string | null
+  total_amount: number | null
+}
+
+/**
+ * Get recent trips for an operator
+ */
+async function getOperatorTrips(operatorId: string, limit = 50): Promise<TripSummary[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      t.trip_id,
+      t.request_id,
+      t.status,
+      ps.address as pickup_location,
+      ds.address as dropoff_location,
+      r.pickup_date_time as scheduled_at,
+      t.completed_at,
+      CONCAT(d.first_name, ' ', d.last_name) as driver_name,
+      CONCAT(u.first_name, ' ', u.last_name) as passenger_name,
+      r.total_amount
+    FROM SWOOP.TRIP t
+    JOIN SWOOP.REQUEST r ON t.request_id = r.request_id
+    LEFT JOIN SWOOP.STOP ps ON r.pickup_stop_id = ps.stop_id
+    LEFT JOIN SWOOP.STOP ds ON r.dropoff_stop_id = ds.stop_id
+    LEFT JOIN POSTGRES_SWOOP.DRIVER d ON t.driver_id = d.driver_id
+    LEFT JOIN SWOOP.USER u ON r.user_id = u.user_id
+    WHERE r.operator_id = '${escapedId}'
+    ORDER BY r.pickup_date_time DESC
+    LIMIT ${limit}
+  `
+
+  const result = await executeQuery<TripSummary>(sql)
+  return result.rows
+}
+
+// ============================================================================
 // Write Operations (CRUD) - Requires Direct Connection
 // ============================================================================
 
@@ -1061,6 +1284,14 @@ export const snowflakeClient = {
   getOperatorContacts,
   getOperatorBankAccounts,
   getOperatorSubscriptionLog,
+
+  // Additional data (Retool parity)
+  getOperatorFeedback,
+  getOperatorBankTransactions,
+  getOperatorDriverAppUsers,
+  getOperatorUserPermissions,
+  getOperatorRequestAnalytics,
+  getOperatorTrips,
 
   // Dashboard/analytics queries
   getTopOperatorsByRevenue,

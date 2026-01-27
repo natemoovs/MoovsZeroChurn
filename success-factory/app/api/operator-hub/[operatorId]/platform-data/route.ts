@@ -15,23 +15,31 @@ export async function GET(
     const { operatorId } = await params
 
     if (!snowflake.isConfigured()) {
-      return NextResponse.json(
-        { error: "Snowflake/Metabase not configured" },
-        { status: 503 }
-      )
+      return NextResponse.json({ error: "Snowflake/Metabase not configured" }, { status: 503 })
     }
 
     // Fetch all platform data in parallel
-    const [promoCodes, priceZones, rules, settings, contacts, bankAccounts, subscriptionLog] =
-      await Promise.all([
-        snowflake.getOperatorPromoCodes(operatorId).catch(() => []),
-        snowflake.getOperatorPriceZones(operatorId).catch(() => []),
-        snowflake.getOperatorRules(operatorId).catch(() => []),
-        snowflake.getOperatorSettings(operatorId).catch(() => null),
-        snowflake.getOperatorContacts(operatorId).catch(() => []),
-        snowflake.getOperatorBankAccounts(operatorId).catch(() => []),
-        snowflake.getOperatorSubscriptionLog(operatorId).catch(() => []),
-      ])
+    const [
+      promoCodes,
+      priceZones,
+      rules,
+      settings,
+      contacts,
+      bankAccounts,
+      subscriptionLog,
+      bankTransactions,
+      driverAppUsers,
+    ] = await Promise.all([
+      snowflake.getOperatorPromoCodes(operatorId).catch(() => []),
+      snowflake.getOperatorPriceZones(operatorId).catch(() => []),
+      snowflake.getOperatorRules(operatorId).catch(() => []),
+      snowflake.getOperatorSettings(operatorId).catch(() => null),
+      snowflake.getOperatorContacts(operatorId).catch(() => []),
+      snowflake.getOperatorBankAccounts(operatorId).catch(() => []),
+      snowflake.getOperatorSubscriptionLog(operatorId).catch(() => []),
+      snowflake.getOperatorBankTransactions(operatorId).catch(() => []),
+      snowflake.getOperatorDriverAppUsers(operatorId).catch(() => []),
+    ])
 
     // Calculate stats
     const activePromoCodes = promoCodes.filter((p) => p.is_active).length
@@ -100,6 +108,24 @@ export async function GET(
         eventDate: s.event_date,
         notes: s.notes,
       })),
+      bankTransactions: bankTransactions.map((t) => ({
+        id: t.transaction_id,
+        accountId: t.account_id,
+        amount: t.amount,
+        currency: t.currency,
+        description: t.description,
+        status: t.status,
+        transactedAt: t.transacted_at,
+        postedAt: t.posted_at,
+      })),
+      driverAppUsers: driverAppUsers.map((d) => ({
+        driverId: d.driver_id,
+        appUserId: d.app_user_id,
+        appVersion: d.app_version,
+        deviceType: d.device_type,
+        lastActiveAt: d.last_active_at,
+        pushEnabled: d.push_enabled,
+      })),
       settings,
       stats: {
         totalPromoCodes: promoCodes.length,
@@ -110,6 +136,8 @@ export async function GET(
         totalContacts: contacts.length,
         totalBankAccounts: bankAccounts.length,
         totalSubscriptionEvents: subscriptionLog.length,
+        totalBankTransactions: bankTransactions.length,
+        totalDriverAppUsers: driverAppUsers.length,
         hasSettings: !!settings,
       },
     })

@@ -35,10 +35,10 @@ const healthConfig = {
   },
   churned: {
     label: "Churned",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
-    textColor: "text-gray-600 dark:text-gray-400",
-    dotColor: "bg-gray-500",
-    ringColor: "ring-gray-500/20",
+    bgColor: "bg-bg-tertiary",
+    textColor: "text-content-secondary",
+    dotColor: "bg-content-tertiary",
+    ringColor: "ring-content-tertiary/20",
     glowClass: "",
   },
   unknown: {

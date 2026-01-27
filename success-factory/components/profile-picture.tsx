@@ -130,12 +130,12 @@ export function ProfilePicture({ className }: ProfilePictureProps) {
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
           className={cn(
-            "absolute bottom-0 right-0",
+            "absolute right-0 bottom-0",
             "flex h-8 w-8 items-center justify-center",
-            "rounded-full border-2 border-white dark:border-gray-800",
+            "dark:border-bg-primary rounded-full border-2 border-white",
             "bg-primary-500 text-white",
             "hover:bg-primary-600 transition-colors",
-            "disabled:opacity-50 disabled:cursor-not-allowed"
+            "disabled:cursor-not-allowed disabled:opacity-50"
           )}
           title="Upload profile picture"
         >
@@ -160,8 +160,8 @@ export function ProfilePicture({ className }: ProfilePictureProps) {
             disabled={uploading}
             className={cn(
               "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
-              "bg-primary-500 text-white hover:bg-primary-600",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
+              "bg-primary-500 hover:bg-primary-600 text-white",
+              "disabled:cursor-not-allowed disabled:opacity-50"
             )}
           >
             {uploading ? (
@@ -183,10 +183,10 @@ export function ProfilePicture({ className }: ProfilePictureProps) {
               disabled={deleting}
               className={cn(
                 "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
-                "border border-error-200 bg-error-50 text-error-700",
+                "border-error-200 bg-error-50 text-error-700 border",
                 "hover:bg-error-100",
                 "dark:border-error-900/50 dark:bg-error-950/30 dark:text-error-400",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "disabled:cursor-not-allowed disabled:opacity-50"
               )}
             >
               {deleting ? (
