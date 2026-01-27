@@ -200,7 +200,7 @@ function CopyActionButton({
       className={cn(
         "flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
         disabled
-          ? "cursor-not-allowed border-border-default bg-bg-tertiary text-content-tertiary"
+          ? "border-border-default bg-bg-tertiary text-content-tertiary cursor-not-allowed"
           : copied
             ? "border-success-500 bg-success-50 text-success-700 dark:border-success-600 dark:bg-success-950/30 dark:text-success-400"
             : "border-border-default hover:bg-surface-hover"
@@ -393,7 +393,8 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
   }
 
   // Use booking portal URL from Snowflake, fall back to domain from HubSpot
-  const customerPortalUrl = bookingPortalUrl || (operator.domain ? `https://${operator.domain}` : null)
+  const customerPortalUrl =
+    bookingPortalUrl || (operator.domain ? `https://${operator.domain}` : null)
 
   return (
     <div className="space-y-6">
@@ -962,7 +963,12 @@ function ChargeDetailModal({
           >
             <span className="sr-only">Close</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -973,7 +979,10 @@ function ChargeDetailModal({
             <div>
               <p className="text-content-tertiary text-sm">Amount</p>
               <p className="text-content-primary text-3xl font-bold">
-                ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                $
+                {charge.total_dollars_charged.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}
               </p>
             </div>
             <span
@@ -995,7 +1004,9 @@ function ChargeDetailModal({
             <h4 className="text-content-primary mb-3 font-medium">Transaction Info</h4>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
               <dt className="text-content-secondary">Charge ID</dt>
-              <dd className="text-content-primary truncate font-mono text-xs">{charge.charge_id}</dd>
+              <dd className="text-content-primary truncate font-mono text-xs">
+                {charge.charge_id}
+              </dd>
 
               <dt className="text-content-secondary">Date</dt>
               <dd className="text-content-primary">
@@ -1033,13 +1044,17 @@ function ChargeDetailModal({
               {charge.customer_id && (
                 <>
                   <dt className="text-content-secondary">Customer ID</dt>
-                  <dd className="text-content-primary truncate font-mono text-xs">{charge.customer_id}</dd>
+                  <dd className="text-content-primary truncate font-mono text-xs">
+                    {charge.customer_id}
+                  </dd>
                 </>
               )}
               {charge.card_id && (
                 <>
                   <dt className="text-content-secondary">Card ID</dt>
-                  <dd className="text-content-primary truncate font-mono text-xs">{charge.card_id}</dd>
+                  <dd className="text-content-primary truncate font-mono text-xs">
+                    {charge.card_id}
+                  </dd>
                 </>
               )}
             </dl>
@@ -1067,7 +1082,8 @@ function ChargeDetailModal({
                       <span
                         className={cn(
                           "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                          charge.outcome_risk_level === "normal" || charge.outcome_risk_level === "low"
+                          charge.outcome_risk_level === "normal" ||
+                            charge.outcome_risk_level === "low"
                             ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                             : charge.outcome_risk_level === "elevated"
                               ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
@@ -1088,19 +1104,25 @@ function ChargeDetailModal({
                 {charge.outcome_network_status && (
                   <>
                     <dt className="text-content-secondary">Network Status</dt>
-                    <dd className="text-content-primary capitalize">{charge.outcome_network_status.replace(/_/g, " ")}</dd>
+                    <dd className="text-content-primary capitalize">
+                      {charge.outcome_network_status.replace(/_/g, " ")}
+                    </dd>
                   </>
                 )}
                 {charge.outcome_reason && (
                   <>
                     <dt className="text-content-secondary">Outcome Reason</dt>
-                    <dd className="text-content-primary capitalize">{charge.outcome_reason.replace(/_/g, " ")}</dd>
+                    <dd className="text-content-primary capitalize">
+                      {charge.outcome_reason.replace(/_/g, " ")}
+                    </dd>
                   </>
                 )}
                 {charge.outcome_seller_message && (
                   <>
                     <dt className="text-content-secondary col-span-2">Message</dt>
-                    <dd className="text-content-primary col-span-2">{charge.outcome_seller_message}</dd>
+                    <dd className="text-content-primary col-span-2">
+                      {charge.outcome_seller_message}
+                    </dd>
                   </>
                 )}
               </dl>
@@ -1112,7 +1134,10 @@ function ChargeDetailModal({
             <div className="bg-warning-50 dark:bg-warning-950/30 rounded-lg p-4">
               <h4 className="text-warning-700 dark:text-warning-400 mb-2 font-medium">Refund</h4>
               <p className="text-warning-600 dark:text-warning-500 text-2xl font-bold">
-                ${charge.total_dollars_refunded.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                $
+                {charge.total_dollars_refunded.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}
               </p>
             </div>
           )}
@@ -1186,7 +1211,10 @@ function ChargeDetailModal({
                       Disputed Amount
                     </dt>
                     <dd className="font-medium">
-                      ${charge.disputed_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      $
+                      {charge.disputed_amount.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
                     </dd>
                   </>
                 )}
@@ -1231,7 +1259,10 @@ function ChargeDetailModal({
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <dt className="text-content-secondary">Gross Amount</dt>
                 <dd className="text-content-primary font-medium">
-                  ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  $
+                  {charge.total_dollars_charged.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })}
                 </dd>
                 <dt className="text-content-secondary">Fee</dt>
                 <dd className="text-content-primary">
@@ -1304,7 +1335,12 @@ function CustomerChargesModal({
           >
             <span className="sr-only">Close</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -1344,26 +1380,40 @@ function CustomerChargesModal({
                   <div>
                     <p className="text-content-tertiary text-xs uppercase">Total Amount</p>
                     <p className="text-content-primary font-medium">
-                      ${data.summary.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      $
+                      {data.summary.total_amount.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
                     </p>
                   </div>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
                   <div>
                     <p className="text-content-tertiary text-xs uppercase">Total Refunded</p>
-                    <p className={cn(
-                      "font-medium",
-                      data.summary.total_refunded > 0 ? "text-warning-600 dark:text-warning-400" : "text-content-primary"
-                    )}>
-                      ${data.summary.total_refunded.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    <p
+                      className={cn(
+                        "font-medium",
+                        data.summary.total_refunded > 0
+                          ? "text-warning-600 dark:text-warning-400"
+                          : "text-content-primary"
+                      )}
+                    >
+                      $
+                      {data.summary.total_refunded.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
                     </p>
                   </div>
                   <div>
                     <p className="text-content-tertiary text-xs uppercase">Disputes</p>
-                    <p className={cn(
-                      "font-medium",
-                      data.summary.total_disputes > 0 ? "text-error-600 dark:text-error-400" : "text-content-primary"
-                    )}>
+                    <p
+                      className={cn(
+                        "font-medium",
+                        data.summary.total_disputes > 0
+                          ? "text-error-600 dark:text-error-400"
+                          : "text-content-primary"
+                      )}
+                    >
                       {data.summary.total_disputes}
                     </p>
                   </div>
@@ -1447,7 +1497,8 @@ function CustomerChargesModal({
                               <span
                                 className={cn(
                                   "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                                  charge.outcome_risk_level === "normal" || charge.outcome_risk_level === "low"
+                                  charge.outcome_risk_level === "normal" ||
+                                    charge.outcome_risk_level === "low"
                                     ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                                     : charge.outcome_risk_level === "elevated"
                                       ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
@@ -1461,10 +1512,17 @@ function CustomerChargesModal({
                             )}
                           </td>
                           <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
-                            ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            $
+                            {charge.total_dollars_charged.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            })}
                             {charge.total_dollars_refunded && charge.total_dollars_refunded > 0 && (
                               <span className="text-warning-600 dark:text-warning-400 ml-1 text-xs">
-                                (-${charge.total_dollars_refunded.toLocaleString(undefined, { minimumFractionDigits: 2 })})
+                                (-$
+                                {charge.total_dollars_refunded.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                })}
+                                )
                               </span>
                             )}
                           </td>
@@ -1497,7 +1555,9 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
   const [data, setData] = useState<ChargesApiResponse | null>(null)
   const [invoices, setInvoices] = useState<InvoicesApiResponse | null>(null)
   const [invoicesLoading, setInvoicesLoading] = useState(true)
-  const [selectedCharge, setSelectedCharge] = useState<ChargesApiResponse["charges"][0] | null>(null)
+  const [selectedCharge, setSelectedCharge] = useState<ChargesApiResponse["charges"][0] | null>(
+    null
+  )
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -1615,112 +1675,127 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
       )}
 
       {/* Charges Analytics Charts */}
-      {hasCharges && (() => {
-        // Prepare monthly data for charts
-        const monthlyData: Record<string, { month: string; succeeded: number; failed: number; total: number }> = {}
+      {hasCharges &&
+        (() => {
+          // Prepare monthly data for charts
+          const monthlyData: Record<
+            string,
+            { month: string; succeeded: number; failed: number; total: number }
+          > = {}
 
-        charges.forEach(charge => {
-          const date = new Date(charge.created_date)
-          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-          const monthLabel = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+          charges.forEach((charge) => {
+            const date = new Date(charge.created_date)
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+            const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" })
 
-          if (!monthlyData[monthKey]) {
-            monthlyData[monthKey] = { month: monthLabel, succeeded: 0, failed: 0, total: 0 }
-          }
+            if (!monthlyData[monthKey]) {
+              monthlyData[monthKey] = { month: monthLabel, succeeded: 0, failed: 0, total: 0 }
+            }
 
-          const amount = charge.total_dollars_charged || 0
-          if (charge.status === 'succeeded') {
-            monthlyData[monthKey].succeeded += amount
-          } else if (charge.status === 'failed') {
-            monthlyData[monthKey].failed += amount
-          }
-          monthlyData[monthKey].total += amount
-        })
+            const amount = charge.total_dollars_charged || 0
+            if (charge.status === "succeeded") {
+              monthlyData[monthKey].succeeded += amount
+            } else if (charge.status === "failed") {
+              monthlyData[monthKey].failed += amount
+            }
+            monthlyData[monthKey].total += amount
+          })
 
-        const chartData = Object.entries(monthlyData)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .slice(-12)
-          .map(([, data]) => data)
+          const chartData = Object.entries(monthlyData)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .slice(-12)
+            .map(([, data]) => data)
 
-        if (chartData.length < 2) return null
+          if (chartData.length < 2) return null
 
-        return (
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Monthly Volume Bar Chart */}
-            <div className="card-sf p-5">
-              <h3 className="text-content-primary mb-4 font-semibold">Monthly Charge Volume</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
-                    <XAxis
-                      dataKey="month"
-                      tick={{ fontSize: 11 }}
-                      className="text-content-tertiary"
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                      className="text-content-tertiary"
-                    />
-                    <Tooltip
-                      formatter={(value) => [`$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, '']}
-                      labelClassName="text-content-primary font-medium"
-                      contentStyle={{
-                        backgroundColor: 'var(--color-bg-secondary)',
-                        border: '1px solid var(--color-border-default)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="succeeded" name="Succeeded" fill="#10b981" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="failed" name="Failed" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+          return (
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Monthly Volume Bar Chart */}
+              <div className="card-sf p-5">
+                <h3 className="text-content-primary mb-4 font-semibold">Monthly Charge Volume</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 11 }}
+                        className="text-content-tertiary"
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                        className="text-content-tertiary"
+                      />
+                      <Tooltip
+                        formatter={(value) => [
+                          `$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                          "",
+                        ]}
+                        labelClassName="text-content-primary font-medium"
+                        contentStyle={{
+                          backgroundColor: "var(--color-bg-secondary)",
+                          border: "1px solid var(--color-border-default)",
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <Legend />
+                      <Bar
+                        dataKey="succeeded"
+                        name="Succeeded"
+                        fill="#10b981"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar dataKey="failed" name="Failed" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Charges Over Time Line Chart */}
+              <div className="card-sf p-5">
+                <h3 className="text-content-primary mb-4 font-semibold">Charges Over Time</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 11 }}
+                        className="text-content-tertiary"
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                        className="text-content-tertiary"
+                      />
+                      <Tooltip
+                        formatter={(value) => [
+                          `$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                          "Total Volume",
+                        ]}
+                        labelClassName="text-content-primary font-medium"
+                        contentStyle={{
+                          backgroundColor: "var(--color-bg-secondary)",
+                          border: "1px solid var(--color-border-default)",
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total"
+                        stroke="#6366f1"
+                        strokeWidth={2}
+                        dot={{ fill: "#6366f1", strokeWidth: 2 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
-
-            {/* Charges Over Time Line Chart */}
-            <div className="card-sf p-5">
-              <h3 className="text-content-primary mb-4 font-semibold">Charges Over Time</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
-                    <XAxis
-                      dataKey="month"
-                      tick={{ fontSize: 11 }}
-                      className="text-content-tertiary"
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                      className="text-content-tertiary"
-                    />
-                    <Tooltip
-                      formatter={(value) => [`$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Total Volume']}
-                      labelClassName="text-content-primary font-medium"
-                      contentStyle={{
-                        backgroundColor: 'var(--color-bg-secondary)',
-                        border: '1px solid var(--color-border-default)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="total"
-                      stroke="#6366f1"
-                      strokeWidth={2}
-                      dot={{ fill: '#6366f1', strokeWidth: 2 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
+          )
+        })()}
 
       {/* Stripe Connected Account Live Data */}
       {operator.stripeAccountId && operator.operatorId && (
@@ -1882,7 +1957,10 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                         {charge.status}
                       </span>
                       {charge.outcome_reason && charge.status === "failed" && (
-                        <div className="text-content-tertiary mt-1 text-xs" title={charge.outcome_seller_message || charge.outcome_reason}>
+                        <div
+                          className="text-content-tertiary mt-1 text-xs"
+                          title={charge.outcome_seller_message || charge.outcome_reason}
+                        >
                           {charge.outcome_reason.replace(/_/g, " ")}
                         </div>
                       )}
@@ -1892,11 +1970,13 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                         <span
                           className={cn(
                             "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                            charge.outcome_risk_level === "normal" || charge.outcome_risk_level === "low"
+                            charge.outcome_risk_level === "normal" ||
+                              charge.outcome_risk_level === "low"
                               ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                               : charge.outcome_risk_level === "elevated"
                                 ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
-                                : charge.outcome_risk_level === "highest" || charge.outcome_risk_level === "high"
+                                : charge.outcome_risk_level === "highest" ||
+                                    charge.outcome_risk_level === "high"
                                   ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
                                   : "bg-bg-tertiary text-content-tertiary"
                           )}
@@ -1906,21 +1986,24 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                       ) : (
                         <span className="text-content-tertiary">—</span>
                       )}
-                      {charge.outcome_risk_score !== null && charge.outcome_risk_score !== undefined && (
-                        <div className="text-content-tertiary mt-0.5 text-xs">
-                          Score: {charge.outcome_risk_score}
-                        </div>
-                      )}
+                      {charge.outcome_risk_score !== null &&
+                        charge.outcome_risk_score !== undefined && (
+                          <div className="text-content-tertiary mt-0.5 text-xs">
+                            Score: {charge.outcome_risk_score}
+                          </div>
+                        )}
                     </td>
                     <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
-                      ${charge.total_dollars_charged.toLocaleString(undefined, {
+                      $
+                      {charge.total_dollars_charged.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                       })}
                     </td>
                     <td className="px-4 py-3 text-right text-sm">
                       {charge.total_dollars_refunded && charge.total_dollars_refunded > 0 ? (
                         <span className="text-warning-600 dark:text-warning-400 font-medium">
-                          ${charge.total_dollars_refunded.toLocaleString(undefined, {
+                          $
+                          {charge.total_dollars_refunded.toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                           })}
                         </span>
@@ -1939,7 +2022,11 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                                 ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
                                 : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
                           )}
-                          title={charge.dispute_reason ? charge.dispute_reason.replace(/_/g, " ") : undefined}
+                          title={
+                            charge.dispute_reason
+                              ? charge.dispute_reason.replace(/_/g, " ")
+                              : undefined
+                          }
                         >
                           {charge.dispute_status || "disputed"}
                         </span>
@@ -2441,7 +2528,12 @@ function RiskUpdateModal({
           >
             <span className="sr-only">Close</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -2463,7 +2555,7 @@ function RiskUpdateModal({
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="text-content-tertiary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm">
+                <span className="text-content-tertiary pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm">
                   $
                 </span>
                 <input
@@ -2497,7 +2589,7 @@ function RiskUpdateModal({
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="text-content-tertiary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm">
+                <span className="text-content-tertiary pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm">
                   $
                 </span>
                 <input
@@ -2761,7 +2853,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
             </div>
             {/* Admin-managed fields */}
             <div className="border-border-secondary mt-4 border-t pt-4">
-              <p className="text-content-tertiary mb-3 text-xs font-medium uppercase tracking-wider">
+              <p className="text-content-tertiary mb-3 text-xs font-medium tracking-wider uppercase">
                 Risk Management Settings
               </p>
               <div className="space-y-3">
@@ -2854,22 +2946,29 @@ function RiskTab({ operator }: { operator: OperatorData }) {
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={disputesData.summary.disputes_over_time.map(d => ({
-                      date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    data={disputesData.summary.disputes_over_time.map((d) => ({
+                      date: new Date(d.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      }),
                       count: d.count,
                     }))}
                     margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-content-tertiary" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11 }}
+                      className="text-content-tertiary"
+                    />
                     <YAxis tick={{ fontSize: 11 }} className="text-content-tertiary" />
                     <Tooltip
-                      formatter={(value) => [Number(value || 0), 'Disputes']}
+                      formatter={(value) => [Number(value || 0), "Disputes"]}
                       labelClassName="text-content-primary font-medium"
                       contentStyle={{
-                        backgroundColor: 'var(--color-bg-secondary)',
-                        border: '1px solid var(--color-border-default)',
-                        borderRadius: '8px',
+                        backgroundColor: "var(--color-bg-secondary)",
+                        border: "1px solid var(--color-border-default)",
+                        borderRadius: "8px",
                       }}
                     />
                     <Line
@@ -2877,7 +2976,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                       dataKey="count"
                       stroke="#ef4444"
                       strokeWidth={2}
-                      dot={{ fill: '#ef4444', strokeWidth: 2 }}
+                      dot={{ fill: "#ef4444", strokeWidth: 2 }}
                       activeDot={{ r: 6 }}
                     />
                   </LineChart>
@@ -2893,15 +2992,19 @@ function RiskTab({ operator }: { operator: OperatorData }) {
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={disputesData.summary.disputes_by_risk_level.map(d => ({
-                      level: (d.risk_level || 'Unknown').replace(/_/g, ' '),
+                    data={disputesData.summary.disputes_by_risk_level.map((d) => ({
+                      level: (d.risk_level || "Unknown").replace(/_/g, " "),
                       count: d.count,
                     }))}
                     margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
                     layout="vertical"
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} className="text-content-tertiary" />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 11 }}
+                      className="text-content-tertiary"
+                    />
                     <YAxis
                       dataKey="level"
                       type="category"
@@ -2910,19 +3013,15 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                       width={80}
                     />
                     <Tooltip
-                      formatter={(value) => [Number(value || 0), 'Disputes']}
+                      formatter={(value) => [Number(value || 0), "Disputes"]}
                       labelClassName="text-content-primary font-medium"
                       contentStyle={{
-                        backgroundColor: 'var(--color-bg-secondary)',
-                        border: '1px solid var(--color-border-default)',
-                        borderRadius: '8px',
+                        backgroundColor: "var(--color-bg-secondary)",
+                        border: "1px solid var(--color-border-default)",
+                        borderRadius: "8px",
                       }}
                     />
-                    <Bar
-                      dataKey="count"
-                      fill="#f59e0b"
-                      radius={[0, 4, 4, 0]}
-                    />
+                    <Bar dataKey="count" fill="#f59e0b" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -2959,24 +3058,18 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                 <StatCard
                   label="Most Common Reason"
                   value={
-                    disputesData.summary.disputes_by_reason[0]?.reason?.replace(/_/g, " ") ||
-                    "—"
+                    disputesData.summary.disputes_by_reason[0]?.reason?.replace(/_/g, " ") || "—"
                   }
                   icon={AlertTriangle}
                 />
                 <StatCard
                   label="Pending Disputes"
-                  value={
-                    disputesData.summary.disputes_by_status
-                      .filter(
-                        (s) =>
-                          s.status !== "won" &&
-                          s.status !== "lost" &&
-                          s.status !== "closed"
-                      )
-                      .reduce((sum, s) => sum + s.count, 0)
-                      .toString()
-                  }
+                  value={disputesData.summary.disputes_by_status
+                    .filter(
+                      (s) => s.status !== "won" && s.status !== "lost" && s.status !== "closed"
+                    )
+                    .reduce((sum, s) => sum + s.count, 0)
+                    .toString()}
                   icon={Clock}
                   variant="warning"
                 />
@@ -2989,8 +3082,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                   <h4 className="text-content-primary mb-4 font-medium">Disputes by Status</h4>
                   <div className="space-y-3">
                     {disputesData.summary.disputes_by_status.map((item) => {
-                      const percentage =
-                        (item.count / disputesData.summary.total_disputes) * 100
+                      const percentage = (item.count / disputesData.summary.total_disputes) * 100
                       return (
                         <div key={item.status} className="space-y-1">
                           <div className="flex justify-between text-sm">
@@ -3025,17 +3117,14 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                   <h4 className="text-content-primary mb-4 font-medium">Disputes by Reason</h4>
                   <div className="space-y-3">
                     {disputesData.summary.disputes_by_reason.slice(0, 5).map((item) => {
-                      const percentage =
-                        (item.count / disputesData.summary.total_disputes) * 100
+                      const percentage = (item.count / disputesData.summary.total_disputes) * 100
                       return (
                         <div key={item.reason} className="space-y-1">
                           <div className="flex justify-between text-sm">
                             <span className="text-content-secondary capitalize">
                               {(item.reason || "unknown").replace(/_/g, " ")}
                             </span>
-                            <span className="text-content-primary font-medium">
-                              {item.count}
-                            </span>
+                            <span className="text-content-primary font-medium">{item.count}</span>
                           </div>
                           <div className="bg-bg-tertiary h-2 overflow-hidden rounded-full">
                             <div
@@ -3051,22 +3140,17 @@ function RiskTab({ operator }: { operator: OperatorData }) {
 
                 {/* Risk Level Distribution */}
                 <div className="card-sf p-5">
-                  <h4 className="text-content-primary mb-4 font-medium">
-                    Risk Level Distribution
-                  </h4>
+                  <h4 className="text-content-primary mb-4 font-medium">Risk Level Distribution</h4>
                   <div className="space-y-3">
                     {disputesData.summary.disputes_by_risk_level.map((item) => {
-                      const percentage =
-                        (item.count / disputesData.summary.total_disputes) * 100
+                      const percentage = (item.count / disputesData.summary.total_disputes) * 100
                       return (
                         <div key={item.risk_level} className="space-y-1">
                           <div className="flex justify-between text-sm">
                             <span className="text-content-secondary capitalize">
                               {(item.risk_level || "unknown").replace(/_/g, " ")}
                             </span>
-                            <span className="text-content-primary font-medium">
-                              {item.count}
-                            </span>
+                            <span className="text-content-primary font-medium">{item.count}</span>
                           </div>
                           <div className="bg-bg-tertiary h-2 overflow-hidden rounded-full">
                             <div
@@ -3078,7 +3162,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                                     ? "bg-warning-500"
                                     : item.risk_level === "highest" || item.risk_level === "high"
                                       ? "bg-error-500"
-                                      : "bg-gray-400"
+                                      : "bg-content-tertiary"
                               )}
                               style={{ width: `${percentage}%` }}
                             />
@@ -3109,7 +3193,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                               className="bg-primary-500 hover:bg-primary-600 w-full rounded-t transition-all"
                               style={{ height: `${Math.max(height, 4)}%` }}
                             />
-                            <div className="absolute -bottom-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap text-xs text-content-tertiary group-hover:block">
+                            <div className="text-content-tertiary absolute -bottom-6 left-1/2 hidden -translate-x-1/2 text-xs whitespace-nowrap group-hover:block">
                               {item.date}
                             </div>
                           </div>
@@ -3153,10 +3237,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                       </thead>
                       <tbody>
                         {disputesData.disputes.slice(0, 10).map((dispute) => (
-                          <tr
-                            key={dispute.dispute_id}
-                            className="border-border-default border-b"
-                          >
+                          <tr key={dispute.dispute_id} className="border-border-default border-b">
                             <td className="text-content-secondary px-4 py-3 text-sm">
                               {dispute.dispute_date
                                 ? new Date(dispute.dispute_date).toLocaleDateString()
@@ -3183,7 +3264,8 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                               </span>
                             </td>
                             <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
-                              ${dispute.disputed_amount.toLocaleString(undefined, {
+                              $
+                              {dispute.disputed_amount.toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                               })}
                             </td>
@@ -3691,6 +3773,14 @@ interface SubscriptionData {
     amountCents: number | null
     currency: string | null
   } | null
+  allSubscriptions: Array<{
+    id: string
+    lagoId: string
+    planCode: string
+    planName: string | null
+    status: string
+    startedAt: string
+  }>
   availablePlans: Array<{
     code: string
     name: string
@@ -3735,13 +3825,17 @@ function ChangePlanModal({
         })
         .then((result) => {
           setData(result)
-          // Initialize with current plan if exists
-          if (result.currentSubscription?.planCode) {
-            setSelectedPlans([{
-              code: result.currentSubscription.planCode,
-              startDate: "",
-              endDate: "",
-            }])
+          // Initialize with all existing subscriptions and their dates
+          if (result.allSubscriptions && result.allSubscriptions.length > 0) {
+            setSelectedPlans(
+              result.allSubscriptions.map((sub: { planCode: string; startedAt: string }) => ({
+                code: sub.planCode,
+                // Format startedAt date to YYYY-MM-DD for the date input
+                startDate: sub.startedAt ? sub.startedAt.split("T")[0] : "",
+                // Active subscriptions don't have an end date
+                endDate: "",
+              }))
+            )
           }
           setLoading(false)
         })
@@ -3842,7 +3936,7 @@ function ChangePlanModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
       <div className="bg-bg-primary border-border-default my-auto w-full max-w-lg rounded-lg border shadow-xl">
-        <div className="border-border-default sticky top-0 flex items-center justify-between border-b bg-inherit p-4 rounded-t-lg">
+        <div className="border-border-default sticky top-0 flex items-center justify-between rounded-t-lg border-b bg-inherit p-4">
           <div>
             <h2 className="text-content-primary text-lg font-semibold">Change Plan</h2>
             <p className="text-content-secondary text-sm">{operatorName}</p>
@@ -3880,33 +3974,38 @@ function ChangePlanModal({
                 </div>
               )}
 
-              {/* Current Plan */}
-              {data?.currentSubscription && (
+              {/* Current Subscriptions */}
+              {data?.allSubscriptions && data.allSubscriptions.length > 0 && (
                 <div className="bg-bg-secondary mb-4 rounded-lg p-4">
                   <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">
-                    Current Plan
+                    Current Subscriptions ({data.allSubscriptions.length})
                   </h4>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-content-primary font-medium">
-                        {data.currentSubscription.planName || data.currentSubscription.planCode}
-                      </p>
-                      <p className="text-content-secondary text-sm">
-                        {data.currentSubscription.amountCents && data.currentSubscription.currency
-                          ? `${formatPrice(data.currentSubscription.amountCents, data.currentSubscription.currency)}/${data.currentSubscription.interval}`
-                          : data.currentSubscription.interval || "—"}
-                      </p>
-                    </div>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                        data.currentSubscription.status === "active"
-                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
-                          : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
-                      )}
-                    >
-                      {data.currentSubscription.status}
-                    </span>
+                  <div className="space-y-2">
+                    {data.allSubscriptions.map((sub) => (
+                      <div key={sub.id} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-content-primary font-medium">
+                            {sub.planName || sub.planCode}
+                          </p>
+                          <p className="text-content-secondary text-xs">
+                            Started:{" "}
+                            {sub.startedAt ? new Date(sub.startedAt).toLocaleDateString() : "—"}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                            sub.status === "active"
+                              ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                              : sub.status === "pending"
+                                ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                : "bg-bg-tertiary text-content-secondary"
+                          )}
+                        >
+                          {sub.status}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -3914,16 +4013,23 @@ function ChangePlanModal({
               {/* Plan Selection */}
               <div>
                 <label className="text-content-primary mb-2 block text-sm font-medium">
-                  {data?.currentSubscription ? "Select Plans" : "Select Plans"}
+                  {data?.allSubscriptions && data.allSubscriptions.length > 0
+                    ? "Manage Plans"
+                    : "Select Plans"}
                 </label>
                 <p className="text-content-tertiary mb-3 text-xs">
-                  Select one or more plans. You can optionally set start and end dates.
+                  Select one or more plans. Plans with existing subscriptions show their start
+                  dates.
                 </p>
                 {data?.availablePlans && data.availablePlans.length > 0 ? (
                   <div className="space-y-3">
                     {data.availablePlans.map((plan) => {
                       const isSelected = selectedPlans.some((p) => p.code === plan.code)
                       const selectedPlanData = selectedPlans.find((p) => p.code === plan.code)
+                      // Check if this plan has an existing subscription
+                      const existingSub = data?.allSubscriptions?.find(
+                        (s) => s.planCode === plan.code
+                      )
                       return (
                         <div
                           key={plan.code}
@@ -3943,7 +4049,21 @@ function ChangePlanModal({
                                 className="text-primary-600 h-4 w-4 rounded"
                               />
                               <div>
-                                <p className="text-content-primary font-medium">{plan.name}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-content-primary font-medium">{plan.name}</p>
+                                  {existingSub && (
+                                    <span
+                                      className={cn(
+                                        "rounded-full px-1.5 py-0.5 text-[10px] font-medium capitalize",
+                                        existingSub.status === "active"
+                                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                          : "bg-bg-tertiary text-content-secondary"
+                                      )}
+                                    >
+                                      {existingSub.status}
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-content-tertiary text-xs">{plan.code}</p>
                               </div>
                             </div>
@@ -3955,7 +4075,7 @@ function ChangePlanModal({
                             </div>
                           </label>
                           {isSelected && (
-                            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-border-default pt-3">
+                            <div className="border-border-default mt-3 grid grid-cols-2 gap-3 border-t pt-3">
                               <div>
                                 <label className="text-content-secondary mb-1 block text-xs">
                                   Start Date
@@ -4156,37 +4276,39 @@ function QuotesTab({ operator }: { operator: OperatorData }) {
       {/* Monthly Trend */}
       {data.summary.quotes_by_month.length > 0 && (
         <div className="card-sf p-5">
-          <h3 className="text-content-primary mb-4 font-semibold">Monthly Trend (Last 12 Months)</h3>
+          <h3 className="text-content-primary mb-4 font-semibold">
+            Monthly Trend (Last 12 Months)
+          </h3>
           <div className="flex h-40 items-end gap-2">
-            {data.summary.quotes_by_month.slice(0, 12).reverse().map((month) => {
-              const maxTotal = Math.max(
-                ...data.summary.quotes_by_month.map((m) => m.quotes + m.reservations)
-              )
-              const total = month.quotes + month.reservations
-              const height = maxTotal > 0 ? (total / maxTotal) * 100 : 0
-              const quoteHeight = total > 0 ? (month.quotes / total) * height : 0
-              const resHeight = height - quoteHeight
+            {data.summary.quotes_by_month
+              .slice(0, 12)
+              .reverse()
+              .map((month) => {
+                const maxTotal = Math.max(
+                  ...data.summary.quotes_by_month.map((m) => m.quotes + m.reservations)
+                )
+                const total = month.quotes + month.reservations
+                const height = maxTotal > 0 ? (total / maxTotal) * 100 : 0
+                const quoteHeight = total > 0 ? (month.quotes / total) * height : 0
+                const resHeight = height - quoteHeight
 
-              return (
-                <div
-                  key={month.month}
-                  className="group relative flex flex-1 flex-col justify-end"
-                  title={`${month.month}: ${month.quotes} quotes, ${month.reservations} reservations`}
-                >
+                return (
                   <div
-                    className="bg-success-500 w-full rounded-t"
-                    style={{ height: `${resHeight}%` }}
-                  />
-                  <div
-                    className="bg-primary-500 w-full"
-                    style={{ height: `${quoteHeight}%` }}
-                  />
-                  <div className="text-content-tertiary mt-1 text-center text-xs">
-                    {month.month.split("-")[1]}
+                    key={month.month}
+                    className="group relative flex flex-1 flex-col justify-end"
+                    title={`${month.month}: ${month.quotes} quotes, ${month.reservations} reservations`}
+                  >
+                    <div
+                      className="bg-success-500 w-full rounded-t"
+                      style={{ height: `${resHeight}%` }}
+                    />
+                    <div className="bg-primary-500 w-full" style={{ height: `${quoteHeight}%` }} />
+                    <div className="text-content-tertiary mt-1 text-center text-xs">
+                      {month.month.split("-")[1]}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
           </div>
           <div className="mt-4 flex items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
@@ -4511,18 +4633,36 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-border-default bg-bg-secondary border-b text-left text-xs uppercase tracking-wider">
+                    <tr className="border-border-default bg-bg-secondary border-b text-left text-xs tracking-wider uppercase">
                       <th className="text-content-secondary px-4 py-3 font-medium">Driver</th>
                       <th className="text-content-secondary px-4 py-3 font-medium">Status</th>
-                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Total Trips</th>
-                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Last 30 Days</th>
-                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Completion</th>
-                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Revenue</th>
+                      <th className="text-content-secondary px-4 py-3 text-right font-medium">
+                        Total Trips
+                      </th>
+                      <th className="text-content-secondary px-4 py-3 text-right font-medium">
+                        Last 30 Days
+                      </th>
+                      <th className="text-content-secondary px-4 py-3 text-right font-medium">
+                        Completion
+                      </th>
+                      <th className="text-content-secondary px-4 py-3 text-right font-medium">
+                        Revenue
+                      </th>
                       <th className="text-content-secondary px-4 py-3 font-medium">Last Active</th>
                     </tr>
                   </thead>
                   <tbody className="divide-border-default divide-y">
-                    {(data.driverPerformance?.length ? data.driverPerformance : data.drivers.map(d => ({ ...d, totalTrips: 0, tripsLast30Days: 0, completionRate: null, totalRevenue: null, lastTripDate: null }))).map((driver) => (
+                    {(data.driverPerformance?.length
+                      ? data.driverPerformance
+                      : data.drivers.map((d) => ({
+                          ...d,
+                          totalTrips: 0,
+                          tripsLast30Days: 0,
+                          completionRate: null,
+                          totalRevenue: null,
+                          lastTripDate: null,
+                        }))
+                    ).map((driver) => (
                       <tr key={driver.id} className="hover:bg-surface-hover transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -4532,7 +4672,8 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                             </div>
                             <div>
                               <p className="text-content-primary text-sm font-medium">
-                                {driver.firstName || (driver as { lastName?: string | null }).lastName
+                                {driver.firstName ||
+                                (driver as { lastName?: string | null }).lastName
                                   ? `${driver.firstName || ""} ${(driver as { lastName?: string | null }).lastName || ""}`.trim()
                                   : "Unknown Driver"}
                               </p>
@@ -4563,15 +4704,24 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                           {(driver as { tripsLast30Days?: number }).tripsLast30Days ?? "—"}
                         </td>
                         <td className="px-4 py-3 text-right text-sm">
-                          {(driver as { completionRate?: number | null }).completionRate !== null && (driver as { completionRate?: number | null }).completionRate !== undefined ? (
-                            <span className={cn(
-                              "font-medium",
-                              (driver as { completionRate?: number }).completionRate! >= 90 ? "text-success-600" :
-                              (driver as { completionRate?: number }).completionRate! >= 70 ? "text-warning-600" : "text-error-600"
-                            )}>
+                          {(driver as { completionRate?: number | null }).completionRate !== null &&
+                          (driver as { completionRate?: number | null }).completionRate !==
+                            undefined ? (
+                            <span
+                              className={cn(
+                                "font-medium",
+                                (driver as { completionRate?: number }).completionRate! >= 90
+                                  ? "text-success-600"
+                                  : (driver as { completionRate?: number }).completionRate! >= 70
+                                    ? "text-warning-600"
+                                    : "text-error-600"
+                              )}
+                            >
                               {(driver as { completionRate?: number }).completionRate}%
                             </span>
-                          ) : "—"}
+                          ) : (
+                            "—"
+                          )}
                         </td>
                         <td className="text-content-primary px-4 py-3 text-right text-sm">
                           {(driver as { totalRevenue?: number | null }).totalRevenue
@@ -4580,7 +4730,9 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                         </td>
                         <td className="text-content-tertiary px-4 py-3 text-sm">
                           {(driver as { lastTripDate?: string | null }).lastTripDate
-                            ? new Date((driver as { lastTripDate?: string }).lastTripDate!).toLocaleDateString()
+                            ? new Date(
+                                (driver as { lastTripDate?: string }).lastTripDate!
+                              ).toLocaleDateString()
                             : "Never"}
                         </td>
                       </tr>
@@ -4607,18 +4759,36 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-border-default bg-bg-secondary border-b text-left text-xs uppercase tracking-wider">
+                    <tr className="border-border-default bg-bg-secondary border-b text-left text-xs tracking-wider uppercase">
                       <th className="text-content-secondary px-4 py-3 font-medium">Vehicle</th>
                       <th className="text-content-secondary px-4 py-3 font-medium">Type</th>
-                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Capacity</th>
-                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Total Trips</th>
-                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Last 30 Days</th>
-                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Revenue</th>
+                      <th className="text-content-secondary px-4 py-3 text-right font-medium">
+                        Capacity
+                      </th>
+                      <th className="text-content-secondary px-4 py-3 text-right font-medium">
+                        Total Trips
+                      </th>
+                      <th className="text-content-secondary px-4 py-3 text-right font-medium">
+                        Last 30 Days
+                      </th>
+                      <th className="text-content-secondary px-4 py-3 text-right font-medium">
+                        Revenue
+                      </th>
                       <th className="text-content-secondary px-4 py-3 font-medium">Last Used</th>
                     </tr>
                   </thead>
                   <tbody className="divide-border-default divide-y">
-                    {(data.vehicleUtilization?.length ? data.vehicleUtilization : data.vehicles.map(v => ({ ...v, totalTrips: 0, tripsLast30Days: 0, totalRevenue: null, lastTripDate: null, daysSinceLastTrip: null }))).map((vehicle) => (
+                    {(data.vehicleUtilization?.length
+                      ? data.vehicleUtilization
+                      : data.vehicles.map((v) => ({
+                          ...v,
+                          totalTrips: 0,
+                          tripsLast30Days: 0,
+                          totalRevenue: null,
+                          lastTripDate: null,
+                          daysSinceLastTrip: null,
+                        }))
+                    ).map((vehicle) => (
                       <tr key={vehicle.id} className="hover:bg-surface-hover transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -4664,16 +4834,23 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                           {(vehicle as { lastTripDate?: string | null }).lastTripDate ? (
                             <div>
                               <p className="text-content-secondary">
-                                {new Date((vehicle as { lastTripDate?: string }).lastTripDate!).toLocaleDateString()}
+                                {new Date(
+                                  (vehicle as { lastTripDate?: string }).lastTripDate!
+                                ).toLocaleDateString()}
                               </p>
-                              {(vehicle as { daysSinceLastTrip?: number | null }).daysSinceLastTrip !== null && (
-                                <p className={cn(
-                                  "text-xs",
-                                  (vehicle as { daysSinceLastTrip?: number }).daysSinceLastTrip! > 30
-                                    ? "text-warning-600"
-                                    : "text-content-tertiary"
-                                )}>
-                                  {(vehicle as { daysSinceLastTrip?: number }).daysSinceLastTrip} days ago
+                              {(vehicle as { daysSinceLastTrip?: number | null })
+                                .daysSinceLastTrip !== null && (
+                                <p
+                                  className={cn(
+                                    "text-xs",
+                                    (vehicle as { daysSinceLastTrip?: number }).daysSinceLastTrip! >
+                                      30
+                                      ? "text-warning-600"
+                                      : "text-content-tertiary"
+                                  )}
+                                >
+                                  {(vehicle as { daysSinceLastTrip?: number }).daysSinceLastTrip}{" "}
+                                  days ago
                                 </p>
                               )}
                             </div>
@@ -5629,7 +5806,9 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
   const [removingEmail, setRemovingEmail] = useState<string | null>(null)
 
   // Global suppression reports state
-  const [globalSuppressionTab, setGlobalSuppressionTab] = useState<"bounces" | "blocks" | "invalid" | "spam">("bounces")
+  const [globalSuppressionTab, setGlobalSuppressionTab] = useState<
+    "bounces" | "blocks" | "invalid" | "spam"
+  >("bounces")
   const [globalSuppressions, setGlobalSuppressions] = useState<{
     bounces: Array<{ email: string; created: number; reason: string; status: string }>
     blocks: Array<{ email: string; created: number; reason: string; status: string }>
@@ -5648,7 +5827,9 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
     setSuppressionResults([])
 
     try {
-      const response = await fetch(`/api/sendgrid/suppressions?email=${encodeURIComponent(suppressionEmail.trim())}`)
+      const response = await fetch(
+        `/api/sendgrid/suppressions?email=${encodeURIComponent(suppressionEmail.trim())}`
+      )
       if (!response.ok) {
         throw new Error("Failed to search suppressions")
       }
@@ -5692,12 +5873,18 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
     }
   }
 
-  const removeSuppression = async (email: string, type: "bounce" | "block" | "invalid" | "spam") => {
+  const removeSuppression = async (
+    email: string,
+    type: "bounce" | "block" | "invalid" | "spam"
+  ) => {
     setRemovingEmail(`${email}-${type}`)
     try {
-      const response = await fetch(`/api/sendgrid/suppressions?email=${encodeURIComponent(email)}&type=${type}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(
+        `/api/sendgrid/suppressions?email=${encodeURIComponent(email)}&type=${type}`,
+        {
+          method: "DELETE",
+        }
+      )
       if (!response.ok) {
         throw new Error("Failed to remove suppression")
       }
@@ -5746,23 +5933,27 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
   // Select/deselect all in current tab
   const toggleSelectAll = () => {
     if (!globalSuppressions) return
-    const currentList = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
-      : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
-      : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
-      : globalSuppressions.spamReports
-    const allEmails = currentList.map(s => s.email)
-    const allSelected = allEmails.every(e => selectedSuppressions.has(e))
+    const currentList =
+      globalSuppressionTab === "bounces"
+        ? globalSuppressions.bounces
+        : globalSuppressionTab === "blocks"
+          ? globalSuppressions.blocks
+          : globalSuppressionTab === "invalid"
+            ? globalSuppressions.invalidEmails
+            : globalSuppressions.spamReports
+    const allEmails = currentList.map((s) => s.email)
+    const allSelected = allEmails.every((e) => selectedSuppressions.has(e))
 
     if (allSelected) {
-      setSelectedSuppressions(prev => {
+      setSelectedSuppressions((prev) => {
         const next = new Set(prev)
-        allEmails.forEach(e => next.delete(e))
+        allEmails.forEach((e) => next.delete(e))
         return next
       })
     } else {
-      setSelectedSuppressions(prev => {
+      setSelectedSuppressions((prev) => {
         const next = new Set(prev)
-        allEmails.forEach(e => next.add(e))
+        allEmails.forEach((e) => next.add(e))
         return next
       })
     }
@@ -5773,13 +5964,17 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
     if (selectedSuppressions.size === 0) return
     setBulkRemoving(true)
 
-    const type = globalSuppressionTab === "bounces" ? "bounce"
-      : globalSuppressionTab === "blocks" ? "block"
-      : globalSuppressionTab === "invalid" ? "invalid"
-      : "spam"
+    const type =
+      globalSuppressionTab === "bounces"
+        ? "bounce"
+        : globalSuppressionTab === "blocks"
+          ? "block"
+          : globalSuppressionTab === "invalid"
+            ? "invalid"
+            : "spam"
 
     try {
-      const promises = Array.from(selectedSuppressions).map(email =>
+      const promises = Array.from(selectedSuppressions).map((email) =>
         fetch(`/api/sendgrid/suppressions?email=${encodeURIComponent(email)}&type=${type}`, {
           method: "DELETE",
         })
@@ -6101,7 +6296,8 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
         <div className="border-border-default border-b px-4 py-3">
           <h3 className="text-content-primary font-semibold">Email Deliverability</h3>
           <p className="text-content-secondary mt-1 text-sm">
-            Check if an email address is on SendGrid suppression lists (bounces, blocks, spam reports)
+            Check if an email address is on SendGrid suppression lists (bounces, blocks, spam
+            reports)
           </p>
         </div>
 
@@ -6122,7 +6318,7 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
               className={cn(
                 "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                 suppressionLoading || !suppressionEmail.trim()
-                  ? "cursor-not-allowed bg-bg-tertiary text-content-tertiary"
+                  ? "bg-bg-tertiary text-content-tertiary cursor-not-allowed"
                   : "bg-primary-600 hover:bg-primary-700 text-white"
               )}
             >
@@ -6130,7 +6326,12 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               )}
               Check
@@ -6148,7 +6349,8 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
           {suppressionResults.length > 0 && (
             <div className="mt-4 space-y-3">
               <p className="text-content-secondary text-sm font-medium">
-                Found {suppressionResults.length} suppression{suppressionResults.length !== 1 ? "s" : ""}:
+                Found {suppressionResults.length} suppression
+                {suppressionResults.length !== 1 ? "s" : ""}:
               </p>
               <div className="divide-border-default divide-y rounded-lg border">
                 {suppressionResults.map((result) => (
@@ -6191,15 +6393,25 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
                       className={cn(
                         "flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
                         removingEmail === `${result.email}-${result.type}`
-                          ? "cursor-not-allowed bg-bg-tertiary text-content-tertiary"
+                          ? "bg-bg-tertiary text-content-tertiary cursor-not-allowed"
                           : "bg-error-100 text-error-700 hover:bg-error-200 dark:bg-error-900/30 dark:text-error-400 dark:hover:bg-error-900/50"
                       )}
                     >
                       {removingEmail === `${result.email}-${result.type}` ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
                       ) : (
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg
+                          className="h-3 w-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       )}
                       Remove
@@ -6211,17 +6423,20 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
           )}
 
           {/* No results message */}
-          {suppressionResults.length === 0 && suppressionEmail && !suppressionLoading && !suppressionError && (
-            <div className="bg-success-50 dark:bg-success-950/30 mt-4 rounded-lg p-4 text-center">
-              <Check className="text-success-600 dark:text-success-400 mx-auto mb-2 h-8 w-8" />
-              <p className="text-success-700 dark:text-success-400 text-sm font-medium">
-                Email not found on any suppression list
-              </p>
-              <p className="text-success-600 dark:text-success-500 mt-1 text-xs">
-                {suppressionEmail} can receive emails normally
-              </p>
-            </div>
-          )}
+          {suppressionResults.length === 0 &&
+            suppressionEmail &&
+            !suppressionLoading &&
+            !suppressionError && (
+              <div className="bg-success-50 dark:bg-success-950/30 mt-4 rounded-lg p-4 text-center">
+                <Check className="text-success-600 dark:text-success-400 mx-auto mb-2 h-8 w-8" />
+                <p className="text-success-700 dark:text-success-400 text-sm font-medium">
+                  Email not found on any suppression list
+                </p>
+                <p className="text-success-600 dark:text-success-500 mt-1 text-xs">
+                  {suppressionEmail} can receive emails normally
+                </p>
+              </div>
+            )}
         </div>
       </div>
 
@@ -6257,7 +6472,11 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
                   {[
                     { key: "bounces", label: "Bounces", count: globalSuppressions.bounces.length },
                     { key: "blocks", label: "Blocks", count: globalSuppressions.blocks.length },
-                    { key: "invalid", label: "Invalid", count: globalSuppressions.invalidEmails.length },
+                    {
+                      key: "invalid",
+                      label: "Invalid",
+                      count: globalSuppressions.invalidEmails.length,
+                    },
                     { key: "spam", label: "Spam", count: globalSuppressions.spamReports.length },
                   ].map((tab) => (
                     <button
@@ -6289,8 +6508,18 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
                     {bulkRemoving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
                       </svg>
                     )}
                     Remove {selectedSuppressions.size} Selected
@@ -6307,28 +6536,47 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
                         <input
                           type="checkbox"
                           checked={(() => {
-                            const list = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
-                              : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
-                              : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
-                              : globalSuppressions.spamReports
-                            return list.length > 0 && list.every(s => selectedSuppressions.has(s.email))
+                            const list =
+                              globalSuppressionTab === "bounces"
+                                ? globalSuppressions.bounces
+                                : globalSuppressionTab === "blocks"
+                                  ? globalSuppressions.blocks
+                                  : globalSuppressionTab === "invalid"
+                                    ? globalSuppressions.invalidEmails
+                                    : globalSuppressions.spamReports
+                            return (
+                              list.length > 0 &&
+                              list.every((s) => selectedSuppressions.has(s.email))
+                            )
                           })()}
                           onChange={toggleSelectAll}
                           className="rounded"
                         />
                       </th>
-                      <th className="text-content-secondary px-3 py-2 text-left font-medium">Email</th>
-                      <th className="text-content-secondary px-3 py-2 text-left font-medium">Reason</th>
-                      <th className="text-content-secondary px-3 py-2 text-left font-medium">Date</th>
-                      <th className="text-content-secondary w-20 px-3 py-2 text-right font-medium">Action</th>
+                      <th className="text-content-secondary px-3 py-2 text-left font-medium">
+                        Email
+                      </th>
+                      <th className="text-content-secondary px-3 py-2 text-left font-medium">
+                        Reason
+                      </th>
+                      <th className="text-content-secondary px-3 py-2 text-left font-medium">
+                        Date
+                      </th>
+                      <th className="text-content-secondary w-20 px-3 py-2 text-right font-medium">
+                        Action
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-border-default divide-y">
                     {(() => {
-                      const list = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
-                        : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
-                        : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
-                        : globalSuppressions.spamReports
+                      const list =
+                        globalSuppressionTab === "bounces"
+                          ? globalSuppressions.bounces
+                          : globalSuppressionTab === "blocks"
+                            ? globalSuppressions.blocks
+                            : globalSuppressionTab === "invalid"
+                              ? globalSuppressions.invalidEmails
+                              : globalSuppressions.spamReports
 
                       if (list.length === 0) {
                         return (
@@ -6350,23 +6598,37 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
                               className="rounded"
                             />
                           </td>
-                          <td className="text-content-primary px-3 py-2 font-medium">{item.email}</td>
+                          <td className="text-content-primary px-3 py-2 font-medium">
+                            {item.email}
+                          </td>
                           <td className="text-content-secondary max-w-xs truncate px-3 py-2">
-                            {"reason" in item ? item.reason : "ip" in item ? `IP: ${item.ip || "N/A"}` : "—"}
+                            {"reason" in item
+                              ? item.reason
+                              : "ip" in item
+                                ? `IP: ${item.ip || "N/A"}`
+                                : "—"}
                           </td>
                           <td className="text-content-tertiary px-3 py-2">
                             {new Date(item.created * 1000).toLocaleDateString()}
                           </td>
                           <td className="px-3 py-2 text-right">
                             <button
-                              onClick={() => removeSuppression(
-                                item.email,
-                                globalSuppressionTab === "bounces" ? "bounce"
-                                  : globalSuppressionTab === "blocks" ? "block"
-                                  : globalSuppressionTab === "invalid" ? "invalid"
-                                  : "spam"
-                              )}
-                              disabled={removingEmail === `${item.email}-${globalSuppressionTab.slice(0, -1)}`}
+                              onClick={() =>
+                                removeSuppression(
+                                  item.email,
+                                  globalSuppressionTab === "bounces"
+                                    ? "bounce"
+                                    : globalSuppressionTab === "blocks"
+                                      ? "block"
+                                      : globalSuppressionTab === "invalid"
+                                        ? "invalid"
+                                        : "spam"
+                                )
+                              }
+                              disabled={
+                                removingEmail ===
+                                `${item.email}-${globalSuppressionTab.slice(0, -1)}`
+                              }
                               className="text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 text-xs font-medium"
                             >
                               Remove
@@ -6378,16 +6640,22 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
                   </tbody>
                 </table>
                 {(() => {
-                  const list = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
-                    : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
-                    : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
-                    : globalSuppressions.spamReports
-                  return list.length > 50 && (
-                    <div className="border-border-default border-t px-3 py-2 text-center">
-                      <p className="text-content-tertiary text-xs">
-                        Showing 50 of {list.length} records
-                      </p>
-                    </div>
+                  const list =
+                    globalSuppressionTab === "bounces"
+                      ? globalSuppressions.bounces
+                      : globalSuppressionTab === "blocks"
+                        ? globalSuppressions.blocks
+                        : globalSuppressionTab === "invalid"
+                          ? globalSuppressions.invalidEmails
+                          : globalSuppressions.spamReports
+                  return (
+                    list.length > 50 && (
+                      <div className="border-border-default border-t px-3 py-2 text-center">
+                        <p className="text-content-tertiary text-xs">
+                          Showing 50 of {list.length} records
+                        </p>
+                      </div>
+                    )
                   )
                 })()}
               </div>
@@ -6398,7 +6666,7 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
             <div className="p-8 text-center">
               <Mail className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
               <p className="text-content-secondary text-sm">
-                Click "Load Reports" to view all suppression lists
+                Click &quot;Load Reports&quot; to view all suppression lists
               </p>
             </div>
           )}
@@ -6710,29 +6978,32 @@ function SmsTab({ operator }: { operator: OperatorData }) {
       name: `${c.firstName || ""} ${c.lastName || ""}`.trim() || c.email || "Unknown",
     }))
 
-  const fetchSmsHistory = useCallback(async (phone: string) => {
-    if (!phone || !operator.operatorId) return
+  const fetchSmsHistory = useCallback(
+    async (phone: string) => {
+      if (!phone || !operator.operatorId) return
 
-    setLoading(true)
-    setError(null)
+      setLoading(true)
+      setError(null)
 
-    try {
-      const response = await fetch(
-        `/api/operator-hub/${operator.operatorId}/sms?phone=${encodeURIComponent(phone)}`
-      )
-      if (!response.ok) {
-        const err = await response.json()
-        throw new Error(err.error || "Failed to fetch SMS history")
+      try {
+        const response = await fetch(
+          `/api/operator-hub/${operator.operatorId}/sms?phone=${encodeURIComponent(phone)}`
+        )
+        if (!response.ok) {
+          const err = await response.json()
+          throw new Error(err.error || "Failed to fetch SMS history")
+        }
+        const result = await response.json()
+        setData(result)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch SMS history")
+        setData(null)
+      } finally {
+        setLoading(false)
       }
-      const result = await response.json()
-      setData(result)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch SMS history")
-      setData(null)
-    } finally {
-      setLoading(false)
-    }
-  }, [operator.operatorId])
+    },
+    [operator.operatorId]
+  )
 
   const handlePhoneSelect = (phone: string) => {
     setSelectedPhone(phone)
@@ -6787,7 +7058,7 @@ function SmsTab({ operator }: { operator: OperatorData }) {
             value={searchPhone}
             onChange={(e) => setSearchPhone(e.target.value)}
             placeholder="Enter phone number (e.g., +14155551234)"
-            className="border-border-default bg-bg-primary text-content-primary placeholder:text-content-tertiary focus:border-primary-500 focus:ring-primary-500 flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1"
+            className="border-border-default bg-bg-primary text-content-primary placeholder:text-content-tertiary focus:border-primary-500 focus:ring-primary-500 flex-1 rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
           <button
@@ -6849,9 +7120,7 @@ function SmsTab({ operator }: { operator: OperatorData }) {
           {/* Messages */}
           <div className="card-sf overflow-hidden">
             <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
-              <h3 className="text-content-primary font-semibold">
-                Conversation with {data.phone}
-              </h3>
+              <h3 className="text-content-primary font-semibold">Conversation with {data.phone}</h3>
               <span className="text-content-tertiary text-sm">
                 {data.metadata.date_range.oldest && data.metadata.date_range.newest
                   ? `${new Date(data.metadata.date_range.oldest).toLocaleDateString()} - ${new Date(data.metadata.date_range.newest).toLocaleDateString()}`
@@ -6871,9 +7140,7 @@ function SmsTab({ operator }: { operator: OperatorData }) {
                     key={msg.sid}
                     className={cn(
                       "p-4",
-                      msg.message_type === "incoming"
-                        ? "bg-bg-secondary"
-                        : "bg-bg-primary"
+                      msg.message_type === "incoming" ? "bg-bg-secondary" : "bg-bg-primary"
                     )}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -6909,9 +7176,7 @@ function SmsTab({ operator }: { operator: OperatorData }) {
                           </p>
                         )}
                         <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-                          <span className="text-content-tertiary">
-                            From: {msg.from}
-                          </span>
+                          <span className="text-content-tertiary">From: {msg.from}</span>
                           <span className="text-content-tertiary">To: {msg.to}</span>
                           {msg.price && (
                             <span className="text-content-tertiary">

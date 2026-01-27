@@ -44,13 +44,25 @@ interface OperatorResult {
 function getMatchTypeLabel(matchType: string | undefined) {
   switch (matchType) {
     case "trip":
-      return { label: "Trip", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" }
+      return {
+        label: "Trip",
+        color: "bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400",
+      }
     case "quote":
-      return { label: "Quote", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" }
+      return {
+        label: "Quote",
+        color: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
+      }
     case "charge":
-      return { label: "Charge", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" }
+      return {
+        label: "Charge",
+        color: "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400",
+      }
     case "customer":
-      return { label: "Customer", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" }
+      return {
+        label: "Customer",
+        color: "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400",
+      }
     default:
       return null
   }
@@ -130,7 +142,9 @@ export default function OperatorHubPage() {
 
     try {
       // Use expanded search to include trips, quotes, charges, customers
-      const res = await fetch(`/api/customer/search?q=${encodeURIComponent(query)}&limit=50&expanded=true`)
+      const res = await fetch(
+        `/api/customer/search?q=${encodeURIComponent(query)}&limit=50&expanded=true`
+      )
       const data = await res.json()
       setResults(data.results || [])
     } catch (error) {
@@ -251,8 +265,8 @@ export default function OperatorHubPage() {
                 <Building2 className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
                 <h3 className="text-content-primary text-lg font-medium">Search for Operators</h3>
                 <p className="text-content-secondary mt-1 max-w-sm">
-                  Search by company name, trip ID, quote ID, charge ID, customer email, phone number,
-                  Stripe account, or location.
+                  Search by company name, trip ID, quote ID, charge ID, customer email, phone
+                  number, Stripe account, or location.
                 </p>
               </div>
             </div>
@@ -381,12 +395,19 @@ export default function OperatorHubPage() {
                                 )}
                               </div>
                               {/* Show match info for expanded results */}
-                              {result.matchType && result.matchType !== "operator" && result.matchValue && (
-                                <p className="text-content-secondary mt-0.5 truncate text-xs">
-                                  {result.matchField}: <span className="font-mono">{result.matchValue}</span>
-                                  {result.matchInfo && <span className="text-content-tertiary ml-1">({result.matchInfo})</span>}
-                                </p>
-                              )}
+                              {result.matchType &&
+                                result.matchType !== "operator" &&
+                                result.matchValue && (
+                                  <p className="text-content-secondary mt-0.5 truncate text-xs">
+                                    {result.matchField}:{" "}
+                                    <span className="font-mono">{result.matchValue}</span>
+                                    {result.matchInfo && (
+                                      <span className="text-content-tertiary ml-1">
+                                        ({result.matchInfo})
+                                      </span>
+                                    )}
+                                  </p>
+                                )}
                               {result.domain && (
                                 <a
                                   href={`https://${result.domain}`}
