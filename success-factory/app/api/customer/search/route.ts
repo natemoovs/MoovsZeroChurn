@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       totalTrips: c.totalTrips,
       location: c.city && c.state ? `${c.city}, ${c.state}` : c.state || c.city || null,
       csm: c.ownerName,
-      lastSynced: c.lastSyncedAt,
+      lastSynced: c.lastSyncedAt as Date | null,
       matchType: "operator" as "operator" | "trip" | "quote" | "charge" | "customer",
       matchField: null as string | null,
       matchValue: null as string | null,
