@@ -131,6 +131,7 @@ type TabId =
   | "trips"
   | "tickets"
   | "emails"
+  | "sms"
   | "feedback"
   | "history"
 
@@ -144,6 +145,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "trips", label: "Trips", icon: Car },
   { id: "tickets", label: "Tickets", icon: FileText },
   { id: "emails", label: "Emails", icon: Mail },
+  { id: "sms", label: "SMS", icon: Phone },
   { id: "feedback", label: "Feedback", icon: MessageSquare },
   { id: "history", label: "History", icon: History },
 ]
@@ -2429,7 +2431,7 @@ function RiskUpdateModal({
       <div className="bg-bg-primary/80 absolute inset-0" onClick={onClose} />
 
       {/* Modal */}
-      <div className="card-sf relative z-10 mx-4 w-full max-w-md p-6">
+      <div className="card-sf relative z-10 mx-4 w-full max-w-sm p-6">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-content-primary text-lg font-semibold">Risk Details</h3>
@@ -2461,14 +2463,14 @@ function RiskUpdateModal({
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="text-content-tertiary absolute left-3 top-1/2 -translate-y-1/2">
+                <span className="text-content-tertiary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm">
                   $
                 </span>
                 <input
                   type="number"
                   value={instantPayoutLimit}
                   onChange={(e) => setInstantPayoutLimit(e.target.value)}
-                  className="input-sf w-full pl-7"
+                  className="input-sf w-full pl-8"
                   placeholder="0.00"
                   step="0.01"
                   min="0"
@@ -2477,9 +2479,9 @@ function RiskUpdateModal({
               <button
                 onClick={() => handleUpdate("instantPayout")}
                 disabled={updating || !instantPayoutLimit}
-                className="btn-sf-secondary whitespace-nowrap"
+                className="btn-sf-secondary shrink-0"
               >
-                {updating ? "Updating..." : "Update"}
+                {updating ? "..." : "Update"}
               </button>
             </div>
           </div>
@@ -2495,14 +2497,14 @@ function RiskUpdateModal({
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="text-content-tertiary absolute left-3 top-1/2 -translate-y-1/2">
+                <span className="text-content-tertiary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm">
                   $
                 </span>
                 <input
                   type="number"
                   value={dailyPaymentLimit}
                   onChange={(e) => setDailyPaymentLimit(e.target.value)}
-                  className="input-sf w-full pl-7"
+                  className="input-sf w-full pl-8"
                   placeholder="0.00"
                   step="0.01"
                   min="0"
@@ -2511,9 +2513,9 @@ function RiskUpdateModal({
               <button
                 onClick={() => handleUpdate("dailyPayment")}
                 disabled={updating || !dailyPaymentLimit}
-                className="btn-sf-secondary whitespace-nowrap"
+                className="btn-sf-secondary shrink-0"
               >
-                {updating ? "Updating..." : "Update"}
+                {updating ? "..." : "Update"}
               </button>
             </div>
           </div>
@@ -2536,9 +2538,9 @@ function RiskUpdateModal({
               <button
                 onClick={() => handleUpdate("riskScore")}
                 disabled={updating || !riskScore}
-                className="btn-sf-secondary whitespace-nowrap"
+                className="btn-sf-secondary shrink-0"
               >
-                {updating ? "Updating..." : "Update"}
+                {updating ? "..." : "Update"}
               </button>
             </div>
           </div>
@@ -6659,6 +6661,295 @@ function TripsTab({ operator }: { operator: OperatorData }) {
 }
 
 // ============================================================================
+// SMS Tab
+// ============================================================================
+
+interface SmsMessage {
+  sid: string
+  body: string
+  from: string
+  to: string
+  status: string
+  direction: string
+  date_created: string
+  date_sent: string | null
+  price: string | null
+  error_code: number | null
+  error_message: string | null
+  message_type: "incoming" | "outgoing"
+}
+
+interface SmsApiResponse {
+  operatorId: string
+  phone: string
+  metadata: {
+    total_messages: number
+    total_incoming: number
+    total_outgoing: number
+    total_cost_usd: string
+    date_range: {
+      newest: string | null
+      oldest: string | null
+    }
+  }
+  messages: SmsMessage[]
+}
+
+function SmsTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<SmsApiResponse | null>(null)
+  const [selectedPhone, setSelectedPhone] = useState<string>("")
+  const [searchPhone, setSearchPhone] = useState("")
+
+  // Get phone numbers from contacts
+  const contactPhones = operator.contacts
+    .filter((c) => c.phone)
+    .map((c) => ({
+      phone: c.phone!,
+      name: `${c.firstName || ""} ${c.lastName || ""}`.trim() || c.email || "Unknown",
+    }))
+
+  const fetchSmsHistory = useCallback(async (phone: string) => {
+    if (!phone || !operator.operatorId) return
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(
+        `/api/operator-hub/${operator.operatorId}/sms?phone=${encodeURIComponent(phone)}`
+      )
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || "Failed to fetch SMS history")
+      }
+      const result = await response.json()
+      setData(result)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch SMS history")
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [operator.operatorId])
+
+  const handlePhoneSelect = (phone: string) => {
+    setSelectedPhone(phone)
+    fetchSmsHistory(phone)
+  }
+
+  const handleSearch = () => {
+    if (searchPhone.trim()) {
+      setSelectedPhone(searchPhone.trim())
+      fetchSmsHistory(searchPhone.trim())
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Phone Selection */}
+      <div className="card-sf p-5">
+        <h3 className="text-content-primary mb-4 font-semibold">SMS History Lookup</h3>
+        <p className="text-content-secondary mb-4 text-sm">
+          Select a contact or enter a phone number to view SMS conversation history from Twilio.
+        </p>
+
+        {/* Contact Quick Select */}
+        {contactPhones.length > 0 && (
+          <div className="mb-4">
+            <label className="text-content-secondary mb-2 block text-sm font-medium">
+              Quick Select Contact
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {contactPhones.map((contact) => (
+                <button
+                  key={contact.phone}
+                  onClick={() => handlePhoneSelect(contact.phone)}
+                  className={cn(
+                    "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                    selectedPhone === contact.phone
+                      ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                      : "border-border-default hover:bg-surface-hover"
+                  )}
+                >
+                  {contact.name}: {contact.phone}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Manual Phone Search */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={searchPhone}
+            onChange={(e) => setSearchPhone(e.target.value)}
+            placeholder="Enter phone number (e.g., +14155551234)"
+            className="border-border-default bg-bg-primary text-content-primary placeholder:text-content-tertiary focus:border-primary-500 focus:ring-primary-500 flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1"
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <button
+            onClick={handleSearch}
+            disabled={!searchPhone.trim() || loading}
+            className="btn-sf-primary px-4 py-2 text-sm disabled:opacity-50"
+          >
+            {loading ? "Loading..." : "Search"}
+          </button>
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="card-sf border-error-200 bg-error-50 dark:border-error-800 dark:bg-error-950/30 p-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="text-error-600 dark:text-error-400 h-5 w-5" />
+            <p className="text-error-700 dark:text-error-400 text-sm">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* SMS Data Display */}
+      {data && !loading && (
+        <>
+          {/* Stats */}
+          <div className="grid gap-4 sm:grid-cols-4">
+            <StatCard
+              label="Total Messages"
+              value={data.metadata.total_messages.toString()}
+              icon={MessageSquare}
+            />
+            <StatCard
+              label="Incoming"
+              value={data.metadata.total_incoming.toString()}
+              icon={Phone}
+              variant="success"
+            />
+            <StatCard
+              label="Outgoing"
+              value={data.metadata.total_outgoing.toString()}
+              icon={Phone}
+              variant="default"
+            />
+            <StatCard
+              label="Total Cost"
+              value={`$${data.metadata.total_cost_usd}`}
+              icon={DollarSign}
+            />
+          </div>
+
+          {/* Messages */}
+          <div className="card-sf overflow-hidden">
+            <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
+              <h3 className="text-content-primary font-semibold">
+                Conversation with {data.phone}
+              </h3>
+              <span className="text-content-tertiary text-sm">
+                {data.metadata.date_range.oldest && data.metadata.date_range.newest
+                  ? `${new Date(data.metadata.date_range.oldest).toLocaleDateString()} - ${new Date(data.metadata.date_range.newest).toLocaleDateString()}`
+                  : ""}
+              </span>
+            </div>
+
+            {data.messages.length === 0 ? (
+              <div className="p-8 text-center">
+                <Phone className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+                <p className="text-content-secondary">No SMS messages found for this number.</p>
+              </div>
+            ) : (
+              <div className="divide-border-default max-h-[600px] divide-y overflow-y-auto">
+                {data.messages.map((msg) => (
+                  <div
+                    key={msg.sid}
+                    className={cn(
+                      "p-4",
+                      msg.message_type === "incoming"
+                        ? "bg-bg-secondary"
+                        : "bg-bg-primary"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex items-center gap-2">
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-xs font-medium",
+                              msg.message_type === "incoming"
+                                ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                : "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                            )}
+                          >
+                            {msg.message_type === "incoming" ? "Received" : "Sent"}
+                          </span>
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-xs",
+                              msg.status === "delivered" || msg.status === "received"
+                                ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                : msg.status === "failed" || msg.status === "undelivered"
+                                  ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                  : "bg-bg-tertiary text-content-tertiary"
+                            )}
+                          >
+                            {msg.status}
+                          </span>
+                        </div>
+                        <p className="text-content-primary text-sm">{msg.body}</p>
+                        {msg.error_message && (
+                          <p className="text-error-600 dark:text-error-400 mt-1 text-xs">
+                            Error: {msg.error_message} (Code: {msg.error_code})
+                          </p>
+                        )}
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                          <span className="text-content-tertiary">
+                            From: {msg.from}
+                          </span>
+                          <span className="text-content-tertiary">To: {msg.to}</span>
+                          {msg.price && (
+                            <span className="text-content-tertiary">
+                              Cost: ${Math.abs(parseFloat(msg.price)).toFixed(4)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-content-tertiary shrink-0 text-xs">
+                        {new Date(msg.date_created).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Empty State - No phone selected */}
+      {!data && !loading && !error && (
+        <div className="card-sf p-8 text-center">
+          <Phone className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+          <h3 className="text-content-primary text-lg font-medium">SMS Message History</h3>
+          <p className="text-content-secondary mx-auto mt-2 max-w-md">
+            Select a contact above or enter a phone number to view their SMS conversation history.
+          </p>
+          <p className="text-content-tertiary mt-4 text-sm">
+            Messages are fetched from Twilio and include both incoming and outgoing SMS.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================================================
 // Feedback Tab
 // ============================================================================
 
@@ -7186,6 +7477,7 @@ export default function OperatorDetailPage() {
           {activeTab === "trips" && <TripsTab operator={operator} />}
           {activeTab === "tickets" && <TicketsTab operator={operator} />}
           {activeTab === "emails" && <EmailsTab operator={operator} />}
+          {activeTab === "sms" && <SmsTab operator={operator} />}
           {activeTab === "feedback" && <FeedbackTab operator={operator} />}
           {activeTab === "history" && <HistoryTab operator={operator} />}
         </div>
