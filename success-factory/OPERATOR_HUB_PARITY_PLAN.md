@@ -12,10 +12,10 @@
 ## Phase 1: Missing Features (No UI, No API)
 
 ### 1.1 Quotes Section
-- [ ] Create `/api/operator-hub/[operatorId]/quotes/route.ts` API
-- [ ] Add Snowflake query for quotes data
-- [ ] Add Quotes tab or section to operator detail page
-- [ ] Display quote conversion rates, status tracking
+- [x] Create `/api/operator-hub/[operatorId]/quotes/route.ts` API
+- [x] Add Snowflake query for quotes data (getOperatorQuotes, getOperatorQuotesSummary)
+- [x] Add Quotes tab to operator detail page
+- [x] Display quote conversion rates, monthly trends, filterable table
 
 ### 1.2 Disputes Analytics
 - [x] Create `/api/operator-hub/[operatorId]/disputes/route.ts` API

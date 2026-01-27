@@ -1430,6 +1430,148 @@ async function getOperatorDisputesSummary(stripeAccountId: string): Promise<Disp
 }
 
 // ============================================================================
+// Quotes Data (for Quotes section)
+// ============================================================================
+
+export interface QuoteRecord {
+  request_id: string
+  order_number: string | null
+  stage: string
+  order_type: string | null
+  total_amount: number | null
+  created_at: string
+  pickup_date: string | null
+  customer_name: string | null
+  customer_email: string | null
+  pickup_address: string | null
+  dropoff_address: string | null
+  vehicle_type: string | null
+}
+
+export interface QuotesSummary {
+  total_quotes: number
+  total_quotes_amount: number
+  total_reservations: number
+  total_reservations_amount: number
+  conversion_rate: number
+  quotes_by_month: Array<{ month: string; quotes: number; reservations: number; amount: number }>
+}
+
+/**
+ * Get quotes and reservations for an operator
+ */
+async function getOperatorQuotes(operatorId: string, limit = 100): Promise<QuoteRecord[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      r.REQUEST_ID as request_id,
+      r.ORDER_NUMBER as order_number,
+      r.STAGE as stage,
+      r.ORDER_TYPE as order_type,
+      (COALESCE(rt.PRICE, 0) +
+       COALESCE(rt.DRIVER_GRATUITY, 0) +
+       COALESCE(rt.TAX_AMT, 0) +
+       COALESCE(rt.TOLLS_AMT, 0) +
+       COALESCE(rt.BASE_RATE_AMT, 0) -
+       COALESCE(rt.PROMO_DISCOUNT_AMT, 0)) / 100 as total_amount,
+      r.CREATED_AT as created_at,
+      t.PICKUP_DATE_TIME as pickup_date,
+      CONCAT(c.FIRST_NAME, ' ', c.LAST_NAME) as customer_name,
+      c.EMAIL as customer_email,
+      ps.ADDRESS as pickup_address,
+      ds.ADDRESS as dropoff_address,
+      v.VEHICLE_TYPE as vehicle_type
+    FROM SWOOP.REQUEST r
+    LEFT JOIN SWOOP.TRIP t ON r.REQUEST_ID = t.REQUEST_ID
+    LEFT JOIN SWOOP.ROUTE rt ON t.TRIP_ID = rt.TRIP_ID
+    LEFT JOIN SWOOP.CONTACT c ON r.BOOKER_ID = c.CONTACT_ID
+    LEFT JOIN SWOOP.STOP ps ON r.PICKUP_STOP_ID = ps.STOP_ID
+    LEFT JOIN SWOOP.STOP ds ON r.DROPOFF_STOP_ID = ds.STOP_ID
+    LEFT JOIN SWOOP.VEHICLE v ON t.VEHICLE_ID = v.VEHICLE_ID
+    WHERE r.OPERATOR_ID = '${escapedId}'
+      AND r.REMOVED_AT IS NULL
+      AND (LOWER(r.STAGE) LIKE '%quote%' OR LOWER(r.STAGE) LIKE '%reservation%')
+    ORDER BY r.CREATED_AT DESC
+    LIMIT ${limit}
+  `
+
+  const result = await executeQuery<QuoteRecord>(sql)
+  return result.rows
+}
+
+/**
+ * Get quotes summary with conversion metrics
+ */
+async function getOperatorQuotesSummary(operatorId: string): Promise<QuotesSummary> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  // Get total counts and amounts
+  const totalsSql = `
+    SELECT
+      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%quote%' THEN 1 END) as total_quotes,
+      COALESCE(SUM(CASE WHEN LOWER(r.STAGE) LIKE '%quote%'
+        THEN (COALESCE(rt.PRICE, 0) + COALESCE(rt.BASE_RATE_AMT, 0)) / 100 END), 0) as total_quotes_amount,
+      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%reservation%' THEN 1 END) as total_reservations,
+      COALESCE(SUM(CASE WHEN LOWER(r.STAGE) LIKE '%reservation%'
+        THEN (COALESCE(rt.PRICE, 0) + COALESCE(rt.BASE_RATE_AMT, 0)) / 100 END), 0) as total_reservations_amount
+    FROM SWOOP.REQUEST r
+    LEFT JOIN SWOOP.TRIP t ON r.REQUEST_ID = t.REQUEST_ID
+    LEFT JOIN SWOOP.ROUTE rt ON t.TRIP_ID = rt.TRIP_ID
+    WHERE r.OPERATOR_ID = '${escapedId}'
+      AND r.REMOVED_AT IS NULL
+      AND (LOWER(r.STAGE) LIKE '%quote%' OR LOWER(r.STAGE) LIKE '%reservation%')
+  `
+
+  // Get monthly breakdown
+  const monthlySQL = `
+    SELECT
+      TO_VARCHAR(DATE_TRUNC('month', r.CREATED_AT), 'YYYY-MM') as month,
+      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%quote%' THEN 1 END) as quotes,
+      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%reservation%' THEN 1 END) as reservations,
+      COALESCE(SUM((COALESCE(rt.PRICE, 0) + COALESCE(rt.BASE_RATE_AMT, 0)) / 100), 0) as amount
+    FROM SWOOP.REQUEST r
+    LEFT JOIN SWOOP.TRIP t ON r.REQUEST_ID = t.REQUEST_ID
+    LEFT JOIN SWOOP.ROUTE rt ON t.TRIP_ID = rt.TRIP_ID
+    WHERE r.OPERATOR_ID = '${escapedId}'
+      AND r.REMOVED_AT IS NULL
+      AND (LOWER(r.STAGE) LIKE '%quote%' OR LOWER(r.STAGE) LIKE '%reservation%')
+      AND r.CREATED_AT >= DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY DATE_TRUNC('month', r.CREATED_AT)
+    ORDER BY month DESC
+  `
+
+  const [totalsResult, monthlyResult] = await Promise.all([
+    executeQuery<{
+      total_quotes: number
+      total_quotes_amount: number
+      total_reservations: number
+      total_reservations_amount: number
+    }>(totalsSql),
+    executeQuery<{ month: string; quotes: number; reservations: number; amount: number }>(monthlySQL),
+  ])
+
+  const totals = totalsResult.rows[0] || {
+    total_quotes: 0,
+    total_quotes_amount: 0,
+    total_reservations: 0,
+    total_reservations_amount: 0,
+  }
+
+  const conversionRate =
+    totals.total_quotes > 0 ? (totals.total_reservations / totals.total_quotes) * 100 : 0
+
+  return {
+    total_quotes: totals.total_quotes,
+    total_quotes_amount: totals.total_quotes_amount,
+    total_reservations: totals.total_reservations,
+    total_reservations_amount: totals.total_reservations_amount,
+    conversion_rate: Math.round(conversionRate * 10) / 10,
+    quotes_by_month: monthlyResult.rows,
+  }
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -1479,6 +1621,10 @@ export const snowflakeClient = {
   // Disputes data
   getOperatorDisputes,
   getOperatorDisputesSummary,
+
+  // Quotes data
+  getOperatorQuotes,
+  getOperatorQuotesSummary,
 
   // Write operations (CRUD)
   isWriteEnabled,

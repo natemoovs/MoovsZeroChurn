@@ -112,6 +112,9 @@ type TabId =
   | "overview"
   | "payments"
   | "risk"
+  | "quotes"
+  | "drivers"
+  | "vehicles"
   | "features"
   | "activity"
   | "trips"
@@ -124,6 +127,9 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: Building2 },
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "risk", label: "Risk", icon: Shield },
+  { id: "quotes", label: "Quotes", icon: FileText },
+  { id: "drivers", label: "Drivers", icon: Users },
+  { id: "vehicles", label: "Vehicles", icon: Car },
   { id: "features", label: "Features", icon: Settings },
   { id: "activity", label: "Activity", icon: BarChart3 },
   { id: "trips", label: "Trips", icon: Car },
@@ -3112,6 +3118,706 @@ function ChangePlanModal({
   )
 }
 
+// ============================================================================
+// Quotes Tab
+// ============================================================================
+
+interface QuotesApiResponse {
+  operatorId: string
+  quotes: Array<{
+    request_id: string
+    order_number: string | null
+    stage: string
+    order_type: string | null
+    total_amount: number | null
+    created_at: string
+    pickup_date: string | null
+    customer_name: string | null
+    customer_email: string | null
+    pickup_address: string | null
+    dropoff_address: string | null
+    vehicle_type: string | null
+  }>
+  summary: {
+    total_quotes: number
+    total_quotes_amount: number
+    total_reservations: number
+    total_reservations_amount: number
+    conversion_rate: number
+    quotes_by_month: Array<{
+      month: string
+      quotes: number
+      reservations: number
+      amount: number
+    }>
+  }
+}
+
+function QuotesTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<QuotesApiResponse | null>(null)
+  const [filter, setFilter] = useState<"all" | "quotes" | "reservations">("all")
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/quotes`)
+      .then((res) => {
+        if (!res.ok) return null
+        return res.json()
+      })
+      .then((data) => {
+        if (data) setData(data)
+        setLoading(false)
+      })
+      .catch(() => {
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (!data || (data.summary.total_quotes === 0 && data.summary.total_reservations === 0)) {
+    return (
+      <div className="card-sf p-8 text-center">
+        <FileText className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+        <h3 className="text-content-primary text-lg font-medium">No Quotes Data</h3>
+        <p className="text-content-secondary mx-auto mt-2 max-w-md">
+          No quotes or reservations found for this operator.
+        </p>
+      </div>
+    )
+  }
+
+  const filteredQuotes = data.quotes.filter((q) => {
+    if (filter === "all") return true
+    if (filter === "quotes") return q.stage.toLowerCase().includes("quote")
+    if (filter === "reservations") return q.stage.toLowerCase().includes("reservation")
+    return true
+  })
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Total Quotes"
+          value={data.summary.total_quotes.toLocaleString()}
+          icon={FileText}
+          subtext={`$${data.summary.total_quotes_amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}`}
+        />
+        <StatCard
+          label="Total Reservations"
+          value={data.summary.total_reservations.toLocaleString()}
+          icon={Car}
+          variant="success"
+          subtext={`$${data.summary.total_reservations_amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}`}
+        />
+        <StatCard
+          label="Conversion Rate"
+          value={`${data.summary.conversion_rate}%`}
+          icon={TrendingUp}
+          variant={
+            data.summary.conversion_rate >= 50
+              ? "success"
+              : data.summary.conversion_rate >= 25
+                ? "warning"
+                : "danger"
+          }
+          subtext="Quotes → Reservations"
+        />
+        <StatCard
+          label="Total Revenue"
+          value={`$${(data.summary.total_quotes_amount + data.summary.total_reservations_amount).toLocaleString(undefined, { minimumFractionDigits: 0 })}`}
+          icon={DollarSign}
+        />
+      </div>
+
+      {/* Monthly Trend */}
+      {data.summary.quotes_by_month.length > 0 && (
+        <div className="card-sf p-5">
+          <h3 className="text-content-primary mb-4 font-semibold">Monthly Trend (Last 12 Months)</h3>
+          <div className="flex h-40 items-end gap-2">
+            {data.summary.quotes_by_month.slice(0, 12).reverse().map((month) => {
+              const maxTotal = Math.max(
+                ...data.summary.quotes_by_month.map((m) => m.quotes + m.reservations)
+              )
+              const total = month.quotes + month.reservations
+              const height = maxTotal > 0 ? (total / maxTotal) * 100 : 0
+              const quoteHeight = total > 0 ? (month.quotes / total) * height : 0
+              const resHeight = height - quoteHeight
+
+              return (
+                <div
+                  key={month.month}
+                  className="group relative flex flex-1 flex-col justify-end"
+                  title={`${month.month}: ${month.quotes} quotes, ${month.reservations} reservations`}
+                >
+                  <div
+                    className="bg-success-500 w-full rounded-t"
+                    style={{ height: `${resHeight}%` }}
+                  />
+                  <div
+                    className="bg-primary-500 w-full"
+                    style={{ height: `${quoteHeight}%` }}
+                  />
+                  <div className="text-content-tertiary mt-1 text-center text-xs">
+                    {month.month.split("-")[1]}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="bg-primary-500 h-3 w-3 rounded" />
+              <span className="text-content-secondary">Quotes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="bg-success-500 h-3 w-3 rounded" />
+              <span className="text-content-secondary">Reservations</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quotes/Reservations Table */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Recent Quotes & Reservations</h3>
+          <div className="flex gap-2">
+            {(["all", "quotes", "reservations"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={cn(
+                  "rounded-md px-3 py-1 text-sm font-medium transition-colors",
+                  filter === f
+                    ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                    : "text-content-secondary hover:bg-surface-hover"
+                )}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[800px]">
+            <thead className="bg-bg-secondary">
+              <tr className="border-border-default border-b">
+                <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                  Date
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                  Order #
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                  Customer
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                  Route
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                  Type
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                  Amount
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredQuotes.slice(0, 25).map((quote) => {
+                const isReservation = quote.stage.toLowerCase().includes("reservation")
+                return (
+                  <tr key={quote.request_id} className="border-border-default border-b">
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {new Date(quote.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-sm font-medium">
+                      {quote.order_number || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="text-content-primary">{quote.customer_name || "—"}</div>
+                      {quote.customer_email && (
+                        <div className="text-content-tertiary text-xs">{quote.customer_email}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="text-content-primary max-w-[200px] truncate">
+                        {quote.pickup_address || "—"}
+                      </div>
+                      {quote.dropoff_address && (
+                        <div className="text-content-tertiary max-w-[200px] truncate text-xs">
+                          → {quote.dropoff_address}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium",
+                          isReservation
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                        )}
+                      >
+                        {isReservation ? "Reservation" : "Quote"}
+                      </span>
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                      {quote.total_amount !== null
+                        ? `$${quote.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                        : "—"}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        {filteredQuotes.length > 25 && (
+          <div className="border-border-default border-t px-4 py-3 text-center">
+            <p className="text-content-secondary text-sm">
+              Showing 25 of {filteredQuotes.length} {filter === "all" ? "items" : filter}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// DriversTab - Dedicated tab for driver management
+// ============================================================================
+
+function DriversTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<MembersApiResponse | null>(null)
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
+  const [searchTerm, setSearchTerm] = useState("")
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/members`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((result) => {
+        setData(result)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Failed to load drivers")
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  const drivers = data?.drivers || []
+  const activeCount = drivers.filter((d) => d.status === "active").length
+  const inactiveCount = drivers.filter((d) => d.status === "inactive").length
+
+  // Filter drivers
+  const filteredDrivers = drivers.filter((driver) => {
+    // Status filter
+    if (statusFilter !== "all" && driver.status !== statusFilter) return false
+
+    // Search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase()
+      const fullName = `${driver.firstName || ""} ${driver.lastName || ""}`.toLowerCase()
+      const email = (driver.email || "").toLowerCase()
+      const phone = (driver.phone || "").toLowerCase()
+      return fullName.includes(search) || email.includes(search) || phone.includes(search)
+    }
+
+    return true
+  })
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          label="Total Drivers"
+          value={drivers.length.toString()}
+          icon={Users}
+        />
+        <StatCard
+          label="Active Drivers"
+          value={activeCount.toString()}
+          icon={Users}
+          variant="success"
+          subtext={drivers.length > 0 ? `${Math.round((activeCount / drivers.length) * 100)}% of total` : undefined}
+        />
+        <StatCard
+          label="Inactive Drivers"
+          value={inactiveCount.toString()}
+          icon={Users}
+          variant={inactiveCount > 0 ? "warning" : "default"}
+        />
+      </div>
+
+      {/* Filters */}
+      <div className="card-sf p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search */}
+          <div className="relative flex-1 sm:max-w-xs">
+            <input
+              type="text"
+              placeholder="Search drivers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input-sf w-full py-2 pl-3 pr-10"
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex gap-2">
+            {(["all", "active", "inactive"] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors",
+                  statusFilter === status
+                    ? "bg-primary-600 text-white"
+                    : "bg-bg-tertiary text-content-secondary hover:bg-surface-hover"
+                )}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Drivers Table */}
+      <div className="card-sf overflow-hidden">
+        {filteredDrivers.length === 0 ? (
+          <div className="p-8 text-center">
+            <Users className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+            <h3 className="text-content-primary text-lg font-medium">
+              {drivers.length === 0 ? "No Drivers Found" : "No Matching Drivers"}
+            </h3>
+            <p className="text-content-secondary mx-auto mt-2 max-w-md">
+              {drivers.length === 0
+                ? error || "Driver data is not available for this operator."
+                : "Try adjusting your search or filter criteria."}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-border-default bg-bg-secondary border-b text-left text-xs uppercase tracking-wider">
+                  <th className="text-content-secondary px-4 py-3 font-medium">Driver</th>
+                  <th className="text-content-secondary px-4 py-3 font-medium">Email</th>
+                  <th className="text-content-secondary px-4 py-3 font-medium">Phone</th>
+                  <th className="text-content-secondary px-4 py-3 font-medium">Status</th>
+                  <th className="text-content-secondary px-4 py-3 font-medium">Created</th>
+                </tr>
+              </thead>
+              <tbody className="divide-border-default divide-y">
+                {filteredDrivers.map((driver) => (
+                  <tr key={driver.id} className="hover:bg-surface-hover transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-success-100 dark:bg-success-900/30 text-success-600 dark:text-success-400 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium">
+                          {driver.firstName?.[0] || "D"}
+                          {driver.lastName?.[0] || ""}
+                        </div>
+                        <span className="text-content-primary text-sm font-medium">
+                          {driver.firstName || driver.lastName
+                            ? `${driver.firstName || ""} ${driver.lastName || ""}`.trim()
+                            : "Unknown Driver"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {driver.email || "—"}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {driver.phone || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={cn(
+                          "inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                          driver.status === "active"
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : driver.status === "inactive"
+                              ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                              : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                        )}
+                      >
+                        {driver.status || "unknown"}
+                      </span>
+                    </td>
+                    <td className="text-content-tertiary px-4 py-3 text-sm">
+                      {driver.createdAt
+                        ? new Date(driver.createdAt).toLocaleDateString()
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {filteredDrivers.length > 0 && (
+          <div className="border-border-default border-t px-4 py-3">
+            <p className="text-content-secondary text-sm">
+              Showing {filteredDrivers.length} of {drivers.length} drivers
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// VehiclesTab - Dedicated tab for vehicle management
+// ============================================================================
+
+function VehiclesTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<MembersApiResponse | null>(null)
+  const [typeFilter, setTypeFilter] = useState<string>("all")
+  const [searchTerm, setSearchTerm] = useState("")
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/members`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((result) => {
+        setData(result)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Failed to load vehicles")
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  const vehicles = data?.vehicles || []
+
+  // Get unique vehicle types for filter
+  const vehicleTypes = Array.from(new Set(vehicles.map((v) => v.type).filter(Boolean))) as string[]
+
+  // Calculate type breakdown
+  const typeBreakdown: Record<string, number> = {}
+  for (const vehicle of vehicles) {
+    const type = vehicle.type || "unknown"
+    typeBreakdown[type] = (typeBreakdown[type] || 0) + 1
+  }
+
+  // Filter vehicles
+  const filteredVehicles = vehicles.filter((vehicle) => {
+    // Type filter
+    if (typeFilter !== "all" && vehicle.type !== typeFilter) return false
+
+    // Search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase()
+      const name = (vehicle.name || "").toLowerCase()
+      const plate = (vehicle.licensePlate || "").toLowerCase()
+      const color = (vehicle.color || "").toLowerCase()
+      return name.includes(search) || plate.includes(search) || color.includes(search)
+    }
+
+    return true
+  })
+
+  // Calculate total capacity
+  const totalCapacity = vehicles.reduce((sum, v) => sum + (v.capacity || 0), 0)
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <StatCard
+          label="Total Vehicles"
+          value={vehicles.length.toString()}
+          icon={Car}
+        />
+        <StatCard
+          label="Total Capacity"
+          value={`${totalCapacity} seats`}
+          icon={Users}
+          subtext={vehicles.length > 0 ? `Avg ${Math.round(totalCapacity / vehicles.length)} per vehicle` : undefined}
+        />
+        {Object.entries(typeBreakdown).slice(0, 2).map(([type, count]) => (
+          <StatCard
+            key={type}
+            label={type.charAt(0).toUpperCase() + type.slice(1)}
+            value={count.toString()}
+            icon={Car}
+          />
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="card-sf p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search */}
+          <div className="relative flex-1 sm:max-w-xs">
+            <input
+              type="text"
+              placeholder="Search vehicles..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input-sf w-full py-2 pl-3 pr-10"
+            />
+          </div>
+
+          {/* Type Filter */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setTypeFilter("all")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                typeFilter === "all"
+                  ? "bg-primary-600 text-white"
+                  : "bg-bg-tertiary text-content-secondary hover:bg-surface-hover"
+              )}
+            >
+              All
+            </button>
+            {vehicleTypes.map((type) => (
+              <button
+                key={type}
+                onClick={() => setTypeFilter(type)}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors",
+                  typeFilter === type
+                    ? "bg-primary-600 text-white"
+                    : "bg-bg-tertiary text-content-secondary hover:bg-surface-hover"
+                )}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Vehicles Table */}
+      <div className="card-sf overflow-hidden">
+        {filteredVehicles.length === 0 ? (
+          <div className="p-8 text-center">
+            <Car className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+            <h3 className="text-content-primary text-lg font-medium">
+              {vehicles.length === 0 ? "No Vehicles Found" : "No Matching Vehicles"}
+            </h3>
+            <p className="text-content-secondary mx-auto mt-2 max-w-md">
+              {vehicles.length === 0
+                ? error || "Vehicle data is not available for this operator."
+                : "Try adjusting your search or filter criteria."}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-border-default bg-bg-secondary border-b text-left text-xs uppercase tracking-wider">
+                  <th className="text-content-secondary px-4 py-3 font-medium">Vehicle</th>
+                  <th className="text-content-secondary px-4 py-3 font-medium">Type</th>
+                  <th className="text-content-secondary px-4 py-3 font-medium">License Plate</th>
+                  <th className="text-content-secondary px-4 py-3 font-medium">Color</th>
+                  <th className="text-content-secondary px-4 py-3 font-medium text-right">Capacity</th>
+                  <th className="text-content-secondary px-4 py-3 font-medium">Created</th>
+                </tr>
+              </thead>
+              <tbody className="divide-border-default divide-y">
+                {filteredVehicles.map((vehicle) => (
+                  <tr key={vehicle.id} className="hover:bg-surface-hover transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                          <Car className="h-4 w-4" />
+                        </div>
+                        <span className="text-content-primary text-sm font-medium">
+                          {vehicle.name || vehicle.type || "Unknown Vehicle"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {vehicle.type ? (
+                        <span className="bg-bg-tertiary text-content-secondary rounded px-2 py-0.5 text-xs capitalize">
+                          {vehicle.type}
+                        </span>
+                      ) : (
+                        <span className="text-content-tertiary text-sm">—</span>
+                      )}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 font-mono text-sm">
+                      {vehicle.licensePlate || "—"}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-sm capitalize">
+                      {vehicle.color || "—"}
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-right text-sm">
+                      {vehicle.capacity ? `${vehicle.capacity} seats` : "—"}
+                    </td>
+                    <td className="text-content-tertiary px-4 py-3 text-sm">
+                      {vehicle.createdAt
+                        ? new Date(vehicle.createdAt).toLocaleDateString()
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {filteredVehicles.length > 0 && (
+          <div className="border-border-default border-t px-4 py-3">
+            <p className="text-content-secondary text-sm">
+              Showing {filteredVehicles.length} of {vehicles.length} vehicles
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function FeaturesTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -5400,6 +6106,9 @@ export default function OperatorDetailPage() {
           {activeTab === "overview" && <OverviewTab operator={operator} />}
           {activeTab === "payments" && <PaymentsTab operator={operator} />}
           {activeTab === "risk" && <RiskTab operator={operator} />}
+          {activeTab === "quotes" && <QuotesTab operator={operator} />}
+          {activeTab === "drivers" && <DriversTab operator={operator} />}
+          {activeTab === "vehicles" && <VehiclesTab operator={operator} />}
           {activeTab === "features" && <FeaturesTab operator={operator} />}
           {activeTab === "activity" && <ActivityTab operator={operator} />}
           {activeTab === "trips" && <TripsTab operator={operator} />}
