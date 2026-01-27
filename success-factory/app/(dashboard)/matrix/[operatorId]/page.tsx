@@ -366,10 +366,73 @@ function EmailHealthAlert({ operatorId }: { operatorId: string | null }) {
   )
 }
 
+// Type for Lago subscription data used in overview
+interface LagoSubscriptionSummary {
+  id: string
+  planCode: string
+  planName: string | null
+  status: string
+  amountCents: number | null
+  amountCurrency: string | null
+  interval: string | null
+  hasOverride: boolean
+}
+
 function OverviewTab({ operator }: { operator: OperatorData }) {
   const location = [operator.city, operator.state, operator.country].filter(Boolean).join(", ")
   const [showChangePlanModal, setShowChangePlanModal] = useState(false)
   const [bookingPortalUrl, setBookingPortalUrl] = useState<string | null>(null)
+  const [lagoSubscriptions, setLagoSubscriptions] = useState<LagoSubscriptionSummary[]>([])
+  const [lagoMrr, setLagoMrr] = useState<number | null>(null)
+  const [lagoLoading, setLagoLoading] = useState(true)
+
+  // Fetch Lago subscription data for accurate MRR and plan info
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLagoLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/subscription`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.allSubscriptions) {
+          // Filter to active subscriptions only
+          const activeSubscriptions = data.allSubscriptions.filter(
+            (s: LagoSubscriptionSummary) => s.status === "active"
+          )
+          setLagoSubscriptions(activeSubscriptions)
+
+          // Calculate MRR from all active subscriptions
+          const totalMrr = activeSubscriptions.reduce(
+            (sum: number, sub: LagoSubscriptionSummary) => {
+              if (!sub.amountCents) return sum
+              // Convert to monthly based on interval
+              let monthlyAmount = sub.amountCents
+              switch (sub.interval) {
+                case "yearly":
+                  monthlyAmount = Math.round(sub.amountCents / 12)
+                  break
+                case "quarterly":
+                  monthlyAmount = Math.round(sub.amountCents / 3)
+                  break
+                case "weekly":
+                  monthlyAmount = sub.amountCents * 4
+                  break
+                // monthly is default
+              }
+              return sum + monthlyAmount
+            },
+            0
+          )
+          setLagoMrr(totalMrr > 0 ? totalMrr / 100 : null) // Convert cents to dollars
+        }
+        setLagoLoading(false)
+      })
+      .catch(() => {
+        setLagoLoading(false)
+      })
+  }, [operator.operatorId])
 
   // Fetch booking portal URL from platform data
   useEffect(() => {
@@ -405,9 +468,20 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Monthly Revenue"
-          value={operator.mrr ? `$${operator.mrr.toLocaleString()}` : "—"}
+          value={
+            lagoLoading
+              ? "..."
+              : lagoMrr !== null
+                ? `$${lagoMrr.toLocaleString()}`
+                : operator.mrr
+                  ? `$${operator.mrr.toLocaleString()}`
+                  : "—"
+          }
           icon={DollarSign}
-          variant={operator.mrr && operator.mrr > 500 ? "success" : "default"}
+          variant={(lagoMrr ?? operator.mrr ?? 0) > 500 ? "success" : "default"}
+          subtext={
+            lagoSubscriptions.length > 1 ? `${lagoSubscriptions.length} active plans` : undefined
+          }
         />
         <StatCard
           label="Total Trips"
@@ -436,29 +510,74 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
         <div className="card-sf p-5">
           <h3 className="text-content-primary mb-4 font-semibold">Account Information</h3>
           <dl className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-content-secondary">Plan</dt>
-              <dd className="text-content-primary font-medium">{operator.plan || "—"}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-content-secondary">Plan Code</dt>
-              <dd className="text-content-primary font-mono text-xs">{operator.planCode || "—"}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-content-secondary">Status</dt>
-              <dd>
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                    operator.subscriptionStatus === "active"
-                      ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
-                      : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
-                  )}
-                >
-                  {operator.subscriptionStatus || "unknown"}
-                </span>
-              </dd>
-            </div>
+            {/* Show Lago subscriptions if available, otherwise fall back to HubSpot data */}
+            {lagoLoading ? (
+              <div className="flex justify-between">
+                <dt className="text-content-secondary">Plans</dt>
+                <dd className="text-content-tertiary">Loading...</dd>
+              </div>
+            ) : lagoSubscriptions.length > 0 ? (
+              <>
+                <div>
+                  <dt className="text-content-secondary mb-2">
+                    Active Plans ({lagoSubscriptions.length})
+                  </dt>
+                  <dd className="space-y-2">
+                    {lagoSubscriptions.map((sub) => (
+                      <div
+                        key={sub.id}
+                        className="bg-bg-secondary flex items-center justify-between rounded-md px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-content-primary font-medium">
+                            {sub.planName || sub.planCode}
+                          </p>
+                          <p className="text-content-tertiary text-xs">
+                            {sub.amountCents
+                              ? `$${(sub.amountCents / 100).toLocaleString()}/${sub.interval || "month"}`
+                              : "—"}
+                            {sub.hasOverride && (
+                              <span className="text-accent-600 ml-1">(custom)</span>
+                            )}
+                          </p>
+                        </div>
+                        <span className="bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400 rounded-full px-2 py-0.5 text-xs font-medium">
+                          Active
+                        </span>
+                      </div>
+                    ))}
+                  </dd>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between">
+                  <dt className="text-content-secondary">Plan</dt>
+                  <dd className="text-content-primary font-medium">{operator.plan || "—"}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-content-secondary">Plan Code</dt>
+                  <dd className="text-content-primary font-mono text-xs">
+                    {operator.planCode || "—"}
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-content-secondary">Status</dt>
+                  <dd>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                        operator.subscriptionStatus === "active"
+                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                          : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                      )}
+                    >
+                      {operator.subscriptionStatus || "unknown"}
+                    </span>
+                  </dd>
+                </div>
+              </>
+            )}
             {location && (
               <div className="flex justify-between">
                 <dt className="text-content-secondary">Location</dt>
