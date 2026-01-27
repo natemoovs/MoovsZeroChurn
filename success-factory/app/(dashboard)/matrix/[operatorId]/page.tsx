@@ -367,11 +367,31 @@ function EmailHealthAlert({ operatorId }: { operatorId: string | null }) {
 function OverviewTab({ operator }: { operator: OperatorData }) {
   const location = [operator.city, operator.state, operator.country].filter(Boolean).join(", ")
   const [showChangePlanModal, setShowChangePlanModal] = useState(false)
+  const [bookingPortalUrl, setBookingPortalUrl] = useState<string | null>(null)
+
+  // Fetch booking portal URL from platform data
+  useEffect(() => {
+    if (!operator.operatorId) return
+
+    fetch(`/api/operator-hub/${operator.operatorId}/platform-data`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.operatorInfo?.bookingPortalUrl) {
+          setBookingPortalUrl(data.operatorInfo.bookingPortalUrl)
+        }
+      })
+      .catch(() => {
+        // Silently fail - we'll fall back to domain if available
+      })
+  }, [operator.operatorId])
 
   const handlePlanChangeSuccess = () => {
     // Refresh the page to get updated plan info
     window.location.reload()
   }
+
+  // Use booking portal URL from Snowflake, fall back to domain from HubSpot
+  const customerPortalUrl = bookingPortalUrl || (operator.domain ? `https://${operator.domain}` : null)
 
   return (
     <div className="space-y-6">
@@ -620,9 +640,9 @@ function OverviewTab({ operator }: { operator: OperatorData }) {
         <h3 className="text-content-primary mb-4 font-semibold">Quick Actions</h3>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {/* External Portal Links */}
-          {operator.domain && (
+          {customerPortalUrl && (
             <a
-              href={`https://${operator.domain}`}
+              href={customerPortalUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-primary-500 hover:bg-primary-600 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors"
@@ -3340,6 +3360,17 @@ interface PlatformDataApiResponse {
     pushEnabled: boolean | null
   }>
   settings: Record<string, unknown> | null
+  operatorInfo: {
+    name: string | null
+    nameSlug: string | null
+    email: string | null
+    phone: string | null
+    generalEmail: string | null
+    termsAndConditionsUrl: string | null
+    websiteUrl: string | null
+    companyLogoUrl: string | null
+    bookingPortalUrl: string | null
+  } | null
   stats: {
     totalPromoCodes: number
     activePromoCodes: number
@@ -3352,6 +3383,7 @@ interface PlatformDataApiResponse {
     totalBankTransactions: number
     totalDriverAppUsers: number
     hasSettings: boolean
+    hasOperatorInfo: boolean
   }
 }
 

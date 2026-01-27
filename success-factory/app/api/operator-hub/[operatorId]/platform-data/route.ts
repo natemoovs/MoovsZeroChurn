@@ -29,6 +29,7 @@ export async function GET(
       subscriptionLog,
       bankTransactions,
       driverAppUsers,
+      operatorCoreInfo,
     ] = await Promise.all([
       snowflake.getOperatorPromoCodes(operatorId).catch(() => []),
       snowflake.getOperatorPriceZones(operatorId).catch(() => []),
@@ -39,6 +40,7 @@ export async function GET(
       snowflake.getOperatorSubscriptionLog(operatorId).catch(() => []),
       snowflake.getOperatorBankTransactions(operatorId).catch(() => []),
       snowflake.getOperatorDriverAppUsers(operatorId).catch(() => []),
+      snowflake.getOperatorCoreInfo(operatorId).catch(() => null),
     ])
 
     // Calculate stats
@@ -127,6 +129,21 @@ export async function GET(
         pushEnabled: d.push_enabled,
       })),
       settings,
+      operatorInfo: operatorCoreInfo
+        ? {
+            name: operatorCoreInfo.name,
+            nameSlug: operatorCoreInfo.name_slug,
+            email: operatorCoreInfo.email,
+            phone: operatorCoreInfo.phone,
+            generalEmail: operatorCoreInfo.general_email,
+            termsAndConditionsUrl: operatorCoreInfo.terms_and_conditions_url,
+            websiteUrl: operatorCoreInfo.website_url,
+            companyLogoUrl: operatorCoreInfo.company_logo_url,
+            bookingPortalUrl: operatorCoreInfo.name_slug
+              ? `https://customer.moovs.app/${operatorCoreInfo.name_slug}/new/info`
+              : null,
+          }
+        : null,
       stats: {
         totalPromoCodes: promoCodes.length,
         activePromoCodes,
@@ -139,6 +156,7 @@ export async function GET(
         totalBankTransactions: bankTransactions.length,
         totalDriverAppUsers: driverAppUsers.length,
         hasSettings: !!settings,
+        hasOperatorInfo: !!operatorCoreInfo,
       },
     })
   } catch (error) {
