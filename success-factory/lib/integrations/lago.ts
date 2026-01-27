@@ -55,6 +55,20 @@ export interface LagoSubscription {
   created_at: string
   billing_time: "calendar" | "anniversary"
   plan: LagoPlan
+  // Plan overrides - custom pricing for this specific subscription
+  plan_overrides?: {
+    amount_cents?: number
+    amount_currency?: string
+    name?: string
+    description?: string
+    invoice_display_name?: string
+    charges?: Array<{
+      id?: string
+      billable_metric_code?: string
+      charge_model?: string
+      properties?: Record<string, unknown>
+    }>
+  }
 }
 
 export interface LagoPlan {
@@ -502,21 +516,26 @@ export interface UpdateSubscriptionInput {
  * Update a subscription (change plan)
  * This terminates the current subscription and creates a new one with the new plan
  */
-export async function updateSubscription(input: UpdateSubscriptionInput): Promise<LagoSubscription | null> {
+export async function updateSubscription(
+  input: UpdateSubscriptionInput
+): Promise<LagoSubscription | null> {
   if (!LAGO_API_KEY) {
     throw new Error("LAGO_API_KEY is not configured")
   }
 
   try {
-    const result = await lagoFetch<{ subscription: LagoSubscription }>(`/subscriptions/${input.subscriptionExternalId}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        subscription: {
-          plan_code: input.planCode,
-          name: input.name,
-        },
-      }),
-    })
+    const result = await lagoFetch<{ subscription: LagoSubscription }>(
+      `/subscriptions/${input.subscriptionExternalId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          subscription: {
+            plan_code: input.planCode,
+            name: input.name,
+          },
+        }),
+      }
+    )
     return result.subscription
   } catch (err) {
     console.error(`Failed to update subscription:`, err)
@@ -535,7 +554,9 @@ export interface CreateSubscriptionInput {
 /**
  * Create a new subscription for a customer
  */
-export async function createSubscription(input: CreateSubscriptionInput): Promise<LagoSubscription | null> {
+export async function createSubscription(
+  input: CreateSubscriptionInput
+): Promise<LagoSubscription | null> {
   if (!LAGO_API_KEY) {
     throw new Error("LAGO_API_KEY is not configured")
   }
@@ -563,15 +584,20 @@ export async function createSubscription(input: CreateSubscriptionInput): Promis
 /**
  * Cancel a subscription
  */
-export async function cancelSubscription(subscriptionExternalId: string): Promise<LagoSubscription | null> {
+export async function cancelSubscription(
+  subscriptionExternalId: string
+): Promise<LagoSubscription | null> {
   if (!LAGO_API_KEY) {
     throw new Error("LAGO_API_KEY is not configured")
   }
 
   try {
-    const result = await lagoFetch<{ subscription: LagoSubscription }>(`/subscriptions/${subscriptionExternalId}`, {
-      method: "DELETE",
-    })
+    const result = await lagoFetch<{ subscription: LagoSubscription }>(
+      `/subscriptions/${subscriptionExternalId}`,
+      {
+        method: "DELETE",
+      }
+    )
     return result.subscription
   } catch (err) {
     console.error(`Failed to cancel subscription:`, err)

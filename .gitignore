@@ -34,4 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Moovs Matrix exports (Retool)
 moovs_matrix_extracted/
+Moovs%20Matrix.json
+Moovs%20Matrix.zip
+Lago*.json
+moovs-factory-main.zip
