@@ -88,13 +88,10 @@
 - [x] Update Payments tab UI to show new columns (Risk, Refund, Dispute)
 - [x] Add charge detail modal (click row to view full charge info)
 
-### 2.2 Drivers/Vehicles - Promote to Dedicated Tabs
-- [ ] Add "Drivers" tab to main tab list
-- [ ] Add "Vehicles" tab to main tab list
-- [ ] Create dedicated DriversTab component with full table
-- [ ] Create dedicated VehiclesTab component with full table
-- [ ] Add driver performance metrics
-- [ ] Add vehicle utilization stats
+### 2.2 Drivers/Vehicles - Keep in Features Tab
+- [x] Decision: Keep drivers/vehicles as sub-sections in Features tab (not promoted to dedicated tabs)
+- [ ] Add driver performance metrics (future enhancement)
+- [ ] Add vehicle utilization stats (future enhancement)
 
 ### 2.3 SendGrid - Full Suppression Management
 - [ ] Add global bounce report table
