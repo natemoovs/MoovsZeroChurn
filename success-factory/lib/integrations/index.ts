@@ -105,6 +105,17 @@ export type {
   OperatorEmailLog,
 } from "./snowflake"
 
+export { twilio } from "./twilio"
+export type {
+  TwilioMessage,
+  TwilioMessageStatus,
+  TwilioMessageDirection,
+  TwilioMessageList,
+  TwilioCombinedMessages,
+  TwilioMessageWithType,
+  TwilioError,
+} from "./twilio"
+
 // Import clients for unified export
 import { hubspot } from "./hubspot"
 import { stripe } from "./stripe"
@@ -112,6 +123,7 @@ import { notion } from "./notion"
 import { metabase } from "./metabase"
 import { lago } from "./lago"
 import { snowflake } from "./snowflake"
+import { twilio } from "./twilio"
 
 /**
  * Unified integrations client
@@ -125,6 +137,7 @@ export const integrations = {
   metabase,
   lago,
   snowflake,
+  twilio,
 }
 
 /**
@@ -137,6 +150,7 @@ export function getConfiguredIntegrations(): {
   metabase: boolean
   lago: boolean
   snowflake: boolean
+  twilio: boolean
 } {
   return {
     hubspot: !!process.env.HUBSPOT_ACCESS_TOKEN,
@@ -145,6 +159,7 @@ export function getConfiguredIntegrations(): {
     metabase: !!(process.env.METABASE_URL && process.env.METABASE_API_KEY),
     lago: !!process.env.LAGO_API_KEY,
     snowflake: !!(process.env.METABASE_URL && process.env.METABASE_API_KEY), // Uses Metabase to query Snowflake
+    twilio: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
   }
 }
 
