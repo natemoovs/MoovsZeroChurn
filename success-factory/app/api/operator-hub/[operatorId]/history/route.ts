@@ -57,7 +57,7 @@ export async function GET(
   }
 }
 
-function mapEventType(eventType: string): string {
+function mapEventType(eventType: string | null): string {
   const typeMap: Record<string, string> = {
     subscription_created: "subscription",
     subscription_updated: "subscription",
@@ -72,11 +72,11 @@ function mapEventType(eventType: string): string {
     member_removed: "member",
     settings_updated: "settings",
   }
-  return typeMap[eventType?.toLowerCase()] || "activity"
+  return typeMap[eventType?.toLowerCase() ?? ""] || "activity"
 }
 
 function formatEventTitle(
-  eventType: string,
+  eventType: string | null,
   planName: string | null,
   previousPlan: string | null
 ): string {
@@ -122,7 +122,7 @@ function formatEventTitle(
 }
 
 function formatEventDescription(entry: {
-  event_type: string
+  event_type: string | null
   plan_name: string | null
   previous_plan: string | null
   amount: number | null
