@@ -288,6 +288,27 @@ export async function getSubscriptions(operatorId: string): Promise<LagoSubscrip
 }
 
 /**
+ * Get a single subscription by external_id with full details
+ * This returns more detailed information than the list endpoint,
+ * including plan_overrides for accurate pricing
+ */
+export async function getSubscription(externalId: string): Promise<LagoSubscription | null> {
+  if (!LAGO_API_KEY) {
+    return null
+  }
+
+  try {
+    const result = await lagoFetch<{
+      subscription: LagoSubscription
+    }>(`/subscriptions/${externalId}`)
+    return result.subscription
+  } catch (err) {
+    console.log(`Failed to get Lago subscription ${externalId}:`, err)
+    return null
+  }
+}
+
+/**
  * Get overdue invoices for a customer
  */
 export async function getOverdueInvoices(operatorId: string): Promise<LagoInvoice[]> {
@@ -631,6 +652,7 @@ export const lago = {
 
   // Subscriptions
   getSubscriptions,
+  getSubscription,
   createSubscription,
   updateSubscription,
   cancelSubscription,
