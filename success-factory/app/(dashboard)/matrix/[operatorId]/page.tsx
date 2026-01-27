@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { useSession } from "@/lib/auth/client"
 import {
   ArrowLeft,
   Building2,
@@ -1862,6 +1863,9 @@ interface RiskApiResponse {
   avg_transaction_amount: number | null
   last_failed_payment_date: string | null
   risk_level: "low" | "medium" | "high" | "unknown"
+  // Risk management settings
+  instant_payout_limit_cents: number | null
+  daily_payment_limit_cents: number | null
 }
 
 // ============================================================================
@@ -2186,21 +2190,245 @@ interface DisputesApiResponse {
   }
 }
 
+// ============================================================================
+// Risk Update Modal (Admin Only)
+// ============================================================================
+
+interface RiskUpdateModalProps {
+  isOpen: boolean
+  onClose: () => void
+  operatorId: string
+  currentValues: {
+    instantPayoutLimitCents: number | null
+    dailyPaymentLimitCents: number | null
+    riskScore: number | null
+  }
+  onSuccess: () => void
+}
+
+function RiskUpdateModal({
+  isOpen,
+  onClose,
+  operatorId,
+  currentValues,
+  onSuccess,
+}: RiskUpdateModalProps) {
+  const [instantPayoutLimit, setInstantPayoutLimit] = useState<string>(
+    currentValues.instantPayoutLimitCents
+      ? (currentValues.instantPayoutLimitCents / 100).toString()
+      : ""
+  )
+  const [dailyPaymentLimit, setDailyPaymentLimit] = useState<string>(
+    currentValues.dailyPaymentLimitCents
+      ? (currentValues.dailyPaymentLimitCents / 100).toString()
+      : ""
+  )
+  const [riskScore, setRiskScore] = useState<string>(
+    currentValues.riskScore !== null ? currentValues.riskScore.toString() : ""
+  )
+  const [updating, setUpdating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Reset form when modal opens with new values
+  useEffect(() => {
+    if (isOpen) {
+      setInstantPayoutLimit(
+        currentValues.instantPayoutLimitCents
+          ? (currentValues.instantPayoutLimitCents / 100).toString()
+          : ""
+      )
+      setDailyPaymentLimit(
+        currentValues.dailyPaymentLimitCents
+          ? (currentValues.dailyPaymentLimitCents / 100).toString()
+          : ""
+      )
+      setRiskScore(currentValues.riskScore !== null ? currentValues.riskScore.toString() : "")
+      setError(null)
+    }
+  }, [isOpen, currentValues])
+
+  const handleUpdate = async (field: "instantPayout" | "dailyPayment" | "riskScore") => {
+    setUpdating(true)
+    setError(null)
+
+    try {
+      const body: Record<string, number> = {}
+
+      if (field === "instantPayout" && instantPayoutLimit) {
+        body.instantPayoutLimitCents = Math.round(parseFloat(instantPayoutLimit) * 100)
+      } else if (field === "dailyPayment" && dailyPaymentLimit) {
+        body.dailyPaymentLimitCents = Math.round(parseFloat(dailyPaymentLimit) * 100)
+      } else if (field === "riskScore" && riskScore) {
+        body.riskScore = parseFloat(riskScore)
+      }
+
+      const response = await fetch(`/api/operator-hub/${operatorId}/risk`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to update risk settings")
+      }
+
+      onSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update")
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="bg-bg-primary/80 absolute inset-0" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="card-sf relative z-10 mx-4 w-full max-w-md p-6">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-content-primary text-lg font-semibold">Risk Details</h3>
+          <button
+            onClick={onClose}
+            className="text-content-secondary hover:text-content-primary transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-error-50 dark:bg-error-950/30 text-error-700 dark:text-error-400 mb-4 rounded-lg p-3 text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {/* Instant Payout Limit */}
+          <div className="space-y-2">
+            <label className="text-content-primary block text-sm font-medium">
+              Instant Payout Limit Amount
+            </label>
+            <p className="text-content-tertiary text-xs">
+              The total instant payout volume an operator can process.
+            </p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="text-content-tertiary absolute left-3 top-1/2 -translate-y-1/2">
+                  $
+                </span>
+                <input
+                  type="number"
+                  value={instantPayoutLimit}
+                  onChange={(e) => setInstantPayoutLimit(e.target.value)}
+                  className="input-sf w-full pl-7"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+              <button
+                onClick={() => handleUpdate("instantPayout")}
+                disabled={updating || !instantPayoutLimit}
+                className="btn-sf-secondary whitespace-nowrap"
+              >
+                {updating ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </div>
+
+          {/* Daily Payment Limit */}
+          <div className="space-y-2">
+            <label className="text-content-primary block text-sm font-medium">
+              Daily Processing Limit Amount
+            </label>
+            <p className="text-content-tertiary text-xs">
+              The total amount of moovs payments an operator can process daily through Customer
+              Portal, Operator Portal.
+            </p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="text-content-tertiary absolute left-3 top-1/2 -translate-y-1/2">
+                  $
+                </span>
+                <input
+                  type="number"
+                  value={dailyPaymentLimit}
+                  onChange={(e) => setDailyPaymentLimit(e.target.value)}
+                  className="input-sf w-full pl-7"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+              <button
+                onClick={() => handleUpdate("dailyPayment")}
+                disabled={updating || !dailyPaymentLimit}
+                className="btn-sf-secondary whitespace-nowrap"
+              >
+                {updating ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </div>
+
+          {/* Risk Score */}
+          <div className="space-y-2">
+            <label className="text-content-primary block text-sm font-medium">Risk Score</label>
+            <p className="text-content-tertiary text-xs">
+              This is the internal risk score of an operator.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={riskScore}
+                onChange={(e) => setRiskScore(e.target.value)}
+                className="input-sf flex-1"
+                placeholder="0"
+                step="1"
+              />
+              <button
+                onClick={() => handleUpdate("riskScore")}
+                disabled={updating || !riskScore}
+                className="btn-sf-secondary whitespace-nowrap"
+              >
+                {updating ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-6 flex justify-end">
+          <button onClick={onClose} className="btn-sf-primary">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function RiskTab({ operator }: { operator: OperatorData }) {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === "admin"
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<RiskApiResponse | null>(null)
   const [disputesData, setDisputesData] = useState<DisputesApiResponse | null>(null)
   const [disputesLoading, setDisputesLoading] = useState(true)
+  const [showRiskModal, setShowRiskModal] = useState(false)
 
-  useEffect(() => {
-    if (!operator.operatorId) {
-      setLoading(false)
-      setDisputesLoading(false)
-      return
-    }
+  // Reusable function to fetch risk data
+  const fetchRiskData = useCallback(() => {
+    if (!operator.operatorId) return
 
-    // Fetch risk data
     fetch(`/api/operator-hub/${operator.operatorId}/risk`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch risk data")
@@ -2214,6 +2442,17 @@ function RiskTab({ operator }: { operator: OperatorData }) {
         setError(err.message)
         setLoading(false)
       })
+  }, [operator.operatorId])
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      setDisputesLoading(false)
+      return
+    }
+
+    // Fetch risk data
+    fetchRiskData()
 
     // Fetch disputes data if stripe account ID available
     if (operator.stripeAccountId) {
@@ -2234,7 +2473,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
     } else {
       setDisputesLoading(false)
     }
-  }, [operator.operatorId, operator.stripeAccountId])
+  }, [operator.operatorId, operator.stripeAccountId, fetchRiskData])
 
   if (loading) {
     return (
@@ -2251,10 +2490,43 @@ function RiskTab({ operator }: { operator: OperatorData }) {
     avg_transaction_amount: null,
     last_failed_payment_date: null,
     risk_level: "unknown" as const,
+    instant_payout_limit_cents: null,
+    daily_payment_limit_cents: null,
   }
 
   return (
     <div className="space-y-6">
+      {/* Admin Risk Update Modal */}
+      {operator.operatorId && (
+        <RiskUpdateModal
+          isOpen={showRiskModal}
+          onClose={() => setShowRiskModal(false)}
+          operatorId={operator.operatorId}
+          currentValues={{
+            instantPayoutLimitCents: riskData.instant_payout_limit_cents,
+            dailyPaymentLimitCents: riskData.daily_payment_limit_cents,
+            riskScore: riskData.risk_score,
+          }}
+          onSuccess={() => {
+            fetchRiskData()
+            setShowRiskModal(false)
+          }}
+        />
+      )}
+
+      {/* Header with Admin Update Button */}
+      {isAdmin && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowRiskModal(true)}
+            className="btn-sf-secondary inline-flex items-center gap-2 text-sm"
+          >
+            <Edit3 className="h-4 w-4" />
+            Update Risk Details
+          </button>
+        </div>
+      )}
+
       {/* Risk Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -2344,6 +2616,36 @@ function RiskTab({ operator }: { operator: OperatorData }) {
             <div className="flex justify-between">
               <dt className="text-content-secondary">Disputes</dt>
               <dd className="text-content-primary">{riskData.dispute_count}</dd>
+            </div>
+            {/* Admin-managed fields */}
+            <div className="border-border-secondary mt-4 border-t pt-4">
+              <p className="text-content-tertiary mb-3 text-xs font-medium uppercase tracking-wider">
+                Risk Management Settings
+              </p>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <dt className="text-content-secondary">Internal Risk Score</dt>
+                  <dd className="text-content-primary">
+                    {riskData.risk_score !== null ? riskData.risk_score : "—"}
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-content-secondary">Instant Payout Limit</dt>
+                  <dd className="text-content-primary">
+                    {riskData.instant_payout_limit_cents !== null
+                      ? `$${(riskData.instant_payout_limit_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                      : "—"}
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-content-secondary">Daily Payment Limit</dt>
+                  <dd className="text-content-primary">
+                    {riskData.daily_payment_limit_cents !== null
+                      ? `$${(riskData.daily_payment_limit_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                      : "—"}
+                  </dd>
+                </div>
+              </div>
             </div>
           </dl>
         </div>

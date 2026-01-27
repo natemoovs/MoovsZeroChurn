@@ -1410,6 +1410,117 @@ async function removeMember(userId: string, operatorId: string): Promise<boolean
 }
 
 // ============================================================================
+// Risk Management Write Operations
+// ============================================================================
+
+export interface UpdateRiskFieldResult {
+  success: boolean
+  operatorId: string
+  field: string
+  newValue: number
+}
+
+/**
+ * Update an operator's instant payout limit (in cents)
+ */
+async function updateOperatorInstantPayoutLimit(
+  operatorId: string,
+  limitCents: number
+): Promise<UpdateRiskFieldResult> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.OPERATOR
+    SET INSTANT_PAYOUT_LIMIT_CENTS = ?,
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE OPERATOR_ID = ?
+  `
+
+  await executeWriteQuery(sql, [limitCents, operatorId])
+
+  return {
+    success: true,
+    operatorId,
+    field: "instant_payout_limit_cents",
+    newValue: limitCents,
+  }
+}
+
+/**
+ * Update an operator's daily payment limit (in cents)
+ */
+async function updateOperatorDailyPaymentLimit(
+  operatorId: string,
+  limitCents: number
+): Promise<UpdateRiskFieldResult> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.OPERATOR
+    SET DAILY_PAYMENT_LIMIT_CENTS = ?,
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE OPERATOR_ID = ?
+  `
+
+  await executeWriteQuery(sql, [limitCents, operatorId])
+
+  return {
+    success: true,
+    operatorId,
+    field: "daily_payment_limit_cents",
+    newValue: limitCents,
+  }
+}
+
+/**
+ * Update an operator's internal risk score
+ */
+async function updateOperatorRiskScore(
+  operatorId: string,
+  riskScore: number
+): Promise<UpdateRiskFieldResult> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.OPERATOR
+    SET RISK_SCORE = ?,
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE OPERATOR_ID = ?
+  `
+
+  await executeWriteQuery(sql, [riskScore, operatorId])
+
+  return {
+    success: true,
+    operatorId,
+    field: "risk_score",
+    newValue: riskScore,
+  }
+}
+
+export interface OperatorRiskDetails {
+  operator_id: string
+  instant_payout_limit_cents: number | null
+  daily_payment_limit_cents: number | null
+  risk_score: number | null
+}
+
+/**
+ * Get operator risk management details (payout limits, risk score)
+ */
+async function getOperatorRiskDetails(operatorId: string): Promise<OperatorRiskDetails | null> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      OPERATOR_ID as operator_id,
+      INSTANT_PAYOUT_LIMIT_CENTS as instant_payout_limit_cents,
+      DAILY_PAYMENT_LIMIT_CENTS as daily_payment_limit_cents,
+      RISK_SCORE as risk_score
+    FROM POSTGRES_SWOOP.OPERATOR
+    WHERE OPERATOR_ID = '${escapedId}'
+    LIMIT 1
+  `
+
+  const result = await executeQuery<OperatorRiskDetails>(sql)
+  return result.rows[0] || null
+}
+
+// ============================================================================
 // Disputes Data (for Risk tab analytics)
 // ============================================================================
 
@@ -1855,6 +1966,12 @@ export const snowflakeClient = {
   addOperatorMember,
   updateMemberRole,
   removeMember,
+
+  // Risk management write operations
+  updateOperatorInstantPayoutLimit,
+  updateOperatorDailyPaymentLimit,
+  updateOperatorRiskScore,
+  getOperatorRiskDetails,
 }
 
 // Default export for consistency with other integrations

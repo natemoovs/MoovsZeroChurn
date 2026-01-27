@@ -54,14 +54,30 @@
 - [x] Add bounce/block search functionality in UI
 - [x] Display suppression results with remove actions
 
-### 1.6 Customer Drill-down from Charges
+### 1.6 Risk Management Admin Actions (Admin-only)
+- [x] Create PATCH endpoint for `/api/operator-hub/[operatorId]/risk`
+- [x] Add Snowflake write queries for:
+  - [x] `updateOperatorInstantPayoutLimit` - Instant payout volume limit
+  - [x] `updateOperatorDailyPaymentLimit` - Daily payment processing limit
+  - [x] `updateOperatorRiskScore` - Internal risk score
+- [x] Add `getOperatorRiskDetails` query to fetch current values
+- [x] Add RiskUpdateModal component with:
+  - [x] Instant Payout Limit input (currency format)
+  - [x] Daily Processing Limit input (currency format)
+  - [x] Internal Risk Score input
+  - [x] Individual update buttons per field
+- [x] Add "Update Risk Details" button in Risk tab (admin-only visibility)
+- [x] Display current risk management settings in Risk Analysis card
+- [x] Protect PATCH endpoint with `requireAdmin()` middleware
+
+### 1.7 Customer Drill-down from Charges
 - [x] Create `/api/operator-hub/[operatorId]/customer/[customerId]/route.ts` API
 - [ ] Add Twilio SMS history lookup (future enhancement)
 - [ ] Add SendGrid email history lookup (future enhancement)
 - [x] Add customer detail modal/drawer in Payments tab
 - [x] Show all customer charges with summary stats
 
-### 1.7 Notion Tickets Integration
+### 1.8 Notion Tickets Integration
 - [ ] Create Notion API integration in `/lib/integrations/notion.ts`
 - [ ] Create `/api/operator-hub/[operatorId]/notion-tickets/route.ts` API
 - [ ] Add Tickets by Alert Type section
@@ -121,15 +137,16 @@
 
 ## Implementation Order (Priority)
 
-1. **Disputes Analytics** - High value, builds on existing Risk tab
-2. **Charges Table Enhancement** - Quick win, improves existing feature
-3. **SendGrid Admin Actions** - High value for ops team
-4. **Quotes Section** - Core business metric
-5. **Customer Drill-down** - Power user feature
-6. **Drivers/Vehicles Tabs** - Better organization
-7. **Sales Tools** - Nice to have
-8. **Marketing AI** - Nice to have
-9. **Notion Integration** - Nice to have
+1. **Disputes Analytics** - High value, builds on existing Risk tab ✅
+2. **Charges Table Enhancement** - Quick win, improves existing feature ✅
+3. **SendGrid Admin Actions** - High value for ops team ✅
+4. **Quotes Section** - Core business metric ✅
+5. **Customer Drill-down** - Power user feature ✅
+6. **Risk Management Admin Actions** - Admin-only risk settings ✅
+7. **Drivers/Vehicles Tabs** - Better organization (kept as sub-sections) ✅
+8. **Sales Tools** - Nice to have
+9. **Marketing AI** - Nice to have
+10. **Notion Integration** - Nice to have
 
 ---
 
