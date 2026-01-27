@@ -1499,6 +1499,18 @@ export interface OperatorRiskDetails {
   risk_score: number | null
 }
 
+export interface OperatorCoreInfo {
+  operator_id: string
+  name: string | null
+  name_slug: string | null
+  email: string | null
+  phone: string | null
+  general_email: string | null
+  terms_and_conditions_url: string | null
+  website_url: string | null
+  company_logo_url: string | null
+}
+
 /**
  * Get operator risk management details (payout limits, risk score)
  */
@@ -1517,6 +1529,32 @@ async function getOperatorRiskDetails(operatorId: string): Promise<OperatorRiskD
   `
 
   const result = await executeQuery<OperatorRiskDetails>(sql)
+  return result.rows[0] || null
+}
+
+/**
+ * Get operator core info including name_slug for booking portal URL
+ */
+async function getOperatorCoreInfo(operatorId: string): Promise<OperatorCoreInfo | null> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      OPERATOR_ID as operator_id,
+      NAME as name,
+      NAME_SLUG as name_slug,
+      EMAIL as email,
+      PHONE as phone,
+      GENERAL_EMAIL as general_email,
+      TERMS_AND_CONDITIONS_URL as terms_and_conditions_url,
+      WEBSITE_URL as website_url,
+      COMPANY_LOGO_URL as company_logo_url
+    FROM POSTGRES_SWOOP.OPERATOR
+    WHERE OPERATOR_ID = '${escapedId}'
+    LIMIT 1
+  `
+
+  const result = await executeQuery<OperatorCoreInfo>(sql)
   return result.rows[0] || null
 }
 
@@ -1972,6 +2010,9 @@ export const snowflakeClient = {
   updateOperatorDailyPaymentLimit,
   updateOperatorRiskScore,
   getOperatorRiskDetails,
+
+  // Operator core info (for booking portal URL)
+  getOperatorCoreInfo,
 }
 
 // Default export for consistency with other integrations
