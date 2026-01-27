@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { lago } from "@/lib/integrations/lago"
-import { snowflakeClient } from "@/lib/integrations/snowflake"
+import { n8nClient } from "@/lib/integrations/n8n"
 import { requireAdmin } from "@/lib/auth/api-middleware"
 
 /**
@@ -264,21 +264,21 @@ export async function POST(
       }
     }
 
-    // DUAL-WRITE: Update Moovs production database (subscription_log + operator.plan)
-    // This syncs with what Retool was doing: INSERT subscription_log + UPDATE operator.plan
+    // Sync to database via N8N webhook (subscription_log + operator.plan)
+    // N8N handles the Snowflake writes using its configured credentials
     let dbSyncResult = null
-    if (subscription && snowflakeClient.isWriteEnabled()) {
+    if (subscription && n8nClient.isConfigured()) {
       try {
-        dbSyncResult = await snowflakeClient.handleSubscriptionChange({
+        dbSyncResult = await n8nClient.syncSubscriptionCreate({
           operatorId,
-          newPlanCode: planCode,
+          planCode,
+          overrideAmountCents:
+            overrideAmountCents !== undefined ? Number(overrideAmountCents) : undefined,
           notes: `Created via Operator Hub. Custom price: ${overrideAmountCents ? `$${(overrideAmountCents / 100).toFixed(2)}` : "standard"}`,
         })
-        console.log(
-          `[Subscription] DB sync successful for ${operatorId}: plan=${dbSyncResult.plan}`
-        )
+        console.log(`[Subscription] N8N sync successful for ${operatorId}: ${planCode}`)
       } catch (dbError) {
-        console.error("[Subscription] DB sync failed (Lago succeeded):", dbError)
+        console.error("[Subscription] N8N sync failed (Lago succeeded):", dbError)
         // Don't fail the operation - Lago is source of truth, DB sync is supplementary
       }
     }
@@ -306,7 +306,7 @@ export async function POST(
             amountCents: appliedAddOn.amount_cents,
           }
         : null,
-      dbSync: dbSyncResult ? { success: true, plan: dbSyncResult.plan } : null,
+      dbSync: dbSyncResult ? { success: true } : null,
     })
   } catch (error) {
     console.error("Failed to create subscription:", error)
@@ -369,21 +369,23 @@ export async function PATCH(
       overrideAmountCurrency,
     })
 
-    // DUAL-WRITE: Update Moovs production database (subscription_log + operator.plan)
+    // Sync to database via N8N webhook (subscription_log + operator.plan)
     let dbSyncResult = null
-    if (subscription && snowflakeClient.isWriteEnabled()) {
+    if (subscription && n8nClient.isConfigured()) {
       try {
-        dbSyncResult = await snowflakeClient.handleSubscriptionChange({
+        dbSyncResult = await n8nClient.syncSubscriptionChange({
           operatorId,
           newPlanCode: planCode,
-          previousPlanCode, // Close the previous plan if provided
+          previousPlanCode,
+          overrideAmountCents:
+            overrideAmountCents !== undefined ? Number(overrideAmountCents) : undefined,
           notes: `Plan changed via Operator Hub. ${previousPlanCode ? `From: ${previousPlanCode}. ` : ""}Custom price: ${overrideAmountCents ? `$${(overrideAmountCents / 100).toFixed(2)}` : "standard"}`,
         })
         console.log(
-          `[Subscription] Plan change DB sync successful for ${operatorId}: ${previousPlanCode || "unknown"} -> ${dbSyncResult.plan}`
+          `[Subscription] N8N sync successful for ${operatorId}: ${previousPlanCode || "unknown"} -> ${planCode}`
         )
       } catch (dbError) {
-        console.error("[Subscription] Plan change DB sync failed (Lago succeeded):", dbError)
+        console.error("[Subscription] N8N sync failed (Lago succeeded):", dbError)
         // Don't fail the operation - Lago is source of truth
       }
     }
@@ -399,7 +401,7 @@ export async function PATCH(
             status: subscription.status,
           }
         : null,
-      dbSync: dbSyncResult ? { success: true, plan: dbSyncResult.plan } : null,
+      dbSync: dbSyncResult ? { success: true } : null,
     })
   } catch (error) {
     console.error("Failed to update subscription:", error)
@@ -447,28 +449,20 @@ export async function DELETE(
 
     const subscription = await lago.cancelSubscription(subscriptionId)
 
-    // DUAL-WRITE: Update Moovs production database
+    // Sync cancellation to database via N8N webhook
     // Note: Lago cancellation is "end of billing period" so operator stays on plan until then
-    // But we track the cancellation event in the log
     let dbSyncResult = null
-    if (subscription && snowflakeClient.isWriteEnabled()) {
+    if (subscription && n8nClient.isConfigured()) {
       try {
-        // Don't set plan to 'free' immediately - Lago handles billing period end
-        // Just log the cancellation for tracking
-        await snowflakeClient.addSubscriptionLogEntry({
+        dbSyncResult = await n8nClient.syncSubscriptionCancel({
           operatorId,
-          lagoPlanCode: planCode || subscription.plan_code || "unknown",
+          planCode: planCode || subscription.plan_code || undefined,
+          immediate: false, // Lago cancels at end of billing period
           notes: `Cancelled via Operator Hub. Will end at billing period. Subscription ID: ${subscriptionId}`,
         })
-        // Mark it as removed immediately (it's a cancellation record)
-        await snowflakeClient.removeSubscriptionLogEntry(
-          operatorId,
-          planCode || subscription.plan_code
-        )
-        dbSyncResult = { success: true }
-        console.log(`[Subscription] Cancellation DB sync successful for ${operatorId}`)
+        console.log(`[Subscription] N8N cancellation sync successful for ${operatorId}`)
       } catch (dbError) {
-        console.error("[Subscription] Cancellation DB sync failed (Lago succeeded):", dbError)
+        console.error("[Subscription] N8N cancellation sync failed (Lago succeeded):", dbError)
         // Don't fail the operation - Lago is source of truth
       }
     }
