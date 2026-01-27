@@ -13,7 +13,7 @@ import {
   Search,
   ChevronRight,
   Clock,
-  Zap
+  Zap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -145,8 +145,8 @@ export default function WinbackPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="border-border-default bg-bg-primary rounded-lg border p-4">
             <div className="flex items-center gap-3">
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-2">
-                <RotateCcw className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <div className="bg-bg-tertiary rounded-lg p-2">
+                <RotateCcw className="text-content-secondary h-5 w-5" />
               </div>
               <div>
                 <p className="text-content-secondary text-sm">Total Churned</p>
@@ -183,8 +183,8 @@ export default function WinbackPage() {
 
           <div className="border-border-default bg-bg-primary rounded-lg border p-4">
             <div className="flex items-center gap-3">
-              <div className="bg-purple-100 dark:bg-purple-900/30 rounded-lg p-2">
-                <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <div className="bg-accent-100 dark:bg-accent-900/30 rounded-lg p-2">
+                <Zap className="text-accent-600 dark:text-accent-400 h-5 w-5" />
               </div>
               <div>
                 <p className="text-content-secondary text-sm">High Value ($100+)</p>
@@ -219,13 +219,13 @@ export default function WinbackPage() {
         </div>
 
         <div className="relative">
-          <Search className="text-content-tertiary absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <Search className="text-content-tertiary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by name, domain, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border-border-default bg-bg-secondary text-content-primary placeholder:text-content-tertiary w-full rounded-lg border py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-80"
+            className="border-border-default bg-bg-secondary text-content-primary placeholder:text-content-tertiary focus:ring-primary-500 w-full rounded-lg border py-2 pr-4 pl-10 text-sm focus:ring-2 focus:outline-none sm:w-80"
           />
         </div>
       </div>
@@ -237,39 +237,40 @@ export default function WinbackPage() {
             <thead>
               <tr className="border-border-default bg-bg-secondary border-b">
                 <th
-                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase"
                   onClick={() => handleSort("name")}
                 >
                   Company {sortField === "name" && (sortOrder === "asc" ? "↑" : "↓")}
                 </th>
                 <th
-                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase"
                   onClick={() => handleSort("mrr")}
                 >
                   Lost MRR {sortField === "mrr" && (sortOrder === "asc" ? "↑" : "↓")}
                 </th>
                 <th
-                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase"
                   onClick={() => handleSort("daysSinceChurn")}
                 >
                   Days Since {sortField === "daysSinceChurn" && (sortOrder === "asc" ? "↑" : "↓")}
                 </th>
                 <th
-                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase"
                   onClick={() => handleSort("totalTrips")}
                 >
                   Total Usage {sortField === "totalTrips" && (sortOrder === "asc" ? "↑" : "↓")}
                 </th>
                 <th
-                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  className="text-content-secondary cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase"
                   onClick={() => handleSort("subscriptionLifetimeDays")}
                 >
-                  Tenure {sortField === "subscriptionLifetimeDays" && (sortOrder === "asc" ? "↑" : "↓")}
+                  Tenure{" "}
+                  {sortField === "subscriptionLifetimeDays" && (sortOrder === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="text-content-secondary px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                <th className="text-content-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Contact
                 </th>
-                <th className="text-content-secondary px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">
+                <th className="text-content-secondary px-4 py-3 text-right text-xs font-medium tracking-wider uppercase">
                   Actions
                 </th>
               </tr>
@@ -285,15 +286,12 @@ export default function WinbackPage() {
                 </tr>
               ) : (
                 filteredAccounts.map((account) => (
-                  <tr
-                    key={account.id}
-                    className="hover:bg-bg-secondary transition-colors"
-                  >
+                  <tr key={account.id} className="hover:bg-bg-secondary transition-colors">
                     <td className="px-4 py-3">
                       <div>
                         <Link
                           href={`/accounts/${account.hubspotId}`}
-                          className="text-content-primary font-medium hover:text-blue-600"
+                          className="text-content-primary hover:text-primary-600 font-medium"
                         >
                           {account.name}
                         </Link>
@@ -301,7 +299,7 @@ export default function WinbackPage() {
                           <p className="text-content-tertiary text-xs">{account.domain}</p>
                         )}
                         {account.plan && (
-                          <span className="text-content-secondary mt-1 inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-800">
+                          <span className="text-content-secondary bg-bg-tertiary mt-1 inline-block rounded px-1.5 py-0.5 text-xs">
                             {account.plan}
                           </span>
                         )}
@@ -318,12 +316,14 @@ export default function WinbackPage() {
                     </td>
                     <td className="px-4 py-3">
                       {account.daysSinceChurn !== null ? (
-                        <span className={cn(
-                          "font-medium",
-                          account.daysSinceChurn <= 30
-                            ? "text-warning-600 dark:text-warning-400"
-                            : "text-content-secondary"
-                        )}>
+                        <span
+                          className={cn(
+                            "font-medium",
+                            account.daysSinceChurn <= 30
+                              ? "text-warning-600 dark:text-warning-400"
+                              : "text-content-secondary"
+                          )}
+                        >
                           {account.daysSinceChurn}d ago
                         </span>
                       ) : (
@@ -394,8 +394,8 @@ export default function WinbackPage() {
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="bg-blue-100 dark:bg-blue-900/30 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-              <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <div className="bg-info-100 dark:bg-info-900/30 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+              <MessageSquare className="text-info-600 dark:text-info-400 h-4 w-4" />
             </div>
             <div>
               <p className="text-content-primary text-sm font-medium">Personalize</p>
@@ -405,8 +405,8 @@ export default function WinbackPage() {
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="bg-purple-100 dark:bg-purple-900/30 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-              <Zap className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <div className="bg-accent-100 dark:bg-accent-900/30 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+              <Zap className="text-accent-600 dark:text-accent-400 h-4 w-4" />
             </div>
             <div>
               <p className="text-content-primary text-sm font-medium">Offer Value</p>

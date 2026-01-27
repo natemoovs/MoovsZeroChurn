@@ -90,7 +90,7 @@ export function CompanySelect({
       yellow: "bg-warning-500",
       red: "bg-error-500",
     }
-    return <span className={`h-2 w-2 rounded-full ${colors[score] || "bg-gray-400"}`} />
+    return <span className={`h-2 w-2 rounded-full ${colors[score] || "bg-content-tertiary"}`} />
   }
 
   // If config check failed, just show a regular input
