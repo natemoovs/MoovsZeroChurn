@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       location: c.city && c.state ? `${c.city}, ${c.state}` : c.state || c.city || null,
       csm: c.ownerName,
       lastSynced: c.lastSyncedAt,
-      matchType: "operator" as const,
+      matchType: "operator" as "operator" | "trip" | "quote" | "charge" | "customer",
       matchField: null as string | null,
       matchValue: null as string | null,
       matchInfo: null as string | null,
