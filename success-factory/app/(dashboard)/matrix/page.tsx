@@ -34,6 +34,26 @@ interface OperatorResult {
   location: string | null
   csm: string | null
   lastSynced: string | null
+  // Expanded search fields
+  matchType?: "operator" | "trip" | "quote" | "charge" | "customer"
+  matchField?: string | null
+  matchValue?: string | null
+  matchInfo?: string | null
+}
+
+function getMatchTypeLabel(matchType: string | undefined) {
+  switch (matchType) {
+    case "trip":
+      return { label: "Trip", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" }
+    case "quote":
+      return { label: "Quote", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" }
+    case "charge":
+      return { label: "Charge", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" }
+    case "customer":
+      return { label: "Customer", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" }
+    default:
+      return null
+  }
 }
 
 type SortField = "name" | "mrr" | "totalTrips" | "numericScore"
@@ -109,7 +129,8 @@ export default function OperatorHubPage() {
     setHasSearched(true)
 
     try {
-      const res = await fetch(`/api/customer/search?q=${encodeURIComponent(query)}&limit=50`)
+      // Use expanded search to include trips, quotes, charges, customers
+      const res = await fetch(`/api/customer/search?q=${encodeURIComponent(query)}&limit=50&expanded=true`)
       const data = await res.json()
       setResults(data.results || [])
     } catch (error) {
@@ -191,7 +212,7 @@ export default function OperatorHubPage() {
         <div className="mb-6">
           <h1 className="text-content-primary text-2xl font-bold sm:text-3xl">Operator Hub</h1>
           <p className="text-content-secondary mt-1">
-            Search operators by name, operator ID, Stripe account, domain, or location
+            Search operators by name, trip ID, quote ID, charge ID, customer email, and more
           </p>
         </div>
 
@@ -207,7 +228,7 @@ export default function OperatorHubPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by company name, operator ID, Stripe account ID, domain, or city/state..."
+              placeholder="Search by name, trip ID, quote ID, charge ID, customer email, phone..."
               className="input-sf h-12 w-full !pr-4 !pl-12 text-base"
               autoFocus
             />
@@ -218,7 +239,7 @@ export default function OperatorHubPage() {
             )}
           </div>
           <p className="text-content-tertiary mt-2 text-xs">
-            Results update as you type. Search is case-insensitive with partial matching.
+            Searches operators, trips, quotes, charges, and customers. Results update as you type.
           </p>
         </div>
 
@@ -230,8 +251,8 @@ export default function OperatorHubPage() {
                 <Building2 className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
                 <h3 className="text-content-primary text-lg font-medium">Search for Operators</h3>
                 <p className="text-content-secondary mt-1 max-w-sm">
-                  Enter a search term above to find operators by company name, operator ID, Stripe
-                  account, domain, or location.
+                  Search by company name, trip ID, quote ID, charge ID, customer email, phone number,
+                  Stripe account, or location.
                 </p>
               </div>
             </div>
@@ -343,9 +364,29 @@ export default function OperatorHubPage() {
                               <Building2 className="text-content-tertiary h-5 w-5" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-content-primary truncate font-medium">
-                                {result.name}
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-content-primary truncate font-medium">
+                                  {result.name}
+                                </p>
+                                {/* Show match type badge for expanded search results */}
+                                {result.matchType && result.matchType !== "operator" && (
+                                  <span
+                                    className={cn(
+                                      "shrink-0 rounded px-1.5 py-0.5 text-xs font-medium",
+                                      getMatchTypeLabel(result.matchType)?.color
+                                    )}
+                                  >
+                                    {getMatchTypeLabel(result.matchType)?.label}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Show match info for expanded results */}
+                              {result.matchType && result.matchType !== "operator" && result.matchValue && (
+                                <p className="text-content-secondary mt-0.5 truncate text-xs">
+                                  {result.matchField}: <span className="font-mono">{result.matchValue}</span>
+                                  {result.matchInfo && <span className="text-content-tertiary ml-1">({result.matchInfo})</span>}
+                                </p>
+                              )}
                               {result.domain && (
                                 <a
                                   href={`https://${result.domain}`}
