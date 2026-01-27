@@ -24,7 +24,11 @@ export async function GET(
       lago.listPlans(),
     ])
 
+    // Create a map of plans for quick lookup
+    const planMap = new Map(plansResult.plans.map((p) => [p.code, p]))
+
     const activeSubscription = subscriptions.find((s) => s.status === "active")
+    const activePlan = activeSubscription ? planMap.get(activeSubscription.plan_code) : null
 
     return NextResponse.json({
       operatorId,
@@ -33,34 +37,46 @@ export async function GET(
             id: activeSubscription.external_id,
             lagoId: activeSubscription.lago_id,
             planCode: activeSubscription.plan_code,
-            planName: activeSubscription.plan?.name,
+            planName: activeSubscription.plan?.name || activePlan?.name,
             status: activeSubscription.status,
             startedAt: activeSubscription.started_at,
             billingTime: activeSubscription.billing_time,
-            interval: activeSubscription.plan?.interval,
-            amountCents: activeSubscription.plan?.amount_cents,
-            currency: activeSubscription.plan?.amount_currency,
+            interval: activeSubscription.plan?.interval || activePlan?.interval,
+            amountCents: activeSubscription.plan?.amount_cents || activePlan?.amount_cents,
+            currency: activeSubscription.plan?.amount_currency || activePlan?.amount_currency,
           }
         : null,
-      allSubscriptions: subscriptions.map((s) => ({
-        id: s.external_id,
-        lagoId: s.lago_id,
-        planCode: s.plan_code,
-        planName: s.plan?.name,
-        status: s.status,
-        startedAt: s.started_at,
-        endingAt: s.ending_at || null,
-        canceledAt: s.canceled_at || null,
-        terminatedAt: s.terminated_at || null,
-        billingTime: s.billing_time,
-        // Pricing - use override if exists, otherwise use plan pricing
-        amountCents: s.plan_overrides?.amount_cents ?? s.plan?.amount_cents ?? null,
-        amountCurrency: s.plan_overrides?.amount_currency ?? s.plan?.amount_currency ?? null,
-        interval: s.plan?.interval ?? null,
-        hasOverride: !!s.plan_overrides?.amount_cents,
-        // Original plan price for reference when overridden
-        originalAmountCents: s.plan_overrides?.amount_cents ? s.plan?.amount_cents : null,
-      })),
+      allSubscriptions: subscriptions.map((s) => {
+        const plan = planMap.get(s.plan_code)
+        // Get pricing: prefer override, then subscription's plan, then looked-up plan
+        const amountCents =
+          s.plan_overrides?.amount_cents ?? s.plan?.amount_cents ?? plan?.amount_cents ?? null
+        const amountCurrency =
+          s.plan_overrides?.amount_currency ??
+          s.plan?.amount_currency ??
+          plan?.amount_currency ??
+          null
+        const hasOverride = !!s.plan_overrides?.amount_cents
+
+        return {
+          id: s.external_id,
+          lagoId: s.lago_id,
+          planCode: s.plan_code,
+          planName: s.plan?.name || plan?.name || null,
+          status: s.status,
+          startedAt: s.started_at,
+          endingAt: s.ending_at || null,
+          canceledAt: s.canceled_at || null,
+          terminatedAt: s.terminated_at || null,
+          billingTime: s.billing_time,
+          amountCents,
+          amountCurrency,
+          interval: s.plan?.interval || plan?.interval || null,
+          hasOverride,
+          // Original plan price for reference when overridden
+          originalAmountCents: hasOverride ? (plan?.amount_cents ?? null) : null,
+        }
+      }),
       availablePlans: plansResult.plans.map((p) => ({
         code: p.code,
         name: p.name,
