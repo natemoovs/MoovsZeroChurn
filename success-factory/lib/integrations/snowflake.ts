@@ -104,6 +104,22 @@ export interface PlatformCharge {
   net_amount: number
   description: string | null
   customer_email: string | null
+  // Extended fields for Retool parity
+  customer_id: string | null
+  total_dollars_refunded: number | null
+  billing_detail_name: string | null
+  outcome_network_status: string | null
+  outcome_reason: string | null
+  outcome_seller_message: string | null
+  outcome_risk_level: string | null
+  outcome_risk_score: number | null
+  card_id: string | null
+  calculated_statement_descriptor: string | null
+  dispute_id: string | null
+  dispute_status: string | null
+  disputed_amount: number | null
+  dispute_reason: string | null
+  dispute_date: string | null
 }
 
 export interface ReservationOverview {
@@ -277,6 +293,7 @@ async function getOperatorById(operatorId: string): Promise<OperatorDetails | nu
 
 /**
  * Get platform charges for an operator (replaces Retool's charges view)
+ * Includes extended fields for Retool parity (risk scores, disputes, refunds, etc.)
  */
 async function getOperatorPlatformCharges(
   operatorId: string,
@@ -295,7 +312,22 @@ async function getOperatorPlatformCharges(
       COALESCE(FEE_AMOUNT, 0) as fee_amount,
       COALESCE(NET_AMOUNT, 0) as net_amount,
       DESCRIPTION as description,
-      CUSTOMER_EMAIL as customer_email
+      CUSTOMER_EMAIL as customer_email,
+      CUSTOMER_ID as customer_id,
+      TOTAL_DOLLARS_REFUNDED as total_dollars_refunded,
+      BILLING_DETAIL_NAME as billing_detail_name,
+      OUTCOME_NETWORK_STATUS as outcome_network_status,
+      OUTCOME_REASON as outcome_reason,
+      OUTCOME_SELLER_MESSAGE as outcome_seller_message,
+      OUTCOME_RISK_LEVEL as outcome_risk_level,
+      OUTCOME_RISK_SCORE as outcome_risk_score,
+      CARD_ID as card_id,
+      CALCULATED_STATEMENT_DESCRIPTOR as calculated_statement_descriptor,
+      DISPUTE_ID as dispute_id,
+      DISPUTE_STATUS as dispute_status,
+      DISPUTED_AMOUNT as disputed_amount,
+      DISPUTE_REASON as dispute_reason,
+      DISPUTE_DATE as dispute_date
     FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
     WHERE OPERATOR_ID = '${escapedId}'
     ORDER BY CREATED_DATE DESC
@@ -621,6 +653,132 @@ async function getOperatorVehicles(operatorId: string): Promise<OperatorVehicle[
   `
 
   const result = await executeQuery<OperatorVehicle>(sql)
+  return result.rows
+}
+
+// ============================================================================
+// Driver Performance & Vehicle Utilization
+// ============================================================================
+
+export interface DriverPerformance {
+  driver_id: string
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  status: string
+  total_trips: number
+  completed_trips: number
+  trips_last_30_days: number
+  total_revenue: number | null
+  last_trip_date: string | null
+  completion_rate: number | null
+}
+
+/**
+ * Get driver performance metrics for an operator
+ */
+async function getDriverPerformance(operatorId: string): Promise<DriverPerformance[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    WITH driver_stats AS (
+      SELECT
+        d.driver_id,
+        d.first_name,
+        d.last_name,
+        d.email,
+        CASE
+          WHEN d.removed_at IS NOT NULL THEN 'removed'
+          WHEN d.deactivated_at IS NOT NULL THEN 'inactive'
+          ELSE 'active'
+        END as status,
+        COUNT(t.trip_id) as total_trips,
+        COUNT(CASE WHEN t.status = 'completed' THEN 1 END) as completed_trips,
+        COUNT(CASE WHEN t.created_at >= DATEADD('day', -30, CURRENT_DATE) THEN 1 END) as trips_last_30_days,
+        SUM(r.total_amount) as total_revenue,
+        MAX(t.completed_at) as last_trip_date
+      FROM POSTGRES_SWOOP.DRIVER d
+      LEFT JOIN SWOOP.TRIP t ON d.driver_id = t.driver_id
+      LEFT JOIN SWOOP.REQUEST r ON t.request_id = r.request_id AND r.operator_id = d.operator_id
+      WHERE d.operator_id = '${escapedId}'
+      GROUP BY d.driver_id, d.first_name, d.last_name, d.email, d.removed_at, d.deactivated_at
+    )
+    SELECT
+      driver_id,
+      first_name,
+      last_name,
+      email,
+      status,
+      total_trips,
+      completed_trips,
+      trips_last_30_days,
+      total_revenue,
+      last_trip_date,
+      CASE WHEN total_trips > 0 THEN ROUND((completed_trips::FLOAT / total_trips) * 100, 1) ELSE NULL END as completion_rate
+    FROM driver_stats
+    ORDER BY total_trips DESC, last_trip_date DESC
+    LIMIT 100
+  `
+
+  const result = await executeQuery<DriverPerformance>(sql)
+  return result.rows
+}
+
+export interface VehicleUtilization {
+  vehicle_id: string
+  vehicle_name: string | null
+  vehicle_type: string | null
+  license_plate: string | null
+  capacity: number | null
+  total_trips: number
+  trips_last_30_days: number
+  total_revenue: number | null
+  last_trip_date: string | null
+  days_since_last_trip: number | null
+}
+
+/**
+ * Get vehicle utilization stats for an operator
+ */
+async function getVehicleUtilization(operatorId: string): Promise<VehicleUtilization[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    WITH vehicle_stats AS (
+      SELECT
+        v.vehicle_id,
+        v.name as vehicle_name,
+        v.vehicle_type,
+        v.license_plate,
+        v.capacity,
+        COUNT(t.trip_id) as total_trips,
+        COUNT(CASE WHEN t.created_at >= DATEADD('day', -30, CURRENT_DATE) THEN 1 END) as trips_last_30_days,
+        SUM(r.total_amount) as total_revenue,
+        MAX(t.completed_at) as last_trip_date
+      FROM SWOOP.VEHICLE v
+      LEFT JOIN SWOOP.TRIP t ON v.vehicle_id = t.vehicle_id
+      LEFT JOIN SWOOP.REQUEST r ON t.request_id = r.request_id AND r.operator_id = v.operator_id
+      WHERE v.operator_id = '${escapedId}'
+        AND v.removed_at IS NULL
+      GROUP BY v.vehicle_id, v.name, v.vehicle_type, v.license_plate, v.capacity
+    )
+    SELECT
+      vehicle_id,
+      vehicle_name,
+      vehicle_type,
+      license_plate,
+      capacity,
+      total_trips,
+      trips_last_30_days,
+      total_revenue,
+      last_trip_date,
+      DATEDIFF('day', last_trip_date, CURRENT_DATE) as days_since_last_trip
+    FROM vehicle_stats
+    ORDER BY total_trips DESC, last_trip_date DESC NULLS LAST
+    LIMIT 100
+  `
+
+  const result = await executeQuery<VehicleUtilization>(sql)
   return result.rows
 }
 
@@ -1252,6 +1410,497 @@ async function removeMember(userId: string, operatorId: string): Promise<boolean
 }
 
 // ============================================================================
+// Risk Management Write Operations
+// ============================================================================
+
+export interface UpdateRiskFieldResult {
+  success: boolean
+  operatorId: string
+  field: string
+  newValue: number
+}
+
+/**
+ * Update an operator's instant payout limit (in cents)
+ */
+async function updateOperatorInstantPayoutLimit(
+  operatorId: string,
+  limitCents: number
+): Promise<UpdateRiskFieldResult> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.OPERATOR
+    SET INSTANT_PAYOUT_LIMIT_CENTS = ?,
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE OPERATOR_ID = ?
+  `
+
+  await executeWriteQuery(sql, [limitCents, operatorId])
+
+  return {
+    success: true,
+    operatorId,
+    field: "instant_payout_limit_cents",
+    newValue: limitCents,
+  }
+}
+
+/**
+ * Update an operator's daily payment limit (in cents)
+ */
+async function updateOperatorDailyPaymentLimit(
+  operatorId: string,
+  limitCents: number
+): Promise<UpdateRiskFieldResult> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.OPERATOR
+    SET DAILY_PAYMENT_LIMIT_CENTS = ?,
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE OPERATOR_ID = ?
+  `
+
+  await executeWriteQuery(sql, [limitCents, operatorId])
+
+  return {
+    success: true,
+    operatorId,
+    field: "daily_payment_limit_cents",
+    newValue: limitCents,
+  }
+}
+
+/**
+ * Update an operator's internal risk score
+ */
+async function updateOperatorRiskScore(
+  operatorId: string,
+  riskScore: number
+): Promise<UpdateRiskFieldResult> {
+  const sql = `
+    UPDATE POSTGRES_SWOOP.OPERATOR
+    SET RISK_SCORE = ?,
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE OPERATOR_ID = ?
+  `
+
+  await executeWriteQuery(sql, [riskScore, operatorId])
+
+  return {
+    success: true,
+    operatorId,
+    field: "risk_score",
+    newValue: riskScore,
+  }
+}
+
+export interface OperatorRiskDetails {
+  operator_id: string
+  instant_payout_limit_cents: number | null
+  daily_payment_limit_cents: number | null
+  risk_score: number | null
+}
+
+/**
+ * Get operator risk management details (payout limits, risk score)
+ */
+async function getOperatorRiskDetails(operatorId: string): Promise<OperatorRiskDetails | null> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      OPERATOR_ID as operator_id,
+      INSTANT_PAYOUT_LIMIT_CENTS as instant_payout_limit_cents,
+      DAILY_PAYMENT_LIMIT_CENTS as daily_payment_limit_cents,
+      RISK_SCORE as risk_score
+    FROM POSTGRES_SWOOP.OPERATOR
+    WHERE OPERATOR_ID = '${escapedId}'
+    LIMIT 1
+  `
+
+  const result = await executeQuery<OperatorRiskDetails>(sql)
+  return result.rows[0] || null
+}
+
+// ============================================================================
+// Disputes Data (for Risk tab analytics)
+// ============================================================================
+
+export interface DisputeRecord {
+  dispute_id: string
+  charge_id: string
+  stripe_account_id: string
+  dispute_status: string
+  dispute_reason: string | null
+  disputed_amount: number
+  dispute_date: string
+  created_date: string
+  outcome_risk_level: string | null
+  outcome_risk_score: number | null
+  customer_id: string | null
+  billing_detail_name: string | null
+}
+
+export interface DisputesSummary {
+  total_disputes: number
+  total_disputed_amount: number
+  disputes_by_status: { status: string; count: number }[]
+  disputes_by_reason: { reason: string; count: number }[]
+  disputes_by_risk_level: { risk_level: string; count: number }[]
+  disputes_over_time: { date: string; count: number }[]
+}
+
+/**
+ * Get all disputed charges for an operator (by Stripe account ID)
+ */
+async function getOperatorDisputes(stripeAccountId: string): Promise<DisputeRecord[]> {
+  const escapedId = stripeAccountId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      DISPUTE_ID as dispute_id,
+      CHARGE_ID as charge_id,
+      STRIPE_ACCOUNT_ID as stripe_account_id,
+      DISPUTE_STATUS as dispute_status,
+      DISPUTE_REASON as dispute_reason,
+      DISPUTED_AMOUNT as disputed_amount,
+      DISPUTE_DATE as dispute_date,
+      CREATED_DATE as created_date,
+      OUTCOME_RISK_LEVEL as outcome_risk_level,
+      OUTCOME_RISK_SCORE as outcome_risk_score,
+      CUSTOMER_ID as customer_id,
+      BILLING_DETAIL_NAME as billing_detail_name
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+    ORDER BY DISPUTE_DATE DESC NULLS LAST, CREATED_DATE DESC
+    LIMIT 200
+  `
+
+  const result = await executeQuery<DisputeRecord>(sql)
+  return result.rows
+}
+
+/**
+ * Get disputes summary with aggregated data for charts
+ */
+async function getOperatorDisputesSummary(stripeAccountId: string): Promise<DisputesSummary> {
+  const escapedId = stripeAccountId.replace(/'/g, "''")
+
+  // Get total counts
+  const totalsSql = `
+    SELECT
+      COUNT(DISTINCT DISPUTE_ID) as total_disputes,
+      COALESCE(SUM(DISPUTED_AMOUNT), 0) as total_disputed_amount
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+  `
+
+  // Get disputes by status
+  const byStatusSql = `
+    SELECT
+      COALESCE(DISPUTE_STATUS, 'unknown') as status,
+      COUNT(DISTINCT DISPUTE_ID) as count
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+    GROUP BY DISPUTE_STATUS
+    ORDER BY count DESC
+  `
+
+  // Get disputes by reason
+  const byReasonSql = `
+    SELECT
+      COALESCE(DISPUTE_REASON, 'unknown') as reason,
+      COUNT(DISTINCT DISPUTE_ID) as count
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+    GROUP BY DISPUTE_REASON
+    ORDER BY count DESC
+  `
+
+  // Get disputes by risk level
+  const byRiskSql = `
+    SELECT
+      COALESCE(OUTCOME_RISK_LEVEL, 'unknown') as risk_level,
+      COUNT(DISTINCT DISPUTE_ID) as count
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+    GROUP BY OUTCOME_RISK_LEVEL
+    ORDER BY count DESC
+  `
+
+  // Get disputes over time (last 12 months)
+  const overTimeSql = `
+    SELECT
+      TO_VARCHAR(DATE_TRUNC('month', COALESCE(DISPUTE_DATE, CREATED_DATE)), 'YYYY-MM') as date,
+      COUNT(DISTINCT DISPUTE_ID) as count
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+      AND COALESCE(DISPUTE_DATE, CREATED_DATE) >= DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY DATE_TRUNC('month', COALESCE(DISPUTE_DATE, CREATED_DATE))
+    ORDER BY date ASC
+  `
+
+  // Execute all queries in parallel
+  const [totalsResult, byStatusResult, byReasonResult, byRiskResult, overTimeResult] =
+    await Promise.all([
+      executeQuery<{ total_disputes: number; total_disputed_amount: number }>(totalsSql),
+      executeQuery<{ status: string; count: number }>(byStatusSql),
+      executeQuery<{ reason: string; count: number }>(byReasonSql),
+      executeQuery<{ risk_level: string; count: number }>(byRiskSql),
+      executeQuery<{ date: string; count: number }>(overTimeSql),
+    ])
+
+  const totals = totalsResult.rows[0] || { total_disputes: 0, total_disputed_amount: 0 }
+
+  return {
+    total_disputes: totals.total_disputes,
+    total_disputed_amount: totals.total_disputed_amount,
+    disputes_by_status: byStatusResult.rows,
+    disputes_by_reason: byReasonResult.rows,
+    disputes_by_risk_level: byRiskResult.rows,
+    disputes_over_time: overTimeResult.rows,
+  }
+}
+
+// ============================================================================
+// Quotes Data (for Quotes section)
+// ============================================================================
+
+export interface QuoteRecord {
+  request_id: string
+  order_number: string | null
+  stage: string
+  order_type: string | null
+  total_amount: number | null
+  created_at: string
+  pickup_date: string | null
+  customer_name: string | null
+  customer_email: string | null
+  pickup_address: string | null
+  dropoff_address: string | null
+  vehicle_type: string | null
+}
+
+export interface QuotesSummary {
+  total_quotes: number
+  total_quotes_amount: number
+  total_reservations: number
+  total_reservations_amount: number
+  conversion_rate: number
+  quotes_by_month: Array<{ month: string; quotes: number; reservations: number; amount: number }>
+}
+
+/**
+ * Get quotes and reservations for an operator
+ */
+async function getOperatorQuotes(operatorId: string, limit = 100): Promise<QuoteRecord[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      r.REQUEST_ID as request_id,
+      r.ORDER_NUMBER as order_number,
+      r.STAGE as stage,
+      r.ORDER_TYPE as order_type,
+      (COALESCE(rt.PRICE, 0) +
+       COALESCE(rt.DRIVER_GRATUITY, 0) +
+       COALESCE(rt.TAX_AMT, 0) +
+       COALESCE(rt.TOLLS_AMT, 0) +
+       COALESCE(rt.BASE_RATE_AMT, 0) -
+       COALESCE(rt.PROMO_DISCOUNT_AMT, 0)) / 100 as total_amount,
+      r.CREATED_AT as created_at,
+      t.PICKUP_DATE_TIME as pickup_date,
+      CONCAT(c.FIRST_NAME, ' ', c.LAST_NAME) as customer_name,
+      c.EMAIL as customer_email,
+      ps.ADDRESS as pickup_address,
+      ds.ADDRESS as dropoff_address,
+      v.VEHICLE_TYPE as vehicle_type
+    FROM SWOOP.REQUEST r
+    LEFT JOIN SWOOP.TRIP t ON r.REQUEST_ID = t.REQUEST_ID
+    LEFT JOIN SWOOP.ROUTE rt ON t.TRIP_ID = rt.TRIP_ID
+    LEFT JOIN SWOOP.CONTACT c ON r.BOOKER_ID = c.CONTACT_ID
+    LEFT JOIN SWOOP.STOP ps ON r.PICKUP_STOP_ID = ps.STOP_ID
+    LEFT JOIN SWOOP.STOP ds ON r.DROPOFF_STOP_ID = ds.STOP_ID
+    LEFT JOIN SWOOP.VEHICLE v ON t.VEHICLE_ID = v.VEHICLE_ID
+    WHERE r.OPERATOR_ID = '${escapedId}'
+      AND r.REMOVED_AT IS NULL
+      AND (LOWER(r.STAGE) LIKE '%quote%' OR LOWER(r.STAGE) LIKE '%reservation%')
+    ORDER BY r.CREATED_AT DESC
+    LIMIT ${limit}
+  `
+
+  const result = await executeQuery<QuoteRecord>(sql)
+  return result.rows
+}
+
+/**
+ * Get quotes summary with conversion metrics
+ */
+async function getOperatorQuotesSummary(operatorId: string): Promise<QuotesSummary> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  // Get total counts and amounts
+  const totalsSql = `
+    SELECT
+      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%quote%' THEN 1 END) as total_quotes,
+      COALESCE(SUM(CASE WHEN LOWER(r.STAGE) LIKE '%quote%'
+        THEN (COALESCE(rt.PRICE, 0) + COALESCE(rt.BASE_RATE_AMT, 0)) / 100 END), 0) as total_quotes_amount,
+      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%reservation%' THEN 1 END) as total_reservations,
+      COALESCE(SUM(CASE WHEN LOWER(r.STAGE) LIKE '%reservation%'
+        THEN (COALESCE(rt.PRICE, 0) + COALESCE(rt.BASE_RATE_AMT, 0)) / 100 END), 0) as total_reservations_amount
+    FROM SWOOP.REQUEST r
+    LEFT JOIN SWOOP.TRIP t ON r.REQUEST_ID = t.REQUEST_ID
+    LEFT JOIN SWOOP.ROUTE rt ON t.TRIP_ID = rt.TRIP_ID
+    WHERE r.OPERATOR_ID = '${escapedId}'
+      AND r.REMOVED_AT IS NULL
+      AND (LOWER(r.STAGE) LIKE '%quote%' OR LOWER(r.STAGE) LIKE '%reservation%')
+  `
+
+  // Get monthly breakdown
+  const monthlySQL = `
+    SELECT
+      TO_VARCHAR(DATE_TRUNC('month', r.CREATED_AT), 'YYYY-MM') as month,
+      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%quote%' THEN 1 END) as quotes,
+      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%reservation%' THEN 1 END) as reservations,
+      COALESCE(SUM((COALESCE(rt.PRICE, 0) + COALESCE(rt.BASE_RATE_AMT, 0)) / 100), 0) as amount
+    FROM SWOOP.REQUEST r
+    LEFT JOIN SWOOP.TRIP t ON r.REQUEST_ID = t.REQUEST_ID
+    LEFT JOIN SWOOP.ROUTE rt ON t.TRIP_ID = rt.TRIP_ID
+    WHERE r.OPERATOR_ID = '${escapedId}'
+      AND r.REMOVED_AT IS NULL
+      AND (LOWER(r.STAGE) LIKE '%quote%' OR LOWER(r.STAGE) LIKE '%reservation%')
+      AND r.CREATED_AT >= DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY DATE_TRUNC('month', r.CREATED_AT)
+    ORDER BY month DESC
+  `
+
+  const [totalsResult, monthlyResult] = await Promise.all([
+    executeQuery<{
+      total_quotes: number
+      total_quotes_amount: number
+      total_reservations: number
+      total_reservations_amount: number
+    }>(totalsSql),
+    executeQuery<{ month: string; quotes: number; reservations: number; amount: number }>(monthlySQL),
+  ])
+
+  const totals = totalsResult.rows[0] || {
+    total_quotes: 0,
+    total_quotes_amount: 0,
+    total_reservations: 0,
+    total_reservations_amount: 0,
+  }
+
+  const conversionRate =
+    totals.total_quotes > 0 ? (totals.total_reservations / totals.total_quotes) * 100 : 0
+
+  return {
+    total_quotes: totals.total_quotes,
+    total_quotes_amount: totals.total_quotes_amount,
+    total_reservations: totals.total_reservations,
+    total_reservations_amount: totals.total_reservations_amount,
+    conversion_rate: Math.round(conversionRate * 10) / 10,
+    quotes_by_month: monthlyResult.rows,
+  }
+}
+
+// ============================================================================
+// Customer Charges Data (for customer drill-down from charges)
+// ============================================================================
+
+export interface CustomerCharge {
+  charge_id: string
+  created_date: string
+  status: string
+  total_dollars_charged: number
+  description: string | null
+  total_dollars_refunded: number | null
+  dispute_id: string | null
+  dispute_status: string | null
+  outcome_risk_level: string | null
+}
+
+export interface CustomerSummary {
+  customer_id: string
+  customer_email: string | null
+  customer_name: string | null
+  total_charges: number
+  total_amount: number
+  total_refunded: number
+  total_disputes: number
+  first_charge_date: string | null
+  last_charge_date: string | null
+}
+
+/**
+ * Get all charges for a specific customer within an operator's account
+ */
+async function getCustomerCharges(
+  customerId: string,
+  operatorId: string,
+  limit = 100
+): Promise<CustomerCharge[]> {
+  const escapedCustomerId = customerId.replace(/'/g, "''")
+  const escapedOperatorId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      CHARGE_ID as charge_id,
+      CREATED_DATE as created_date,
+      STATUS as status,
+      TOTAL_DOLLARS_CHARGED as total_dollars_charged,
+      DESCRIPTION as description,
+      TOTAL_DOLLARS_REFUNDED as total_dollars_refunded,
+      DISPUTE_ID as dispute_id,
+      DISPUTE_STATUS as dispute_status,
+      OUTCOME_RISK_LEVEL as outcome_risk_level
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE CUSTOMER_ID = '${escapedCustomerId}'
+      AND OPERATOR_ID = '${escapedOperatorId}'
+    ORDER BY CREATED_DATE DESC
+    LIMIT ${limit}
+  `
+
+  const result = await executeQuery<CustomerCharge>(sql)
+  return result.rows
+}
+
+/**
+ * Get summary statistics for a customer within an operator's account
+ */
+async function getCustomerSummary(
+  customerId: string,
+  operatorId: string
+): Promise<CustomerSummary | null> {
+  const escapedCustomerId = customerId.replace(/'/g, "''")
+  const escapedOperatorId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      CUSTOMER_ID as customer_id,
+      MAX(CUSTOMER_EMAIL) as customer_email,
+      MAX(BILLING_DETAIL_NAME) as customer_name,
+      COUNT(*) as total_charges,
+      COALESCE(SUM(TOTAL_DOLLARS_CHARGED), 0) as total_amount,
+      COALESCE(SUM(TOTAL_DOLLARS_REFUNDED), 0) as total_refunded,
+      COUNT(DISTINCT DISPUTE_ID) as total_disputes,
+      MIN(CREATED_DATE) as first_charge_date,
+      MAX(CREATED_DATE) as last_charge_date
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE CUSTOMER_ID = '${escapedCustomerId}'
+      AND OPERATOR_ID = '${escapedOperatorId}'
+    GROUP BY CUSTOMER_ID
+  `
+
+  const result = await executeQuery<CustomerSummary>(sql)
+  return result.rows[0] || null
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -1272,6 +1921,8 @@ export const snowflakeClient = {
   getOperatorMembers,
   getOperatorDrivers,
   getOperatorVehicles,
+  getDriverPerformance,
+  getVehicleUtilization,
   getOperatorEmailLog,
 
   // Additional platform data
@@ -1298,11 +1949,29 @@ export const snowflakeClient = {
   getFailedInvoices,
   getInactiveAccounts,
 
+  // Disputes data
+  getOperatorDisputes,
+  getOperatorDisputesSummary,
+
+  // Quotes data
+  getOperatorQuotes,
+  getOperatorQuotesSummary,
+
+  // Customer data (drill-down)
+  getCustomerCharges,
+  getCustomerSummary,
+
   // Write operations (CRUD)
   isWriteEnabled,
   addOperatorMember,
   updateMemberRole,
   removeMember,
+
+  // Risk management write operations
+  updateOperatorInstantPayoutLimit,
+  updateOperatorDailyPaymentLimit,
+  updateOperatorRiskScore,
+  getOperatorRiskDetails,
 }
 
 // Default export for consistency with other integrations

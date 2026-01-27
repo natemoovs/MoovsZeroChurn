@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { useSession } from "@/lib/auth/client"
 import {
   ArrowLeft,
   Building2,
@@ -42,6 +43,18 @@ import {
   Landmark,
   Receipt,
 } from "lucide-react"
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts"
 import { cn } from "@/lib/utils"
 
 // ============================================================================
@@ -112,6 +125,7 @@ type TabId =
   | "overview"
   | "payments"
   | "risk"
+  | "quotes"
   | "features"
   | "activity"
   | "trips"
@@ -124,6 +138,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: Building2 },
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "risk", label: "Risk", icon: Shield },
+  { id: "quotes", label: "Quotes", icon: FileText },
   { id: "features", label: "Features", icon: Settings },
   { id: "activity", label: "Activity", icon: BarChart3 },
   { id: "trips", label: "Trips", icon: Car },
@@ -807,6 +822,22 @@ interface ChargesApiResponse {
     net_amount: number
     description: string | null
     customer_email: string | null
+    // Extended fields for Retool parity
+    customer_id?: string | null
+    total_dollars_refunded?: number | null
+    billing_detail_name?: string | null
+    outcome_network_status?: string | null
+    outcome_reason?: string | null
+    outcome_seller_message?: string | null
+    outcome_risk_level?: string | null
+    outcome_risk_score?: number | null
+    card_id?: string | null
+    calculated_statement_descriptor?: string | null
+    dispute_id?: string | null
+    dispute_status?: string | null
+    disputed_amount?: number | null
+    dispute_reason?: string | null
+    dispute_date?: string | null
   }>
   summary: Array<{
     charge_month: string
@@ -857,12 +888,595 @@ interface InvoicesApiResponse {
   }
 }
 
+interface CustomerApiResponse {
+  operatorId: string
+  customerId: string
+  summary: {
+    customer_id: string
+    customer_email: string | null
+    customer_name: string | null
+    total_charges: number
+    total_amount: number
+    total_refunded: number
+    total_disputes: number
+    first_charge_date: string | null
+    last_charge_date: string | null
+  }
+  charges: Array<{
+    charge_id: string
+    created_date: string
+    status: string
+    total_dollars_charged: number
+    description: string | null
+    total_dollars_refunded: number | null
+    dispute_id: string | null
+    dispute_status: string | null
+    outcome_risk_level: string | null
+  }>
+}
+
+// Charge Detail Modal Component
+function ChargeDetailModal({
+  charge,
+  onClose,
+  onViewCustomerCharges,
+}: {
+  charge: ChargesApiResponse["charges"][0]
+  onClose: () => void
+  onViewCustomerCharges?: (customerId: string) => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="bg-surface-default relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl shadow-xl">
+        <div className="border-border-default sticky top-0 flex items-center justify-between border-b bg-inherit px-6 py-4">
+          <h3 className="text-content-primary text-lg font-semibold">Charge Details</h3>
+          <button
+            onClick={onClose}
+            className="text-content-tertiary hover:text-content-primary rounded-lg p-1 transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-6 p-6">
+          {/* Amount & Status */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-content-tertiary text-sm">Amount</p>
+              <p className="text-content-primary text-3xl font-bold">
+                ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <span
+              className={cn(
+                "rounded-full px-3 py-1 text-sm font-medium capitalize",
+                charge.status === "succeeded" || charge.status === "paid"
+                  ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                  : charge.status === "failed"
+                    ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                    : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+              )}
+            >
+              {charge.status}
+            </span>
+          </div>
+
+          {/* Basic Info */}
+          <div className="card-sf p-4">
+            <h4 className="text-content-primary mb-3 font-medium">Transaction Info</h4>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <dt className="text-content-secondary">Charge ID</dt>
+              <dd className="text-content-primary truncate font-mono text-xs">{charge.charge_id}</dd>
+
+              <dt className="text-content-secondary">Date</dt>
+              <dd className="text-content-primary">
+                {new Date(charge.created_date).toLocaleString()}
+              </dd>
+
+              <dt className="text-content-secondary">Description</dt>
+              <dd className="text-content-primary">{charge.description || "—"}</dd>
+
+              {charge.calculated_statement_descriptor && (
+                <>
+                  <dt className="text-content-secondary">Statement Descriptor</dt>
+                  <dd className="text-content-primary">{charge.calculated_statement_descriptor}</dd>
+                </>
+              )}
+            </dl>
+          </div>
+
+          {/* Customer Info */}
+          <div className="card-sf p-4">
+            <h4 className="text-content-primary mb-3 font-medium">Customer</h4>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              {charge.billing_detail_name && (
+                <>
+                  <dt className="text-content-secondary">Name</dt>
+                  <dd className="text-content-primary">{charge.billing_detail_name}</dd>
+                </>
+              )}
+              {charge.customer_email && (
+                <>
+                  <dt className="text-content-secondary">Email</dt>
+                  <dd className="text-content-primary">{charge.customer_email}</dd>
+                </>
+              )}
+              {charge.customer_id && (
+                <>
+                  <dt className="text-content-secondary">Customer ID</dt>
+                  <dd className="text-content-primary truncate font-mono text-xs">{charge.customer_id}</dd>
+                </>
+              )}
+              {charge.card_id && (
+                <>
+                  <dt className="text-content-secondary">Card ID</dt>
+                  <dd className="text-content-primary truncate font-mono text-xs">{charge.card_id}</dd>
+                </>
+              )}
+            </dl>
+            {charge.customer_id && onViewCustomerCharges && (
+              <button
+                onClick={() => onViewCustomerCharges(charge.customer_id!)}
+                className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 mt-3 flex items-center gap-1 text-sm font-medium transition-colors"
+              >
+                <Users className="h-4 w-4" />
+                View All Customer Charges
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Risk & Outcome */}
+          {(charge.outcome_risk_level || charge.outcome_reason) && (
+            <div className="card-sf p-4">
+              <h4 className="text-content-primary mb-3 font-medium">Risk & Outcome</h4>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {charge.outcome_risk_level && (
+                  <>
+                    <dt className="text-content-secondary">Risk Level</dt>
+                    <dd>
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                          charge.outcome_risk_level === "normal" || charge.outcome_risk_level === "low"
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : charge.outcome_risk_level === "elevated"
+                              ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                              : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                        )}
+                      >
+                        {charge.outcome_risk_level}
+                      </span>
+                    </dd>
+                  </>
+                )}
+                {charge.outcome_risk_score !== null && charge.outcome_risk_score !== undefined && (
+                  <>
+                    <dt className="text-content-secondary">Risk Score</dt>
+                    <dd className="text-content-primary">{charge.outcome_risk_score}</dd>
+                  </>
+                )}
+                {charge.outcome_network_status && (
+                  <>
+                    <dt className="text-content-secondary">Network Status</dt>
+                    <dd className="text-content-primary capitalize">{charge.outcome_network_status.replace(/_/g, " ")}</dd>
+                  </>
+                )}
+                {charge.outcome_reason && (
+                  <>
+                    <dt className="text-content-secondary">Outcome Reason</dt>
+                    <dd className="text-content-primary capitalize">{charge.outcome_reason.replace(/_/g, " ")}</dd>
+                  </>
+                )}
+                {charge.outcome_seller_message && (
+                  <>
+                    <dt className="text-content-secondary col-span-2">Message</dt>
+                    <dd className="text-content-primary col-span-2">{charge.outcome_seller_message}</dd>
+                  </>
+                )}
+              </dl>
+            </div>
+          )}
+
+          {/* Refund Info */}
+          {charge.total_dollars_refunded && charge.total_dollars_refunded > 0 && (
+            <div className="bg-warning-50 dark:bg-warning-950/30 rounded-lg p-4">
+              <h4 className="text-warning-700 dark:text-warning-400 mb-2 font-medium">Refund</h4>
+              <p className="text-warning-600 dark:text-warning-500 text-2xl font-bold">
+                ${charge.total_dollars_refunded.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          )}
+
+          {/* Dispute Info */}
+          {charge.dispute_id && (
+            <div
+              className={cn(
+                "rounded-lg p-4",
+                charge.dispute_status === "won"
+                  ? "bg-success-50 dark:bg-success-950/30"
+                  : charge.dispute_status === "lost"
+                    ? "bg-error-50 dark:bg-error-950/30"
+                    : "bg-warning-50 dark:bg-warning-950/30"
+              )}
+            >
+              <h4
+                className={cn(
+                  "mb-3 font-medium",
+                  charge.dispute_status === "won"
+                    ? "text-success-700 dark:text-success-400"
+                    : charge.dispute_status === "lost"
+                      ? "text-error-700 dark:text-error-400"
+                      : "text-warning-700 dark:text-warning-400"
+                )}
+              >
+                Dispute
+              </h4>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <dt
+                  className={cn(
+                    charge.dispute_status === "won"
+                      ? "text-success-600 dark:text-success-500"
+                      : charge.dispute_status === "lost"
+                        ? "text-error-600 dark:text-error-500"
+                        : "text-warning-600 dark:text-warning-500"
+                  )}
+                >
+                  Status
+                </dt>
+                <dd className="font-medium capitalize">{charge.dispute_status}</dd>
+
+                {charge.dispute_reason && (
+                  <>
+                    <dt
+                      className={cn(
+                        charge.dispute_status === "won"
+                          ? "text-success-600 dark:text-success-500"
+                          : charge.dispute_status === "lost"
+                            ? "text-error-600 dark:text-error-500"
+                            : "text-warning-600 dark:text-warning-500"
+                      )}
+                    >
+                      Reason
+                    </dt>
+                    <dd className="capitalize">{charge.dispute_reason.replace(/_/g, " ")}</dd>
+                  </>
+                )}
+
+                {charge.disputed_amount && (
+                  <>
+                    <dt
+                      className={cn(
+                        charge.dispute_status === "won"
+                          ? "text-success-600 dark:text-success-500"
+                          : charge.dispute_status === "lost"
+                            ? "text-error-600 dark:text-error-500"
+                            : "text-warning-600 dark:text-warning-500"
+                      )}
+                    >
+                      Disputed Amount
+                    </dt>
+                    <dd className="font-medium">
+                      ${charge.disputed_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </dd>
+                  </>
+                )}
+
+                {charge.dispute_date && (
+                  <>
+                    <dt
+                      className={cn(
+                        charge.dispute_status === "won"
+                          ? "text-success-600 dark:text-success-500"
+                          : charge.dispute_status === "lost"
+                            ? "text-error-600 dark:text-error-500"
+                            : "text-warning-600 dark:text-warning-500"
+                      )}
+                    >
+                      Dispute Date
+                    </dt>
+                    <dd>{new Date(charge.dispute_date).toLocaleDateString()}</dd>
+                  </>
+                )}
+
+                <dt
+                  className={cn(
+                    charge.dispute_status === "won"
+                      ? "text-success-600 dark:text-success-500"
+                      : charge.dispute_status === "lost"
+                        ? "text-error-600 dark:text-error-500"
+                        : "text-warning-600 dark:text-warning-500"
+                  )}
+                >
+                  Dispute ID
+                </dt>
+                <dd className="truncate font-mono text-xs">{charge.dispute_id}</dd>
+              </dl>
+            </div>
+          )}
+
+          {/* Fees */}
+          {(charge.fee_amount > 0 || charge.net_amount > 0) && (
+            <div className="card-sf p-4">
+              <h4 className="text-content-primary mb-3 font-medium">Fees & Net</h4>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <dt className="text-content-secondary">Gross Amount</dt>
+                <dd className="text-content-primary font-medium">
+                  ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </dd>
+                <dt className="text-content-secondary">Fee</dt>
+                <dd className="text-content-primary">
+                  ${charge.fee_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </dd>
+                <dt className="text-content-secondary">Net Amount</dt>
+                <dd className="text-content-primary font-medium">
+                  ${charge.net_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </dd>
+              </dl>
+            </div>
+          )}
+        </div>
+
+        <div className="border-border-default sticky bottom-0 border-t bg-inherit px-6 py-4">
+          <button
+            onClick={onClose}
+            className="bg-primary-600 hover:bg-primary-700 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Customer Charges Modal Component
+function CustomerChargesModal({
+  customerId,
+  operatorId,
+  onClose,
+}: {
+  customerId: string
+  operatorId: string
+  onClose: () => void
+}) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<CustomerApiResponse | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/operator-hub/${operatorId}/customer/${customerId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch customer data")
+        return res.json()
+      })
+      .then((customerData) => {
+        setData(customerData)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [customerId, operatorId])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="bg-surface-default relative z-10 max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl shadow-xl">
+        <div className="border-border-default sticky top-0 flex items-center justify-between border-b bg-inherit px-6 py-4">
+          <h3 className="text-content-primary text-lg font-semibold">Customer Charges</h3>
+          <button
+            onClick={onClose}
+            className="text-content-tertiary hover:text-content-primary rounded-lg p-1 transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="text-error-600 dark:text-error-400 py-8 text-center">
+              <AlertTriangle className="mx-auto mb-2 h-8 w-8" />
+              <p>{error}</p>
+            </div>
+          ) : data ? (
+            <div className="space-y-6">
+              {/* Customer Summary */}
+              <div className="card-sf p-4">
+                <h4 className="text-content-primary mb-3 font-medium">Customer Summary</h4>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Name</p>
+                    <p className="text-content-primary font-medium">
+                      {data.summary.customer_name || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Email</p>
+                    <p className="text-content-primary truncate font-medium">
+                      {data.summary.customer_email || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Total Charges</p>
+                    <p className="text-content-primary font-medium">{data.summary.total_charges}</p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Total Amount</p>
+                    <p className="text-content-primary font-medium">
+                      ${data.summary.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Total Refunded</p>
+                    <p className={cn(
+                      "font-medium",
+                      data.summary.total_refunded > 0 ? "text-warning-600 dark:text-warning-400" : "text-content-primary"
+                    )}>
+                      ${data.summary.total_refunded.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Disputes</p>
+                    <p className={cn(
+                      "font-medium",
+                      data.summary.total_disputes > 0 ? "text-error-600 dark:text-error-400" : "text-content-primary"
+                    )}>
+                      {data.summary.total_disputes}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">First Charge</p>
+                    <p className="text-content-primary font-medium">
+                      {data.summary.first_charge_date
+                        ? new Date(data.summary.first_charge_date).toLocaleDateString()
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Last Charge</p>
+                    <p className="text-content-primary font-medium">
+                      {data.summary.last_charge_date
+                        ? new Date(data.summary.last_charge_date).toLocaleDateString()
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Charges Table */}
+              <div className="card-sf overflow-hidden">
+                <div className="border-border-default border-b px-4 py-3">
+                  <h4 className="text-content-primary font-medium">
+                    All Charges ({data.charges.length})
+                  </h4>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
+                    <thead className="bg-bg-secondary">
+                      <tr className="border-border-default border-b">
+                        <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                          Date
+                        </th>
+                        <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                          Description
+                        </th>
+                        <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                          Status
+                        </th>
+                        <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                          Risk
+                        </th>
+                        <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.charges.map((charge) => (
+                        <tr key={charge.charge_id} className="border-border-default border-b">
+                          <td className="text-content-secondary px-4 py-3 text-sm">
+                            {new Date(charge.created_date).toLocaleDateString()}
+                          </td>
+                          <td className="text-content-primary max-w-[200px] truncate px-4 py-3 text-sm">
+                            {charge.description || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                                charge.status === "succeeded" || charge.status === "paid"
+                                  ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                  : charge.status === "failed"
+                                    ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                    : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                              )}
+                            >
+                              {charge.status}
+                            </span>
+                            {charge.dispute_id && (
+                              <span className="bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400 ml-1 rounded-full px-2 py-0.5 text-xs font-medium">
+                                Disputed
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {charge.outcome_risk_level ? (
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                                  charge.outcome_risk_level === "normal" || charge.outcome_risk_level === "low"
+                                    ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                    : charge.outcome_risk_level === "elevated"
+                                      ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                      : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                )}
+                              >
+                                {charge.outcome_risk_level}
+                              </span>
+                            ) : (
+                              <span className="text-content-tertiary text-xs">—</span>
+                            )}
+                          </td>
+                          <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                            ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {charge.total_dollars_refunded && charge.total_dollars_refunded > 0 && (
+                              <span className="text-warning-600 dark:text-warning-400 ml-1 text-xs">
+                                (-${charge.total_dollars_refunded.toLocaleString(undefined, { minimumFractionDigits: 2 })})
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="border-border-default sticky bottom-0 border-t bg-inherit px-6 py-4">
+          <button
+            onClick={onClose}
+            className="bg-primary-600 hover:bg-primary-700 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PaymentsTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, _setError] = useState<string | null>(null)
   const [data, setData] = useState<ChargesApiResponse | null>(null)
   const [invoices, setInvoices] = useState<InvoicesApiResponse | null>(null)
   const [invoicesLoading, setInvoicesLoading] = useState(true)
+  const [selectedCharge, setSelectedCharge] = useState<ChargesApiResponse["charges"][0] | null>(null)
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!operator.operatorId) {
@@ -978,6 +1592,114 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
         </div>
       )}
 
+      {/* Charges Analytics Charts */}
+      {hasCharges && (() => {
+        // Prepare monthly data for charts
+        const monthlyData: Record<string, { month: string; succeeded: number; failed: number; total: number }> = {}
+
+        charges.forEach(charge => {
+          const date = new Date(charge.created_date)
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+          const monthLabel = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+
+          if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { month: monthLabel, succeeded: 0, failed: 0, total: 0 }
+          }
+
+          const amount = charge.total_dollars_charged || 0
+          if (charge.status === 'succeeded') {
+            monthlyData[monthKey].succeeded += amount
+          } else if (charge.status === 'failed') {
+            monthlyData[monthKey].failed += amount
+          }
+          monthlyData[monthKey].total += amount
+        })
+
+        const chartData = Object.entries(monthlyData)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .slice(-12)
+          .map(([, data]) => data)
+
+        if (chartData.length < 2) return null
+
+        return (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Monthly Volume Bar Chart */}
+            <div className="card-sf p-5">
+              <h3 className="text-content-primary mb-4 font-semibold">Monthly Charge Volume</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 11 }}
+                      className="text-content-tertiary"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      className="text-content-tertiary"
+                    />
+                    <Tooltip
+                      formatter={(value) => [`$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, '']}
+                      labelClassName="text-content-primary font-medium"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="succeeded" name="Succeeded" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="failed" name="Failed" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Charges Over Time Line Chart */}
+            <div className="card-sf p-5">
+              <h3 className="text-content-primary mb-4 font-semibold">Charges Over Time</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 11 }}
+                      className="text-content-tertiary"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      className="text-content-tertiary"
+                    />
+                    <Tooltip
+                      formatter={(value) => [`$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Total Volume']}
+                      labelClassName="text-content-primary font-medium"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      stroke="#6366f1"
+                      strokeWidth={2}
+                      dot={{ fill: '#6366f1', strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Stripe Connected Account Live Data */}
       {operator.stripeAccountId && operator.operatorId && (
         <StripeLiveDataCard
@@ -1078,14 +1800,11 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
             <h3 className="text-content-primary font-semibold">Platform Charges</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px]">
+            <table className="w-full min-w-[900px]">
               <thead className="bg-bg-secondary">
                 <tr className="border-border-default border-b">
                   <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
                     Date
-                  </th>
-                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
-                    Description
                   </th>
                   <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
                     Customer
@@ -1093,22 +1812,39 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                   <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
                     Status
                   </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Risk
+                  </th>
                   <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
                     Amount
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Refund
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Dispute
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {charges.slice(0, 25).map((charge) => (
-                  <tr key={charge.charge_id} className="border-border-default border-b">
+                  <tr
+                    key={charge.charge_id}
+                    className="border-border-default hover:bg-surface-hover cursor-pointer border-b transition-colors"
+                    onClick={() => setSelectedCharge(charge)}
+                  >
                     <td className="text-content-secondary px-4 py-3 text-sm">
                       {new Date(charge.created_date).toLocaleDateString()}
                     </td>
-                    <td className="text-content-primary max-w-[200px] truncate px-4 py-3 text-sm">
-                      {charge.description || "Platform charge"}
-                    </td>
-                    <td className="text-content-secondary max-w-[200px] truncate px-4 py-3 text-sm">
-                      {charge.customer_email || "—"}
+                    <td className="px-4 py-3 text-sm">
+                      <div className="text-content-primary max-w-[160px] truncate">
+                        {charge.billing_detail_name || charge.customer_email || "—"}
+                      </div>
+                      {charge.billing_detail_name && charge.customer_email && (
+                        <div className="text-content-tertiary max-w-[160px] truncate text-xs">
+                          {charge.customer_email}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
@@ -1123,12 +1859,71 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                       >
                         {charge.status}
                       </span>
+                      {charge.outcome_reason && charge.status === "failed" && (
+                        <div className="text-content-tertiary mt-1 text-xs" title={charge.outcome_seller_message || charge.outcome_reason}>
+                          {charge.outcome_reason.replace(/_/g, " ")}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {charge.outcome_risk_level ? (
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                            charge.outcome_risk_level === "normal" || charge.outcome_risk_level === "low"
+                              ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                              : charge.outcome_risk_level === "elevated"
+                                ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                : charge.outcome_risk_level === "highest" || charge.outcome_risk_level === "high"
+                                  ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                  : "bg-bg-tertiary text-content-tertiary"
+                          )}
+                        >
+                          {charge.outcome_risk_level}
+                        </span>
+                      ) : (
+                        <span className="text-content-tertiary">—</span>
+                      )}
+                      {charge.outcome_risk_score !== null && charge.outcome_risk_score !== undefined && (
+                        <div className="text-content-tertiary mt-0.5 text-xs">
+                          Score: {charge.outcome_risk_score}
+                        </div>
+                      )}
                     </td>
                     <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
-                      $
-                      {charge.total_dollars_charged.toLocaleString(undefined, {
+                      ${charge.total_dollars_charged.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                       })}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm">
+                      {charge.total_dollars_refunded && charge.total_dollars_refunded > 0 ? (
+                        <span className="text-warning-600 dark:text-warning-400 font-medium">
+                          ${charge.total_dollars_refunded.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                          })}
+                        </span>
+                      ) : (
+                        <span className="text-content-tertiary">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {charge.dispute_id ? (
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                            charge.dispute_status === "won"
+                              ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                              : charge.dispute_status === "lost"
+                                ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                          )}
+                          title={charge.dispute_reason ? charge.dispute_reason.replace(/_/g, " ") : undefined}
+                        >
+                          {charge.dispute_status || "disputed"}
+                        </span>
+                      ) : (
+                        <span className="text-content-tertiary">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1155,6 +1950,27 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
           </p>
         </div>
       ) : null}
+
+      {/* Charge Detail Modal */}
+      {selectedCharge && (
+        <ChargeDetailModal
+          charge={selectedCharge}
+          onClose={() => setSelectedCharge(null)}
+          onViewCustomerCharges={(customerId) => {
+            setSelectedCharge(null)
+            setSelectedCustomerId(customerId)
+          }}
+        />
+      )}
+
+      {/* Customer Charges Modal */}
+      {selectedCustomerId && operator.operatorId && (
+        <CustomerChargesModal
+          customerId={selectedCustomerId}
+          operatorId={operator.operatorId}
+          onClose={() => setSelectedCustomerId(null)}
+        />
+      )}
     </div>
   )
 }
@@ -1167,6 +1983,9 @@ interface RiskApiResponse {
   avg_transaction_amount: number | null
   last_failed_payment_date: string | null
   risk_level: "low" | "medium" | "high" | "unknown"
+  // Risk management settings
+  instant_payout_limit_cents: number | null
+  daily_payment_limit_cents: number | null
 }
 
 // ============================================================================
@@ -1467,16 +2286,268 @@ function StripeLiveDataCard({
   )
 }
 
+interface DisputesApiResponse {
+  operatorId: string
+  stripeAccountId: string
+  disputes: Array<{
+    dispute_id: string
+    charge_id: string
+    dispute_status: string
+    dispute_reason: string | null
+    disputed_amount: number
+    dispute_date: string
+    created_date: string
+    outcome_risk_level: string | null
+    billing_detail_name: string | null
+  }>
+  summary: {
+    total_disputes: number
+    total_disputed_amount: number
+    disputes_by_status: Array<{ status: string; count: number }>
+    disputes_by_reason: Array<{ reason: string; count: number }>
+    disputes_by_risk_level: Array<{ risk_level: string; count: number }>
+    disputes_over_time: Array<{ date: string; count: number }>
+  }
+}
+
+// ============================================================================
+// Risk Update Modal (Admin Only)
+// ============================================================================
+
+interface RiskUpdateModalProps {
+  isOpen: boolean
+  onClose: () => void
+  operatorId: string
+  currentValues: {
+    instantPayoutLimitCents: number | null
+    dailyPaymentLimitCents: number | null
+    riskScore: number | null
+  }
+  onSuccess: () => void
+}
+
+function RiskUpdateModal({
+  isOpen,
+  onClose,
+  operatorId,
+  currentValues,
+  onSuccess,
+}: RiskUpdateModalProps) {
+  const [instantPayoutLimit, setInstantPayoutLimit] = useState<string>(
+    currentValues.instantPayoutLimitCents
+      ? (currentValues.instantPayoutLimitCents / 100).toString()
+      : ""
+  )
+  const [dailyPaymentLimit, setDailyPaymentLimit] = useState<string>(
+    currentValues.dailyPaymentLimitCents
+      ? (currentValues.dailyPaymentLimitCents / 100).toString()
+      : ""
+  )
+  const [riskScore, setRiskScore] = useState<string>(
+    currentValues.riskScore !== null ? currentValues.riskScore.toString() : ""
+  )
+  const [updating, setUpdating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Reset form when modal opens with new values
+  useEffect(() => {
+    if (isOpen) {
+      setInstantPayoutLimit(
+        currentValues.instantPayoutLimitCents
+          ? (currentValues.instantPayoutLimitCents / 100).toString()
+          : ""
+      )
+      setDailyPaymentLimit(
+        currentValues.dailyPaymentLimitCents
+          ? (currentValues.dailyPaymentLimitCents / 100).toString()
+          : ""
+      )
+      setRiskScore(currentValues.riskScore !== null ? currentValues.riskScore.toString() : "")
+      setError(null)
+    }
+  }, [isOpen, currentValues])
+
+  const handleUpdate = async (field: "instantPayout" | "dailyPayment" | "riskScore") => {
+    setUpdating(true)
+    setError(null)
+
+    try {
+      const body: Record<string, number> = {}
+
+      if (field === "instantPayout" && instantPayoutLimit) {
+        body.instantPayoutLimitCents = Math.round(parseFloat(instantPayoutLimit) * 100)
+      } else if (field === "dailyPayment" && dailyPaymentLimit) {
+        body.dailyPaymentLimitCents = Math.round(parseFloat(dailyPaymentLimit) * 100)
+      } else if (field === "riskScore" && riskScore) {
+        body.riskScore = parseFloat(riskScore)
+      }
+
+      const response = await fetch(`/api/operator-hub/${operatorId}/risk`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to update risk settings")
+      }
+
+      onSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update")
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="bg-bg-primary/80 absolute inset-0" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="card-sf relative z-10 mx-4 w-full max-w-md p-6">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-content-primary text-lg font-semibold">Risk Details</h3>
+          <button
+            onClick={onClose}
+            className="text-content-secondary hover:text-content-primary transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-error-50 dark:bg-error-950/30 text-error-700 dark:text-error-400 mb-4 rounded-lg p-3 text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {/* Instant Payout Limit */}
+          <div className="space-y-2">
+            <label className="text-content-primary block text-sm font-medium">
+              Instant Payout Limit Amount
+            </label>
+            <p className="text-content-tertiary text-xs">
+              The total instant payout volume an operator can process.
+            </p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="text-content-tertiary absolute left-3 top-1/2 -translate-y-1/2">
+                  $
+                </span>
+                <input
+                  type="number"
+                  value={instantPayoutLimit}
+                  onChange={(e) => setInstantPayoutLimit(e.target.value)}
+                  className="input-sf w-full pl-7"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+              <button
+                onClick={() => handleUpdate("instantPayout")}
+                disabled={updating || !instantPayoutLimit}
+                className="btn-sf-secondary whitespace-nowrap"
+              >
+                {updating ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </div>
+
+          {/* Daily Payment Limit */}
+          <div className="space-y-2">
+            <label className="text-content-primary block text-sm font-medium">
+              Daily Processing Limit Amount
+            </label>
+            <p className="text-content-tertiary text-xs">
+              The total amount of moovs payments an operator can process daily through Customer
+              Portal, Operator Portal.
+            </p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="text-content-tertiary absolute left-3 top-1/2 -translate-y-1/2">
+                  $
+                </span>
+                <input
+                  type="number"
+                  value={dailyPaymentLimit}
+                  onChange={(e) => setDailyPaymentLimit(e.target.value)}
+                  className="input-sf w-full pl-7"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+              <button
+                onClick={() => handleUpdate("dailyPayment")}
+                disabled={updating || !dailyPaymentLimit}
+                className="btn-sf-secondary whitespace-nowrap"
+              >
+                {updating ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </div>
+
+          {/* Risk Score */}
+          <div className="space-y-2">
+            <label className="text-content-primary block text-sm font-medium">Risk Score</label>
+            <p className="text-content-tertiary text-xs">
+              This is the internal risk score of an operator.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={riskScore}
+                onChange={(e) => setRiskScore(e.target.value)}
+                className="input-sf flex-1"
+                placeholder="0"
+                step="1"
+              />
+              <button
+                onClick={() => handleUpdate("riskScore")}
+                disabled={updating || !riskScore}
+                className="btn-sf-secondary whitespace-nowrap"
+              >
+                {updating ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-6 flex justify-end">
+          <button onClick={onClose} className="btn-sf-primary">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function RiskTab({ operator }: { operator: OperatorData }) {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === "admin"
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<RiskApiResponse | null>(null)
+  const [disputesData, setDisputesData] = useState<DisputesApiResponse | null>(null)
+  const [disputesLoading, setDisputesLoading] = useState(true)
+  const [showRiskModal, setShowRiskModal] = useState(false)
 
-  useEffect(() => {
-    if (!operator.operatorId) {
-      setLoading(false)
-      return
-    }
+  // Reusable function to fetch risk data
+  const fetchRiskData = useCallback(() => {
+    if (!operator.operatorId) return
 
     fetch(`/api/operator-hub/${operator.operatorId}/risk`)
       .then((res) => {
@@ -1493,6 +2564,37 @@ function RiskTab({ operator }: { operator: OperatorData }) {
       })
   }, [operator.operatorId])
 
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      setDisputesLoading(false)
+      return
+    }
+
+    // Fetch risk data
+    fetchRiskData()
+
+    // Fetch disputes data if stripe account ID available
+    if (operator.stripeAccountId) {
+      fetch(
+        `/api/operator-hub/${operator.operatorId}/disputes?stripeAccountId=${operator.stripeAccountId}`
+      )
+        .then((res) => {
+          if (!res.ok) return null
+          return res.json()
+        })
+        .then((data) => {
+          if (data) setDisputesData(data)
+          setDisputesLoading(false)
+        })
+        .catch(() => {
+          setDisputesLoading(false)
+        })
+    } else {
+      setDisputesLoading(false)
+    }
+  }, [operator.operatorId, operator.stripeAccountId, fetchRiskData])
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -1508,10 +2610,43 @@ function RiskTab({ operator }: { operator: OperatorData }) {
     avg_transaction_amount: null,
     last_failed_payment_date: null,
     risk_level: "unknown" as const,
+    instant_payout_limit_cents: null,
+    daily_payment_limit_cents: null,
   }
 
   return (
     <div className="space-y-6">
+      {/* Admin Risk Update Modal */}
+      {operator.operatorId && (
+        <RiskUpdateModal
+          isOpen={showRiskModal}
+          onClose={() => setShowRiskModal(false)}
+          operatorId={operator.operatorId}
+          currentValues={{
+            instantPayoutLimitCents: riskData.instant_payout_limit_cents,
+            dailyPaymentLimitCents: riskData.daily_payment_limit_cents,
+            riskScore: riskData.risk_score,
+          }}
+          onSuccess={() => {
+            fetchRiskData()
+            setShowRiskModal(false)
+          }}
+        />
+      )}
+
+      {/* Header with Admin Update Button */}
+      {isAdmin && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowRiskModal(true)}
+            className="btn-sf-secondary inline-flex items-center gap-2 text-sm"
+          >
+            <Edit3 className="h-4 w-4" />
+            Update Risk Details
+          </button>
+        </div>
+      )}
+
       {/* Risk Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -1602,6 +2737,36 @@ function RiskTab({ operator }: { operator: OperatorData }) {
               <dt className="text-content-secondary">Disputes</dt>
               <dd className="text-content-primary">{riskData.dispute_count}</dd>
             </div>
+            {/* Admin-managed fields */}
+            <div className="border-border-secondary mt-4 border-t pt-4">
+              <p className="text-content-tertiary mb-3 text-xs font-medium uppercase tracking-wider">
+                Risk Management Settings
+              </p>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <dt className="text-content-secondary">Internal Risk Score</dt>
+                  <dd className="text-content-primary">
+                    {riskData.risk_score !== null ? riskData.risk_score : "—"}
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-content-secondary">Instant Payout Limit</dt>
+                  <dd className="text-content-primary">
+                    {riskData.instant_payout_limit_cents !== null
+                      ? `$${(riskData.instant_payout_limit_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                      : "—"}
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-content-secondary">Daily Payment Limit</dt>
+                  <dd className="text-content-primary">
+                    {riskData.daily_payment_limit_cents !== null
+                      ? `$${(riskData.daily_payment_limit_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                      : "—"}
+                  </dd>
+                </div>
+              </div>
+            </div>
           </dl>
         </div>
 
@@ -1656,6 +2821,376 @@ function RiskTab({ operator }: { operator: OperatorData }) {
           </div>
         </div>
       </div>
+
+      {/* Risk Analytics Charts */}
+      {disputesData && disputesData.summary.total_disputes > 0 && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Disputes Over Time Chart */}
+          {disputesData.summary.disputes_over_time.length > 1 && (
+            <div className="card-sf p-5">
+              <h3 className="text-content-primary mb-4 font-semibold">Disputes Trend</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={disputesData.summary.disputes_over_time.map(d => ({
+                      date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                      count: d.count,
+                    }))}
+                    margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-content-tertiary" />
+                    <YAxis tick={{ fontSize: 11 }} className="text-content-tertiary" />
+                    <Tooltip
+                      formatter={(value) => [Number(value || 0), 'Disputes']}
+                      labelClassName="text-content-primary font-medium"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="count"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      dot={{ fill: '#ef4444', strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Risk Level Distribution Bar Chart */}
+          {disputesData.summary.disputes_by_risk_level.length > 0 && (
+            <div className="card-sf p-5">
+              <h3 className="text-content-primary mb-4 font-semibold">Disputes by Risk Level</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={disputesData.summary.disputes_by_risk_level.map(d => ({
+                      level: (d.risk_level || 'Unknown').replace(/_/g, ' '),
+                      count: d.count,
+                    }))}
+                    margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                    <XAxis type="number" tick={{ fontSize: 11 }} className="text-content-tertiary" />
+                    <YAxis
+                      dataKey="level"
+                      type="category"
+                      tick={{ fontSize: 11 }}
+                      className="text-content-tertiary"
+                      width={80}
+                    />
+                    <Tooltip
+                      formatter={(value) => [Number(value || 0), 'Disputes']}
+                      labelClassName="text-content-primary font-medium"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="#f59e0b"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Disputes Analytics Section */}
+      {operator.stripeAccountId && (
+        <div className="space-y-4">
+          <h3 className="text-content-primary text-lg font-semibold">Disputes Analytics</h3>
+
+          {disputesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="text-primary-500 h-6 w-6 animate-spin" />
+            </div>
+          ) : disputesData && disputesData.summary.total_disputes > 0 ? (
+            <>
+              {/* Disputes Summary Stats */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                  label="Total Disputes"
+                  value={disputesData.summary.total_disputes.toString()}
+                  icon={FileText}
+                  variant="danger"
+                />
+                <StatCard
+                  label="Total Disputed Amount"
+                  value={`$${disputesData.summary.total_disputed_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                  icon={DollarSign}
+                  variant="danger"
+                />
+                <StatCard
+                  label="Most Common Reason"
+                  value={
+                    disputesData.summary.disputes_by_reason[0]?.reason?.replace(/_/g, " ") ||
+                    "—"
+                  }
+                  icon={AlertTriangle}
+                />
+                <StatCard
+                  label="Pending Disputes"
+                  value={
+                    disputesData.summary.disputes_by_status
+                      .filter(
+                        (s) =>
+                          s.status !== "won" &&
+                          s.status !== "lost" &&
+                          s.status !== "closed"
+                      )
+                      .reduce((sum, s) => sum + s.count, 0)
+                      .toString()
+                  }
+                  icon={Clock}
+                  variant="warning"
+                />
+              </div>
+
+              {/* Charts Grid */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Disputes by Status */}
+                <div className="card-sf p-5">
+                  <h4 className="text-content-primary mb-4 font-medium">Disputes by Status</h4>
+                  <div className="space-y-3">
+                    {disputesData.summary.disputes_by_status.map((item) => {
+                      const percentage =
+                        (item.count / disputesData.summary.total_disputes) * 100
+                      return (
+                        <div key={item.status} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-content-secondary capitalize">
+                              {item.status.replace(/_/g, " ")}
+                            </span>
+                            <span className="text-content-primary font-medium">
+                              {item.count} ({percentage.toFixed(0)}%)
+                            </span>
+                          </div>
+                          <div className="bg-bg-tertiary h-2 overflow-hidden rounded-full">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all",
+                                item.status === "won"
+                                  ? "bg-success-500"
+                                  : item.status === "lost"
+                                    ? "bg-error-500"
+                                    : "bg-warning-500"
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Disputes by Reason */}
+                <div className="card-sf p-5">
+                  <h4 className="text-content-primary mb-4 font-medium">Disputes by Reason</h4>
+                  <div className="space-y-3">
+                    {disputesData.summary.disputes_by_reason.slice(0, 5).map((item) => {
+                      const percentage =
+                        (item.count / disputesData.summary.total_disputes) * 100
+                      return (
+                        <div key={item.reason} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-content-secondary capitalize">
+                              {(item.reason || "unknown").replace(/_/g, " ")}
+                            </span>
+                            <span className="text-content-primary font-medium">
+                              {item.count}
+                            </span>
+                          </div>
+                          <div className="bg-bg-tertiary h-2 overflow-hidden rounded-full">
+                            <div
+                              className="bg-primary-500 h-full rounded-full transition-all"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Risk Level Distribution */}
+                <div className="card-sf p-5">
+                  <h4 className="text-content-primary mb-4 font-medium">
+                    Risk Level Distribution
+                  </h4>
+                  <div className="space-y-3">
+                    {disputesData.summary.disputes_by_risk_level.map((item) => {
+                      const percentage =
+                        (item.count / disputesData.summary.total_disputes) * 100
+                      return (
+                        <div key={item.risk_level} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-content-secondary capitalize">
+                              {(item.risk_level || "unknown").replace(/_/g, " ")}
+                            </span>
+                            <span className="text-content-primary font-medium">
+                              {item.count}
+                            </span>
+                          </div>
+                          <div className="bg-bg-tertiary h-2 overflow-hidden rounded-full">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all",
+                                item.risk_level === "low" || item.risk_level === "normal"
+                                  ? "bg-success-500"
+                                  : item.risk_level === "elevated"
+                                    ? "bg-warning-500"
+                                    : item.risk_level === "highest" || item.risk_level === "high"
+                                      ? "bg-error-500"
+                                      : "bg-gray-400"
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Disputes Over Time */}
+                <div className="card-sf p-5">
+                  <h4 className="text-content-primary mb-4 font-medium">Disputes Over Time</h4>
+                  {disputesData.summary.disputes_over_time.length > 0 ? (
+                    <div className="flex h-32 items-end gap-1">
+                      {disputesData.summary.disputes_over_time.map((item) => {
+                        const maxCount = Math.max(
+                          ...disputesData.summary.disputes_over_time.map((d) => d.count)
+                        )
+                        const height = (item.count / maxCount) * 100
+                        return (
+                          <div
+                            key={item.date}
+                            className="group relative flex-1"
+                            title={`${item.date}: ${item.count} disputes`}
+                          >
+                            <div
+                              className="bg-primary-500 hover:bg-primary-600 w-full rounded-t transition-all"
+                              style={{ height: `${Math.max(height, 4)}%` }}
+                            />
+                            <div className="absolute -bottom-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap text-xs text-content-tertiary group-hover:block">
+                              {item.date}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-content-tertiary py-8 text-center text-sm">
+                      No dispute history available
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Disputes Table */}
+              {disputesData.disputes.length > 0 && (
+                <div className="card-sf overflow-hidden">
+                  <div className="border-border-default border-b px-4 py-3">
+                    <h4 className="text-content-primary font-medium">Recent Disputes</h4>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[600px]">
+                      <thead className="bg-bg-secondary">
+                        <tr>
+                          <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                            Date
+                          </th>
+                          <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                            Customer
+                          </th>
+                          <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                            Reason
+                          </th>
+                          <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                            Status
+                          </th>
+                          <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                            Amount
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {disputesData.disputes.slice(0, 10).map((dispute) => (
+                          <tr
+                            key={dispute.dispute_id}
+                            className="border-border-default border-b"
+                          >
+                            <td className="text-content-secondary px-4 py-3 text-sm">
+                              {dispute.dispute_date
+                                ? new Date(dispute.dispute_date).toLocaleDateString()
+                                : new Date(dispute.created_date).toLocaleDateString()}
+                            </td>
+                            <td className="text-content-primary px-4 py-3 text-sm">
+                              {dispute.billing_detail_name || "—"}
+                            </td>
+                            <td className="text-content-secondary px-4 py-3 text-sm capitalize">
+                              {(dispute.dispute_reason || "unknown").replace(/_/g, " ")}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                                  dispute.dispute_status === "won"
+                                    ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                    : dispute.dispute_status === "lost"
+                                      ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                      : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                )}
+                              >
+                                {dispute.dispute_status}
+                              </span>
+                            </td>
+                            <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                              ${dispute.disputed_amount.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                              })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {disputesData.disputes.length > 10 && (
+                    <div className="border-border-default border-t px-4 py-3 text-center">
+                      <p className="text-content-secondary text-sm">
+                        Showing 10 of {disputesData.disputes.length} disputes
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="card-sf p-8 text-center">
+              <Check className="text-success-500 mx-auto mb-4 h-12 w-12" />
+              <h4 className="text-content-primary text-lg font-medium">No Disputes</h4>
+              <p className="text-content-secondary mt-2">
+                This operator has no recorded payment disputes.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -1688,6 +3223,31 @@ interface MembersApiResponse {
     color: string | null
     capacity: number | null
     createdAt: string | null
+  }>
+  driverPerformance: Array<{
+    id: string
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+    status: string
+    totalTrips: number
+    completedTrips: number
+    tripsLast30Days: number
+    totalRevenue: number | null
+    lastTripDate: string | null
+    completionRate: number | null
+  }>
+  vehicleUtilization: Array<{
+    id: string
+    name: string | null
+    type: string | null
+    licensePlate: string | null
+    capacity: number | null
+    totalTrips: number
+    tripsLast30Days: number
+    totalRevenue: number | null
+    lastTripDate: string | null
+    daysSinceLastTrip: number | null
   }>
   stats: {
     totalMembers: number
@@ -2211,7 +3771,8 @@ function ChangePlanModal({
 
   if (!isOpen) return null
 
-  const formatPrice = (cents: number, currency: string) => {
+  const formatPrice = (cents: number | null, currency: string | null) => {
+    if (cents === null || cents === undefined) return "—"
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency || "USD",
@@ -2368,6 +3929,285 @@ function ChangePlanModal({
             </button>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// Quotes Tab
+// ============================================================================
+
+interface QuotesApiResponse {
+  operatorId: string
+  quotes: Array<{
+    request_id: string
+    order_number: string | null
+    stage: string
+    order_type: string | null
+    total_amount: number | null
+    created_at: string
+    pickup_date: string | null
+    customer_name: string | null
+    customer_email: string | null
+    pickup_address: string | null
+    dropoff_address: string | null
+    vehicle_type: string | null
+  }>
+  summary: {
+    total_quotes: number
+    total_quotes_amount: number
+    total_reservations: number
+    total_reservations_amount: number
+    conversion_rate: number
+    quotes_by_month: Array<{
+      month: string
+      quotes: number
+      reservations: number
+      amount: number
+    }>
+  }
+}
+
+function QuotesTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<QuotesApiResponse | null>(null)
+  const [filter, setFilter] = useState<"all" | "quotes" | "reservations">("all")
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/quotes`)
+      .then((res) => {
+        if (!res.ok) return null
+        return res.json()
+      })
+      .then((data) => {
+        if (data) setData(data)
+        setLoading(false)
+      })
+      .catch(() => {
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (!data || (data.summary.total_quotes === 0 && data.summary.total_reservations === 0)) {
+    return (
+      <div className="card-sf p-8 text-center">
+        <FileText className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+        <h3 className="text-content-primary text-lg font-medium">No Quotes Data</h3>
+        <p className="text-content-secondary mx-auto mt-2 max-w-md">
+          No quotes or reservations found for this operator.
+        </p>
+      </div>
+    )
+  }
+
+  const filteredQuotes = data.quotes.filter((q) => {
+    if (filter === "all") return true
+    if (filter === "quotes") return q.stage.toLowerCase().includes("quote")
+    if (filter === "reservations") return q.stage.toLowerCase().includes("reservation")
+    return true
+  })
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Total Quotes"
+          value={data.summary.total_quotes.toLocaleString()}
+          icon={FileText}
+          subtext={`$${data.summary.total_quotes_amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}`}
+        />
+        <StatCard
+          label="Total Reservations"
+          value={data.summary.total_reservations.toLocaleString()}
+          icon={Car}
+          variant="success"
+          subtext={`$${data.summary.total_reservations_amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}`}
+        />
+        <StatCard
+          label="Conversion Rate"
+          value={`${data.summary.conversion_rate}%`}
+          icon={TrendingUp}
+          variant={
+            data.summary.conversion_rate >= 50
+              ? "success"
+              : data.summary.conversion_rate >= 25
+                ? "warning"
+                : "danger"
+          }
+          subtext="Quotes → Reservations"
+        />
+        <StatCard
+          label="Total Revenue"
+          value={`$${(data.summary.total_quotes_amount + data.summary.total_reservations_amount).toLocaleString(undefined, { minimumFractionDigits: 0 })}`}
+          icon={DollarSign}
+        />
+      </div>
+
+      {/* Monthly Trend */}
+      {data.summary.quotes_by_month.length > 0 && (
+        <div className="card-sf p-5">
+          <h3 className="text-content-primary mb-4 font-semibold">Monthly Trend (Last 12 Months)</h3>
+          <div className="flex h-40 items-end gap-2">
+            {data.summary.quotes_by_month.slice(0, 12).reverse().map((month) => {
+              const maxTotal = Math.max(
+                ...data.summary.quotes_by_month.map((m) => m.quotes + m.reservations)
+              )
+              const total = month.quotes + month.reservations
+              const height = maxTotal > 0 ? (total / maxTotal) * 100 : 0
+              const quoteHeight = total > 0 ? (month.quotes / total) * height : 0
+              const resHeight = height - quoteHeight
+
+              return (
+                <div
+                  key={month.month}
+                  className="group relative flex flex-1 flex-col justify-end"
+                  title={`${month.month}: ${month.quotes} quotes, ${month.reservations} reservations`}
+                >
+                  <div
+                    className="bg-success-500 w-full rounded-t"
+                    style={{ height: `${resHeight}%` }}
+                  />
+                  <div
+                    className="bg-primary-500 w-full"
+                    style={{ height: `${quoteHeight}%` }}
+                  />
+                  <div className="text-content-tertiary mt-1 text-center text-xs">
+                    {month.month.split("-")[1]}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="bg-primary-500 h-3 w-3 rounded" />
+              <span className="text-content-secondary">Quotes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="bg-success-500 h-3 w-3 rounded" />
+              <span className="text-content-secondary">Reservations</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quotes/Reservations Table */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Recent Quotes & Reservations</h3>
+          <div className="flex gap-2">
+            {(["all", "quotes", "reservations"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={cn(
+                  "rounded-md px-3 py-1 text-sm font-medium transition-colors",
+                  filter === f
+                    ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                    : "text-content-secondary hover:bg-surface-hover"
+                )}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[800px]">
+            <thead className="bg-bg-secondary">
+              <tr className="border-border-default border-b">
+                <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                  Date
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                  Order #
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                  Customer
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                  Route
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                  Type
+                </th>
+                <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                  Amount
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredQuotes.slice(0, 25).map((quote) => {
+                const isReservation = quote.stage.toLowerCase().includes("reservation")
+                return (
+                  <tr key={quote.request_id} className="border-border-default border-b">
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {new Date(quote.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-sm font-medium">
+                      {quote.order_number || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="text-content-primary">{quote.customer_name || "—"}</div>
+                      {quote.customer_email && (
+                        <div className="text-content-tertiary text-xs">{quote.customer_email}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="text-content-primary max-w-[200px] truncate">
+                        {quote.pickup_address || "—"}
+                      </div>
+                      {quote.dropoff_address && (
+                        <div className="text-content-tertiary max-w-[200px] truncate text-xs">
+                          → {quote.dropoff_address}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium",
+                          isReservation
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                        )}
+                      >
+                        {isReservation ? "Reservation" : "Quote"}
+                      </span>
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                      {quote.total_amount !== null
+                        ? `$${quote.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                        : "—"}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        {filteredQuotes.length > 25 && (
+          <div className="border-border-default border-t px-4 py-3 text-center">
+            <p className="text-content-secondary text-sm">
+              Showing 25 of {filteredQuotes.length} {filter === "all" ? "items" : filter}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -2561,7 +4401,7 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
           </div>
         )}
 
-        {/* Drivers Section */}
+        {/* Drivers Section - With Performance Metrics */}
         {activeSection === "drivers" && (
           <div>
             {!data || data.drivers.length === 0 ? (
@@ -2573,48 +4413,91 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                 </p>
               </div>
             ) : (
-              <div className="divide-border-default divide-y">
-                {data.drivers.map((driver) => (
-                  <div key={driver.id} className="flex items-center gap-4 p-4">
-                    <div className="bg-success-100 dark:bg-success-900/30 text-success-600 dark:text-success-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium">
-                      {driver.firstName?.[0] || "D"}
-                      {driver.lastName?.[0] || ""}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-content-primary text-sm font-medium">
-                        {driver.firstName || driver.lastName
-                          ? `${driver.firstName || ""} ${driver.lastName || ""}`.trim()
-                          : "Unknown Driver"}
-                      </p>
-                      <div className="flex gap-3 text-xs">
-                        {driver.email && (
-                          <span className="text-content-secondary">{driver.email}</span>
-                        )}
-                        {driver.phone && (
-                          <span className="text-content-tertiary">{driver.phone}</span>
-                        )}
-                      </div>
-                    </div>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                        driver.status === "active"
-                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
-                          : driver.status === "inactive"
-                            ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
-                            : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
-                      )}
-                    >
-                      {driver.status || "unknown"}
-                    </span>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-border-default bg-bg-secondary border-b text-left text-xs uppercase tracking-wider">
+                      <th className="text-content-secondary px-4 py-3 font-medium">Driver</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium">Status</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Total Trips</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Last 30 Days</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Completion</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Revenue</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium">Last Active</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-border-default divide-y">
+                    {(data.driverPerformance?.length ? data.driverPerformance : data.drivers.map(d => ({ ...d, totalTrips: 0, tripsLast30Days: 0, completionRate: null, totalRevenue: null, lastTripDate: null }))).map((driver) => (
+                      <tr key={driver.id} className="hover:bg-surface-hover transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-success-100 dark:bg-success-900/30 text-success-600 dark:text-success-400 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium">
+                              {driver.firstName?.[0] || "D"}
+                              {(driver as { lastName?: string | null }).lastName?.[0] || ""}
+                            </div>
+                            <div>
+                              <p className="text-content-primary text-sm font-medium">
+                                {driver.firstName || (driver as { lastName?: string | null }).lastName
+                                  ? `${driver.firstName || ""} ${(driver as { lastName?: string | null }).lastName || ""}`.trim()
+                                  : "Unknown Driver"}
+                              </p>
+                              {driver.email && (
+                                <p className="text-content-tertiary text-xs">{driver.email}</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                              driver.status === "active"
+                                ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                : driver.status === "inactive"
+                                  ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                  : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                            )}
+                          >
+                            {driver.status || "unknown"}
+                          </span>
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                          {(driver as { totalTrips?: number }).totalTrips ?? "—"}
+                        </td>
+                        <td className="text-content-secondary px-4 py-3 text-right text-sm">
+                          {(driver as { tripsLast30Days?: number }).tripsLast30Days ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm">
+                          {(driver as { completionRate?: number | null }).completionRate !== null && (driver as { completionRate?: number | null }).completionRate !== undefined ? (
+                            <span className={cn(
+                              "font-medium",
+                              (driver as { completionRate?: number }).completionRate! >= 90 ? "text-success-600" :
+                              (driver as { completionRate?: number }).completionRate! >= 70 ? "text-warning-600" : "text-error-600"
+                            )}>
+                              {(driver as { completionRate?: number }).completionRate}%
+                            </span>
+                          ) : "—"}
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm">
+                          {(driver as { totalRevenue?: number | null }).totalRevenue
+                            ? `$${(driver as { totalRevenue?: number }).totalRevenue!.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                            : "—"}
+                        </td>
+                        <td className="text-content-tertiary px-4 py-3 text-sm">
+                          {(driver as { lastTripDate?: string | null }).lastTripDate
+                            ? new Date((driver as { lastTripDate?: string }).lastTripDate!).toLocaleDateString()
+                            : "Never"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
         )}
 
-        {/* Vehicles Section */}
+        {/* Vehicles Section - With Utilization Stats */}
         {activeSection === "vehicles" && (
           <div>
             {!data || data.vehicles.length === 0 ? (
@@ -2626,37 +4509,87 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                 </p>
               </div>
             ) : (
-              <div className="divide-border-default divide-y">
-                {data.vehicles.map((vehicle) => (
-                  <div key={vehicle.id} className="flex items-center gap-4 p-4">
-                    <div className="bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                      <Car className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-content-primary text-sm font-medium">
-                        {vehicle.name || vehicle.type || "Unknown Vehicle"}
-                      </p>
-                      <div className="flex gap-3 text-xs">
-                        {vehicle.type && (
-                          <span className="text-content-secondary capitalize">{vehicle.type}</span>
-                        )}
-                        {vehicle.color && (
-                          <span className="text-content-tertiary capitalize">{vehicle.color}</span>
-                        )}
-                        {vehicle.licensePlate && (
-                          <span className="text-content-tertiary font-mono">
-                            {vehicle.licensePlate}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {vehicle.capacity && (
-                      <span className="text-content-secondary text-sm">
-                        {vehicle.capacity} seats
-                      </span>
-                    )}
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-border-default bg-bg-secondary border-b text-left text-xs uppercase tracking-wider">
+                      <th className="text-content-secondary px-4 py-3 font-medium">Vehicle</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium">Type</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Capacity</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Total Trips</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Last 30 Days</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Revenue</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium">Last Used</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-border-default divide-y">
+                    {(data.vehicleUtilization?.length ? data.vehicleUtilization : data.vehicles.map(v => ({ ...v, totalTrips: 0, tripsLast30Days: 0, totalRevenue: null, lastTripDate: null, daysSinceLastTrip: null }))).map((vehicle) => (
+                      <tr key={vehicle.id} className="hover:bg-surface-hover transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                              <Car className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-content-primary text-sm font-medium">
+                                {vehicle.name || vehicle.type || "Unknown Vehicle"}
+                              </p>
+                              {(vehicle as { licensePlate?: string | null }).licensePlate && (
+                                <p className="text-content-tertiary font-mono text-xs">
+                                  {(vehicle as { licensePlate?: string }).licensePlate}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {vehicle.type ? (
+                            <span className="bg-bg-tertiary text-content-secondary rounded px-2 py-0.5 text-xs capitalize">
+                              {vehicle.type}
+                            </span>
+                          ) : (
+                            <span className="text-content-tertiary text-sm">—</span>
+                          )}
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm">
+                          {vehicle.capacity ? `${vehicle.capacity}` : "—"}
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                          {(vehicle as { totalTrips?: number }).totalTrips ?? "—"}
+                        </td>
+                        <td className="text-content-secondary px-4 py-3 text-right text-sm">
+                          {(vehicle as { tripsLast30Days?: number }).tripsLast30Days ?? "—"}
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm">
+                          {(vehicle as { totalRevenue?: number | null }).totalRevenue
+                            ? `$${(vehicle as { totalRevenue?: number }).totalRevenue!.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {(vehicle as { lastTripDate?: string | null }).lastTripDate ? (
+                            <div>
+                              <p className="text-content-secondary">
+                                {new Date((vehicle as { lastTripDate?: string }).lastTripDate!).toLocaleDateString()}
+                              </p>
+                              {(vehicle as { daysSinceLastTrip?: number | null }).daysSinceLastTrip !== null && (
+                                <p className={cn(
+                                  "text-xs",
+                                  (vehicle as { daysSinceLastTrip?: number }).daysSinceLastTrip! > 30
+                                    ? "text-warning-600"
+                                    : "text-content-tertiary"
+                                )}>
+                                  {(vehicle as { daysSinceLastTrip?: number }).daysSinceLastTrip} days ago
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-content-tertiary">Never</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
@@ -3577,12 +5510,196 @@ interface EmailsApiResponse {
   }
 }
 
+interface SuppressionResult {
+  email: string
+  type: "bounce" | "block" | "invalid" | "spam"
+  reason?: string
+  created: number
+}
+
 function EmailsTab({ operator }: { operator: OperatorData }) {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === "admin"
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<EmailsApiResponse | null>(null)
   const [filter, setFilter] = useState<"all" | "emails" | "calls" | "meetings" | "notes">("all")
   const [searchQuery, setSearchQuery] = useState("")
+
+  // SendGrid suppression management state
+  const [suppressionEmail, setSuppressionEmail] = useState("")
+  const [suppressionLoading, setSuppressionLoading] = useState(false)
+  const [suppressionResults, setSuppressionResults] = useState<SuppressionResult[]>([])
+  const [suppressionError, setSuppressionError] = useState<string | null>(null)
+  const [removingEmail, setRemovingEmail] = useState<string | null>(null)
+
+  // Global suppression reports state
+  const [globalSuppressionTab, setGlobalSuppressionTab] = useState<"bounces" | "blocks" | "invalid" | "spam">("bounces")
+  const [globalSuppressions, setGlobalSuppressions] = useState<{
+    bounces: Array<{ email: string; created: number; reason: string; status: string }>
+    blocks: Array<{ email: string; created: number; reason: string; status: string }>
+    invalidEmails: Array<{ email: string; created: number; reason: string }>
+    spamReports: Array<{ email: string; created: number; ip?: string }>
+  } | null>(null)
+  const [globalSuppressionsLoading, setGlobalSuppressionsLoading] = useState(false)
+  const [selectedSuppressions, setSelectedSuppressions] = useState<Set<string>>(new Set())
+  const [bulkRemoving, setBulkRemoving] = useState(false)
+
+  const searchSuppression = async () => {
+    if (!suppressionEmail.trim()) return
+
+    setSuppressionLoading(true)
+    setSuppressionError(null)
+    setSuppressionResults([])
+
+    try {
+      const response = await fetch(`/api/sendgrid/suppressions?email=${encodeURIComponent(suppressionEmail.trim())}`)
+      if (!response.ok) {
+        throw new Error("Failed to search suppressions")
+      }
+      const data = await response.json()
+
+      const results: SuppressionResult[] = []
+
+      // Add bounces
+      if (data.bounces?.length) {
+        data.bounces.forEach((b: { email: string; reason: string; created: number }) => {
+          results.push({ email: b.email, type: "bounce", reason: b.reason, created: b.created })
+        })
+      }
+
+      // Add blocks
+      if (data.blocks?.length) {
+        data.blocks.forEach((b: { email: string; reason: string; created: number }) => {
+          results.push({ email: b.email, type: "block", reason: b.reason, created: b.created })
+        })
+      }
+
+      // Add invalid emails
+      if (data.invalidEmails?.length) {
+        data.invalidEmails.forEach((i: { email: string; reason: string; created: number }) => {
+          results.push({ email: i.email, type: "invalid", reason: i.reason, created: i.created })
+        })
+      }
+
+      // Add spam reports
+      if (data.spamReports?.length) {
+        data.spamReports.forEach((s: { email: string; created: number }) => {
+          results.push({ email: s.email, type: "spam", created: s.created })
+        })
+      }
+
+      setSuppressionResults(results)
+    } catch (err) {
+      setSuppressionError(err instanceof Error ? err.message : "Failed to search")
+    } finally {
+      setSuppressionLoading(false)
+    }
+  }
+
+  const removeSuppression = async (email: string, type: "bounce" | "block" | "invalid" | "spam") => {
+    setRemovingEmail(`${email}-${type}`)
+    try {
+      const response = await fetch(`/api/sendgrid/suppressions?email=${encodeURIComponent(email)}&type=${type}`, {
+        method: "DELETE",
+      })
+      if (!response.ok) {
+        throw new Error("Failed to remove suppression")
+      }
+      // Remove from results
+      setSuppressionResults((prev) => prev.filter((r) => !(r.email === email && r.type === type)))
+    } catch (err) {
+      setSuppressionError(err instanceof Error ? err.message : "Failed to remove")
+    } finally {
+      setRemovingEmail(null)
+    }
+  }
+
+  // Load all global suppressions
+  const loadGlobalSuppressions = async () => {
+    setGlobalSuppressionsLoading(true)
+    try {
+      const response = await fetch("/api/sendgrid/suppressions?type=all")
+      if (!response.ok) throw new Error("Failed to load suppressions")
+      const data = await response.json()
+      setGlobalSuppressions({
+        bounces: data.bounces || [],
+        blocks: data.blocks || [],
+        invalidEmails: data.invalidEmails || [],
+        spamReports: data.spamReports || [],
+      })
+    } catch (err) {
+      console.error("Failed to load global suppressions:", err)
+    } finally {
+      setGlobalSuppressionsLoading(false)
+    }
+  }
+
+  // Toggle selection for bulk operations
+  const toggleSuppressionSelection = (email: string) => {
+    setSelectedSuppressions((prev) => {
+      const next = new Set(prev)
+      if (next.has(email)) {
+        next.delete(email)
+      } else {
+        next.add(email)
+      }
+      return next
+    })
+  }
+
+  // Select/deselect all in current tab
+  const toggleSelectAll = () => {
+    if (!globalSuppressions) return
+    const currentList = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
+      : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
+      : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
+      : globalSuppressions.spamReports
+    const allEmails = currentList.map(s => s.email)
+    const allSelected = allEmails.every(e => selectedSuppressions.has(e))
+
+    if (allSelected) {
+      setSelectedSuppressions(prev => {
+        const next = new Set(prev)
+        allEmails.forEach(e => next.delete(e))
+        return next
+      })
+    } else {
+      setSelectedSuppressions(prev => {
+        const next = new Set(prev)
+        allEmails.forEach(e => next.add(e))
+        return next
+      })
+    }
+  }
+
+  // Bulk remove selected suppressions
+  const bulkRemoveSuppressions = async () => {
+    if (selectedSuppressions.size === 0) return
+    setBulkRemoving(true)
+
+    const type = globalSuppressionTab === "bounces" ? "bounce"
+      : globalSuppressionTab === "blocks" ? "block"
+      : globalSuppressionTab === "invalid" ? "invalid"
+      : "spam"
+
+    try {
+      const promises = Array.from(selectedSuppressions).map(email =>
+        fetch(`/api/sendgrid/suppressions?email=${encodeURIComponent(email)}&type=${type}`, {
+          method: "DELETE",
+        })
+      )
+      await Promise.all(promises)
+
+      // Refresh the list
+      await loadGlobalSuppressions()
+      setSelectedSuppressions(new Set())
+    } catch (err) {
+      console.error("Bulk remove failed:", err)
+    } finally {
+      setBulkRemoving(false)
+    }
+  }
 
   useEffect(() => {
     // Use HubSpot ID for the API call
@@ -3883,6 +6000,315 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
           </div>
         )}
       </div>
+
+      {/* SendGrid Email Deliverability */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Email Deliverability</h3>
+          <p className="text-content-secondary mt-1 text-sm">
+            Check if an email address is on SendGrid suppression lists (bounces, blocks, spam reports)
+          </p>
+        </div>
+
+        <div className="p-4">
+          {/* Search Input */}
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="Enter email address to check..."
+              value={suppressionEmail}
+              onChange={(e) => setSuppressionEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && searchSuppression()}
+              className="input-sf flex-1 py-2"
+            />
+            <button
+              onClick={searchSuppression}
+              disabled={suppressionLoading || !suppressionEmail.trim()}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                suppressionLoading || !suppressionEmail.trim()
+                  ? "cursor-not-allowed bg-bg-tertiary text-content-tertiary"
+                  : "bg-primary-600 hover:bg-primary-700 text-white"
+              )}
+            >
+              {suppressionLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              )}
+              Check
+            </button>
+          </div>
+
+          {/* Error Message */}
+          {suppressionError && (
+            <div className="bg-error-50 dark:bg-error-950/30 border-error-200 dark:border-error-800 mt-3 rounded-lg border p-3">
+              <p className="text-error-700 dark:text-error-400 text-sm">{suppressionError}</p>
+            </div>
+          )}
+
+          {/* Results */}
+          {suppressionResults.length > 0 && (
+            <div className="mt-4 space-y-3">
+              <p className="text-content-secondary text-sm font-medium">
+                Found {suppressionResults.length} suppression{suppressionResults.length !== 1 ? "s" : ""}:
+              </p>
+              <div className="divide-border-default divide-y rounded-lg border">
+                {suppressionResults.map((result) => (
+                  <div
+                    key={`${result.email}-${result.type}`}
+                    className="flex items-center justify-between gap-4 p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "rounded px-2 py-0.5 text-xs font-medium uppercase",
+                            result.type === "bounce"
+                              ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                              : result.type === "block"
+                                ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                : result.type === "spam"
+                                  ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                  : "bg-bg-tertiary text-content-secondary"
+                          )}
+                        >
+                          {result.type}
+                        </span>
+                        <span className="text-content-primary text-sm font-medium">
+                          {result.email}
+                        </span>
+                      </div>
+                      {result.reason && (
+                        <p className="text-content-tertiary mt-1 truncate text-xs">
+                          {result.reason}
+                        </p>
+                      )}
+                      <p className="text-content-tertiary mt-0.5 text-xs">
+                        Added: {new Date(result.created * 1000).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeSuppression(result.email, result.type)}
+                      disabled={removingEmail === `${result.email}-${result.type}`}
+                      className={cn(
+                        "flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                        removingEmail === `${result.email}-${result.type}`
+                          ? "cursor-not-allowed bg-bg-tertiary text-content-tertiary"
+                          : "bg-error-100 text-error-700 hover:bg-error-200 dark:bg-error-900/30 dark:text-error-400 dark:hover:bg-error-900/50"
+                      )}
+                    >
+                      {removingEmail === `${result.email}-${result.type}` ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No results message */}
+          {suppressionResults.length === 0 && suppressionEmail && !suppressionLoading && !suppressionError && (
+            <div className="bg-success-50 dark:bg-success-950/30 mt-4 rounded-lg p-4 text-center">
+              <Check className="text-success-600 dark:text-success-400 mx-auto mb-2 h-8 w-8" />
+              <p className="text-success-700 dark:text-success-400 text-sm font-medium">
+                Email not found on any suppression list
+              </p>
+              <p className="text-success-600 dark:text-success-500 mt-1 text-xs">
+                {suppressionEmail} can receive emails normally
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Global Suppression Reports (Admin Only) */}
+      {isAdmin && (
+        <div className="card-sf overflow-hidden">
+          <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
+            <div>
+              <h3 className="text-content-primary font-semibold">Suppression Reports</h3>
+              <p className="text-content-secondary mt-1 text-sm">
+                View and manage all email suppressions across the system
+              </p>
+            </div>
+            <button
+              onClick={loadGlobalSuppressions}
+              disabled={globalSuppressionsLoading}
+              className="btn-sf-secondary inline-flex items-center gap-2 text-sm"
+            >
+              {globalSuppressionsLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              {globalSuppressions ? "Refresh" : "Load Reports"}
+            </button>
+          </div>
+
+          {globalSuppressions && (
+            <div className="p-4">
+              {/* Tabs */}
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex gap-1">
+                  {[
+                    { key: "bounces", label: "Bounces", count: globalSuppressions.bounces.length },
+                    { key: "blocks", label: "Blocks", count: globalSuppressions.blocks.length },
+                    { key: "invalid", label: "Invalid", count: globalSuppressions.invalidEmails.length },
+                    { key: "spam", label: "Spam", count: globalSuppressions.spamReports.length },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => {
+                        setGlobalSuppressionTab(tab.key as typeof globalSuppressionTab)
+                        setSelectedSuppressions(new Set())
+                      }}
+                      className={cn(
+                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                        globalSuppressionTab === tab.key
+                          ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                          : "text-content-secondary hover:bg-bg-secondary"
+                      )}
+                    >
+                      {tab.label}
+                      <span className="text-content-tertiary ml-1.5 text-xs">({tab.count})</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Bulk Actions */}
+                {selectedSuppressions.size > 0 && (
+                  <button
+                    onClick={bulkRemoveSuppressions}
+                    disabled={bulkRemoving}
+                    className="bg-error-100 text-error-700 hover:bg-error-200 dark:bg-error-900/30 dark:text-error-400 dark:hover:bg-error-900/50 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+                  >
+                    {bulkRemoving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                    Remove {selectedSuppressions.size} Selected
+                  </button>
+                )}
+              </div>
+
+              {/* Table */}
+              <div className="border-border-default overflow-hidden rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead className="bg-bg-secondary">
+                    <tr>
+                      <th className="w-10 px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={(() => {
+                            const list = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
+                              : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
+                              : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
+                              : globalSuppressions.spamReports
+                            return list.length > 0 && list.every(s => selectedSuppressions.has(s.email))
+                          })()}
+                          onChange={toggleSelectAll}
+                          className="rounded"
+                        />
+                      </th>
+                      <th className="text-content-secondary px-3 py-2 text-left font-medium">Email</th>
+                      <th className="text-content-secondary px-3 py-2 text-left font-medium">Reason</th>
+                      <th className="text-content-secondary px-3 py-2 text-left font-medium">Date</th>
+                      <th className="text-content-secondary w-20 px-3 py-2 text-right font-medium">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-border-default divide-y">
+                    {(() => {
+                      const list = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
+                        : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
+                        : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
+                        : globalSuppressions.spamReports
+
+                      if (list.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={5} className="text-content-tertiary px-3 py-8 text-center">
+                              No {globalSuppressionTab} found
+                            </td>
+                          </tr>
+                        )
+                      }
+
+                      return list.slice(0, 50).map((item) => (
+                        <tr key={item.email} className="hover:bg-bg-secondary">
+                          <td className="px-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedSuppressions.has(item.email)}
+                              onChange={() => toggleSuppressionSelection(item.email)}
+                              className="rounded"
+                            />
+                          </td>
+                          <td className="text-content-primary px-3 py-2 font-medium">{item.email}</td>
+                          <td className="text-content-secondary max-w-xs truncate px-3 py-2">
+                            {"reason" in item ? item.reason : "ip" in item ? `IP: ${item.ip || "N/A"}` : "—"}
+                          </td>
+                          <td className="text-content-tertiary px-3 py-2">
+                            {new Date(item.created * 1000).toLocaleDateString()}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <button
+                              onClick={() => removeSuppression(
+                                item.email,
+                                globalSuppressionTab === "bounces" ? "bounce"
+                                  : globalSuppressionTab === "blocks" ? "block"
+                                  : globalSuppressionTab === "invalid" ? "invalid"
+                                  : "spam"
+                              )}
+                              disabled={removingEmail === `${item.email}-${globalSuppressionTab.slice(0, -1)}`}
+                              className="text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 text-xs font-medium"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    })()}
+                  </tbody>
+                </table>
+                {(() => {
+                  const list = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
+                    : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
+                    : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
+                    : globalSuppressions.spamReports
+                  return list.length > 50 && (
+                    <div className="border-border-default border-t px-3 py-2 text-center">
+                      <p className="text-content-tertiary text-xs">
+                        Showing 50 of {list.length} records
+                      </p>
+                    </div>
+                  )
+                })()}
+              </div>
+            </div>
+          )}
+
+          {!globalSuppressions && !globalSuppressionsLoading && (
+            <div className="p-8 text-center">
+              <Mail className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+              <p className="text-content-secondary text-sm">
+                Click "Load Reports" to view all suppression lists
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -4661,6 +7087,7 @@ export default function OperatorDetailPage() {
           {activeTab === "overview" && <OverviewTab operator={operator} />}
           {activeTab === "payments" && <PaymentsTab operator={operator} />}
           {activeTab === "risk" && <RiskTab operator={operator} />}
+          {activeTab === "quotes" && <QuotesTab operator={operator} />}
           {activeTab === "features" && <FeaturesTab operator={operator} />}
           {activeTab === "activity" && <ActivityTab operator={operator} />}
           {activeTab === "trips" && <TripsTab operator={operator} />}

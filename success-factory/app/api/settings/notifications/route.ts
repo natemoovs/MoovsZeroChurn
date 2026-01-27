@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
         },
         create: {
           neonUserId: user.id,
-          email: user.email,
+          email: user.email ?? "",
           name: user.name,
           alertPreferences: JSON.parse(JSON.stringify(preferences)),
         },

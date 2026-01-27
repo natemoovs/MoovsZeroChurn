@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { snowflake } from "@/lib/integrations"
+import { requireAdmin, requireAuth } from "@/lib/auth/api-middleware"
 
 /**
  * GET /api/operator-hub/[operatorId]/members
@@ -18,11 +19,13 @@ export async function GET(
       return NextResponse.json({ error: "Snowflake/Metabase not configured" }, { status: 503 })
     }
 
-    // Fetch members, drivers, and vehicles in parallel
-    const [members, drivers, vehicles] = await Promise.all([
+    // Fetch members, drivers, vehicles, and performance data in parallel
+    const [members, drivers, vehicles, driverPerformance, vehicleUtilization] = await Promise.all([
       snowflake.getOperatorMembers(operatorId),
       snowflake.getOperatorDrivers(operatorId),
       snowflake.getOperatorVehicles(operatorId),
+      snowflake.getDriverPerformance(operatorId).catch(() => []),
+      snowflake.getVehicleUtilization(operatorId).catch(() => []),
     ])
 
     // Calculate stats
@@ -62,6 +65,31 @@ export async function GET(
         capacity: v.capacity,
         createdAt: v.created_at,
       })),
+      driverPerformance: driverPerformance.map((dp) => ({
+        id: dp.driver_id,
+        firstName: dp.first_name,
+        lastName: dp.last_name,
+        email: dp.email,
+        status: dp.status,
+        totalTrips: dp.total_trips,
+        completedTrips: dp.completed_trips,
+        tripsLast30Days: dp.trips_last_30_days,
+        totalRevenue: dp.total_revenue,
+        lastTripDate: dp.last_trip_date,
+        completionRate: dp.completion_rate,
+      })),
+      vehicleUtilization: vehicleUtilization.map((vu) => ({
+        id: vu.vehicle_id,
+        name: vu.vehicle_name,
+        type: vu.vehicle_type,
+        licensePlate: vu.license_plate,
+        capacity: vu.capacity,
+        totalTrips: vu.total_trips,
+        tripsLast30Days: vu.trips_last_30_days,
+        totalRevenue: vu.total_revenue,
+        lastTripDate: vu.last_trip_date,
+        daysSinceLastTrip: vu.days_since_last_trip,
+      })),
       stats: {
         totalMembers: members.length,
         totalDrivers: drivers.length,
@@ -86,12 +114,18 @@ export async function GET(
  * POST /api/operator-hub/[operatorId]/members
  *
  * Add a new member to the operator's platform.
+ * Requires authentication. Non-admins can only add members with "member" role.
  * Requires direct Snowflake connection for write operations.
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
+  // Require authentication for adding members
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+  const user = authResult
+
   try {
     const { operatorId } = await params
 
@@ -115,12 +149,23 @@ export async function POST(
       return NextResponse.json({ error: "Invalid email format" }, { status: 400 })
     }
 
+    // Non-admins can only add members with "member" role
+    const privilegedRoles = ["owner", "admin"]
+    const effectiveRole = user.role === "admin" ? (roleSlug || "member") : "member"
+
+    if (user.role !== "admin" && roleSlug && privilegedRoles.includes(roleSlug)) {
+      return NextResponse.json(
+        { error: "Only admins can assign owner or admin roles" },
+        { status: 403 }
+      )
+    }
+
     const result = await snowflake.addOperatorMember({
       operatorId,
       email,
       firstName,
       lastName,
-      roleSlug: roleSlug || "member",
+      roleSlug: effectiveRole,
     })
 
     return NextResponse.json({
@@ -144,12 +189,16 @@ export async function POST(
  * PATCH /api/operator-hub/[operatorId]/members
  *
  * Update a member's role.
- * Requires direct Snowflake connection for write operations.
+ * Requires admin role and direct Snowflake connection for write operations.
  */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
+  // Require admin role for updating member roles
+  const authResult = await requireAdmin()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { operatorId } = await params
 
@@ -205,12 +254,16 @@ export async function PATCH(
  * DELETE /api/operator-hub/[operatorId]/members
  *
  * Remove a member from the operator's platform (soft delete).
- * Requires direct Snowflake connection for write operations.
+ * Requires authentication and direct Snowflake connection for write operations.
  */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
+  // Require authentication for removing members
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { operatorId } = await params
 

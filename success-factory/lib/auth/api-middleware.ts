@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getCurrentUser } from "./server"
+import { getCurrentUser, type AuthUser } from "./server"
 
 /**
  * API Authentication Middleware
@@ -15,7 +15,7 @@ import { getCurrentUser } from "./server"
  *   // ... rest of handler
  * }
  */
-export async function requireAuth() {
+export async function requireAuth(): Promise<AuthUser | NextResponse> {
   const user = await getCurrentUser()
 
   if (!user) {
@@ -26,10 +26,41 @@ export async function requireAuth() {
 }
 
 /**
- * Type guard to check if requireAuth returned an error response
+ * API Admin Authorization Middleware
+ *
+ * Use this in API routes to require admin role.
+ * Returns the user if admin, or a 401/403 response if not.
+ *
+ * @example
+ * export async function DELETE(request: NextRequest) {
+ *   const authResult = await requireAdmin()
+ *   if (authResult instanceof NextResponse) return authResult
+ *   const adminUser = authResult
+ *   // ... rest of handler (only admins reach here)
+ * }
+ */
+export async function requireAdmin(): Promise<AuthUser | NextResponse> {
+  const user = await getCurrentUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 })
+  }
+
+  if (user.role !== "admin") {
+    return NextResponse.json(
+      { error: "Forbidden. Admin access required." },
+      { status: 403 }
+    )
+  }
+
+  return user
+}
+
+/**
+ * Type guard to check if requireAuth/requireAdmin returned an error response
  */
 export function isAuthError(
-  result: Awaited<ReturnType<typeof requireAuth>>
+  result: AuthUser | NextResponse
 ): result is NextResponse<{ error: string }> {
   return result instanceof NextResponse
 }
@@ -44,12 +75,31 @@ export function isAuthError(
  * })
  */
 export function withAuth<T extends unknown[]>(
-  handler: (
-    ...args: [...T, { id: string; email: string | null; name: string | null }]
-  ) => Promise<NextResponse>
+  handler: (...args: [...T, AuthUser]) => Promise<NextResponse>
 ) {
   return async (...args: T): Promise<NextResponse> => {
     const authResult = await requireAuth()
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+    return handler(...args, authResult)
+  }
+}
+
+/**
+ * Higher-order function to wrap an API handler with admin authorization
+ *
+ * @example
+ * export const DELETE = withAdmin(async (request, adminUser) => {
+ *   // adminUser is guaranteed to be an admin here
+ *   return NextResponse.json({ data: "..." })
+ * })
+ */
+export function withAdmin<T extends unknown[]>(
+  handler: (...args: [...T, AuthUser]) => Promise<NextResponse>
+) {
+  return async (...args: T): Promise<NextResponse> => {
+    const authResult = await requireAdmin()
     if (authResult instanceof NextResponse) {
       return authResult
     }

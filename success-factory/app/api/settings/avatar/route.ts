@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       update: { avatarUrl: blob.url },
       create: {
         neonUserId: user.id,
-        email: user.email,
+        email: user.email ?? "",
         name: user.name,
         avatarUrl: blob.url,
       },
