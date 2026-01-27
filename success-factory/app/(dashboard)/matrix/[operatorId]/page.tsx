@@ -1642,7 +1642,7 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                       className="text-content-tertiary"
                     />
                     <Tooltip
-                      formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, '']}
+                      formatter={(value) => [`$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, '']}
                       labelClassName="text-content-primary font-medium"
                       contentStyle={{
                         backgroundColor: 'var(--color-bg-secondary)',
@@ -1676,7 +1676,7 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                       className="text-content-tertiary"
                     />
                     <Tooltip
-                      formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Total Volume']}
+                      formatter={(value) => [`$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Total Volume']}
                       labelClassName="text-content-primary font-medium"
                       contentStyle={{
                         backgroundColor: 'var(--color-bg-secondary)',
@@ -2842,7 +2842,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-content-tertiary" />
                     <YAxis tick={{ fontSize: 11 }} className="text-content-tertiary" />
                     <Tooltip
-                      formatter={(value: number) => [value, 'Disputes']}
+                      formatter={(value) => [Number(value || 0), 'Disputes']}
                       labelClassName="text-content-primary font-medium"
                       contentStyle={{
                         backgroundColor: 'var(--color-bg-secondary)',
@@ -2888,7 +2888,7 @@ function RiskTab({ operator }: { operator: OperatorData }) {
                       width={80}
                     />
                     <Tooltip
-                      formatter={(value: number) => [value, 'Disputes']}
+                      formatter={(value) => [Number(value || 0), 'Disputes']}
                       labelClassName="text-content-primary font-medium"
                       contentStyle={{
                         backgroundColor: 'var(--color-bg-secondary)',
