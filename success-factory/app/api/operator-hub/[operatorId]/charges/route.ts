@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
+import { stripe } from "@/lib/integrations/stripe"
 import { snowflake } from "@/lib/integrations"
-import { metabase } from "@/lib/integrations"
 
 /**
  * GET /api/operator-hub/[operatorId]/charges
  *
- * Fetches platform charges for an operator.
- * Uses Snowflake direct connection if configured, falls back to Metabase.
+ * Fetches charges for an operator.
+ * Priority: Stripe (connected account) > Snowflake (for historical data)
+ *
+ * Financial data comes from Stripe (source of truth for payments).
+ * Metabase removed - use Stripe/Lago for financial data to avoid data discrepancies.
  */
 export async function GET(
   request: NextRequest,
@@ -16,63 +19,75 @@ export async function GET(
     const { operatorId } = await params
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get("limit") || "100")
+    const stripeAccountId = searchParams.get("stripeAccountId")
 
-    // Try Snowflake first
-    if (snowflake.isConfigured()) {
-      const [charges, summary] = await Promise.all([
-        snowflake.getOperatorPlatformCharges(operatorId, limit),
-        snowflake.getMonthlyChargesSummary(operatorId),
-      ])
+    // Priority 1: Stripe connected account (source of truth for payments)
+    if (stripeAccountId && stripe.isConnectedConfigured()) {
+      try {
+        const stripeCharges = await stripe.getConnectedAccountCharges(stripeAccountId, { limit })
 
-      return NextResponse.json({
-        source: "snowflake",
-        charges,
-        summary,
-        totals: calculateTotals(charges),
-      })
+        if (stripeCharges && stripeCharges.length > 0) {
+          // Transform Stripe charges to match our format
+          const charges = stripeCharges.map((c) => ({
+            charge_id: c.id,
+            operator_id: operatorId,
+            operator_name: "",
+            created_date: new Date(c.created * 1000).toISOString(),
+            status: c.status,
+            total_dollars_charged: c.amount / 100, // Stripe amounts are in cents
+            fee_amount: 0,
+            net_amount: c.amount / 100,
+            description: c.description,
+            customer_email: null,
+          }))
+
+          return NextResponse.json({
+            source: "stripe",
+            charges,
+            summary: [],
+            totals: calculateTotals(charges),
+          })
+        }
+      } catch (err) {
+        console.log("Stripe query failed, trying Snowflake:", err)
+      }
     }
 
-    // Fallback to Metabase custom query
-    const sql = `
-      SELECT
-        CHARGE_ID as "chargeId",
-        OPERATOR_ID as "operatorId",
-        OPERATOR_NAME as "operatorName",
-        CREATED_DATE as "createdAt",
-        STATUS as "status",
-        TOTAL_DOLLARS_CHARGED as "amount",
-        FEE_AMOUNT as "feeAmount",
-        DESCRIPTION as "description",
-        CUSTOMER_EMAIL as "customerEmail"
-      FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-      WHERE OPERATOR_ID = '${operatorId}'
-      ORDER BY CREATED_DATE DESC
-      LIMIT ${limit}
-    `
+    // Priority 2: Snowflake (for historical/platform charge data if available)
+    if (snowflake.isConfigured()) {
+      try {
+        const [charges, summary] = await Promise.all([
+          snowflake.getOperatorPlatformCharges(operatorId, limit),
+          snowflake.getMonthlyChargesSummary(operatorId),
+        ])
 
-    const result = await metabase.runCustomQuery(metabase.METABASE_DATABASE_ID, sql)
-    const charges = metabase.rowsToObjects(result)
+        if (charges && charges.length > 0) {
+          return NextResponse.json({
+            source: "snowflake",
+            charges,
+            summary,
+            totals: calculateTotals(charges),
+          })
+        }
+      } catch (err) {
+        console.log("Snowflake query failed:", err)
+      }
+    }
 
-    // Get monthly summary
-    const summarySql = `
-      SELECT
-        DATE_TRUNC('month', CREATED_DATE) as "month",
-        STATUS as "status",
-        SUM(TOTAL_DOLLARS_CHARGED) as "totalAmount",
-        COUNT(*) as "chargeCount"
-      FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-      WHERE OPERATOR_ID = '${operatorId}'
-      GROUP BY DATE_TRUNC('month', CREATED_DATE), STATUS
-      ORDER BY "month" DESC
-    `
-    const summaryResult = await metabase.runCustomQuery(metabase.METABASE_DATABASE_ID, summarySql)
-    const summary = metabase.rowsToObjects(summaryResult)
-
+    // No data found from any source
     return NextResponse.json({
-      source: "metabase",
-      charges,
-      summary,
-      totals: calculateTotals(charges as Array<{ amount: number; status: string }>),
+      source: "none",
+      charges: [],
+      summary: [],
+      totals: {
+        totalVolume: 0,
+        totalCount: 0,
+        successCount: 0,
+        successVolume: 0,
+        failedCount: 0,
+        failedVolume: 0,
+        successRate: 0,
+      },
     })
   } catch (error) {
     console.error("Failed to fetch operator charges:", error)

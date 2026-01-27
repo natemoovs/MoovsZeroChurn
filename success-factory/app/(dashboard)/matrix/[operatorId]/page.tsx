@@ -127,7 +127,7 @@ interface MonthlyChargeSummary {
   failedCount: number
 }
 
-type TabId = "overview" | "payments" | "risk" | "features" | "activity" | "tickets" | "emails"
+type TabId = "overview" | "payments" | "risk" | "features" | "activity" | "tickets" | "emails" | "history"
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: Building2 },
@@ -137,6 +137,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "activity", label: "Activity", icon: BarChart3 },
   { id: "tickets", label: "Tickets", icon: FileText },
   { id: "emails", label: "Emails", icon: Mail },
+  { id: "history", label: "History", icon: History },
 ]
 
 // ============================================================================
@@ -821,31 +822,72 @@ interface ChargesApiResponse {
   }
 }
 
+interface InvoicesApiResponse {
+  operatorId: string
+  invoices: Array<{
+    id: string
+    number: string
+    type: string
+    status: string
+    paymentStatus: string
+    currency: string
+    totalAmountCents: number
+    taxesAmountCents: number
+    issuingDate: string
+    paymentDueDate: string | null
+    paymentOverdue: boolean
+    fromDate: string | null
+    toDate: string | null
+    createdAt: string
+  }>
+  summary: {
+    totalInvoiced: number
+    totalPaid: number
+    totalPending: number
+    totalOverdue: number
+    invoiceCount: number
+    paidCount: number
+    pendingCount: number
+    overdueCount: number
+    failedCount: number
+    currency: string
+  }
+}
+
 function PaymentsTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ChargesApiResponse | null>(null)
+  const [invoices, setInvoices] = useState<InvoicesApiResponse | null>(null)
+  const [invoicesLoading, setInvoicesLoading] = useState(true)
 
   useEffect(() => {
     if (!operator.operatorId) {
       setLoading(false)
+      setInvoicesLoading(false)
       return
     }
 
-    fetch(`/api/operator-hub/${operator.operatorId}/charges`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch charges")
-        return res.json()
-      })
-      .then((data) => {
-        setData(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err.message)
-        setLoading(false)
-      })
-  }, [operator.operatorId])
+    // Fetch charges and invoices in parallel
+    // Pass stripeAccountId to charges API so it can fallback to Stripe when Snowflake isn't available
+    const chargesUrl = operator.stripeAccountId
+      ? `/api/operator-hub/${operator.operatorId}/charges?stripeAccountId=${operator.stripeAccountId}`
+      : `/api/operator-hub/${operator.operatorId}/charges`
+
+    Promise.all([
+      fetch(chargesUrl)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null),
+      fetch(`/api/operator-hub/${operator.operatorId}/invoices`)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null),
+    ]).then(([chargesData, invoicesData]) => {
+      if (chargesData) setData(chargesData)
+      if (invoicesData) setInvoices(invoicesData)
+      setLoading(false)
+      setInvoicesLoading(false)
+    })
+  }, [operator.operatorId, operator.stripeAccountId])
 
   if (loading) {
     return (
@@ -855,64 +897,83 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
     )
   }
 
-  if (error || !data) {
-    return (
-      <div className="space-y-6">
+  const hasCharges = data && data.charges?.length > 0
+  const hasInvoices = invoices && invoices.invoices?.length > 0
+  const totals = data?.totals
+  const charges = data?.charges || []
+
+  return (
+    <div className="space-y-6">
+      {/* Payment Stats - show charges stats if available, otherwise invoice stats */}
+      {totals ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Total Volume"
+            value={`$${totals.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={DollarSign}
+            subtext={`${totals.totalCount} charges`}
+          />
+          <StatCard
+            label="Successful"
+            value={`$${totals.successVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={Check}
+            variant="success"
+            subtext={`${totals.successCount} charges`}
+          />
+          <StatCard
+            label="Success Rate"
+            value={`${totals.successRate.toFixed(1)}%`}
+            icon={TrendingUp}
+            variant={
+              totals.successRate >= 95 ? "success" : totals.successRate >= 80 ? "warning" : "danger"
+            }
+          />
+          <StatCard
+            label="Failed"
+            value={`$${totals.failedVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={AlertTriangle}
+            variant={totals.failedCount > 0 ? "danger" : "default"}
+            subtext={`${totals.failedCount} charges`}
+          />
+        </div>
+      ) : invoices?.summary ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Total Invoiced"
+            value={`$${(invoices.summary.totalInvoiced / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={FileText}
+            subtext={`${invoices.summary.invoiceCount} invoices`}
+          />
+          <StatCard
+            label="Total Paid"
+            value={`$${(invoices.summary.totalPaid / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={Check}
+            variant="success"
+            subtext={`${invoices.summary.paidCount} paid`}
+          />
+          <StatCard
+            label="Pending"
+            value={`$${(invoices.summary.totalPending / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={Clock}
+            variant={invoices.summary.pendingCount > 0 ? "warning" : "default"}
+            subtext={`${invoices.summary.pendingCount} pending`}
+          />
+          <StatCard
+            label="Overdue"
+            value={`$${(invoices.summary.totalOverdue / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={AlertTriangle}
+            variant={invoices.summary.overdueCount > 0 ? "danger" : "default"}
+            subtext={`${invoices.summary.overdueCount} overdue`}
+          />
+        </div>
+      ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Total Volume" value="—" icon={DollarSign} subtext="All time" />
           <StatCard label="This Month" value="—" icon={Calendar} />
           <StatCard label="Success Rate" value="—" icon={Check} />
           <StatCard label="Failed Payments" value="—" icon={AlertTriangle} />
         </div>
-        <div className="card-sf p-8 text-center">
-          <CreditCard className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-          <h3 className="text-content-primary text-lg font-medium">Payment History</h3>
-          <p className="text-content-secondary mx-auto mt-2 max-w-md">
-            {error || "Configure Metabase to view platform charges and payment history."}
-          </p>
-          <p className="text-content-tertiary mt-4 text-sm">
-            Required: METABASE_URL, METABASE_API_KEY
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  const { charges, totals } = data
-
-  return (
-    <div className="space-y-6">
-      {/* Payment Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Volume"
-          value={`$${totals.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={DollarSign}
-          subtext={`${totals.totalCount} charges`}
-        />
-        <StatCard
-          label="Successful"
-          value={`$${totals.successVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={Check}
-          variant="success"
-          subtext={`${totals.successCount} charges`}
-        />
-        <StatCard
-          label="Success Rate"
-          value={`${totals.successRate.toFixed(1)}%`}
-          icon={TrendingUp}
-          variant={
-            totals.successRate >= 95 ? "success" : totals.successRate >= 80 ? "warning" : "danger"
-          }
-        />
-        <StatCard
-          label="Failed"
-          value={`$${totals.failedVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={AlertTriangle}
-          variant={totals.failedCount > 0 ? "danger" : "default"}
-          subtext={`${totals.failedCount} charges`}
-        />
-      </div>
+      )}
 
       {/* Stripe Connected Account Live Data */}
       {operator.stripeAccountId && operator.operatorId && (
@@ -922,17 +983,96 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
         />
       )}
 
-      {/* Charges Table */}
-      <div className="card-sf overflow-hidden">
-        <div className="border-border-default border-b px-4 py-3">
-          <h3 className="text-content-primary font-semibold">Recent Charges</h3>
-        </div>
-        {charges.length === 0 ? (
-          <div className="p-8 text-center">
-            <CreditCard className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
-            <p className="text-content-secondary">No charges found for this operator.</p>
+      {/* Lago Invoices Section */}
+      {invoicesLoading ? (
+        <div className="card-sf p-4">
+          <div className="flex items-center gap-3">
+            <Loader2 className="text-primary-500 h-5 w-5 animate-spin" />
+            <span className="text-content-secondary text-sm">Loading invoices...</span>
           </div>
-        ) : (
+        </div>
+      ) : hasInvoices ? (
+        <div className="card-sf overflow-hidden">
+          <div className="border-border-default border-b px-4 py-3">
+            <h3 className="text-content-primary font-semibold">Billing Invoices (Lago)</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px]">
+              <thead className="bg-bg-secondary">
+                <tr className="border-border-default border-b">
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Invoice #
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Date
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                    Period
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Status
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices!.invoices.slice(0, 15).map((invoice) => (
+                  <tr key={invoice.id} className="border-border-default border-b">
+                    <td className="text-content-primary px-4 py-3 text-sm font-medium">
+                      {invoice.number}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {new Date(invoice.issuingDate).toLocaleDateString()}
+                    </td>
+                    <td className="text-content-secondary px-4 py-3 text-sm">
+                      {invoice.fromDate && invoice.toDate
+                        ? `${new Date(invoice.fromDate).toLocaleDateString()} - ${new Date(invoice.toDate).toLocaleDateString()}`
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                          invoice.paymentStatus === "succeeded"
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : invoice.paymentStatus === "failed"
+                              ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                              : invoice.paymentOverdue
+                                ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                        )}
+                      >
+                        {invoice.paymentOverdue ? "Overdue" : invoice.paymentStatus}
+                      </span>
+                    </td>
+                    <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                      ${(invoice.totalAmountCents / 100).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {invoices!.invoices.length > 15 && (
+            <div className="border-border-default border-t px-4 py-3 text-center">
+              <p className="text-content-secondary text-sm">
+                Showing 15 of {invoices!.invoices.length} invoices
+              </p>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Charges Table */}
+      {hasCharges ? (
+        <div className="card-sf overflow-hidden">
+          <div className="border-border-default border-b px-4 py-3">
+            <h3 className="text-content-primary font-semibold">Platform Charges</h3>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px]">
               <thead className="bg-bg-secondary">
@@ -991,13 +1131,24 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
               </tbody>
             </table>
           </div>
-        )}
-        {charges.length > 25 && (
-          <div className="border-border-default border-t px-4 py-3 text-center">
-            <p className="text-content-secondary text-sm">Showing 25 of {charges.length} charges</p>
-          </div>
-        )}
-      </div>
+          {charges.length > 25 && (
+            <div className="border-border-default border-t px-4 py-3 text-center">
+              <p className="text-content-secondary text-sm">Showing 25 of {charges.length} charges</p>
+            </div>
+          )}
+        </div>
+      ) : !hasInvoices ? (
+        <div className="card-sf p-8 text-center">
+          <CreditCard className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+          <h3 className="text-content-primary text-lg font-medium">Payment History</h3>
+          <p className="text-content-secondary mx-auto mt-2 max-w-md">
+            {error || "Configure data sources to view payment and invoice history."}
+          </p>
+          <p className="text-content-tertiary mt-4 text-sm">
+            Supported: Snowflake, Metabase, Lago, Stripe
+          </p>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -3601,6 +3752,195 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
 }
 
 // ============================================================================
+// History Tab
+// ============================================================================
+
+interface HistoryEntry {
+  id: string
+  type: string
+  title: string
+  description: string
+  timestamp: string
+  metadata: {
+    eventType: string
+    planName: string | null
+    previousPlan: string | null
+    amount: number | null
+    notes: string | null
+  }
+}
+
+interface HistoryApiResponse {
+  operatorId: string
+  history: HistoryEntry[]
+  count: number
+}
+
+function HistoryTab({ operator }: { operator: OperatorData }) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<HistoryApiResponse | null>(null)
+
+  useEffect(() => {
+    if (!operator.operatorId) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`/api/operator-hub/${operator.operatorId}/history`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch history")
+        return res.json()
+      })
+      .then((data) => {
+        setData(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [operator.operatorId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case "subscription":
+        return <CreditCard className="h-4 w-4" />
+      case "plan_change":
+        return <TrendingUp className="h-4 w-4" />
+      case "payment":
+        return <DollarSign className="h-4 w-4" />
+      case "member":
+        return <Users className="h-4 w-4" />
+      case "settings":
+        return <Settings className="h-4 w-4" />
+      default:
+        return <History className="h-4 w-4" />
+    }
+  }
+
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case "subscription":
+        return "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
+      case "plan_change":
+        return "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+      case "payment":
+        return "bg-info-100 text-info-600 dark:bg-info-900/30 dark:text-info-400"
+      case "member":
+        return "bg-accent-100 text-accent-600 dark:bg-accent-900/30 dark:text-accent-400"
+      default:
+        return "bg-surface-muted text-content-secondary"
+    }
+  }
+
+  if (error || !data || data.history.length === 0) {
+    return (
+      <div className="card-sf p-8 text-center">
+        <History className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+        <h3 className="text-content-primary text-lg font-medium">Change History</h3>
+        <p className="text-content-secondary mx-auto mt-2 max-w-md">
+          {error || "No history records found for this operator."}
+        </p>
+        <p className="text-content-tertiary mt-4 text-sm">
+          Subscription changes, plan updates, and other events will appear here.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          label="Total Events"
+          value={data.count.toString()}
+          icon={History}
+          subtext="All time"
+        />
+        <StatCard
+          label="Subscription Events"
+          value={data.history.filter((h) => h.type === "subscription" || h.type === "plan_change").length.toString()}
+          icon={CreditCard}
+        />
+        <StatCard
+          label="Recent Activity"
+          value={
+            data.history[0]
+              ? new Date(data.history[0].timestamp).toLocaleDateString()
+              : "—"
+          }
+          icon={Calendar}
+          subtext="Last event"
+        />
+      </div>
+
+      {/* Timeline */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Activity Timeline</h3>
+        </div>
+        <div className="divide-border-default divide-y">
+          {data.history.slice(0, 50).map((entry) => (
+            <div key={entry.id} className="flex gap-4 px-4 py-4">
+              <div
+                className={cn(
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                  getEventColor(entry.type)
+                )}
+              >
+                {getEventIcon(entry.type)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-content-primary font-medium">{entry.title}</p>
+                    {entry.description && (
+                      <p className="text-content-secondary mt-0.5 text-sm">{entry.description}</p>
+                    )}
+                  </div>
+                  <span className="text-content-tertiary shrink-0 text-xs">
+                    {new Date(entry.timestamp).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year:
+                        new Date(entry.timestamp).getFullYear() !== new Date().getFullYear()
+                          ? "numeric"
+                          : undefined,
+                    })}
+                  </span>
+                </div>
+                {entry.metadata.amount && entry.metadata.amount > 0 && (
+                  <span className="text-content-secondary mt-1 inline-block text-sm">
+                    ${(entry.metadata.amount / 100).toFixed(2)}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        {data.history.length > 50 && (
+          <div className="border-border-default border-t px-4 py-3 text-center">
+            <p className="text-content-secondary text-sm">
+              Showing 50 of {data.history.length} events
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
 // Main Page Component
 // ============================================================================
 
@@ -3801,6 +4141,7 @@ export default function OperatorDetailPage() {
           {activeTab === "activity" && <ActivityTab operator={operator} />}
           {activeTab === "tickets" && <TicketsTab operator={operator} />}
           {activeTab === "emails" && <EmailsTab operator={operator} />}
+          {activeTab === "history" && <HistoryTab operator={operator} />}
         </div>
       </div>
     </DashboardLayout>
