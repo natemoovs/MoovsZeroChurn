@@ -4,6 +4,17 @@
  * Sends webhook requests to N8N for database operations.
  * N8N handles the actual Snowflake queries using its configured credentials.
  *
+ * Uses 9 consolidated workflows instead of 44 separate endpoints:
+ * 1. operator-search - Search operations
+ * 2. operator-data - Core operator data
+ * 3. financial - Financial/charges data
+ * 4. risk - Risk & disputes
+ * 5. team - Team management
+ * 6. fleet - Drivers & vehicles
+ * 7. bookings - Trips & quotes
+ * 8. platform - Misc platform data
+ * 9. subscriptions - Subscription & analytics
+ *
  * Environment variables:
  *   - N8N_WEBHOOK_BASE_URL: Base URL for N8N webhooks (e.g., https://moovs.app.n8n.cloud/webhook)
  *   - N8N_WEBHOOK_SECRET: Secret for authenticating webhook requests
@@ -14,79 +25,74 @@ const N8N_WEBHOOK_BASE_URL =
 const N8N_WEBHOOK_SECRET = process.env.N8N_WEBHOOK_SECRET
 
 // ============================================================================
-// Webhook Endpoints
+// Consolidated Webhook Endpoints (9 workflows)
 // ============================================================================
 
-export const N8N_ENDPOINTS = {
-  // Subscription Management (existing)
-  SUBSCRIPTION_SYNC: "subscription-sync",
-
-  // Search & Discovery
-  SEARCH_OPERATORS: "snowflake/search-operators",
-  EXPANDED_SEARCH: "snowflake/expanded-search",
-
-  // Operator Core Data
-  GET_OPERATOR_BY_ID: "snowflake/get-operator-by-id",
-  GET_OPERATOR_CORE_INFO: "snowflake/get-operator-core-info",
-  GET_OPERATOR_SETTINGS: "snowflake/get-operator-settings",
-
-  // Financial Data
-  GET_OPERATOR_CHARGES: "snowflake/get-operator-charges",
-  GET_MONTHLY_CHARGES_SUMMARY: "snowflake/get-monthly-charges-summary",
-  GET_RESERVATIONS_OVERVIEW: "snowflake/get-reservations-overview",
-  GET_CUSTOMER_CHARGES: "snowflake/get-customer-charges",
-  GET_CUSTOMER_SUMMARY: "snowflake/get-customer-summary",
-  GET_OPERATOR_BANK_ACCOUNTS: "snowflake/get-operator-bank-accounts",
-  GET_OPERATOR_BANK_TRANSACTIONS: "snowflake/get-operator-bank-transactions",
-
-  // Risk & Disputes
-  GET_RISK_OVERVIEW: "snowflake/get-risk-overview",
-  GET_OPERATOR_RISK_DETAILS: "snowflake/get-operator-risk-details",
-  GET_OPERATOR_DISPUTES: "snowflake/get-operator-disputes",
-  GET_OPERATOR_DISPUTES_SUMMARY: "snowflake/get-operator-disputes-summary",
-  GET_FAILED_INVOICES: "snowflake/get-failed-invoices",
-  UPDATE_OPERATOR_RISK: "snowflake/update-operator-risk",
-
-  // Team & Members
-  GET_OPERATOR_MEMBERS: "snowflake/get-operator-members",
-  GET_OPERATOR_USER_PERMISSIONS: "snowflake/get-operator-user-permissions",
-  ADD_OPERATOR_MEMBER: "snowflake/add-operator-member",
-  UPDATE_MEMBER_ROLE: "snowflake/update-member-role",
-  REMOVE_MEMBER: "snowflake/remove-member",
-
-  // Drivers & Vehicles
-  GET_OPERATOR_DRIVERS: "snowflake/get-operator-drivers",
-  GET_DRIVER_PERFORMANCE: "snowflake/get-driver-performance",
-  GET_OPERATOR_DRIVER_APP_USERS: "snowflake/get-operator-driver-app-users",
-  GET_OPERATOR_VEHICLES: "snowflake/get-operator-vehicles",
-  GET_VEHICLE_UTILIZATION: "snowflake/get-vehicle-utilization",
-
-  // Trips & Quotes
-  GET_OPERATOR_TRIPS: "snowflake/get-operator-trips",
-  GET_OPERATOR_QUOTES: "snowflake/get-operator-quotes",
-  GET_OPERATOR_QUOTES_SUMMARY: "snowflake/get-operator-quotes-summary",
-  GET_OPERATOR_REQUEST_ANALYTICS: "snowflake/get-operator-request-analytics",
-
-  // Misc Data
-  GET_OPERATOR_CONTACTS: "snowflake/get-operator-contacts",
-  GET_OPERATOR_EMAIL_LOG: "snowflake/get-operator-email-log",
-  GET_OPERATOR_PROMO_CODES: "snowflake/get-operator-promo-codes",
-  GET_OPERATOR_PRICE_ZONES: "snowflake/get-operator-price-zones",
-  GET_OPERATOR_RULES: "snowflake/get-operator-rules",
-  GET_OPERATOR_FEEDBACK: "snowflake/get-operator-feedback",
-
-  // Subscription Log
-  GET_OPERATOR_SUBSCRIPTION_LOG: "snowflake/get-operator-subscription-log",
-  ADD_SUBSCRIPTION_LOG_ENTRY: "snowflake/add-subscription-log-entry",
-  REMOVE_SUBSCRIPTION_LOG_ENTRY: "snowflake/remove-subscription-log-entry",
-  UPDATE_OPERATOR_PLAN: "snowflake/update-operator-plan",
-
-  // Analytics & Leaderboard
-  GET_TOP_OPERATORS_BY_REVENUE: "snowflake/get-top-operators-by-revenue",
-  GET_INACTIVE_ACCOUNTS: "snowflake/get-inactive-accounts",
+export const N8N_WORKFLOWS = {
+  SUBSCRIPTION_SYNC: "subscription-sync", // Existing
+  OPERATOR_SEARCH: "snowflake/operator-search",
+  OPERATOR_DATA: "snowflake/operator-data",
+  FINANCIAL: "snowflake/financial",
+  RISK: "snowflake/risk",
+  TEAM: "snowflake/team",
+  FLEET: "snowflake/fleet",
+  BOOKINGS: "snowflake/bookings",
+  PLATFORM: "snowflake/platform",
+  SUBSCRIPTIONS: "snowflake/subscriptions",
 } as const
 
-export type N8NEndpoint = (typeof N8N_ENDPOINTS)[keyof typeof N8N_ENDPOINTS]
+export type N8NWorkflow = (typeof N8N_WORKFLOWS)[keyof typeof N8N_WORKFLOWS]
+
+// ============================================================================
+// Action Types for Each Workflow
+// ============================================================================
+
+export type OperatorSearchAction = "search" | "expanded"
+
+export type OperatorDataAction =
+  | "details"
+  | "core-info"
+  | "settings"
+  | "risk-details"
+  | "risk-overview"
+
+export type FinancialAction =
+  | "charges"
+  | "monthly-summary"
+  | "reservations"
+  | "customer-charges"
+  | "customer-summary"
+  | "bank-accounts"
+  | "bank-transactions"
+
+export type RiskAction = "disputes" | "disputes-summary" | "failed-invoices" | "update-risk"
+
+export type TeamAction = "members" | "permissions" | "add-member" | "update-role" | "remove-member"
+
+export type FleetAction =
+  | "drivers"
+  | "driver-performance"
+  | "driver-app-users"
+  | "vehicles"
+  | "vehicle-utilization"
+
+export type BookingsAction = "trips" | "quotes" | "quotes-summary" | "request-analytics"
+
+export type PlatformAction =
+  | "contacts"
+  | "email-log"
+  | "promo-codes"
+  | "price-zones"
+  | "rules"
+  | "feedback"
+
+export type SubscriptionsAction =
+  | "log"
+  | "add-log"
+  | "remove-log"
+  | "update-plan"
+  | "top-operators"
+  | "inactive-accounts"
 
 // ============================================================================
 // Types
@@ -228,84 +234,62 @@ async function sendWebhook<T = N8NWebhookResponse>(
 }
 
 // ============================================================================
-// Helper Functions for Common Patterns
+// Consolidated Workflow Helper Functions
 // ============================================================================
 
 /**
- * GET request to N8N webhook - returns single object or null
+ * Call a consolidated workflow with an action parameter
  */
-export async function n8nGet<T = unknown>(
-  endpoint: N8NEndpoint,
+async function callWorkflow<T = unknown>(
+  workflow: N8NWorkflow,
+  action: string,
+  params: Record<string, unknown> = {},
+  options: { method?: "GET" | "POST" | "PATCH" | "DELETE" } = {}
+): Promise<N8NWebhookResponse<T>> {
+  const { method = "POST" } = options
+  const payload = { action, ...params }
+
+  try {
+    return await sendWebhook<N8NWebhookResponse<T>>(workflow, payload, { method })
+  } catch (error) {
+    console.error(`[N8N] ${workflow}/${action} failed:`, error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+  }
+}
+
+/**
+ * GET request to consolidated workflow - returns single object or null
+ */
+export async function workflowGet<T = unknown>(
+  workflow: N8NWorkflow,
+  action: string,
   params: Record<string, unknown> = {}
 ): Promise<T | null> {
-  try {
-    const response = await sendWebhook<N8NWebhookResponse<T>>(endpoint, params, { method: "GET" })
-    return response.data ?? null
-  } catch (error) {
-    console.error(`[N8N] GET ${endpoint} failed:`, error)
-    return null
-  }
+  const response = await callWorkflow<T>(workflow, action, params, { method: "POST" })
+  return response.data ?? null
 }
 
 /**
- * GET request to N8N webhook - returns array
+ * GET request to consolidated workflow - returns array
  */
-export async function n8nGetArray<T = unknown>(
-  endpoint: N8NEndpoint,
+export async function workflowGetArray<T = unknown>(
+  workflow: N8NWorkflow,
+  action: string,
   params: Record<string, unknown> = {}
 ): Promise<T[]> {
-  try {
-    const response = await sendWebhook<N8NWebhookResponse<T[]>>(endpoint, params, { method: "GET" })
-    return Array.isArray(response.data) ? response.data : []
-  } catch (error) {
-    console.error(`[N8N] GET ${endpoint} failed:`, error)
-    return []
-  }
+  const response = await callWorkflow<T[]>(workflow, action, params, { method: "POST" })
+  return Array.isArray(response.data) ? response.data : []
 }
 
 /**
- * POST request to N8N webhook
+ * POST/write request to consolidated workflow
  */
-export async function n8nPost<T = unknown>(
-  endpoint: N8NEndpoint,
+export async function workflowPost<T = unknown>(
+  workflow: N8NWorkflow,
+  action: string,
   body: Record<string, unknown>
 ): Promise<N8NWebhookResponse<T>> {
-  try {
-    return await sendWebhook<N8NWebhookResponse<T>>(endpoint, body, { method: "POST" })
-  } catch (error) {
-    console.error(`[N8N] POST ${endpoint} failed:`, error)
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
-  }
-}
-
-/**
- * PATCH request to N8N webhook
- */
-export async function n8nPatch<T = unknown>(
-  endpoint: N8NEndpoint,
-  body: Record<string, unknown>
-): Promise<N8NWebhookResponse<T>> {
-  try {
-    return await sendWebhook<N8NWebhookResponse<T>>(endpoint, body, { method: "PATCH" })
-  } catch (error) {
-    console.error(`[N8N] PATCH ${endpoint} failed:`, error)
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
-  }
-}
-
-/**
- * DELETE request to N8N webhook
- */
-export async function n8nDelete<T = unknown>(
-  endpoint: N8NEndpoint,
-  body: Record<string, unknown> = {}
-): Promise<N8NWebhookResponse<T>> {
-  try {
-    return await sendWebhook<N8NWebhookResponse<T>>(endpoint, body, { method: "DELETE" })
-  } catch (error) {
-    console.error(`[N8N] DELETE ${endpoint} failed:`, error)
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
-  }
+  return callWorkflow<T>(workflow, action, body, { method: "POST" })
 }
 
 // ============================================================================
@@ -341,7 +325,7 @@ export async function syncSubscriptionChange(input: {
     `[N8N] Syncing subscription change for ${input.operatorId}: ${input.previousPlanCode || "new"} -> ${input.newPlanCode}`
   )
 
-  return sendWebhook(N8N_ENDPOINTS.SUBSCRIPTION_SYNC, payload as unknown as Record<string, unknown>)
+  return sendWebhook(N8N_WORKFLOWS.SUBSCRIPTION_SYNC, payload as unknown as Record<string, unknown>)
 }
 
 /**
@@ -368,7 +352,7 @@ export async function syncSubscriptionCreate(input: {
 
   console.log(`[N8N] Syncing subscription create for ${input.operatorId}: ${input.planCode}`)
 
-  return sendWebhook(N8N_ENDPOINTS.SUBSCRIPTION_SYNC, payload as unknown as Record<string, unknown>)
+  return sendWebhook(N8N_WORKFLOWS.SUBSCRIPTION_SYNC, payload as unknown as Record<string, unknown>)
 }
 
 /**
@@ -396,7 +380,7 @@ export async function syncSubscriptionCancel(input: {
     `[N8N] Syncing subscription cancel for ${input.operatorId}: ${input.planCode || "all"}`
   )
 
-  return sendWebhook(N8N_ENDPOINTS.SUBSCRIPTION_SYNC, payload as unknown as Record<string, unknown>)
+  return sendWebhook(N8N_WORKFLOWS.SUBSCRIPTION_SYNC, payload as unknown as Record<string, unknown>)
 }
 
 // ============================================================================
@@ -407,17 +391,16 @@ export const n8nClient = {
   // Configuration
   isConfigured,
   hasSecret,
-  ENDPOINTS: N8N_ENDPOINTS,
+  WORKFLOWS: N8N_WORKFLOWS,
 
   // Core
   sendWebhook,
 
-  // Helper methods
-  get: n8nGet,
-  getArray: n8nGetArray,
-  post: n8nPost,
-  patch: n8nPatch,
-  delete: n8nDelete,
+  // Consolidated workflow helpers
+  callWorkflow,
+  workflowGet,
+  workflowGetArray,
+  workflowPost,
 
   // Subscription management
   syncSubscriptionCreate,

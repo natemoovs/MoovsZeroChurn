@@ -4,15 +4,23 @@
  * All Snowflake operations are now routed through N8N webhooks.
  * N8N handles the actual database connections using securely stored credentials.
  *
- * This file maintains the same API surface for backward compatibility,
- * but internally calls N8N webhooks instead of direct database connections.
+ * Uses 9 consolidated N8N workflows instead of 44 separate endpoints:
+ * 1. operator-search - Search operations
+ * 2. operator-data - Core operator data
+ * 3. financial - Financial/charges data
+ * 4. risk - Risk & disputes
+ * 5. team - Team management
+ * 6. fleet - Drivers & vehicles
+ * 7. bookings - Trips & quotes
+ * 8. platform - Misc platform data
+ * 9. subscriptions - Subscription & analytics
  *
  * Environment variables:
  *   - N8N_WEBHOOK_BASE_URL: Base URL for N8N webhooks
  *   - N8N_WEBHOOK_SECRET: Optional secret for authenticating requests
  */
 
-import { n8nClient, N8N_ENDPOINTS, N8NWebhookResponse } from "./n8n"
+import { n8nClient, N8N_WORKFLOWS, N8NWebhookResponse } from "./n8n"
 
 // ============================================================================
 // Types
@@ -460,202 +468,137 @@ function isWriteEnabled(): boolean {
 }
 
 // ============================================================================
-// Operator Queries
+// Operator Search (Workflow: operator-search)
 // ============================================================================
 
 async function searchOperators(searchTerm: string, limit = 50): Promise<OperatorDetails[]> {
-  return n8nClient.getArray<OperatorDetails>(N8N_ENDPOINTS.SEARCH_OPERATORS, {
+  return n8nClient.workflowGetArray<OperatorDetails>(N8N_WORKFLOWS.OPERATOR_SEARCH, "search", {
     searchTerm,
     limit,
   })
 }
 
 async function expandedSearch(searchTerm: string, limit = 50): Promise<ExpandedSearchResult[]> {
-  return n8nClient.getArray<ExpandedSearchResult>(N8N_ENDPOINTS.EXPANDED_SEARCH, {
-    searchTerm,
-    limit,
+  return n8nClient.workflowGetArray<ExpandedSearchResult>(
+    N8N_WORKFLOWS.OPERATOR_SEARCH,
+    "expanded",
+    {
+      searchTerm,
+      limit,
+    }
+  )
+}
+
+// ============================================================================
+// Operator Data (Workflow: operator-data)
+// ============================================================================
+
+async function getOperatorById(operatorId: string): Promise<OperatorDetails | null> {
+  return n8nClient.workflowGet<OperatorDetails>(N8N_WORKFLOWS.OPERATOR_DATA, "details", {
+    operatorId,
   })
 }
 
-async function getOperatorById(operatorId: string): Promise<OperatorDetails | null> {
-  return n8nClient.get<OperatorDetails>(N8N_ENDPOINTS.GET_OPERATOR_BY_ID, { operatorId })
+async function getOperatorCoreInfo(operatorId: string): Promise<OperatorCoreInfo | null> {
+  return n8nClient.workflowGet<OperatorCoreInfo>(N8N_WORKFLOWS.OPERATOR_DATA, "core-info", {
+    operatorId,
+  })
 }
+
+async function getOperatorSettings(operatorId: string): Promise<Record<string, unknown> | null> {
+  return n8nClient.workflowGet<Record<string, unknown>>(N8N_WORKFLOWS.OPERATOR_DATA, "settings", {
+    operatorId,
+  })
+}
+
+async function getOperatorRiskDetails(operatorId: string): Promise<OperatorRiskDetails | null> {
+  return n8nClient.workflowGet<OperatorRiskDetails>(N8N_WORKFLOWS.OPERATOR_DATA, "risk-details", {
+    operatorId,
+  })
+}
+
+async function getRiskOverview(operatorId: string): Promise<RiskOverview | null> {
+  return n8nClient.workflowGet<RiskOverview>(N8N_WORKFLOWS.OPERATOR_DATA, "risk-overview", {
+    operatorId,
+  })
+}
+
+// ============================================================================
+// Financial Data (Workflow: financial)
+// ============================================================================
 
 async function getOperatorPlatformCharges(
   operatorId: string,
   limit = 100
 ): Promise<PlatformCharge[]> {
-  return n8nClient.getArray<PlatformCharge>(N8N_ENDPOINTS.GET_OPERATOR_CHARGES, {
+  return n8nClient.workflowGetArray<PlatformCharge>(N8N_WORKFLOWS.FINANCIAL, "charges", {
     operatorId,
     limit,
   })
 }
 
 async function getMonthlyChargesSummary(operatorId: string): Promise<MonthlySummary[]> {
-  return n8nClient.getArray<MonthlySummary>(N8N_ENDPOINTS.GET_MONTHLY_CHARGES_SUMMARY, {
+  return n8nClient.workflowGetArray<MonthlySummary>(N8N_WORKFLOWS.FINANCIAL, "monthly-summary", {
     operatorId,
   })
 }
 
 async function getReservationsOverview(operatorId: string): Promise<ReservationOverview[]> {
-  return n8nClient.getArray<ReservationOverview>(N8N_ENDPOINTS.GET_RESERVATIONS_OVERVIEW, {
+  return n8nClient.workflowGetArray<ReservationOverview>(N8N_WORKFLOWS.FINANCIAL, "reservations", {
     operatorId,
   })
 }
 
-async function getRiskOverview(operatorId: string): Promise<RiskOverview | null> {
-  return n8nClient.get<RiskOverview>(N8N_ENDPOINTS.GET_RISK_OVERVIEW, { operatorId })
-}
-
-async function getTopOperatorsByRevenue(
-  limit = 10,
-  period: "week" | "month" | "year" = "month"
-): Promise<
-  {
-    operator_id: string
-    operator_name: string
-    total_charged: number
-    total_trips: number
-  }[]
-> {
-  return n8nClient.getArray(N8N_ENDPOINTS.GET_TOP_OPERATORS_BY_REVENUE, { limit, period })
-}
-
-async function getFailedInvoices(limit = 50): Promise<
-  {
-    operator_id: string
-    operator_name: string
-    charge_id: string
-    amount: number
-    failed_at: string
-    failure_reason: string | null
-  }[]
-> {
-  return n8nClient.getArray(N8N_ENDPOINTS.GET_FAILED_INVOICES, { limit })
-}
-
-async function getInactiveAccounts(
-  daysSinceLastActivity = 30,
-  limit = 50
-): Promise<
-  {
-    operator_id: string
-    company_name: string
-    last_activity_date: string | null
-    days_inactive: number
-    mrr: number | null
-  }[]
-> {
-  return n8nClient.getArray(N8N_ENDPOINTS.GET_INACTIVE_ACCOUNTS, { daysSinceLastActivity, limit })
-}
-
-// ============================================================================
-// Operator Portal Data
-// ============================================================================
-
-async function getOperatorMembers(operatorId: string): Promise<OperatorMember[]> {
-  return n8nClient.getArray<OperatorMember>(N8N_ENDPOINTS.GET_OPERATOR_MEMBERS, { operatorId })
-}
-
-async function getOperatorDrivers(operatorId: string): Promise<OperatorDriver[]> {
-  return n8nClient.getArray<OperatorDriver>(N8N_ENDPOINTS.GET_OPERATOR_DRIVERS, { operatorId })
-}
-
-async function getOperatorVehicles(operatorId: string): Promise<OperatorVehicle[]> {
-  return n8nClient.getArray<OperatorVehicle>(N8N_ENDPOINTS.GET_OPERATOR_VEHICLES, { operatorId })
-}
-
-async function getDriverPerformance(operatorId: string): Promise<DriverPerformance[]> {
-  return n8nClient.getArray<DriverPerformance>(N8N_ENDPOINTS.GET_DRIVER_PERFORMANCE, { operatorId })
-}
-
-async function getVehicleUtilization(operatorId: string): Promise<VehicleUtilization[]> {
-  return n8nClient.getArray<VehicleUtilization>(N8N_ENDPOINTS.GET_VEHICLE_UTILIZATION, {
-    operatorId,
-  })
-}
-
-async function getOperatorEmailLog(operatorId: string, limit = 50): Promise<OperatorEmailLog[]> {
-  return n8nClient.getArray<OperatorEmailLog>(N8N_ENDPOINTS.GET_OPERATOR_EMAIL_LOG, {
+async function getCustomerCharges(
+  customerId: string,
+  operatorId: string,
+  limit = 100
+): Promise<CustomerCharge[]> {
+  return n8nClient.workflowGetArray<CustomerCharge>(N8N_WORKFLOWS.FINANCIAL, "customer-charges", {
+    customerId,
     operatorId,
     limit,
   })
 }
 
-async function getOperatorPromoCodes(operatorId: string): Promise<PromoCode[]> {
-  return n8nClient.getArray<PromoCode>(N8N_ENDPOINTS.GET_OPERATOR_PROMO_CODES, { operatorId })
-}
-
-async function getOperatorPriceZones(operatorId: string): Promise<PriceZone[]> {
-  return n8nClient.getArray<PriceZone>(N8N_ENDPOINTS.GET_OPERATOR_PRICE_ZONES, { operatorId })
-}
-
-async function getOperatorRules(operatorId: string): Promise<BusinessRule[]> {
-  return n8nClient.getArray<BusinessRule>(N8N_ENDPOINTS.GET_OPERATOR_RULES, { operatorId })
-}
-
-async function getOperatorSettings(operatorId: string): Promise<Record<string, unknown> | null> {
-  return n8nClient.get<Record<string, unknown>>(N8N_ENDPOINTS.GET_OPERATOR_SETTINGS, { operatorId })
-}
-
-async function getOperatorContacts(operatorId: string): Promise<PlatformContact[]> {
-  return n8nClient.getArray<PlatformContact>(N8N_ENDPOINTS.GET_OPERATOR_CONTACTS, { operatorId })
+async function getCustomerSummary(
+  customerId: string,
+  operatorId: string
+): Promise<CustomerSummary | null> {
+  return n8nClient.workflowGet<CustomerSummary>(N8N_WORKFLOWS.FINANCIAL, "customer-summary", {
+    customerId,
+    operatorId,
+  })
 }
 
 async function getOperatorBankAccounts(operatorId: string): Promise<BankAccount[]> {
-  return n8nClient.getArray<BankAccount>(N8N_ENDPOINTS.GET_OPERATOR_BANK_ACCOUNTS, { operatorId })
-}
-
-async function getOperatorSubscriptionLog(operatorId: string): Promise<SubscriptionLogEntry[]> {
-  return n8nClient.getArray<SubscriptionLogEntry>(N8N_ENDPOINTS.GET_OPERATOR_SUBSCRIPTION_LOG, {
+  return n8nClient.workflowGetArray<BankAccount>(N8N_WORKFLOWS.FINANCIAL, "bank-accounts", {
     operatorId,
   })
-}
-
-async function getOperatorFeedback(operatorId: string): Promise<CustomerFeedback[]> {
-  return n8nClient.getArray<CustomerFeedback>(N8N_ENDPOINTS.GET_OPERATOR_FEEDBACK, { operatorId })
 }
 
 async function getOperatorBankTransactions(operatorId: string): Promise<BankTransaction[]> {
-  return n8nClient.getArray<BankTransaction>(N8N_ENDPOINTS.GET_OPERATOR_BANK_TRANSACTIONS, {
+  return n8nClient.workflowGetArray<BankTransaction>(N8N_WORKFLOWS.FINANCIAL, "bank-transactions", {
     operatorId,
   })
-}
-
-async function getOperatorDriverAppUsers(operatorId: string): Promise<DriverAppUser[]> {
-  return n8nClient.getArray<DriverAppUser>(N8N_ENDPOINTS.GET_OPERATOR_DRIVER_APP_USERS, {
-    operatorId,
-  })
-}
-
-async function getOperatorUserPermissions(operatorId: string): Promise<UserPermission[]> {
-  return n8nClient.getArray<UserPermission>(N8N_ENDPOINTS.GET_OPERATOR_USER_PERMISSIONS, {
-    operatorId,
-  })
-}
-
-async function getOperatorRequestAnalytics(operatorId: string): Promise<RequestAnalytics[]> {
-  return n8nClient.getArray<RequestAnalytics>(N8N_ENDPOINTS.GET_OPERATOR_REQUEST_ANALYTICS, {
-    operatorId,
-  })
-}
-
-async function getOperatorTrips(operatorId: string, limit = 50): Promise<TripSummary[]> {
-  return n8nClient.getArray<TripSummary>(N8N_ENDPOINTS.GET_OPERATOR_TRIPS, { operatorId, limit })
 }
 
 // ============================================================================
-// Disputes Data
+// Risk & Disputes (Workflow: risk)
 // ============================================================================
 
 async function getOperatorDisputes(stripeAccountId: string): Promise<DisputeRecord[]> {
-  return n8nClient.getArray<DisputeRecord>(N8N_ENDPOINTS.GET_OPERATOR_DISPUTES, { stripeAccountId })
+  return n8nClient.workflowGetArray<DisputeRecord>(N8N_WORKFLOWS.RISK, "disputes", {
+    stripeAccountId,
+  })
 }
 
 async function getOperatorDisputesSummary(stripeAccountId: string): Promise<DisputesSummary> {
-  const result = await n8nClient.get<DisputesSummary>(N8N_ENDPOINTS.GET_OPERATOR_DISPUTES_SUMMARY, {
-    stripeAccountId,
-  })
+  const result = await n8nClient.workflowGet<DisputesSummary>(
+    N8N_WORKFLOWS.RISK,
+    "disputes-summary",
+    { stripeAccountId }
+  )
   return (
     result || {
       total_disputes: 0,
@@ -668,74 +611,26 @@ async function getOperatorDisputesSummary(stripeAccountId: string): Promise<Disp
   )
 }
 
-// ============================================================================
-// Quotes Data
-// ============================================================================
-
-async function getOperatorQuotes(operatorId: string, limit = 100): Promise<QuoteRecord[]> {
-  return n8nClient.getArray<QuoteRecord>(N8N_ENDPOINTS.GET_OPERATOR_QUOTES, { operatorId, limit })
-}
-
-async function getOperatorQuotesSummary(operatorId: string): Promise<QuotesSummary> {
-  const result = await n8nClient.get<QuotesSummary>(N8N_ENDPOINTS.GET_OPERATOR_QUOTES_SUMMARY, {
-    operatorId,
-  })
-  return (
-    result || {
-      total_quotes: 0,
-      total_quotes_amount: 0,
-      total_reservations: 0,
-      total_reservations_amount: 0,
-      conversion_rate: 0,
-      quotes_by_month: [],
-    }
-  )
-}
-
-// ============================================================================
-// Customer Data
-// ============================================================================
-
-async function getCustomerCharges(
-  customerId: string,
-  operatorId: string,
-  limit = 100
-): Promise<CustomerCharge[]> {
-  return n8nClient.getArray<CustomerCharge>(N8N_ENDPOINTS.GET_CUSTOMER_CHARGES, {
-    customerId,
-    operatorId,
-    limit,
-  })
-}
-
-async function getCustomerSummary(
-  customerId: string,
-  operatorId: string
-): Promise<CustomerSummary | null> {
-  return n8nClient.get<CustomerSummary>(N8N_ENDPOINTS.GET_CUSTOMER_SUMMARY, {
-    customerId,
-    operatorId,
-  })
-}
-
-// ============================================================================
-// Risk Management
-// ============================================================================
-
-async function getOperatorRiskDetails(operatorId: string): Promise<OperatorRiskDetails | null> {
-  return n8nClient.get<OperatorRiskDetails>(N8N_ENDPOINTS.GET_OPERATOR_RISK_DETAILS, { operatorId })
-}
-
-async function getOperatorCoreInfo(operatorId: string): Promise<OperatorCoreInfo | null> {
-  return n8nClient.get<OperatorCoreInfo>(N8N_ENDPOINTS.GET_OPERATOR_CORE_INFO, { operatorId })
+async function getFailedInvoices(limit = 50): Promise<
+  {
+    operator_id: string
+    operator_name: string
+    charge_id: string
+    amount: number
+    failed_at: string
+    failure_reason: string | null
+  }[]
+> {
+  return n8nClient.workflowGetArray(N8N_WORKFLOWS.RISK, "failed-invoices", { limit })
 }
 
 async function updateOperatorInstantPayoutLimit(
   operatorId: string,
   limitCents: number
 ): Promise<UpdateRiskFieldResult> {
-  const response = await n8nClient.patch<UpdateRiskFieldResult>(
-    N8N_ENDPOINTS.UPDATE_OPERATOR_RISK,
+  const response = await n8nClient.workflowPost<UpdateRiskFieldResult>(
+    N8N_WORKFLOWS.RISK,
+    "update-risk",
     {
       operatorId,
       field: "instant_payout_limit_cents",
@@ -755,8 +650,9 @@ async function updateOperatorDailyPaymentLimit(
   operatorId: string,
   limitCents: number
 ): Promise<UpdateRiskFieldResult> {
-  const response = await n8nClient.patch<UpdateRiskFieldResult>(
-    N8N_ENDPOINTS.UPDATE_OPERATOR_RISK,
+  const response = await n8nClient.workflowPost<UpdateRiskFieldResult>(
+    N8N_WORKFLOWS.RISK,
+    "update-risk",
     {
       operatorId,
       field: "daily_payment_limit_cents",
@@ -776,8 +672,9 @@ async function updateOperatorRiskScore(
   operatorId: string,
   riskScore: number
 ): Promise<UpdateRiskFieldResult> {
-  const response = await n8nClient.patch<UpdateRiskFieldResult>(
-    N8N_ENDPOINTS.UPDATE_OPERATOR_RISK,
+  const response = await n8nClient.workflowPost<UpdateRiskFieldResult>(
+    N8N_WORKFLOWS.RISK,
+    "update-risk",
     {
       operatorId,
       field: "risk_score",
@@ -794,11 +691,21 @@ async function updateOperatorRiskScore(
 }
 
 // ============================================================================
-// Member Management (Write Operations)
+// Team Management (Workflow: team)
 // ============================================================================
 
+async function getOperatorMembers(operatorId: string): Promise<OperatorMember[]> {
+  return n8nClient.workflowGetArray<OperatorMember>(N8N_WORKFLOWS.TEAM, "members", { operatorId })
+}
+
+async function getOperatorUserPermissions(operatorId: string): Promise<UserPermission[]> {
+  return n8nClient.workflowGetArray<UserPermission>(N8N_WORKFLOWS.TEAM, "permissions", {
+    operatorId,
+  })
+}
+
 async function addOperatorMember(input: AddMemberInput): Promise<AddMemberResult> {
-  const response = await n8nClient.post<AddMemberResult>(N8N_ENDPOINTS.ADD_OPERATOR_MEMBER, {
+  const response = await n8nClient.workflowPost<AddMemberResult>(N8N_WORKFLOWS.TEAM, "add-member", {
     operatorId: input.operatorId,
     email: input.email,
     firstName: input.firstName,
@@ -813,7 +720,7 @@ async function addOperatorMember(input: AddMemberInput): Promise<AddMemberResult
 }
 
 async function updateMemberRole(input: UpdateMemberRoleInput): Promise<boolean> {
-  const response = await n8nClient.patch(N8N_ENDPOINTS.UPDATE_MEMBER_ROLE, {
+  const response = await n8nClient.workflowPost(N8N_WORKFLOWS.TEAM, "update-role", {
     userId: input.userId,
     operatorId: input.operatorId,
     roleSlug: input.roleSlug,
@@ -823,7 +730,7 @@ async function updateMemberRole(input: UpdateMemberRoleInput): Promise<boolean> 
 }
 
 async function removeMember(userId: string, operatorId: string): Promise<boolean> {
-  const response = await n8nClient.delete(N8N_ENDPOINTS.REMOVE_MEMBER, {
+  const response = await n8nClient.workflowPost(N8N_WORKFLOWS.TEAM, "remove-member", {
     userId,
     operatorId,
   })
@@ -832,14 +739,138 @@ async function removeMember(userId: string, operatorId: string): Promise<boolean
 }
 
 // ============================================================================
-// Subscription Management (Write Operations)
+// Fleet Management (Workflow: fleet)
 // ============================================================================
+
+async function getOperatorDrivers(operatorId: string): Promise<OperatorDriver[]> {
+  return n8nClient.workflowGetArray<OperatorDriver>(N8N_WORKFLOWS.FLEET, "drivers", { operatorId })
+}
+
+async function getDriverPerformance(operatorId: string): Promise<DriverPerformance[]> {
+  return n8nClient.workflowGetArray<DriverPerformance>(N8N_WORKFLOWS.FLEET, "driver-performance", {
+    operatorId,
+  })
+}
+
+async function getOperatorDriverAppUsers(operatorId: string): Promise<DriverAppUser[]> {
+  return n8nClient.workflowGetArray<DriverAppUser>(N8N_WORKFLOWS.FLEET, "driver-app-users", {
+    operatorId,
+  })
+}
+
+async function getOperatorVehicles(operatorId: string): Promise<OperatorVehicle[]> {
+  return n8nClient.workflowGetArray<OperatorVehicle>(N8N_WORKFLOWS.FLEET, "vehicles", {
+    operatorId,
+  })
+}
+
+async function getVehicleUtilization(operatorId: string): Promise<VehicleUtilization[]> {
+  return n8nClient.workflowGetArray<VehicleUtilization>(
+    N8N_WORKFLOWS.FLEET,
+    "vehicle-utilization",
+    {
+      operatorId,
+    }
+  )
+}
+
+// ============================================================================
+// Bookings - Trips & Quotes (Workflow: bookings)
+// ============================================================================
+
+async function getOperatorTrips(operatorId: string, limit = 50): Promise<TripSummary[]> {
+  return n8nClient.workflowGetArray<TripSummary>(N8N_WORKFLOWS.BOOKINGS, "trips", {
+    operatorId,
+    limit,
+  })
+}
+
+async function getOperatorQuotes(operatorId: string, limit = 100): Promise<QuoteRecord[]> {
+  return n8nClient.workflowGetArray<QuoteRecord>(N8N_WORKFLOWS.BOOKINGS, "quotes", {
+    operatorId,
+    limit,
+  })
+}
+
+async function getOperatorQuotesSummary(operatorId: string): Promise<QuotesSummary> {
+  const result = await n8nClient.workflowGet<QuotesSummary>(
+    N8N_WORKFLOWS.BOOKINGS,
+    "quotes-summary",
+    { operatorId }
+  )
+  return (
+    result || {
+      total_quotes: 0,
+      total_quotes_amount: 0,
+      total_reservations: 0,
+      total_reservations_amount: 0,
+      conversion_rate: 0,
+      quotes_by_month: [],
+    }
+  )
+}
+
+async function getOperatorRequestAnalytics(operatorId: string): Promise<RequestAnalytics[]> {
+  return n8nClient.workflowGetArray<RequestAnalytics>(N8N_WORKFLOWS.BOOKINGS, "request-analytics", {
+    operatorId,
+  })
+}
+
+// ============================================================================
+// Platform Data (Workflow: platform)
+// ============================================================================
+
+async function getOperatorContacts(operatorId: string): Promise<PlatformContact[]> {
+  return n8nClient.workflowGetArray<PlatformContact>(N8N_WORKFLOWS.PLATFORM, "contacts", {
+    operatorId,
+  })
+}
+
+async function getOperatorEmailLog(operatorId: string, limit = 50): Promise<OperatorEmailLog[]> {
+  return n8nClient.workflowGetArray<OperatorEmailLog>(N8N_WORKFLOWS.PLATFORM, "email-log", {
+    operatorId,
+    limit,
+  })
+}
+
+async function getOperatorPromoCodes(operatorId: string): Promise<PromoCode[]> {
+  return n8nClient.workflowGetArray<PromoCode>(N8N_WORKFLOWS.PLATFORM, "promo-codes", {
+    operatorId,
+  })
+}
+
+async function getOperatorPriceZones(operatorId: string): Promise<PriceZone[]> {
+  return n8nClient.workflowGetArray<PriceZone>(N8N_WORKFLOWS.PLATFORM, "price-zones", {
+    operatorId,
+  })
+}
+
+async function getOperatorRules(operatorId: string): Promise<BusinessRule[]> {
+  return n8nClient.workflowGetArray<BusinessRule>(N8N_WORKFLOWS.PLATFORM, "rules", { operatorId })
+}
+
+async function getOperatorFeedback(operatorId: string): Promise<CustomerFeedback[]> {
+  return n8nClient.workflowGetArray<CustomerFeedback>(N8N_WORKFLOWS.PLATFORM, "feedback", {
+    operatorId,
+  })
+}
+
+// ============================================================================
+// Subscriptions & Analytics (Workflow: subscriptions)
+// ============================================================================
+
+async function getOperatorSubscriptionLog(operatorId: string): Promise<SubscriptionLogEntry[]> {
+  return n8nClient.workflowGetArray<SubscriptionLogEntry>(N8N_WORKFLOWS.SUBSCRIPTIONS, "log", {
+    operatorId,
+  })
+}
 
 async function addSubscriptionLogEntry(
   input: AddSubscriptionLogInput
 ): Promise<AddSubscriptionLogResult> {
-  const response = await n8nClient.post<AddSubscriptionLogResult>(
-    N8N_ENDPOINTS.ADD_SUBSCRIPTION_LOG_ENTRY,
+  const response = await n8nClient.workflowPost<AddSubscriptionLogResult>(
+    N8N_WORKFLOWS.SUBSCRIPTIONS,
+    "add-log",
     {
       operatorId: input.operatorId,
       lagoPlanCode: input.lagoPlanCode,
@@ -858,7 +889,7 @@ async function removeSubscriptionLogEntry(
   operatorId: string,
   lagoPlanCode?: string
 ): Promise<boolean> {
-  const response = await n8nClient.delete(N8N_ENDPOINTS.REMOVE_SUBSCRIPTION_LOG_ENTRY, {
+  const response = await n8nClient.workflowPost(N8N_WORKFLOWS.SUBSCRIPTIONS, "remove-log", {
     operatorId,
     lagoPlanCode,
   })
@@ -869,8 +900,9 @@ async function removeSubscriptionLogEntry(
 async function updateOperatorPlan(
   input: UpdateOperatorPlanInput
 ): Promise<UpdateOperatorPlanResult> {
-  const response = await n8nClient.patch<UpdateOperatorPlanResult>(
-    N8N_ENDPOINTS.UPDATE_OPERATOR_PLAN,
+  const response = await n8nClient.workflowPost<UpdateOperatorPlanResult>(
+    N8N_WORKFLOWS.SUBSCRIPTIONS,
+    "update-plan",
     {
       operatorId: input.operatorId,
       plan: input.plan,
@@ -884,6 +916,42 @@ async function updateOperatorPlan(
     plan: input.plan,
   }
 }
+
+async function getTopOperatorsByRevenue(
+  limit = 10,
+  period: "week" | "month" | "year" = "month"
+): Promise<
+  {
+    operator_id: string
+    operator_name: string
+    total_charged: number
+    total_trips: number
+  }[]
+> {
+  return n8nClient.workflowGetArray(N8N_WORKFLOWS.SUBSCRIPTIONS, "top-operators", { limit, period })
+}
+
+async function getInactiveAccounts(
+  daysSinceLastActivity = 30,
+  limit = 50
+): Promise<
+  {
+    operator_id: string
+    company_name: string
+    last_activity_date: string | null
+    days_inactive: number
+    mrr: number | null
+  }[]
+> {
+  return n8nClient.workflowGetArray(N8N_WORKFLOWS.SUBSCRIPTIONS, "inactive-accounts", {
+    daysSinceLastActivity,
+    limit,
+  })
+}
+
+// ============================================================================
+// Subscription Change Handlers (Uses existing subscription-sync workflow)
+// ============================================================================
 
 function extractPlanFromCode(lagoPlanCode: string): string {
   const code = lagoPlanCode.toLowerCase()
@@ -933,78 +1001,72 @@ export const snowflakeClient = {
   // Core
   isConfigured,
 
-  // Operator queries
+  // Search (operator-search workflow)
   searchOperators,
   expandedSearch,
+
+  // Operator data (operator-data workflow)
   getOperatorById,
+  getOperatorCoreInfo,
+  getOperatorSettings,
+  getOperatorRiskDetails,
+  getRiskOverview,
+
+  // Financial data (financial workflow)
   getOperatorPlatformCharges,
   getMonthlyChargesSummary,
   getReservationsOverview,
-  getRiskOverview,
-
-  // Operator portal data
-  getOperatorMembers,
-  getOperatorDrivers,
-  getOperatorVehicles,
-  getDriverPerformance,
-  getVehicleUtilization,
-  getOperatorEmailLog,
-
-  // Additional platform data
-  getOperatorPromoCodes,
-  getOperatorPriceZones,
-  getOperatorRules,
-  getOperatorSettings,
-
-  // More platform data
-  getOperatorContacts,
-  getOperatorBankAccounts,
-  getOperatorSubscriptionLog,
-
-  // Additional data (Retool parity)
-  getOperatorFeedback,
-  getOperatorBankTransactions,
-  getOperatorDriverAppUsers,
-  getOperatorUserPermissions,
-  getOperatorRequestAnalytics,
-  getOperatorTrips,
-
-  // Dashboard/analytics queries
-  getTopOperatorsByRevenue,
-  getFailedInvoices,
-  getInactiveAccounts,
-
-  // Disputes data
-  getOperatorDisputes,
-  getOperatorDisputesSummary,
-
-  // Quotes data
-  getOperatorQuotes,
-  getOperatorQuotesSummary,
-
-  // Customer data (drill-down)
   getCustomerCharges,
   getCustomerSummary,
+  getOperatorBankAccounts,
+  getOperatorBankTransactions,
 
-  // Write operations (CRUD)
-  isWriteEnabled,
-  addOperatorMember,
-  updateMemberRole,
-  removeMember,
-
-  // Risk management write operations
+  // Risk & disputes (risk workflow)
+  getOperatorDisputes,
+  getOperatorDisputesSummary,
+  getFailedInvoices,
   updateOperatorInstantPayoutLimit,
   updateOperatorDailyPaymentLimit,
   updateOperatorRiskScore,
-  getOperatorRiskDetails,
 
-  // Operator core info (for booking portal URL)
-  getOperatorCoreInfo,
+  // Team management (team workflow)
+  getOperatorMembers,
+  getOperatorUserPermissions,
+  addOperatorMember,
+  updateMemberRole,
+  removeMember,
+  isWriteEnabled,
 
-  // Subscription management write operations
+  // Fleet management (fleet workflow)
+  getOperatorDrivers,
+  getDriverPerformance,
+  getOperatorDriverAppUsers,
+  getOperatorVehicles,
+  getVehicleUtilization,
+
+  // Bookings (bookings workflow)
+  getOperatorTrips,
+  getOperatorQuotes,
+  getOperatorQuotesSummary,
+  getOperatorRequestAnalytics,
+
+  // Platform data (platform workflow)
+  getOperatorContacts,
+  getOperatorEmailLog,
+  getOperatorPromoCodes,
+  getOperatorPriceZones,
+  getOperatorRules,
+  getOperatorFeedback,
+
+  // Subscriptions & analytics (subscriptions workflow)
+  getOperatorSubscriptionLog,
   addSubscriptionLogEntry,
   removeSubscriptionLogEntry,
   updateOperatorPlan,
+  getTopOperatorsByRevenue,
+  getInactiveAccounts,
+
+  // Subscription change handlers (uses subscription-sync workflow)
   handleSubscriptionChange,
   handleSubscriptionCancellation,
   extractPlanFromCode,
