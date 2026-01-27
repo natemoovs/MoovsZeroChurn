@@ -875,13 +875,42 @@ interface InvoicesApiResponse {
   }
 }
 
+interface CustomerApiResponse {
+  operatorId: string
+  customerId: string
+  summary: {
+    customer_id: string
+    customer_email: string | null
+    customer_name: string | null
+    total_charges: number
+    total_amount: number
+    total_refunded: number
+    total_disputes: number
+    first_charge_date: string | null
+    last_charge_date: string | null
+  }
+  charges: Array<{
+    charge_id: string
+    created_date: string
+    status: string
+    total_dollars_charged: number
+    description: string | null
+    total_dollars_refunded: number | null
+    dispute_id: string | null
+    dispute_status: string | null
+    outcome_risk_level: string | null
+  }>
+}
+
 // Charge Detail Modal Component
 function ChargeDetailModal({
   charge,
   onClose,
+  onViewCustomerCharges,
 }: {
   charge: ChargesApiResponse["charges"][0]
   onClose: () => void
+  onViewCustomerCharges?: (customerId: string) => void
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -979,6 +1008,16 @@ function ChargeDetailModal({
                 </>
               )}
             </dl>
+            {charge.customer_id && onViewCustomerCharges && (
+              <button
+                onClick={() => onViewCustomerCharges(charge.customer_id!)}
+                className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 mt-3 flex items-center gap-1 text-sm font-medium transition-colors"
+              >
+                <Users className="h-4 w-4" />
+                View All Customer Charges
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           {/* Risk & Outcome */}
@@ -1185,6 +1224,238 @@ function ChargeDetailModal({
   )
 }
 
+// Customer Charges Modal Component
+function CustomerChargesModal({
+  customerId,
+  operatorId,
+  onClose,
+}: {
+  customerId: string
+  operatorId: string
+  onClose: () => void
+}) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<CustomerApiResponse | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/operator-hub/${operatorId}/customer/${customerId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch customer data")
+        return res.json()
+      })
+      .then((customerData) => {
+        setData(customerData)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [customerId, operatorId])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="bg-surface-default relative z-10 max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl shadow-xl">
+        <div className="border-border-default sticky top-0 flex items-center justify-between border-b bg-inherit px-6 py-4">
+          <h3 className="text-content-primary text-lg font-semibold">Customer Charges</h3>
+          <button
+            onClick={onClose}
+            className="text-content-tertiary hover:text-content-primary rounded-lg p-1 transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="text-error-600 dark:text-error-400 py-8 text-center">
+              <AlertTriangle className="mx-auto mb-2 h-8 w-8" />
+              <p>{error}</p>
+            </div>
+          ) : data ? (
+            <div className="space-y-6">
+              {/* Customer Summary */}
+              <div className="card-sf p-4">
+                <h4 className="text-content-primary mb-3 font-medium">Customer Summary</h4>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Name</p>
+                    <p className="text-content-primary font-medium">
+                      {data.summary.customer_name || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Email</p>
+                    <p className="text-content-primary truncate font-medium">
+                      {data.summary.customer_email || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Total Charges</p>
+                    <p className="text-content-primary font-medium">{data.summary.total_charges}</p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Total Amount</p>
+                    <p className="text-content-primary font-medium">
+                      ${data.summary.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Total Refunded</p>
+                    <p className={cn(
+                      "font-medium",
+                      data.summary.total_refunded > 0 ? "text-warning-600 dark:text-warning-400" : "text-content-primary"
+                    )}>
+                      ${data.summary.total_refunded.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Disputes</p>
+                    <p className={cn(
+                      "font-medium",
+                      data.summary.total_disputes > 0 ? "text-error-600 dark:text-error-400" : "text-content-primary"
+                    )}>
+                      {data.summary.total_disputes}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">First Charge</p>
+                    <p className="text-content-primary font-medium">
+                      {data.summary.first_charge_date
+                        ? new Date(data.summary.first_charge_date).toLocaleDateString()
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-content-tertiary text-xs uppercase">Last Charge</p>
+                    <p className="text-content-primary font-medium">
+                      {data.summary.last_charge_date
+                        ? new Date(data.summary.last_charge_date).toLocaleDateString()
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Charges Table */}
+              <div className="card-sf overflow-hidden">
+                <div className="border-border-default border-b px-4 py-3">
+                  <h4 className="text-content-primary font-medium">
+                    All Charges ({data.charges.length})
+                  </h4>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
+                    <thead className="bg-bg-secondary">
+                      <tr className="border-border-default border-b">
+                        <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                          Date
+                        </th>
+                        <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                          Description
+                        </th>
+                        <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                          Status
+                        </th>
+                        <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                          Risk
+                        </th>
+                        <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.charges.map((charge) => (
+                        <tr key={charge.charge_id} className="border-border-default border-b">
+                          <td className="text-content-secondary px-4 py-3 text-sm">
+                            {new Date(charge.created_date).toLocaleDateString()}
+                          </td>
+                          <td className="text-content-primary max-w-[200px] truncate px-4 py-3 text-sm">
+                            {charge.description || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                                charge.status === "succeeded" || charge.status === "paid"
+                                  ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                  : charge.status === "failed"
+                                    ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                    : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                              )}
+                            >
+                              {charge.status}
+                            </span>
+                            {charge.dispute_id && (
+                              <span className="bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400 ml-1 rounded-full px-2 py-0.5 text-xs font-medium">
+                                Disputed
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {charge.outcome_risk_level ? (
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                                  charge.outcome_risk_level === "normal" || charge.outcome_risk_level === "low"
+                                    ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                    : charge.outcome_risk_level === "elevated"
+                                      ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                      : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                )}
+                              >
+                                {charge.outcome_risk_level}
+                              </span>
+                            ) : (
+                              <span className="text-content-tertiary text-xs">—</span>
+                            )}
+                          </td>
+                          <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                            ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {charge.total_dollars_refunded && charge.total_dollars_refunded > 0 && (
+                              <span className="text-warning-600 dark:text-warning-400 ml-1 text-xs">
+                                (-${charge.total_dollars_refunded.toLocaleString(undefined, { minimumFractionDigits: 2 })})
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="border-border-default sticky bottom-0 border-t bg-inherit px-6 py-4">
+          <button
+            onClick={onClose}
+            className="bg-primary-600 hover:bg-primary-700 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PaymentsTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, _setError] = useState<string | null>(null)
@@ -1192,6 +1463,7 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
   const [invoices, setInvoices] = useState<InvoicesApiResponse | null>(null)
   const [invoicesLoading, setInvoicesLoading] = useState(true)
   const [selectedCharge, setSelectedCharge] = useState<ChargesApiResponse["charges"][0] | null>(null)
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!operator.operatorId) {
@@ -1563,6 +1835,19 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
         <ChargeDetailModal
           charge={selectedCharge}
           onClose={() => setSelectedCharge(null)}
+          onViewCustomerCharges={(customerId) => {
+            setSelectedCharge(null)
+            setSelectedCustomerId(customerId)
+          }}
+        />
+      )}
+
+      {/* Customer Charges Modal */}
+      {selectedCustomerId && operator.operatorId && (
+        <CustomerChargesModal
+          customerId={selectedCustomerId}
+          operatorId={operator.operatorId}
+          onClose={() => setSelectedCustomerId(null)}
         />
       )}
     </div>

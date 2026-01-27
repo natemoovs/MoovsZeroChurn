@@ -1698,6 +1698,98 @@ async function getOperatorQuotesSummary(operatorId: string): Promise<QuotesSumma
 }
 
 // ============================================================================
+// Customer Charges Data (for customer drill-down from charges)
+// ============================================================================
+
+export interface CustomerCharge {
+  charge_id: string
+  created_date: string
+  status: string
+  total_dollars_charged: number
+  description: string | null
+  total_dollars_refunded: number | null
+  dispute_id: string | null
+  dispute_status: string | null
+  outcome_risk_level: string | null
+}
+
+export interface CustomerSummary {
+  customer_id: string
+  customer_email: string | null
+  customer_name: string | null
+  total_charges: number
+  total_amount: number
+  total_refunded: number
+  total_disputes: number
+  first_charge_date: string | null
+  last_charge_date: string | null
+}
+
+/**
+ * Get all charges for a specific customer within an operator's account
+ */
+async function getCustomerCharges(
+  customerId: string,
+  operatorId: string,
+  limit = 100
+): Promise<CustomerCharge[]> {
+  const escapedCustomerId = customerId.replace(/'/g, "''")
+  const escapedOperatorId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      CHARGE_ID as charge_id,
+      CREATED_DATE as created_date,
+      STATUS as status,
+      TOTAL_DOLLARS_CHARGED as total_dollars_charged,
+      DESCRIPTION as description,
+      TOTAL_DOLLARS_REFUNDED as total_dollars_refunded,
+      DISPUTE_ID as dispute_id,
+      DISPUTE_STATUS as dispute_status,
+      OUTCOME_RISK_LEVEL as outcome_risk_level
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE CUSTOMER_ID = '${escapedCustomerId}'
+      AND OPERATOR_ID = '${escapedOperatorId}'
+    ORDER BY CREATED_DATE DESC
+    LIMIT ${limit}
+  `
+
+  const result = await executeQuery<CustomerCharge>(sql)
+  return result.rows
+}
+
+/**
+ * Get summary statistics for a customer within an operator's account
+ */
+async function getCustomerSummary(
+  customerId: string,
+  operatorId: string
+): Promise<CustomerSummary | null> {
+  const escapedCustomerId = customerId.replace(/'/g, "''")
+  const escapedOperatorId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      CUSTOMER_ID as customer_id,
+      MAX(CUSTOMER_EMAIL) as customer_email,
+      MAX(BILLING_DETAIL_NAME) as customer_name,
+      COUNT(*) as total_charges,
+      COALESCE(SUM(TOTAL_DOLLARS_CHARGED), 0) as total_amount,
+      COALESCE(SUM(TOTAL_DOLLARS_REFUNDED), 0) as total_refunded,
+      COUNT(DISTINCT DISPUTE_ID) as total_disputes,
+      MIN(CREATED_DATE) as first_charge_date,
+      MAX(CREATED_DATE) as last_charge_date
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE CUSTOMER_ID = '${escapedCustomerId}'
+      AND OPERATOR_ID = '${escapedOperatorId}'
+    GROUP BY CUSTOMER_ID
+  `
+
+  const result = await executeQuery<CustomerSummary>(sql)
+  return result.rows[0] || null
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -1753,6 +1845,10 @@ export const snowflakeClient = {
   // Quotes data
   getOperatorQuotes,
   getOperatorQuotesSummary,
+
+  // Customer data (drill-down)
+  getCustomerCharges,
+  getCustomerSummary,
 
   // Write operations (CRUD)
   isWriteEnabled,

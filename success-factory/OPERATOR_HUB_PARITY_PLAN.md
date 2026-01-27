@@ -55,11 +55,11 @@
 - [x] Display suppression results with remove actions
 
 ### 1.6 Customer Drill-down from Charges
-- [ ] Create `/api/operator-hub/[operatorId]/customer/[customerId]/route.ts` API
-- [ ] Add Twilio SMS history lookup
-- [ ] Add SendGrid email history lookup
-- [ ] Add customer detail modal/drawer in Payments tab
-- [ ] Show booking/reservation history for customer
+- [x] Create `/api/operator-hub/[operatorId]/customer/[customerId]/route.ts` API
+- [ ] Add Twilio SMS history lookup (future enhancement)
+- [ ] Add SendGrid email history lookup (future enhancement)
+- [x] Add customer detail modal/drawer in Payments tab
+- [x] Show all customer charges with summary stats
 
 ### 1.7 Notion Tickets Integration
 - [ ] Create Notion API integration in `/lib/integrations/notion.ts`
