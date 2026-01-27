@@ -140,7 +140,7 @@ export async function GET(
             websiteUrl: operatorCoreInfo.website_url,
             companyLogoUrl: operatorCoreInfo.company_logo_url,
             bookingPortalUrl: operatorCoreInfo.name_slug
-              ? `https://${operatorCoreInfo.name_slug}.book.moovs.app`
+              ? `https://customer.moovs.app/${operatorCoreInfo.name_slug}/new/info`
               : null,
           }
         : null,
