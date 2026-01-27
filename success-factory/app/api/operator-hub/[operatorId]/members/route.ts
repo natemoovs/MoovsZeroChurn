@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { snowflake } from "@/lib/integrations"
+import { requireAdmin } from "@/lib/auth/api-middleware"
 
 /**
  * GET /api/operator-hub/[operatorId]/members
@@ -113,12 +114,16 @@ export async function GET(
  * POST /api/operator-hub/[operatorId]/members
  *
  * Add a new member to the operator's platform.
- * Requires direct Snowflake connection for write operations.
+ * Requires admin role and direct Snowflake connection for write operations.
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
+  // Require admin role for adding members
+  const authResult = await requireAdmin()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { operatorId } = await params
 
@@ -171,12 +176,16 @@ export async function POST(
  * PATCH /api/operator-hub/[operatorId]/members
  *
  * Update a member's role.
- * Requires direct Snowflake connection for write operations.
+ * Requires admin role and direct Snowflake connection for write operations.
  */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
+  // Require admin role for updating member roles
+  const authResult = await requireAdmin()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { operatorId } = await params
 
@@ -232,12 +241,16 @@ export async function PATCH(
  * DELETE /api/operator-hub/[operatorId]/members
  *
  * Remove a member from the operator's platform (soft delete).
- * Requires direct Snowflake connection for write operations.
+ * Requires admin role and direct Snowflake connection for write operations.
  */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
+  // Require admin role for removing members
+  const authResult = await requireAdmin()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { operatorId } = await params
 

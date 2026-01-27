@@ -3,16 +3,22 @@ import {
   isSendGridConfigured,
   sendgridSuppressions,
 } from "@/lib/email/sendgrid"
+import { requireAdmin, requireAuth } from "@/lib/auth/api-middleware"
 
 /**
  * GET /api/sendgrid/suppressions
  *
  * Fetches email suppression lists from SendGrid.
+ * Requires authentication.
  * Query params:
  * - type: "bounces" | "blocks" | "invalid" | "spam" | "all" (default: "all")
  * - email: Optional email to search for
  */
 export async function GET(request: NextRequest) {
+  // Require authentication for viewing suppressions
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     if (!isSendGridConfigured()) {
       return NextResponse.json({ error: "SendGrid not configured" }, { status: 503 })
@@ -76,11 +82,16 @@ export async function GET(request: NextRequest) {
  * DELETE /api/sendgrid/suppressions
  *
  * Remove an email from a suppression list.
+ * Requires admin role.
  * Query params:
  * - type: "bounce" | "block" | "invalid" | "spam" (required)
  * - email: The email to remove (required)
  */
 export async function DELETE(request: NextRequest) {
+  // Require admin role for removing suppressions
+  const authResult = await requireAdmin()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     if (!isSendGridConfigured()) {
       return NextResponse.json({ error: "SendGrid not configured" }, { status: 503 })

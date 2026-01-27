@@ -3262,7 +3262,8 @@ function ChangePlanModal({
 
   if (!isOpen) return null
 
-  const formatPrice = (cents: number, currency: string) => {
+  const formatPrice = (cents: number | null, currency: string | null) => {
+    if (cents === null || cents === undefined) return "—"
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency || "USD",

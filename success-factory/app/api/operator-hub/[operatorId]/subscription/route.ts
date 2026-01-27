@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { lago } from "@/lib/integrations/lago"
+import { requireAdmin } from "@/lib/auth/api-middleware"
 
 /**
  * GET /api/operator-hub/[operatorId]/subscription
@@ -72,12 +73,17 @@ export async function GET(
 /**
  * POST /api/operator-hub/[operatorId]/subscription
  *
- * Create a new subscription for an operator
+ * Create a new subscription for an operator.
+ * Requires admin role.
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
+  // Require admin role for creating subscriptions
+  const authResult = await requireAdmin()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { operatorId } = await params
 
@@ -126,12 +132,17 @@ export async function POST(
 /**
  * PATCH /api/operator-hub/[operatorId]/subscription
  *
- * Update an existing subscription (change plan)
+ * Update an existing subscription (change plan).
+ * Requires admin role.
  */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
+  // Require admin role for updating subscriptions
+  const authResult = await requireAdmin()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { operatorId } = await params
 
@@ -183,12 +194,17 @@ export async function PATCH(
 /**
  * DELETE /api/operator-hub/[operatorId]/subscription
  *
- * Cancel a subscription
+ * Cancel a subscription.
+ * Requires admin role.
  */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
+  // Require admin role for cancelling subscriptions
+  const authResult = await requireAdmin()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const { operatorId } = await params
 
