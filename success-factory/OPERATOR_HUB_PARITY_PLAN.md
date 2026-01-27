@@ -110,28 +110,28 @@
 - [x] Add vehicle utilization stats (total trips, revenue, last used, days idle)
 
 ### 2.3 SendGrid - Full Suppression Management
-- [ ] Add global bounce report table
-- [ ] Add invalid email report table
-- [ ] Add blocked email report table
-- [ ] Add spam reports table
-- [ ] Add email search by address
-- [ ] Add bulk removal actions
+- [x] Add global bounce report table
+- [x] Add invalid email report table
+- [x] Add blocked email report table
+- [x] Add spam reports table
+- [x] Add email search by address
+- [x] Add bulk removal actions
 
 ---
 
 ## Phase 3: Analytics & Visualizations
 
 ### 3.1 Add Chart Library
-- [ ] Install recharts or chart.js
-- [ ] Create reusable chart components
+- [x] Install recharts or chart.js
+- [x] Create reusable chart components
 
 ### 3.2 Charges Analytics
-- [ ] Monthly Total Charges bar chart (grouped by succeeded/failed)
-- [ ] Charges over time line chart
+- [x] Monthly Total Charges bar chart (grouped by succeeded/failed)
+- [x] Charges over time line chart
 
 ### 3.3 Risk Analytics
-- [ ] Risk score distribution chart
-- [ ] Failed payments trend chart
+- [x] Risk score distribution chart (Disputes by Risk Level)
+- [x] Disputes trend chart (Failed payments/disputes over time)
 
 ---
 

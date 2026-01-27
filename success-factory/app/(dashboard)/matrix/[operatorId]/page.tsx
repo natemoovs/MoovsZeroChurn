@@ -43,6 +43,18 @@ import {
   Landmark,
   Receipt,
 } from "lucide-react"
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts"
 import { cn } from "@/lib/utils"
 
 // ============================================================================
@@ -1580,6 +1592,114 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
         </div>
       )}
 
+      {/* Charges Analytics Charts */}
+      {hasCharges && (() => {
+        // Prepare monthly data for charts
+        const monthlyData: Record<string, { month: string; succeeded: number; failed: number; total: number }> = {}
+
+        charges.forEach(charge => {
+          const date = new Date(charge.created_date)
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+          const monthLabel = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+
+          if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { month: monthLabel, succeeded: 0, failed: 0, total: 0 }
+          }
+
+          const amount = charge.total_dollars_charged || 0
+          if (charge.status === 'succeeded') {
+            monthlyData[monthKey].succeeded += amount
+          } else if (charge.status === 'failed') {
+            monthlyData[monthKey].failed += amount
+          }
+          monthlyData[monthKey].total += amount
+        })
+
+        const chartData = Object.entries(monthlyData)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .slice(-12)
+          .map(([, data]) => data)
+
+        if (chartData.length < 2) return null
+
+        return (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Monthly Volume Bar Chart */}
+            <div className="card-sf p-5">
+              <h3 className="text-content-primary mb-4 font-semibold">Monthly Charge Volume</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 11 }}
+                      className="text-content-tertiary"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      className="text-content-tertiary"
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, '']}
+                      labelClassName="text-content-primary font-medium"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="succeeded" name="Succeeded" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="failed" name="Failed" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Charges Over Time Line Chart */}
+            <div className="card-sf p-5">
+              <h3 className="text-content-primary mb-4 font-semibold">Charges Over Time</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 11 }}
+                      className="text-content-tertiary"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      className="text-content-tertiary"
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Total Volume']}
+                      labelClassName="text-content-primary font-medium"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      stroke="#6366f1"
+                      strokeWidth={2}
+                      dot={{ fill: '#6366f1', strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Stripe Connected Account Live Data */}
       {operator.stripeAccountId && operator.operatorId && (
         <StripeLiveDataCard
@@ -2701,6 +2821,93 @@ function RiskTab({ operator }: { operator: OperatorData }) {
           </div>
         </div>
       </div>
+
+      {/* Risk Analytics Charts */}
+      {disputesData && disputesData.summary.total_disputes > 0 && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Disputes Over Time Chart */}
+          {disputesData.summary.disputes_over_time.length > 1 && (
+            <div className="card-sf p-5">
+              <h3 className="text-content-primary mb-4 font-semibold">Disputes Trend</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={disputesData.summary.disputes_over_time.map(d => ({
+                      date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                      count: d.count,
+                    }))}
+                    margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-content-tertiary" />
+                    <YAxis tick={{ fontSize: 11 }} className="text-content-tertiary" />
+                    <Tooltip
+                      formatter={(value: number) => [value, 'Disputes']}
+                      labelClassName="text-content-primary font-medium"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="count"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      dot={{ fill: '#ef4444', strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Risk Level Distribution Bar Chart */}
+          {disputesData.summary.disputes_by_risk_level.length > 0 && (
+            <div className="card-sf p-5">
+              <h3 className="text-content-primary mb-4 font-semibold">Disputes by Risk Level</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={disputesData.summary.disputes_by_risk_level.map(d => ({
+                      level: (d.risk_level || 'Unknown').replace(/_/g, ' '),
+                      count: d.count,
+                    }))}
+                    margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                    <XAxis type="number" tick={{ fontSize: 11 }} className="text-content-tertiary" />
+                    <YAxis
+                      dataKey="level"
+                      type="category"
+                      tick={{ fontSize: 11 }}
+                      className="text-content-tertiary"
+                      width={80}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [value, 'Disputes']}
+                      labelClassName="text-content-primary font-medium"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="#f59e0b"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Disputes Analytics Section */}
       {operator.stripeAccountId && (
@@ -5311,6 +5518,8 @@ interface SuppressionResult {
 }
 
 function EmailsTab({ operator }: { operator: OperatorData }) {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === "admin"
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<EmailsApiResponse | null>(null)
@@ -5323,6 +5532,18 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
   const [suppressionResults, setSuppressionResults] = useState<SuppressionResult[]>([])
   const [suppressionError, setSuppressionError] = useState<string | null>(null)
   const [removingEmail, setRemovingEmail] = useState<string | null>(null)
+
+  // Global suppression reports state
+  const [globalSuppressionTab, setGlobalSuppressionTab] = useState<"bounces" | "blocks" | "invalid" | "spam">("bounces")
+  const [globalSuppressions, setGlobalSuppressions] = useState<{
+    bounces: Array<{ email: string; created: number; reason: string; status: string }>
+    blocks: Array<{ email: string; created: number; reason: string; status: string }>
+    invalidEmails: Array<{ email: string; created: number; reason: string }>
+    spamReports: Array<{ email: string; created: number; ip?: string }>
+  } | null>(null)
+  const [globalSuppressionsLoading, setGlobalSuppressionsLoading] = useState(false)
+  const [selectedSuppressions, setSelectedSuppressions] = useState<Set<string>>(new Set())
+  const [bulkRemoving, setBulkRemoving] = useState(false)
 
   const searchSuppression = async () => {
     if (!suppressionEmail.trim()) return
@@ -5391,6 +5612,92 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
       setSuppressionError(err instanceof Error ? err.message : "Failed to remove")
     } finally {
       setRemovingEmail(null)
+    }
+  }
+
+  // Load all global suppressions
+  const loadGlobalSuppressions = async () => {
+    setGlobalSuppressionsLoading(true)
+    try {
+      const response = await fetch("/api/sendgrid/suppressions?type=all")
+      if (!response.ok) throw new Error("Failed to load suppressions")
+      const data = await response.json()
+      setGlobalSuppressions({
+        bounces: data.bounces || [],
+        blocks: data.blocks || [],
+        invalidEmails: data.invalidEmails || [],
+        spamReports: data.spamReports || [],
+      })
+    } catch (err) {
+      console.error("Failed to load global suppressions:", err)
+    } finally {
+      setGlobalSuppressionsLoading(false)
+    }
+  }
+
+  // Toggle selection for bulk operations
+  const toggleSuppressionSelection = (email: string) => {
+    setSelectedSuppressions((prev) => {
+      const next = new Set(prev)
+      if (next.has(email)) {
+        next.delete(email)
+      } else {
+        next.add(email)
+      }
+      return next
+    })
+  }
+
+  // Select/deselect all in current tab
+  const toggleSelectAll = () => {
+    if (!globalSuppressions) return
+    const currentList = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
+      : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
+      : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
+      : globalSuppressions.spamReports
+    const allEmails = currentList.map(s => s.email)
+    const allSelected = allEmails.every(e => selectedSuppressions.has(e))
+
+    if (allSelected) {
+      setSelectedSuppressions(prev => {
+        const next = new Set(prev)
+        allEmails.forEach(e => next.delete(e))
+        return next
+      })
+    } else {
+      setSelectedSuppressions(prev => {
+        const next = new Set(prev)
+        allEmails.forEach(e => next.add(e))
+        return next
+      })
+    }
+  }
+
+  // Bulk remove selected suppressions
+  const bulkRemoveSuppressions = async () => {
+    if (selectedSuppressions.size === 0) return
+    setBulkRemoving(true)
+
+    const type = globalSuppressionTab === "bounces" ? "bounce"
+      : globalSuppressionTab === "blocks" ? "block"
+      : globalSuppressionTab === "invalid" ? "invalid"
+      : "spam"
+
+    try {
+      const promises = Array.from(selectedSuppressions).map(email =>
+        fetch(`/api/sendgrid/suppressions?email=${encodeURIComponent(email)}&type=${type}`, {
+          method: "DELETE",
+        })
+      )
+      await Promise.all(promises)
+
+      // Refresh the list
+      await loadGlobalSuppressions()
+      setSelectedSuppressions(new Set())
+    } catch (err) {
+      console.error("Bulk remove failed:", err)
+    } finally {
+      setBulkRemoving(false)
     }
   }
 
@@ -5822,6 +6129,186 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
           )}
         </div>
       </div>
+
+      {/* Global Suppression Reports (Admin Only) */}
+      {isAdmin && (
+        <div className="card-sf overflow-hidden">
+          <div className="border-border-default flex items-center justify-between border-b px-4 py-3">
+            <div>
+              <h3 className="text-content-primary font-semibold">Suppression Reports</h3>
+              <p className="text-content-secondary mt-1 text-sm">
+                View and manage all email suppressions across the system
+              </p>
+            </div>
+            <button
+              onClick={loadGlobalSuppressions}
+              disabled={globalSuppressionsLoading}
+              className="btn-sf-secondary inline-flex items-center gap-2 text-sm"
+            >
+              {globalSuppressionsLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              {globalSuppressions ? "Refresh" : "Load Reports"}
+            </button>
+          </div>
+
+          {globalSuppressions && (
+            <div className="p-4">
+              {/* Tabs */}
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex gap-1">
+                  {[
+                    { key: "bounces", label: "Bounces", count: globalSuppressions.bounces.length },
+                    { key: "blocks", label: "Blocks", count: globalSuppressions.blocks.length },
+                    { key: "invalid", label: "Invalid", count: globalSuppressions.invalidEmails.length },
+                    { key: "spam", label: "Spam", count: globalSuppressions.spamReports.length },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => {
+                        setGlobalSuppressionTab(tab.key as typeof globalSuppressionTab)
+                        setSelectedSuppressions(new Set())
+                      }}
+                      className={cn(
+                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                        globalSuppressionTab === tab.key
+                          ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                          : "text-content-secondary hover:bg-bg-secondary"
+                      )}
+                    >
+                      {tab.label}
+                      <span className="text-content-tertiary ml-1.5 text-xs">({tab.count})</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Bulk Actions */}
+                {selectedSuppressions.size > 0 && (
+                  <button
+                    onClick={bulkRemoveSuppressions}
+                    disabled={bulkRemoving}
+                    className="bg-error-100 text-error-700 hover:bg-error-200 dark:bg-error-900/30 dark:text-error-400 dark:hover:bg-error-900/50 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+                  >
+                    {bulkRemoving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                    Remove {selectedSuppressions.size} Selected
+                  </button>
+                )}
+              </div>
+
+              {/* Table */}
+              <div className="border-border-default overflow-hidden rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead className="bg-bg-secondary">
+                    <tr>
+                      <th className="w-10 px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={(() => {
+                            const list = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
+                              : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
+                              : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
+                              : globalSuppressions.spamReports
+                            return list.length > 0 && list.every(s => selectedSuppressions.has(s.email))
+                          })()}
+                          onChange={toggleSelectAll}
+                          className="rounded"
+                        />
+                      </th>
+                      <th className="text-content-secondary px-3 py-2 text-left font-medium">Email</th>
+                      <th className="text-content-secondary px-3 py-2 text-left font-medium">Reason</th>
+                      <th className="text-content-secondary px-3 py-2 text-left font-medium">Date</th>
+                      <th className="text-content-secondary w-20 px-3 py-2 text-right font-medium">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-border-default divide-y">
+                    {(() => {
+                      const list = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
+                        : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
+                        : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
+                        : globalSuppressions.spamReports
+
+                      if (list.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={5} className="text-content-tertiary px-3 py-8 text-center">
+                              No {globalSuppressionTab} found
+                            </td>
+                          </tr>
+                        )
+                      }
+
+                      return list.slice(0, 50).map((item) => (
+                        <tr key={item.email} className="hover:bg-bg-secondary">
+                          <td className="px-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedSuppressions.has(item.email)}
+                              onChange={() => toggleSuppressionSelection(item.email)}
+                              className="rounded"
+                            />
+                          </td>
+                          <td className="text-content-primary px-3 py-2 font-medium">{item.email}</td>
+                          <td className="text-content-secondary max-w-xs truncate px-3 py-2">
+                            {"reason" in item ? item.reason : "ip" in item ? `IP: ${item.ip || "N/A"}` : "—"}
+                          </td>
+                          <td className="text-content-tertiary px-3 py-2">
+                            {new Date(item.created * 1000).toLocaleDateString()}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <button
+                              onClick={() => removeSuppression(
+                                item.email,
+                                globalSuppressionTab === "bounces" ? "bounce"
+                                  : globalSuppressionTab === "blocks" ? "block"
+                                  : globalSuppressionTab === "invalid" ? "invalid"
+                                  : "spam"
+                              )}
+                              disabled={removingEmail === `${item.email}-${globalSuppressionTab.slice(0, -1)}`}
+                              className="text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 text-xs font-medium"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    })()}
+                  </tbody>
+                </table>
+                {(() => {
+                  const list = globalSuppressionTab === "bounces" ? globalSuppressions.bounces
+                    : globalSuppressionTab === "blocks" ? globalSuppressions.blocks
+                    : globalSuppressionTab === "invalid" ? globalSuppressions.invalidEmails
+                    : globalSuppressions.spamReports
+                  return list.length > 50 && (
+                    <div className="border-border-default border-t px-3 py-2 text-center">
+                      <p className="text-content-tertiary text-xs">
+                        Showing 50 of {list.length} records
+                      </p>
+                    </div>
+                  )
+                })()}
+              </div>
+            </div>
+          )}
+
+          {!globalSuppressions && !globalSuppressionsLoading && (
+            <div className="p-8 text-center">
+              <Mail className="text-content-tertiary mx-auto mb-4 h-12 w-12" />
+              <p className="text-content-secondary text-sm">
+                Click "Load Reports" to view all suppression lists
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
