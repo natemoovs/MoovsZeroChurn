@@ -306,7 +306,7 @@ async function expandedSearch(searchTerm: string, limit = 50): Promise<ExpandedS
 
       UNION ALL
 
-      -- Search by trip_id or request_id
+      -- Search by trip_id or request_id (format: XXXX-XX)
       SELECT DISTINCT
         m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
         m.P_COMPANY_NAME as company_name,
@@ -314,7 +314,7 @@ async function expandedSearch(searchTerm: string, limit = 50): Promise<ExpandedS
         m.CALCULATED_MRR as mrr,
         'trip' as match_type,
         CASE
-          WHEN t.TRIP_ID = '${escapedTerm}' THEN 'trip_id'
+          WHEN t.TRIP_ID LIKE '${searchPattern}' THEN 'trip_id'
           ELSE 'request_id'
         END as match_field,
         COALESCE(t.TRIP_ID, r.REQUEST_ID) as match_value,
@@ -323,12 +323,12 @@ async function expandedSearch(searchTerm: string, limit = 50): Promise<ExpandedS
       JOIN SWOOP.REQUEST r ON t.REQUEST_ID = r.REQUEST_ID
       JOIN MOOVS.CSM_MOOVS m ON r.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
       WHERE
-        t.TRIP_ID = '${escapedTerm}'
-        OR r.REQUEST_ID = '${escapedTerm}'
+        t.TRIP_ID LIKE '${searchPattern}'
+        OR r.REQUEST_ID LIKE '${searchPattern}'
 
       UNION ALL
 
-      -- Search by quote/request order_number
+      -- Search by quote/request order_number (format: XXXX-XX)
       SELECT DISTINCT
         m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
         m.P_COMPANY_NAME as company_name,
@@ -336,7 +336,7 @@ async function expandedSearch(searchTerm: string, limit = 50): Promise<ExpandedS
         m.CALCULATED_MRR as mrr,
         'quote' as match_type,
         CASE
-          WHEN r.ORDER_NUMBER = '${escapedTerm}' THEN 'order_number'
+          WHEN r.ORDER_NUMBER LIKE '${searchPattern}' THEN 'order_number'
           ELSE 'request_id'
         END as match_field,
         COALESCE(r.ORDER_NUMBER, r.REQUEST_ID) as match_value,
@@ -344,8 +344,8 @@ async function expandedSearch(searchTerm: string, limit = 50): Promise<ExpandedS
       FROM SWOOP.REQUEST r
       JOIN MOOVS.CSM_MOOVS m ON r.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
       WHERE
-        r.ORDER_NUMBER = '${escapedTerm}'
-        OR r.REQUEST_ID = '${escapedTerm}'
+        r.ORDER_NUMBER LIKE '${searchPattern}'
+        OR r.REQUEST_ID LIKE '${searchPattern}'
 
       UNION ALL
 
