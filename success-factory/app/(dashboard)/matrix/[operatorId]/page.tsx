@@ -4078,6 +4078,8 @@ function ChangePlanModal({
           planCode: primaryPlan.code,
           overrideAmountCents,
           overrideAmountCurrency: "USD",
+          // Pass previous plan code for database tracking (subscription_log)
+          previousPlanCode: data.currentSubscription.planCode,
         }),
       })
 

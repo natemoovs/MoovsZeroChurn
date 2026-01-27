@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { lago } from "@/lib/integrations/lago"
+import { snowflakeClient } from "@/lib/integrations/snowflake"
 import { requireAdmin } from "@/lib/auth/api-middleware"
 
 /**
@@ -263,6 +264,25 @@ export async function POST(
       }
     }
 
+    // DUAL-WRITE: Update Moovs production database (subscription_log + operator.plan)
+    // This syncs with what Retool was doing: INSERT subscription_log + UPDATE operator.plan
+    let dbSyncResult = null
+    if (subscription && snowflakeClient.isWriteEnabled()) {
+      try {
+        dbSyncResult = await snowflakeClient.handleSubscriptionChange({
+          operatorId,
+          newPlanCode: planCode,
+          notes: `Created via Operator Hub. Custom price: ${overrideAmountCents ? `$${(overrideAmountCents / 100).toFixed(2)}` : "standard"}`,
+        })
+        console.log(
+          `[Subscription] DB sync successful for ${operatorId}: plan=${dbSyncResult.plan}`
+        )
+      } catch (dbError) {
+        console.error("[Subscription] DB sync failed (Lago succeeded):", dbError)
+        // Don't fail the operation - Lago is source of truth, DB sync is supplementary
+      }
+    }
+
     return NextResponse.json({
       success: true,
       subscription: subscription
@@ -286,6 +306,7 @@ export async function POST(
             amountCents: appliedAddOn.amount_cents,
           }
         : null,
+      dbSync: dbSyncResult ? { success: true, plan: dbSyncResult.plan } : null,
     })
   } catch (error) {
     console.error("Failed to create subscription:", error)
@@ -321,7 +342,14 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { subscriptionId, planCode, name, overrideAmountCents, overrideAmountCurrency } = body
+    const {
+      subscriptionId,
+      planCode,
+      name,
+      overrideAmountCents,
+      overrideAmountCurrency,
+      previousPlanCode, // Optional: for better tracking
+    } = body
 
     if (!subscriptionId || !planCode) {
       return NextResponse.json(
@@ -341,6 +369,25 @@ export async function PATCH(
       overrideAmountCurrency,
     })
 
+    // DUAL-WRITE: Update Moovs production database (subscription_log + operator.plan)
+    let dbSyncResult = null
+    if (subscription && snowflakeClient.isWriteEnabled()) {
+      try {
+        dbSyncResult = await snowflakeClient.handleSubscriptionChange({
+          operatorId,
+          newPlanCode: planCode,
+          previousPlanCode, // Close the previous plan if provided
+          notes: `Plan changed via Operator Hub. ${previousPlanCode ? `From: ${previousPlanCode}. ` : ""}Custom price: ${overrideAmountCents ? `$${(overrideAmountCents / 100).toFixed(2)}` : "standard"}`,
+        })
+        console.log(
+          `[Subscription] Plan change DB sync successful for ${operatorId}: ${previousPlanCode || "unknown"} -> ${dbSyncResult.plan}`
+        )
+      } catch (dbError) {
+        console.error("[Subscription] Plan change DB sync failed (Lago succeeded):", dbError)
+        // Don't fail the operation - Lago is source of truth
+      }
+    }
+
     return NextResponse.json({
       success: true,
       subscription: subscription
@@ -352,6 +399,7 @@ export async function PATCH(
             status: subscription.status,
           }
         : null,
+      dbSync: dbSyncResult ? { success: true, plan: dbSyncResult.plan } : null,
     })
   } catch (error) {
     console.error("Failed to update subscription:", error)
@@ -380,8 +428,7 @@ export async function DELETE(
   if (authResult instanceof NextResponse) return authResult
 
   try {
-    // operatorId is available but not used for cancellation - subscription ID is sufficient
-    const { operatorId: _operatorId } = await params
+    const { operatorId } = await params
 
     if (!lago.isConfigured()) {
       return NextResponse.json({ error: "Lago not configured" }, { status: 503 })
@@ -389,6 +436,7 @@ export async function DELETE(
 
     const { searchParams } = new URL(request.url)
     const subscriptionId = searchParams.get("subscriptionId")
+    const planCode = searchParams.get("planCode") // Optional: for DB tracking
 
     if (!subscriptionId) {
       return NextResponse.json(
@@ -398,6 +446,32 @@ export async function DELETE(
     }
 
     const subscription = await lago.cancelSubscription(subscriptionId)
+
+    // DUAL-WRITE: Update Moovs production database
+    // Note: Lago cancellation is "end of billing period" so operator stays on plan until then
+    // But we track the cancellation event in the log
+    let dbSyncResult = null
+    if (subscription && snowflakeClient.isWriteEnabled()) {
+      try {
+        // Don't set plan to 'free' immediately - Lago handles billing period end
+        // Just log the cancellation for tracking
+        await snowflakeClient.addSubscriptionLogEntry({
+          operatorId,
+          lagoPlanCode: planCode || subscription.plan_code || "unknown",
+          notes: `Cancelled via Operator Hub. Will end at billing period. Subscription ID: ${subscriptionId}`,
+        })
+        // Mark it as removed immediately (it's a cancellation record)
+        await snowflakeClient.removeSubscriptionLogEntry(
+          operatorId,
+          planCode || subscription.plan_code
+        )
+        dbSyncResult = { success: true }
+        console.log(`[Subscription] Cancellation DB sync successful for ${operatorId}`)
+      } catch (dbError) {
+        console.error("[Subscription] Cancellation DB sync failed (Lago succeeded):", dbError)
+        // Don't fail the operation - Lago is source of truth
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -409,6 +483,7 @@ export async function DELETE(
             canceledAt: subscription.canceled_at,
           }
         : null,
+      dbSync: dbSyncResult,
     })
   } catch (error) {
     console.error("Failed to cancel subscription:", error)

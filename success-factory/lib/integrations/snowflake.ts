@@ -1960,7 +1960,9 @@ async function getOperatorQuotesSummary(operatorId: string): Promise<QuotesSumma
       total_reservations: number
       total_reservations_amount: number
     }>(totalsSql),
-    executeQuery<{ month: string; quotes: number; reservations: number; amount: number }>(monthlySQL),
+    executeQuery<{ month: string; quotes: number; reservations: number; amount: number }>(
+      monthlySQL
+    ),
   ])
 
   const totals = totalsResult.rows[0] || {
@@ -2076,6 +2078,214 @@ async function getCustomerSummary(
 }
 
 // ============================================================================
+// Subscription Management Write Operations
+// ============================================================================
+
+export interface AddSubscriptionLogInput {
+  operatorId: string
+  lagoPlanCode: string
+  startedAt?: Date
+  notes?: string
+}
+
+export interface AddSubscriptionLogResult {
+  subscriptionLogId: string
+  success: boolean
+}
+
+/**
+ * Add a new subscription log entry when creating or changing subscriptions
+ * This mirrors what Retool does: INSERT INTO subscription_log(operator_id, lago_plan_code, started_at, created_at)
+ */
+async function addSubscriptionLogEntry(
+  input: AddSubscriptionLogInput
+): Promise<AddSubscriptionLogResult> {
+  const subscriptionLogId = crypto.randomUUID()
+  const startedAt = input.startedAt || new Date()
+
+  const sql = `
+    INSERT INTO POSTGRES_SWOOP.SUBSCRIPTION_LOG (
+      SUBSCRIPTION_LOG_ID,
+      OPERATOR_ID,
+      LAGO_PLAN_CODE,
+      STARTED_AT,
+      CREATED_AT,
+      NOTES
+    ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP(), ?)
+  `
+
+  await executeWriteQuery(sql, [
+    subscriptionLogId,
+    input.operatorId,
+    input.lagoPlanCode,
+    startedAt.toISOString(),
+    input.notes || null,
+  ])
+
+  return { subscriptionLogId, success: true }
+}
+
+/**
+ * Remove/cancel a subscription log entry (soft delete by setting removed_at)
+ * Used when cancelling or changing subscriptions
+ */
+async function removeSubscriptionLogEntry(
+  operatorId: string,
+  lagoPlanCode?: string
+): Promise<boolean> {
+  // If plan code provided, remove just that subscription, otherwise remove all active
+  const sql = lagoPlanCode
+    ? `
+      UPDATE POSTGRES_SWOOP.SUBSCRIPTION_LOG
+      SET REMOVED_AT = CURRENT_TIMESTAMP()
+      WHERE OPERATOR_ID = ?
+        AND LAGO_PLAN_CODE = ?
+        AND REMOVED_AT IS NULL
+    `
+    : `
+      UPDATE POSTGRES_SWOOP.SUBSCRIPTION_LOG
+      SET REMOVED_AT = CURRENT_TIMESTAMP()
+      WHERE OPERATOR_ID = ?
+        AND REMOVED_AT IS NULL
+    `
+
+  const binds = lagoPlanCode ? [operatorId, lagoPlanCode] : [operatorId]
+  const result = await executeWriteQuery(sql, binds)
+  return result.success
+}
+
+export interface UpdateOperatorPlanInput {
+  operatorId: string
+  plan: string // 'free', 'standard', 'pro', 'enterprise'
+  activeForAnalytics?: boolean
+}
+
+export interface UpdateOperatorPlanResult {
+  success: boolean
+  operatorId: string
+  plan: string
+}
+
+/**
+ * Update the operator's plan field in the operator table
+ * This mirrors what Retool does: UPDATE operator SET plan = ?, active_for_analytics = true
+ */
+async function updateOperatorPlan(
+  input: UpdateOperatorPlanInput
+): Promise<UpdateOperatorPlanResult> {
+  const activeForAnalytics = input.activeForAnalytics ?? true
+
+  const sql = `
+    UPDATE POSTGRES_SWOOP.OPERATOR
+    SET PLAN = ?,
+        ACTIVE_FOR_ANALYTICS = ?,
+        UPDATED_AT = CURRENT_TIMESTAMP()
+    WHERE OPERATOR_ID = ?
+  `
+
+  await executeWriteQuery(sql, [input.plan, activeForAnalytics, input.operatorId])
+
+  return {
+    success: true,
+    operatorId: input.operatorId,
+    plan: input.plan,
+  }
+}
+
+/**
+ * Helper to extract base plan name from Lago plan code
+ * e.g., 'pro-annual' -> 'pro', 'enterprise-monthly' -> 'enterprise'
+ */
+function extractPlanFromCode(lagoPlanCode: string): string {
+  const code = lagoPlanCode.toLowerCase()
+  if (code.includes("enterprise")) return "enterprise"
+  if (code.includes("pro")) return "pro"
+  if (code.includes("standard")) return "standard"
+  return "free"
+}
+
+export interface SubscriptionChangeInput {
+  operatorId: string
+  newPlanCode: string
+  previousPlanCode?: string
+  startedAt?: Date
+  notes?: string
+}
+
+/**
+ * Complete subscription change operation that updates both:
+ * 1. subscription_log table (close old, add new)
+ * 2. operator.plan field
+ *
+ * This replicates the full Retool workflow in a single function
+ */
+async function handleSubscriptionChange(
+  input: SubscriptionChangeInput
+): Promise<{ success: boolean; subscriptionLogId: string; plan: string }> {
+  // 1. Close any existing active subscription log entries
+  if (input.previousPlanCode) {
+    await removeSubscriptionLogEntry(input.operatorId, input.previousPlanCode)
+  } else {
+    // Close all active subscriptions for this operator
+    await removeSubscriptionLogEntry(input.operatorId)
+  }
+
+  // 2. Add new subscription log entry
+  const logResult = await addSubscriptionLogEntry({
+    operatorId: input.operatorId,
+    lagoPlanCode: input.newPlanCode,
+    startedAt: input.startedAt,
+    notes: input.notes,
+  })
+
+  // 3. Update operator.plan field
+  const newPlan = extractPlanFromCode(input.newPlanCode)
+  await updateOperatorPlan({
+    operatorId: input.operatorId,
+    plan: newPlan,
+    activeForAnalytics: true,
+  })
+
+  return {
+    success: true,
+    subscriptionLogId: logResult.subscriptionLogId,
+    plan: newPlan,
+  }
+}
+
+/**
+ * Handle subscription cancellation - close subscription log and update operator plan to 'free'
+ */
+async function handleSubscriptionCancellation(
+  operatorId: string,
+  planCode?: string,
+  notes?: string
+): Promise<{ success: boolean }> {
+  // 1. Close the subscription log entry
+  await removeSubscriptionLogEntry(operatorId, planCode)
+
+  // 2. Update operator plan to 'free'
+  await updateOperatorPlan({
+    operatorId,
+    plan: "free",
+    activeForAnalytics: true,
+  })
+
+  // 3. Optionally add a cancellation log entry for audit trail
+  if (notes) {
+    await addSubscriptionLogEntry({
+      operatorId,
+      lagoPlanCode: "cancelled",
+      notes,
+    })
+    // Immediately close it
+    await removeSubscriptionLogEntry(operatorId, "cancelled")
+  }
+
+  return { success: true }
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -2151,6 +2361,14 @@ export const snowflakeClient = {
 
   // Operator core info (for booking portal URL)
   getOperatorCoreInfo,
+
+  // Subscription management write operations
+  addSubscriptionLogEntry,
+  removeSubscriptionLogEntry,
+  updateOperatorPlan,
+  handleSubscriptionChange,
+  handleSubscriptionCancellation,
+  extractPlanFromCode,
 }
 
 // Default export for consistency with other integrations
