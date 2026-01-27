@@ -2431,7 +2431,7 @@ function RiskUpdateModal({
       <div className="bg-bg-primary/80 absolute inset-0" onClick={onClose} />
 
       {/* Modal */}
-      <div className="card-sf relative z-10 mx-4 w-full max-w-md p-6">
+      <div className="card-sf relative z-10 mx-4 w-full max-w-sm p-6">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-content-primary text-lg font-semibold">Risk Details</h3>
@@ -2463,14 +2463,14 @@ function RiskUpdateModal({
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="text-content-tertiary absolute left-3 top-1/2 -translate-y-1/2">
+                <span className="text-content-tertiary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm">
                   $
                 </span>
                 <input
                   type="number"
                   value={instantPayoutLimit}
                   onChange={(e) => setInstantPayoutLimit(e.target.value)}
-                  className="input-sf w-full pl-7"
+                  className="input-sf w-full pl-8"
                   placeholder="0.00"
                   step="0.01"
                   min="0"
@@ -2479,9 +2479,9 @@ function RiskUpdateModal({
               <button
                 onClick={() => handleUpdate("instantPayout")}
                 disabled={updating || !instantPayoutLimit}
-                className="btn-sf-secondary whitespace-nowrap"
+                className="btn-sf-secondary shrink-0"
               >
-                {updating ? "Updating..." : "Update"}
+                {updating ? "..." : "Update"}
               </button>
             </div>
           </div>
@@ -2497,14 +2497,14 @@ function RiskUpdateModal({
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="text-content-tertiary absolute left-3 top-1/2 -translate-y-1/2">
+                <span className="text-content-tertiary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm">
                   $
                 </span>
                 <input
                   type="number"
                   value={dailyPaymentLimit}
                   onChange={(e) => setDailyPaymentLimit(e.target.value)}
-                  className="input-sf w-full pl-7"
+                  className="input-sf w-full pl-8"
                   placeholder="0.00"
                   step="0.01"
                   min="0"
@@ -2513,9 +2513,9 @@ function RiskUpdateModal({
               <button
                 onClick={() => handleUpdate("dailyPayment")}
                 disabled={updating || !dailyPaymentLimit}
-                className="btn-sf-secondary whitespace-nowrap"
+                className="btn-sf-secondary shrink-0"
               >
-                {updating ? "Updating..." : "Update"}
+                {updating ? "..." : "Update"}
               </button>
             </div>
           </div>
@@ -2538,9 +2538,9 @@ function RiskUpdateModal({
               <button
                 onClick={() => handleUpdate("riskScore")}
                 disabled={updating || !riskScore}
-                className="btn-sf-secondary whitespace-nowrap"
+                className="btn-sf-secondary shrink-0"
               >
-                {updating ? "Updating..." : "Update"}
+                {updating ? "..." : "Update"}
               </button>
             </div>
           </div>

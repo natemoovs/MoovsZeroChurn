@@ -260,6 +260,143 @@ async function searchOperators(searchTerm: string, limit = 50): Promise<Operator
 }
 
 /**
+ * Search result with source information
+ */
+export interface ExpandedSearchResult {
+  operator_id: string
+  company_name: string
+  stripe_account_id: string | null
+  mrr: number | null
+  match_type: "operator" | "trip" | "quote" | "charge" | "customer"
+  match_field: string
+  match_value: string
+  additional_info?: string
+}
+
+/**
+ * Expanded search across operators, trips, quotes, charges, and customers
+ * Returns operator info with match context
+ */
+async function expandedSearch(searchTerm: string, limit = 50): Promise<ExpandedSearchResult[]> {
+  const escapedTerm = searchTerm.replace(/'/g, "''")
+  const searchPattern = `%${escapedTerm}%`
+
+  // Search across multiple sources with UNION ALL
+  const sql = `
+    WITH search_results AS (
+      -- Search operators by name/ID
+      SELECT DISTINCT
+        LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
+        P_COMPANY_NAME as company_name,
+        STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
+        CALCULATED_MRR as mrr,
+        'operator' as match_type,
+        CASE
+          WHEN LAGO_EXTERNAL_CUSTOMER_ID = '${escapedTerm}' THEN 'operator_id'
+          WHEN STRIPE_CONNECT_ACCOUNT_ID = '${escapedTerm}' THEN 'stripe_account_id'
+          ELSE 'company_name'
+        END as match_field,
+        COALESCE(LAGO_EXTERNAL_CUSTOMER_ID, STRIPE_CONNECT_ACCOUNT_ID, P_COMPANY_NAME) as match_value,
+        NULL as additional_info
+      FROM MOOVS.CSM_MOOVS
+      WHERE
+        LOWER(P_COMPANY_NAME) LIKE LOWER('${searchPattern}')
+        OR LAGO_EXTERNAL_CUSTOMER_ID = '${escapedTerm}'
+        OR STRIPE_CONNECT_ACCOUNT_ID = '${escapedTerm}'
+
+      UNION ALL
+
+      -- Search by trip_id or request_id
+      SELECT DISTINCT
+        m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
+        m.P_COMPANY_NAME as company_name,
+        m.STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
+        m.CALCULATED_MRR as mrr,
+        'trip' as match_type,
+        CASE
+          WHEN t.TRIP_ID = '${escapedTerm}' THEN 'trip_id'
+          ELSE 'request_id'
+        END as match_field,
+        COALESCE(t.TRIP_ID, r.REQUEST_ID) as match_value,
+        CONCAT('Trip Status: ', COALESCE(t.STATUS, 'N/A')) as additional_info
+      FROM SWOOP.TRIP t
+      JOIN SWOOP.REQUEST r ON t.REQUEST_ID = r.REQUEST_ID
+      JOIN MOOVS.CSM_MOOVS m ON r.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
+      WHERE
+        t.TRIP_ID = '${escapedTerm}'
+        OR r.REQUEST_ID = '${escapedTerm}'
+
+      UNION ALL
+
+      -- Search by quote/request order_number
+      SELECT DISTINCT
+        m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
+        m.P_COMPANY_NAME as company_name,
+        m.STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
+        m.CALCULATED_MRR as mrr,
+        'quote' as match_type,
+        CASE
+          WHEN r.ORDER_NUMBER = '${escapedTerm}' THEN 'order_number'
+          ELSE 'request_id'
+        END as match_field,
+        COALESCE(r.ORDER_NUMBER, r.REQUEST_ID) as match_value,
+        CONCAT('Stage: ', COALESCE(r.STAGE, 'N/A')) as additional_info
+      FROM SWOOP.REQUEST r
+      JOIN MOOVS.CSM_MOOVS m ON r.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
+      WHERE
+        r.ORDER_NUMBER = '${escapedTerm}'
+        OR r.REQUEST_ID = '${escapedTerm}'
+
+      UNION ALL
+
+      -- Search by customer email or phone
+      SELECT DISTINCT
+        m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
+        m.P_COMPANY_NAME as company_name,
+        m.STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
+        m.CALCULATED_MRR as mrr,
+        'customer' as match_type,
+        CASE
+          WHEN LOWER(c.EMAIL) LIKE LOWER('${searchPattern}') THEN 'email'
+          ELSE 'phone'
+        END as match_field,
+        COALESCE(c.EMAIL, c.PHONE) as match_value,
+        CONCAT(COALESCE(c.FIRST_NAME, ''), ' ', COALESCE(c.LAST_NAME, '')) as additional_info
+      FROM SWOOP.CONTACT c
+      JOIN MOOVS.CSM_MOOVS m ON c.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
+      WHERE
+        LOWER(c.EMAIL) LIKE LOWER('${searchPattern}')
+        OR c.PHONE LIKE '${searchPattern}'
+
+      UNION ALL
+
+      -- Search by Stripe charge ID
+      SELECT DISTINCT
+        m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
+        m.P_COMPANY_NAME as company_name,
+        m.STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
+        m.CALCULATED_MRR as mrr,
+        'charge' as match_type,
+        'charge_id' as match_field,
+        pc.ID as match_value,
+        CONCAT('Amount: $', ROUND(pc.TOTAL_DOLLARS_CHARGED, 2), ' - ', COALESCE(pc.STATUS, 'N/A')) as additional_info
+      FROM MOOVS.PLATFORM_CHARGES pc
+      JOIN MOOVS.CSM_MOOVS m ON pc.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
+      WHERE
+        pc.ID = '${escapedTerm}'
+        OR pc.PAYMENT_INTENT_ID = '${escapedTerm}'
+    )
+    SELECT *
+    FROM search_results
+    ORDER BY mrr DESC NULLS LAST
+    LIMIT ${limit}
+  `
+
+  const result = await executeQuery<ExpandedSearchResult>(sql)
+  return result.rows
+}
+
+/**
  * Get detailed operator info by operator ID
  */
 async function getOperatorById(operatorId: string): Promise<OperatorDetails | null> {
@@ -1949,6 +2086,7 @@ export const snowflakeClient = {
 
   // Operator queries
   searchOperators,
+  expandedSearch,
   getOperatorById,
   getOperatorPlatformCharges,
   getMonthlyChargesSummary,

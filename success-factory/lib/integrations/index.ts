@@ -103,6 +103,7 @@ export type {
   OperatorDriver,
   OperatorVehicle,
   OperatorEmailLog,
+  ExpandedSearchResult,
 } from "./snowflake"
 
 export { twilio } from "./twilio"
