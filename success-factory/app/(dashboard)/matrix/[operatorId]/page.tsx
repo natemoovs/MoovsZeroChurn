@@ -807,6 +807,22 @@ interface ChargesApiResponse {
     net_amount: number
     description: string | null
     customer_email: string | null
+    // Extended fields for Retool parity
+    customer_id?: string | null
+    total_dollars_refunded?: number | null
+    billing_detail_name?: string | null
+    outcome_network_status?: string | null
+    outcome_reason?: string | null
+    outcome_seller_message?: string | null
+    outcome_risk_level?: string | null
+    outcome_risk_score?: number | null
+    card_id?: string | null
+    calculated_statement_descriptor?: string | null
+    dispute_id?: string | null
+    dispute_status?: string | null
+    disputed_amount?: number | null
+    dispute_reason?: string | null
+    dispute_date?: string | null
   }>
   summary: Array<{
     charge_month: string
@@ -857,12 +873,323 @@ interface InvoicesApiResponse {
   }
 }
 
+// Charge Detail Modal Component
+function ChargeDetailModal({
+  charge,
+  onClose,
+}: {
+  charge: ChargesApiResponse["charges"][0]
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="bg-surface-default relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl shadow-xl">
+        <div className="border-border-default sticky top-0 flex items-center justify-between border-b bg-inherit px-6 py-4">
+          <h3 className="text-content-primary text-lg font-semibold">Charge Details</h3>
+          <button
+            onClick={onClose}
+            className="text-content-tertiary hover:text-content-primary rounded-lg p-1 transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-6 p-6">
+          {/* Amount & Status */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-content-tertiary text-sm">Amount</p>
+              <p className="text-content-primary text-3xl font-bold">
+                ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <span
+              className={cn(
+                "rounded-full px-3 py-1 text-sm font-medium capitalize",
+                charge.status === "succeeded" || charge.status === "paid"
+                  ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                  : charge.status === "failed"
+                    ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                    : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+              )}
+            >
+              {charge.status}
+            </span>
+          </div>
+
+          {/* Basic Info */}
+          <div className="card-sf p-4">
+            <h4 className="text-content-primary mb-3 font-medium">Transaction Info</h4>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <dt className="text-content-secondary">Charge ID</dt>
+              <dd className="text-content-primary truncate font-mono text-xs">{charge.charge_id}</dd>
+
+              <dt className="text-content-secondary">Date</dt>
+              <dd className="text-content-primary">
+                {new Date(charge.created_date).toLocaleString()}
+              </dd>
+
+              <dt className="text-content-secondary">Description</dt>
+              <dd className="text-content-primary">{charge.description || "—"}</dd>
+
+              {charge.calculated_statement_descriptor && (
+                <>
+                  <dt className="text-content-secondary">Statement Descriptor</dt>
+                  <dd className="text-content-primary">{charge.calculated_statement_descriptor}</dd>
+                </>
+              )}
+            </dl>
+          </div>
+
+          {/* Customer Info */}
+          <div className="card-sf p-4">
+            <h4 className="text-content-primary mb-3 font-medium">Customer</h4>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              {charge.billing_detail_name && (
+                <>
+                  <dt className="text-content-secondary">Name</dt>
+                  <dd className="text-content-primary">{charge.billing_detail_name}</dd>
+                </>
+              )}
+              {charge.customer_email && (
+                <>
+                  <dt className="text-content-secondary">Email</dt>
+                  <dd className="text-content-primary">{charge.customer_email}</dd>
+                </>
+              )}
+              {charge.customer_id && (
+                <>
+                  <dt className="text-content-secondary">Customer ID</dt>
+                  <dd className="text-content-primary truncate font-mono text-xs">{charge.customer_id}</dd>
+                </>
+              )}
+              {charge.card_id && (
+                <>
+                  <dt className="text-content-secondary">Card ID</dt>
+                  <dd className="text-content-primary truncate font-mono text-xs">{charge.card_id}</dd>
+                </>
+              )}
+            </dl>
+          </div>
+
+          {/* Risk & Outcome */}
+          {(charge.outcome_risk_level || charge.outcome_reason) && (
+            <div className="card-sf p-4">
+              <h4 className="text-content-primary mb-3 font-medium">Risk & Outcome</h4>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {charge.outcome_risk_level && (
+                  <>
+                    <dt className="text-content-secondary">Risk Level</dt>
+                    <dd>
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                          charge.outcome_risk_level === "normal" || charge.outcome_risk_level === "low"
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : charge.outcome_risk_level === "elevated"
+                              ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                              : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                        )}
+                      >
+                        {charge.outcome_risk_level}
+                      </span>
+                    </dd>
+                  </>
+                )}
+                {charge.outcome_risk_score !== null && charge.outcome_risk_score !== undefined && (
+                  <>
+                    <dt className="text-content-secondary">Risk Score</dt>
+                    <dd className="text-content-primary">{charge.outcome_risk_score}</dd>
+                  </>
+                )}
+                {charge.outcome_network_status && (
+                  <>
+                    <dt className="text-content-secondary">Network Status</dt>
+                    <dd className="text-content-primary capitalize">{charge.outcome_network_status.replace(/_/g, " ")}</dd>
+                  </>
+                )}
+                {charge.outcome_reason && (
+                  <>
+                    <dt className="text-content-secondary">Outcome Reason</dt>
+                    <dd className="text-content-primary capitalize">{charge.outcome_reason.replace(/_/g, " ")}</dd>
+                  </>
+                )}
+                {charge.outcome_seller_message && (
+                  <>
+                    <dt className="text-content-secondary col-span-2">Message</dt>
+                    <dd className="text-content-primary col-span-2">{charge.outcome_seller_message}</dd>
+                  </>
+                )}
+              </dl>
+            </div>
+          )}
+
+          {/* Refund Info */}
+          {charge.total_dollars_refunded && charge.total_dollars_refunded > 0 && (
+            <div className="bg-warning-50 dark:bg-warning-950/30 rounded-lg p-4">
+              <h4 className="text-warning-700 dark:text-warning-400 mb-2 font-medium">Refund</h4>
+              <p className="text-warning-600 dark:text-warning-500 text-2xl font-bold">
+                ${charge.total_dollars_refunded.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          )}
+
+          {/* Dispute Info */}
+          {charge.dispute_id && (
+            <div
+              className={cn(
+                "rounded-lg p-4",
+                charge.dispute_status === "won"
+                  ? "bg-success-50 dark:bg-success-950/30"
+                  : charge.dispute_status === "lost"
+                    ? "bg-error-50 dark:bg-error-950/30"
+                    : "bg-warning-50 dark:bg-warning-950/30"
+              )}
+            >
+              <h4
+                className={cn(
+                  "mb-3 font-medium",
+                  charge.dispute_status === "won"
+                    ? "text-success-700 dark:text-success-400"
+                    : charge.dispute_status === "lost"
+                      ? "text-error-700 dark:text-error-400"
+                      : "text-warning-700 dark:text-warning-400"
+                )}
+              >
+                Dispute
+              </h4>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <dt
+                  className={cn(
+                    charge.dispute_status === "won"
+                      ? "text-success-600 dark:text-success-500"
+                      : charge.dispute_status === "lost"
+                        ? "text-error-600 dark:text-error-500"
+                        : "text-warning-600 dark:text-warning-500"
+                  )}
+                >
+                  Status
+                </dt>
+                <dd className="font-medium capitalize">{charge.dispute_status}</dd>
+
+                {charge.dispute_reason && (
+                  <>
+                    <dt
+                      className={cn(
+                        charge.dispute_status === "won"
+                          ? "text-success-600 dark:text-success-500"
+                          : charge.dispute_status === "lost"
+                            ? "text-error-600 dark:text-error-500"
+                            : "text-warning-600 dark:text-warning-500"
+                      )}
+                    >
+                      Reason
+                    </dt>
+                    <dd className="capitalize">{charge.dispute_reason.replace(/_/g, " ")}</dd>
+                  </>
+                )}
+
+                {charge.disputed_amount && (
+                  <>
+                    <dt
+                      className={cn(
+                        charge.dispute_status === "won"
+                          ? "text-success-600 dark:text-success-500"
+                          : charge.dispute_status === "lost"
+                            ? "text-error-600 dark:text-error-500"
+                            : "text-warning-600 dark:text-warning-500"
+                      )}
+                    >
+                      Disputed Amount
+                    </dt>
+                    <dd className="font-medium">
+                      ${charge.disputed_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </dd>
+                  </>
+                )}
+
+                {charge.dispute_date && (
+                  <>
+                    <dt
+                      className={cn(
+                        charge.dispute_status === "won"
+                          ? "text-success-600 dark:text-success-500"
+                          : charge.dispute_status === "lost"
+                            ? "text-error-600 dark:text-error-500"
+                            : "text-warning-600 dark:text-warning-500"
+                      )}
+                    >
+                      Dispute Date
+                    </dt>
+                    <dd>{new Date(charge.dispute_date).toLocaleDateString()}</dd>
+                  </>
+                )}
+
+                <dt
+                  className={cn(
+                    charge.dispute_status === "won"
+                      ? "text-success-600 dark:text-success-500"
+                      : charge.dispute_status === "lost"
+                        ? "text-error-600 dark:text-error-500"
+                        : "text-warning-600 dark:text-warning-500"
+                  )}
+                >
+                  Dispute ID
+                </dt>
+                <dd className="truncate font-mono text-xs">{charge.dispute_id}</dd>
+              </dl>
+            </div>
+          )}
+
+          {/* Fees */}
+          {(charge.fee_amount > 0 || charge.net_amount > 0) && (
+            <div className="card-sf p-4">
+              <h4 className="text-content-primary mb-3 font-medium">Fees & Net</h4>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <dt className="text-content-secondary">Gross Amount</dt>
+                <dd className="text-content-primary font-medium">
+                  ${charge.total_dollars_charged.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </dd>
+                <dt className="text-content-secondary">Fee</dt>
+                <dd className="text-content-primary">
+                  ${charge.fee_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </dd>
+                <dt className="text-content-secondary">Net Amount</dt>
+                <dd className="text-content-primary font-medium">
+                  ${charge.net_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </dd>
+              </dl>
+            </div>
+          )}
+        </div>
+
+        <div className="border-border-default sticky bottom-0 border-t bg-inherit px-6 py-4">
+          <button
+            onClick={onClose}
+            className="bg-primary-600 hover:bg-primary-700 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PaymentsTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, _setError] = useState<string | null>(null)
   const [data, setData] = useState<ChargesApiResponse | null>(null)
   const [invoices, setInvoices] = useState<InvoicesApiResponse | null>(null)
   const [invoicesLoading, setInvoicesLoading] = useState(true)
+  const [selectedCharge, setSelectedCharge] = useState<ChargesApiResponse["charges"][0] | null>(null)
 
   useEffect(() => {
     if (!operator.operatorId) {
@@ -1078,14 +1405,11 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
             <h3 className="text-content-primary font-semibold">Platform Charges</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px]">
+            <table className="w-full min-w-[900px]">
               <thead className="bg-bg-secondary">
                 <tr className="border-border-default border-b">
                   <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
                     Date
-                  </th>
-                  <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
-                    Description
                   </th>
                   <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
                     Customer
@@ -1093,22 +1417,39 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                   <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
                     Status
                   </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Risk
+                  </th>
                   <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
                     Amount
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                    Refund
+                  </th>
+                  <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                    Dispute
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {charges.slice(0, 25).map((charge) => (
-                  <tr key={charge.charge_id} className="border-border-default border-b">
+                  <tr
+                    key={charge.charge_id}
+                    className="border-border-default hover:bg-surface-hover cursor-pointer border-b transition-colors"
+                    onClick={() => setSelectedCharge(charge)}
+                  >
                     <td className="text-content-secondary px-4 py-3 text-sm">
                       {new Date(charge.created_date).toLocaleDateString()}
                     </td>
-                    <td className="text-content-primary max-w-[200px] truncate px-4 py-3 text-sm">
-                      {charge.description || "Platform charge"}
-                    </td>
-                    <td className="text-content-secondary max-w-[200px] truncate px-4 py-3 text-sm">
-                      {charge.customer_email || "—"}
+                    <td className="px-4 py-3 text-sm">
+                      <div className="text-content-primary max-w-[160px] truncate">
+                        {charge.billing_detail_name || charge.customer_email || "—"}
+                      </div>
+                      {charge.billing_detail_name && charge.customer_email && (
+                        <div className="text-content-tertiary max-w-[160px] truncate text-xs">
+                          {charge.customer_email}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
@@ -1123,12 +1464,71 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
                       >
                         {charge.status}
                       </span>
+                      {charge.outcome_reason && charge.status === "failed" && (
+                        <div className="text-content-tertiary mt-1 text-xs" title={charge.outcome_seller_message || charge.outcome_reason}>
+                          {charge.outcome_reason.replace(/_/g, " ")}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {charge.outcome_risk_level ? (
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                            charge.outcome_risk_level === "normal" || charge.outcome_risk_level === "low"
+                              ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                              : charge.outcome_risk_level === "elevated"
+                                ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                : charge.outcome_risk_level === "highest" || charge.outcome_risk_level === "high"
+                                  ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                  : "bg-bg-tertiary text-content-tertiary"
+                          )}
+                        >
+                          {charge.outcome_risk_level}
+                        </span>
+                      ) : (
+                        <span className="text-content-tertiary">—</span>
+                      )}
+                      {charge.outcome_risk_score !== null && charge.outcome_risk_score !== undefined && (
+                        <div className="text-content-tertiary mt-0.5 text-xs">
+                          Score: {charge.outcome_risk_score}
+                        </div>
+                      )}
                     </td>
                     <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
-                      $
-                      {charge.total_dollars_charged.toLocaleString(undefined, {
+                      ${charge.total_dollars_charged.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                       })}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm">
+                      {charge.total_dollars_refunded && charge.total_dollars_refunded > 0 ? (
+                        <span className="text-warning-600 dark:text-warning-400 font-medium">
+                          ${charge.total_dollars_refunded.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                          })}
+                        </span>
+                      ) : (
+                        <span className="text-content-tertiary">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {charge.dispute_id ? (
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                            charge.dispute_status === "won"
+                              ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                              : charge.dispute_status === "lost"
+                                ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                          )}
+                          title={charge.dispute_reason ? charge.dispute_reason.replace(/_/g, " ") : undefined}
+                        >
+                          {charge.dispute_status || "disputed"}
+                        </span>
+                      ) : (
+                        <span className="text-content-tertiary">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1155,6 +1555,14 @@ function PaymentsTab({ operator }: { operator: OperatorData }) {
           </p>
         </div>
       ) : null}
+
+      {/* Charge Detail Modal */}
+      {selectedCharge && (
+        <ChargeDetailModal
+          charge={selectedCharge}
+          onClose={() => setSelectedCharge(null)}
+        />
+      )}
     </div>
   )
 }
@@ -1467,17 +1875,45 @@ function StripeLiveDataCard({
   )
 }
 
+interface DisputesApiResponse {
+  operatorId: string
+  stripeAccountId: string
+  disputes: Array<{
+    dispute_id: string
+    charge_id: string
+    dispute_status: string
+    dispute_reason: string | null
+    disputed_amount: number
+    dispute_date: string
+    created_date: string
+    outcome_risk_level: string | null
+    billing_detail_name: string | null
+  }>
+  summary: {
+    total_disputes: number
+    total_disputed_amount: number
+    disputes_by_status: Array<{ status: string; count: number }>
+    disputes_by_reason: Array<{ reason: string; count: number }>
+    disputes_by_risk_level: Array<{ risk_level: string; count: number }>
+    disputes_over_time: Array<{ date: string; count: number }>
+  }
+}
+
 function RiskTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<RiskApiResponse | null>(null)
+  const [disputesData, setDisputesData] = useState<DisputesApiResponse | null>(null)
+  const [disputesLoading, setDisputesLoading] = useState(true)
 
   useEffect(() => {
     if (!operator.operatorId) {
       setLoading(false)
+      setDisputesLoading(false)
       return
     }
 
+    // Fetch risk data
     fetch(`/api/operator-hub/${operator.operatorId}/risk`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch risk data")
@@ -1491,7 +1927,27 @@ function RiskTab({ operator }: { operator: OperatorData }) {
         setError(err.message)
         setLoading(false)
       })
-  }, [operator.operatorId])
+
+    // Fetch disputes data if stripe account ID available
+    if (operator.stripeAccountId) {
+      fetch(
+        `/api/operator-hub/${operator.operatorId}/disputes?stripeAccountId=${operator.stripeAccountId}`
+      )
+        .then((res) => {
+          if (!res.ok) return null
+          return res.json()
+        })
+        .then((data) => {
+          if (data) setDisputesData(data)
+          setDisputesLoading(false)
+        })
+        .catch(() => {
+          setDisputesLoading(false)
+        })
+    } else {
+      setDisputesLoading(false)
+    }
+  }, [operator.operatorId, operator.stripeAccountId])
 
   if (loading) {
     return (
@@ -1656,6 +2112,289 @@ function RiskTab({ operator }: { operator: OperatorData }) {
           </div>
         </div>
       </div>
+
+      {/* Disputes Analytics Section */}
+      {operator.stripeAccountId && (
+        <div className="space-y-4">
+          <h3 className="text-content-primary text-lg font-semibold">Disputes Analytics</h3>
+
+          {disputesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="text-primary-500 h-6 w-6 animate-spin" />
+            </div>
+          ) : disputesData && disputesData.summary.total_disputes > 0 ? (
+            <>
+              {/* Disputes Summary Stats */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                  label="Total Disputes"
+                  value={disputesData.summary.total_disputes.toString()}
+                  icon={FileText}
+                  variant="danger"
+                />
+                <StatCard
+                  label="Total Disputed Amount"
+                  value={`$${disputesData.summary.total_disputed_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                  icon={DollarSign}
+                  variant="danger"
+                />
+                <StatCard
+                  label="Most Common Reason"
+                  value={
+                    disputesData.summary.disputes_by_reason[0]?.reason?.replace(/_/g, " ") ||
+                    "—"
+                  }
+                  icon={AlertTriangle}
+                />
+                <StatCard
+                  label="Pending Disputes"
+                  value={
+                    disputesData.summary.disputes_by_status
+                      .filter(
+                        (s) =>
+                          s.status !== "won" &&
+                          s.status !== "lost" &&
+                          s.status !== "closed"
+                      )
+                      .reduce((sum, s) => sum + s.count, 0)
+                      .toString()
+                  }
+                  icon={Clock}
+                  variant="warning"
+                />
+              </div>
+
+              {/* Charts Grid */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Disputes by Status */}
+                <div className="card-sf p-5">
+                  <h4 className="text-content-primary mb-4 font-medium">Disputes by Status</h4>
+                  <div className="space-y-3">
+                    {disputesData.summary.disputes_by_status.map((item) => {
+                      const percentage =
+                        (item.count / disputesData.summary.total_disputes) * 100
+                      return (
+                        <div key={item.status} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-content-secondary capitalize">
+                              {item.status.replace(/_/g, " ")}
+                            </span>
+                            <span className="text-content-primary font-medium">
+                              {item.count} ({percentage.toFixed(0)}%)
+                            </span>
+                          </div>
+                          <div className="bg-bg-tertiary h-2 overflow-hidden rounded-full">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all",
+                                item.status === "won"
+                                  ? "bg-success-500"
+                                  : item.status === "lost"
+                                    ? "bg-error-500"
+                                    : "bg-warning-500"
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Disputes by Reason */}
+                <div className="card-sf p-5">
+                  <h4 className="text-content-primary mb-4 font-medium">Disputes by Reason</h4>
+                  <div className="space-y-3">
+                    {disputesData.summary.disputes_by_reason.slice(0, 5).map((item) => {
+                      const percentage =
+                        (item.count / disputesData.summary.total_disputes) * 100
+                      return (
+                        <div key={item.reason} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-content-secondary capitalize">
+                              {(item.reason || "unknown").replace(/_/g, " ")}
+                            </span>
+                            <span className="text-content-primary font-medium">
+                              {item.count}
+                            </span>
+                          </div>
+                          <div className="bg-bg-tertiary h-2 overflow-hidden rounded-full">
+                            <div
+                              className="bg-primary-500 h-full rounded-full transition-all"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Risk Level Distribution */}
+                <div className="card-sf p-5">
+                  <h4 className="text-content-primary mb-4 font-medium">
+                    Risk Level Distribution
+                  </h4>
+                  <div className="space-y-3">
+                    {disputesData.summary.disputes_by_risk_level.map((item) => {
+                      const percentage =
+                        (item.count / disputesData.summary.total_disputes) * 100
+                      return (
+                        <div key={item.risk_level} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-content-secondary capitalize">
+                              {(item.risk_level || "unknown").replace(/_/g, " ")}
+                            </span>
+                            <span className="text-content-primary font-medium">
+                              {item.count}
+                            </span>
+                          </div>
+                          <div className="bg-bg-tertiary h-2 overflow-hidden rounded-full">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all",
+                                item.risk_level === "low" || item.risk_level === "normal"
+                                  ? "bg-success-500"
+                                  : item.risk_level === "elevated"
+                                    ? "bg-warning-500"
+                                    : item.risk_level === "highest" || item.risk_level === "high"
+                                      ? "bg-error-500"
+                                      : "bg-gray-400"
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Disputes Over Time */}
+                <div className="card-sf p-5">
+                  <h4 className="text-content-primary mb-4 font-medium">Disputes Over Time</h4>
+                  {disputesData.summary.disputes_over_time.length > 0 ? (
+                    <div className="flex h-32 items-end gap-1">
+                      {disputesData.summary.disputes_over_time.map((item) => {
+                        const maxCount = Math.max(
+                          ...disputesData.summary.disputes_over_time.map((d) => d.count)
+                        )
+                        const height = (item.count / maxCount) * 100
+                        return (
+                          <div
+                            key={item.date}
+                            className="group relative flex-1"
+                            title={`${item.date}: ${item.count} disputes`}
+                          >
+                            <div
+                              className="bg-primary-500 hover:bg-primary-600 w-full rounded-t transition-all"
+                              style={{ height: `${Math.max(height, 4)}%` }}
+                            />
+                            <div className="absolute -bottom-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap text-xs text-content-tertiary group-hover:block">
+                              {item.date}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-content-tertiary py-8 text-center text-sm">
+                      No dispute history available
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Disputes Table */}
+              {disputesData.disputes.length > 0 && (
+                <div className="card-sf overflow-hidden">
+                  <div className="border-border-default border-b px-4 py-3">
+                    <h4 className="text-content-primary font-medium">Recent Disputes</h4>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[600px]">
+                      <thead className="bg-bg-secondary">
+                        <tr>
+                          <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                            Date
+                          </th>
+                          <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                            Customer
+                          </th>
+                          <th className="text-content-secondary px-4 py-3 text-left text-xs font-semibold uppercase">
+                            Reason
+                          </th>
+                          <th className="text-content-secondary px-4 py-3 text-center text-xs font-semibold uppercase">
+                            Status
+                          </th>
+                          <th className="text-content-secondary px-4 py-3 text-right text-xs font-semibold uppercase">
+                            Amount
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {disputesData.disputes.slice(0, 10).map((dispute) => (
+                          <tr
+                            key={dispute.dispute_id}
+                            className="border-border-default border-b"
+                          >
+                            <td className="text-content-secondary px-4 py-3 text-sm">
+                              {dispute.dispute_date
+                                ? new Date(dispute.dispute_date).toLocaleDateString()
+                                : new Date(dispute.created_date).toLocaleDateString()}
+                            </td>
+                            <td className="text-content-primary px-4 py-3 text-sm">
+                              {dispute.billing_detail_name || "—"}
+                            </td>
+                            <td className="text-content-secondary px-4 py-3 text-sm capitalize">
+                              {(dispute.dispute_reason || "unknown").replace(/_/g, " ")}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                                  dispute.dispute_status === "won"
+                                    ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                    : dispute.dispute_status === "lost"
+                                      ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                      : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                )}
+                              >
+                                {dispute.dispute_status}
+                              </span>
+                            </td>
+                            <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                              ${dispute.disputed_amount.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                              })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {disputesData.disputes.length > 10 && (
+                    <div className="border-border-default border-t px-4 py-3 text-center">
+                      <p className="text-content-secondary text-sm">
+                        Showing 10 of {disputesData.disputes.length} disputes
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="card-sf p-8 text-center">
+              <Check className="text-success-500 mx-auto mb-4 h-12 w-12" />
+              <h4 className="text-content-primary text-lg font-medium">No Disputes</h4>
+              <p className="text-content-secondary mt-2">
+                This operator has no recorded payment disputes.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

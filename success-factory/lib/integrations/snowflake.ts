@@ -104,6 +104,22 @@ export interface PlatformCharge {
   net_amount: number
   description: string | null
   customer_email: string | null
+  // Extended fields for Retool parity
+  customer_id: string | null
+  total_dollars_refunded: number | null
+  billing_detail_name: string | null
+  outcome_network_status: string | null
+  outcome_reason: string | null
+  outcome_seller_message: string | null
+  outcome_risk_level: string | null
+  outcome_risk_score: number | null
+  card_id: string | null
+  calculated_statement_descriptor: string | null
+  dispute_id: string | null
+  dispute_status: string | null
+  disputed_amount: number | null
+  dispute_reason: string | null
+  dispute_date: string | null
 }
 
 export interface ReservationOverview {
@@ -277,6 +293,7 @@ async function getOperatorById(operatorId: string): Promise<OperatorDetails | nu
 
 /**
  * Get platform charges for an operator (replaces Retool's charges view)
+ * Includes extended fields for Retool parity (risk scores, disputes, refunds, etc.)
  */
 async function getOperatorPlatformCharges(
   operatorId: string,
@@ -295,7 +312,22 @@ async function getOperatorPlatformCharges(
       COALESCE(FEE_AMOUNT, 0) as fee_amount,
       COALESCE(NET_AMOUNT, 0) as net_amount,
       DESCRIPTION as description,
-      CUSTOMER_EMAIL as customer_email
+      CUSTOMER_EMAIL as customer_email,
+      CUSTOMER_ID as customer_id,
+      TOTAL_DOLLARS_REFUNDED as total_dollars_refunded,
+      BILLING_DETAIL_NAME as billing_detail_name,
+      OUTCOME_NETWORK_STATUS as outcome_network_status,
+      OUTCOME_REASON as outcome_reason,
+      OUTCOME_SELLER_MESSAGE as outcome_seller_message,
+      OUTCOME_RISK_LEVEL as outcome_risk_level,
+      OUTCOME_RISK_SCORE as outcome_risk_score,
+      CARD_ID as card_id,
+      CALCULATED_STATEMENT_DESCRIPTOR as calculated_statement_descriptor,
+      DISPUTE_ID as dispute_id,
+      DISPUTE_STATUS as dispute_status,
+      DISPUTED_AMOUNT as disputed_amount,
+      DISPUTE_REASON as dispute_reason,
+      DISPUTE_DATE as dispute_date
     FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
     WHERE OPERATOR_ID = '${escapedId}'
     ORDER BY CREATED_DATE DESC
@@ -1252,6 +1284,152 @@ async function removeMember(userId: string, operatorId: string): Promise<boolean
 }
 
 // ============================================================================
+// Disputes Data (for Risk tab analytics)
+// ============================================================================
+
+export interface DisputeRecord {
+  dispute_id: string
+  charge_id: string
+  stripe_account_id: string
+  dispute_status: string
+  dispute_reason: string | null
+  disputed_amount: number
+  dispute_date: string
+  created_date: string
+  outcome_risk_level: string | null
+  outcome_risk_score: number | null
+  customer_id: string | null
+  billing_detail_name: string | null
+}
+
+export interface DisputesSummary {
+  total_disputes: number
+  total_disputed_amount: number
+  disputes_by_status: { status: string; count: number }[]
+  disputes_by_reason: { reason: string; count: number }[]
+  disputes_by_risk_level: { risk_level: string; count: number }[]
+  disputes_over_time: { date: string; count: number }[]
+}
+
+/**
+ * Get all disputed charges for an operator (by Stripe account ID)
+ */
+async function getOperatorDisputes(stripeAccountId: string): Promise<DisputeRecord[]> {
+  const escapedId = stripeAccountId.replace(/'/g, "''")
+
+  const sql = `
+    SELECT
+      DISPUTE_ID as dispute_id,
+      CHARGE_ID as charge_id,
+      STRIPE_ACCOUNT_ID as stripe_account_id,
+      DISPUTE_STATUS as dispute_status,
+      DISPUTE_REASON as dispute_reason,
+      DISPUTED_AMOUNT as disputed_amount,
+      DISPUTE_DATE as dispute_date,
+      CREATED_DATE as created_date,
+      OUTCOME_RISK_LEVEL as outcome_risk_level,
+      OUTCOME_RISK_SCORE as outcome_risk_score,
+      CUSTOMER_ID as customer_id,
+      BILLING_DETAIL_NAME as billing_detail_name
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+    ORDER BY DISPUTE_DATE DESC NULLS LAST, CREATED_DATE DESC
+    LIMIT 200
+  `
+
+  const result = await executeQuery<DisputeRecord>(sql)
+  return result.rows
+}
+
+/**
+ * Get disputes summary with aggregated data for charts
+ */
+async function getOperatorDisputesSummary(stripeAccountId: string): Promise<DisputesSummary> {
+  const escapedId = stripeAccountId.replace(/'/g, "''")
+
+  // Get total counts
+  const totalsSql = `
+    SELECT
+      COUNT(DISTINCT DISPUTE_ID) as total_disputes,
+      COALESCE(SUM(DISPUTED_AMOUNT), 0) as total_disputed_amount
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+  `
+
+  // Get disputes by status
+  const byStatusSql = `
+    SELECT
+      COALESCE(DISPUTE_STATUS, 'unknown') as status,
+      COUNT(DISTINCT DISPUTE_ID) as count
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+    GROUP BY DISPUTE_STATUS
+    ORDER BY count DESC
+  `
+
+  // Get disputes by reason
+  const byReasonSql = `
+    SELECT
+      COALESCE(DISPUTE_REASON, 'unknown') as reason,
+      COUNT(DISTINCT DISPUTE_ID) as count
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+    GROUP BY DISPUTE_REASON
+    ORDER BY count DESC
+  `
+
+  // Get disputes by risk level
+  const byRiskSql = `
+    SELECT
+      COALESCE(OUTCOME_RISK_LEVEL, 'unknown') as risk_level,
+      COUNT(DISTINCT DISPUTE_ID) as count
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+    GROUP BY OUTCOME_RISK_LEVEL
+    ORDER BY count DESC
+  `
+
+  // Get disputes over time (last 12 months)
+  const overTimeSql = `
+    SELECT
+      TO_VARCHAR(DATE_TRUNC('month', COALESCE(DISPUTE_DATE, CREATED_DATE)), 'YYYY-MM') as date,
+      COUNT(DISTINCT DISPUTE_ID) as count
+    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
+    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
+      AND DISPUTE_ID IS NOT NULL
+      AND COALESCE(DISPUTE_DATE, CREATED_DATE) >= DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY DATE_TRUNC('month', COALESCE(DISPUTE_DATE, CREATED_DATE))
+    ORDER BY date ASC
+  `
+
+  // Execute all queries in parallel
+  const [totalsResult, byStatusResult, byReasonResult, byRiskResult, overTimeResult] =
+    await Promise.all([
+      executeQuery<{ total_disputes: number; total_disputed_amount: number }>(totalsSql),
+      executeQuery<{ status: string; count: number }>(byStatusSql),
+      executeQuery<{ reason: string; count: number }>(byReasonSql),
+      executeQuery<{ risk_level: string; count: number }>(byRiskSql),
+      executeQuery<{ date: string; count: number }>(overTimeSql),
+    ])
+
+  const totals = totalsResult.rows[0] || { total_disputes: 0, total_disputed_amount: 0 }
+
+  return {
+    total_disputes: totals.total_disputes,
+    total_disputed_amount: totals.total_disputed_amount,
+    disputes_by_status: byStatusResult.rows,
+    disputes_by_reason: byReasonResult.rows,
+    disputes_by_risk_level: byRiskResult.rows,
+    disputes_over_time: overTimeResult.rows,
+  }
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -1297,6 +1475,10 @@ export const snowflakeClient = {
   getTopOperatorsByRevenue,
   getFailedInvoices,
   getInactiveAccounts,
+
+  // Disputes data
+  getOperatorDisputes,
+  getOperatorDisputesSummary,
 
   // Write operations (CRUD)
   isWriteEnabled,
