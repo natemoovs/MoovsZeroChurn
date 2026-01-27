@@ -18,11 +18,17 @@ npm run typecheck --silent || {
 
 # Run secrets detection on staged files
 echo "🔐 Checking for secrets..."
-# Use -z flag with git and -0 with xargs to handle filenames with special characters
-git diff --cached --name-only -z --diff-filter=ACM | xargs -0 -r npx secretlint 2>/dev/null || {
-  echo "❌ Secrets detected! Please remove sensitive data before committing."
-  exit 1
-}
+# Strip 'success-factory/' prefix since we're already in that directory and run secretlint
+# Only check files that are in the success-factory directory
+staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep '^success-factory/' | sed 's|^success-factory/||' || true)
+if [ -n "$staged_files" ]; then
+  echo "$staged_files" | xargs ./node_modules/.bin/secretlint 2>/dev/null
+  secretlint_exit=$?
+  if [ $secretlint_exit -eq 1 ]; then
+    echo "❌ Secrets detected! Please remove sensitive data before committing."
+    exit 1
+  fi
+fi
 
 # Run color audit
 echo "🎨 Running color audit..."

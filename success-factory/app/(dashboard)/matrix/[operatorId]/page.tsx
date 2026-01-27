@@ -3780,6 +3780,15 @@ interface SubscriptionData {
     planName: string | null
     status: string
     startedAt: string
+    endingAt: string | null
+    canceledAt: string | null
+    terminatedAt: string | null
+    billingTime: string
+    amountCents: number | null
+    amountCurrency: string | null
+    interval: string | null
+    hasOverride: boolean
+    originalAmountCents: number | null
   }>
   availablePlans: Array<{
     code: string
@@ -3828,13 +3837,25 @@ function ChangePlanModal({
           // Initialize with all existing subscriptions and their dates
           if (result.allSubscriptions && result.allSubscriptions.length > 0) {
             setSelectedPlans(
-              result.allSubscriptions.map((sub: { planCode: string; startedAt: string }) => ({
-                code: sub.planCode,
-                // Format startedAt date to YYYY-MM-DD for the date input
-                startDate: sub.startedAt ? sub.startedAt.split("T")[0] : "",
-                // Active subscriptions don't have an end date
-                endDate: "",
-              }))
+              result.allSubscriptions.map(
+                (sub: {
+                  planCode: string
+                  startedAt: string
+                  endingAt: string | null
+                  canceledAt: string | null
+                  terminatedAt: string | null
+                }) => {
+                  // Get the effective end date from available fields
+                  const effectiveEndDate = sub.endingAt || sub.canceledAt || sub.terminatedAt
+                  return {
+                    code: sub.planCode,
+                    // Format startedAt date to YYYY-MM-DD for the date input
+                    startDate: sub.startedAt ? sub.startedAt.split("T")[0] : "",
+                    // Use effective end date if subscription has ended
+                    endDate: effectiveEndDate ? effectiveEndDate.split("T")[0] : "",
+                  }
+                }
+              )
             )
           }
           setLoading(false)
@@ -3980,32 +4001,73 @@ function ChangePlanModal({
                   <h4 className="text-content-secondary mb-2 text-xs font-medium uppercase">
                     Current Subscriptions ({data.allSubscriptions.length})
                   </h4>
-                  <div className="space-y-2">
-                    {data.allSubscriptions.map((sub) => (
-                      <div key={sub.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="text-content-primary font-medium">
-                            {sub.planName || sub.planCode}
-                          </p>
-                          <p className="text-content-secondary text-xs">
-                            Started:{" "}
-                            {sub.startedAt ? new Date(sub.startedAt).toLocaleDateString() : "—"}
-                          </p>
-                        </div>
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                            sub.status === "active"
-                              ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
-                              : sub.status === "pending"
-                                ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
-                                : "bg-bg-tertiary text-content-secondary"
-                          )}
+                  <div className="space-y-3">
+                    {data.allSubscriptions.map((sub) => {
+                      const effectiveEndDate = sub.endingAt || sub.canceledAt || sub.terminatedAt
+                      return (
+                        <div
+                          key={sub.id}
+                          className="border-border-default bg-bg-primary rounded-lg border p-3"
                         >
-                          {sub.status}
-                        </span>
-                      </div>
-                    ))}
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-content-primary font-medium">
+                                  {sub.planName || sub.planCode}
+                                </p>
+                                {sub.hasOverride && (
+                                  <span className="bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400 rounded px-1.5 py-0.5 text-[10px] font-medium">
+                                    Custom Price
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-content-secondary mt-1 space-y-0.5 text-xs">
+                                <p>
+                                  {sub.amountCents !== null
+                                    ? `${new Intl.NumberFormat("en-US", {
+                                        style: "currency",
+                                        currency: sub.amountCurrency || "USD",
+                                      }).format(sub.amountCents / 100)}/${sub.interval || "month"}`
+                                    : "—"}
+                                  {sub.hasOverride && sub.originalAmountCents && (
+                                    <span className="text-content-tertiary ml-1 line-through">
+                                      {new Intl.NumberFormat("en-US", {
+                                        style: "currency",
+                                        currency: sub.amountCurrency || "USD",
+                                      }).format(sub.originalAmountCents / 100)}
+                                    </span>
+                                  )}
+                                </p>
+                                <p>
+                                  Started:{" "}
+                                  {sub.startedAt
+                                    ? new Date(sub.startedAt).toLocaleDateString()
+                                    : "—"}
+                                  {effectiveEndDate && (
+                                    <>
+                                      {" → "}
+                                      Ended: {new Date(effectiveEndDate).toLocaleDateString()}
+                                    </>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                                sub.status === "active"
+                                  ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                  : sub.status === "pending"
+                                    ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                    : "bg-bg-tertiary text-content-secondary"
+                              )}
+                            >
+                              {sub.status}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}

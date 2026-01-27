@@ -49,6 +49,17 @@ export async function GET(
         planName: s.plan?.name,
         status: s.status,
         startedAt: s.started_at,
+        endingAt: s.ending_at || null,
+        canceledAt: s.canceled_at || null,
+        terminatedAt: s.terminated_at || null,
+        billingTime: s.billing_time,
+        // Pricing - use override if exists, otherwise use plan pricing
+        amountCents: s.plan_overrides?.amount_cents ?? s.plan?.amount_cents ?? null,
+        amountCurrency: s.plan_overrides?.amount_currency ?? s.plan?.amount_currency ?? null,
+        interval: s.plan?.interval ?? null,
+        hasOverride: !!s.plan_overrides?.amount_cents,
+        // Original plan price for reference when overridden
+        originalAmountCents: s.plan_overrides?.amount_cents ? s.plan?.amount_cents : null,
       })),
       availablePlans: plansResult.plans.map((p) => ({
         code: p.code,
