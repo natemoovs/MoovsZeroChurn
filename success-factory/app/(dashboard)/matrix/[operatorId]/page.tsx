@@ -3685,12 +3685,15 @@ function ChangePlanModal({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<SubscriptionData | null>(null)
-  const [selectedPlan, setSelectedPlan] = useState<string>("")
+  const [selectedPlans, setSelectedPlans] = useState<
+    Array<{ code: string; startDate: string; endDate: string }>
+  >([])
 
   useEffect(() => {
     if (isOpen && operatorId) {
       setLoading(true)
       setError(null)
+      setSelectedPlans([])
       fetch(`/api/operator-hub/${operatorId}/subscription`)
         .then((res) => {
           if (!res.ok) throw new Error("Failed to load subscription data")
@@ -3698,7 +3701,14 @@ function ChangePlanModal({
         })
         .then((result) => {
           setData(result)
-          setSelectedPlan(result.currentSubscription?.planCode || "")
+          // Initialize with current plan if exists
+          if (result.currentSubscription?.planCode) {
+            setSelectedPlans([{
+              code: result.currentSubscription.planCode,
+              startDate: "",
+              endDate: "",
+            }])
+          }
           setLoading(false)
         })
         .catch((err) => {
@@ -3708,8 +3718,24 @@ function ChangePlanModal({
     }
   }, [isOpen, operatorId])
 
+  const togglePlan = (planCode: string) => {
+    setSelectedPlans((prev) => {
+      const exists = prev.find((p) => p.code === planCode)
+      if (exists) {
+        return prev.filter((p) => p.code !== planCode)
+      }
+      return [...prev, { code: planCode, startDate: "", endDate: "" }]
+    })
+  }
+
+  const updatePlanDates = (planCode: string, field: "startDate" | "endDate", value: string) => {
+    setSelectedPlans((prev) =>
+      prev.map((p) => (p.code === planCode ? { ...p, [field]: value } : p))
+    )
+  }
+
   const handleChangePlan = async () => {
-    if (!selectedPlan || !data?.currentSubscription) return
+    if (selectedPlans.length === 0 || !data?.currentSubscription) return
 
     setSaving(true)
     setError(null)
@@ -3720,7 +3746,7 @@ function ChangePlanModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subscriptionId: data.currentSubscription.id,
-          planCode: selectedPlan,
+          plans: selectedPlans,
         }),
       })
 
@@ -3740,7 +3766,7 @@ function ChangePlanModal({
   }
 
   const handleCreateSubscription = async () => {
-    if (!selectedPlan) return
+    if (selectedPlans.length === 0) return
 
     setSaving(true)
     setError(null)
@@ -3750,7 +3776,7 @@ function ChangePlanModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          planCode: selectedPlan,
+          plans: selectedPlans,
         }),
       })
 
@@ -3780,9 +3806,9 @@ function ChangePlanModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-bg-primary border-border-default w-full max-w-lg rounded-lg border shadow-xl">
-        <div className="border-border-default flex items-center justify-between border-b p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+      <div className="bg-bg-primary border-border-default my-auto w-full max-w-lg rounded-lg border shadow-xl">
+        <div className="border-border-default sticky top-0 flex items-center justify-between border-b bg-inherit p-4 rounded-t-lg">
           <div>
             <h2 className="text-content-primary text-lg font-semibold">Change Plan</h2>
             <p className="text-content-secondary text-sm">{operatorName}</p>
@@ -3803,7 +3829,7 @@ function ChangePlanModal({
           </button>
         </div>
 
-        <div className="p-4">
+        <div className="max-h-[70vh] overflow-y-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="text-primary-500 h-8 w-8 animate-spin" />
@@ -3854,42 +3880,79 @@ function ChangePlanModal({
               {/* Plan Selection */}
               <div>
                 <label className="text-content-primary mb-2 block text-sm font-medium">
-                  {data?.currentSubscription ? "Select New Plan" : "Select Plan"}
+                  {data?.currentSubscription ? "Select Plans" : "Select Plans"}
                 </label>
+                <p className="text-content-tertiary mb-3 text-xs">
+                  Select one or more plans. You can optionally set start and end dates.
+                </p>
                 {data?.availablePlans && data.availablePlans.length > 0 ? (
-                  <div className="space-y-2">
-                    {data.availablePlans.map((plan) => (
-                      <label
-                        key={plan.code}
-                        className={cn(
-                          "border-border-default flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors",
-                          selectedPlan === plan.code
-                            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                            : "hover:bg-bg-secondary"
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="plan"
-                            value={plan.code}
-                            checked={selectedPlan === plan.code}
-                            onChange={(e) => setSelectedPlan(e.target.value)}
-                            className="text-primary-600"
-                          />
-                          <div>
-                            <p className="text-content-primary font-medium">{plan.name}</p>
-                            <p className="text-content-tertiary text-xs">{plan.code}</p>
-                          </div>
+                  <div className="space-y-3">
+                    {data.availablePlans.map((plan) => {
+                      const isSelected = selectedPlans.some((p) => p.code === plan.code)
+                      const selectedPlanData = selectedPlans.find((p) => p.code === plan.code)
+                      return (
+                        <div
+                          key={plan.code}
+                          className={cn(
+                            "border-border-default rounded-lg border p-3 transition-colors",
+                            isSelected
+                              ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                              : "hover:bg-bg-secondary"
+                          )}
+                        >
+                          <label className="flex cursor-pointer items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => togglePlan(plan.code)}
+                                className="text-primary-600 h-4 w-4 rounded"
+                              />
+                              <div>
+                                <p className="text-content-primary font-medium">{plan.name}</p>
+                                <p className="text-content-tertiary text-xs">{plan.code}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-content-primary font-medium">
+                                {formatPrice(plan.amountCents, plan.currency)}
+                              </p>
+                              <p className="text-content-tertiary text-xs">per {plan.interval}</p>
+                            </div>
+                          </label>
+                          {isSelected && (
+                            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-border-default pt-3">
+                              <div>
+                                <label className="text-content-secondary mb-1 block text-xs">
+                                  Start Date
+                                </label>
+                                <input
+                                  type="date"
+                                  value={selectedPlanData?.startDate || ""}
+                                  onChange={(e) =>
+                                    updatePlanDates(plan.code, "startDate", e.target.value)
+                                  }
+                                  className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-2 py-1 text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-content-secondary mb-1 block text-xs">
+                                  End Date
+                                </label>
+                                <input
+                                  type="date"
+                                  value={selectedPlanData?.endDate || ""}
+                                  onChange={(e) =>
+                                    updatePlanDates(plan.code, "endDate", e.target.value)
+                                  }
+                                  className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-2 py-1 text-sm"
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="text-right">
-                          <p className="text-content-primary font-medium">
-                            {formatPrice(plan.amountCents, plan.currency)}
-                          </p>
-                          <p className="text-content-tertiary text-xs">per {plan.interval}</p>
-                        </div>
-                      </label>
-                    ))}
+                      )
+                    })}
                   </div>
                 ) : (
                   <p className="text-content-tertiary text-sm">No plans available</p>
@@ -3910,22 +3973,20 @@ function ChangePlanModal({
           {data?.currentSubscription ? (
             <button
               onClick={handleChangePlan}
-              disabled={
-                saving || !selectedPlan || selectedPlan === data.currentSubscription.planCode
-              }
+              disabled={saving || selectedPlans.length === 0}
               className="bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Change Plan
+              Update Plans ({selectedPlans.length})
             </button>
           ) : (
             <button
               onClick={handleCreateSubscription}
-              disabled={saving || !selectedPlan}
+              disabled={saving || selectedPlans.length === 0}
               className="bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Create Subscription
+              Create Subscription ({selectedPlans.length})
             </button>
           )}
         </div>
