@@ -90,8 +90,8 @@
 
 ### 2.2 Drivers/Vehicles - Keep in Features Tab
 - [x] Decision: Keep drivers/vehicles as sub-sections in Features tab (not promoted to dedicated tabs)
-- [ ] Add driver performance metrics (future enhancement)
-- [ ] Add vehicle utilization stats (future enhancement)
+- [x] Add driver performance metrics (total trips, completion rate, revenue, last active)
+- [x] Add vehicle utilization stats (total trips, revenue, last used, days idle)
 
 ### 2.3 SendGrid - Full Suppression Management
 - [ ] Add global bounce report table

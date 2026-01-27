@@ -18,11 +18,13 @@ export async function GET(
       return NextResponse.json({ error: "Snowflake/Metabase not configured" }, { status: 503 })
     }
 
-    // Fetch members, drivers, and vehicles in parallel
-    const [members, drivers, vehicles] = await Promise.all([
+    // Fetch members, drivers, vehicles, and performance data in parallel
+    const [members, drivers, vehicles, driverPerformance, vehicleUtilization] = await Promise.all([
       snowflake.getOperatorMembers(operatorId),
       snowflake.getOperatorDrivers(operatorId),
       snowflake.getOperatorVehicles(operatorId),
+      snowflake.getDriverPerformance(operatorId).catch(() => []),
+      snowflake.getVehicleUtilization(operatorId).catch(() => []),
     ])
 
     // Calculate stats
@@ -61,6 +63,31 @@ export async function GET(
         color: v.color,
         capacity: v.capacity,
         createdAt: v.created_at,
+      })),
+      driverPerformance: driverPerformance.map((dp) => ({
+        id: dp.driver_id,
+        firstName: dp.first_name,
+        lastName: dp.last_name,
+        email: dp.email,
+        status: dp.status,
+        totalTrips: dp.total_trips,
+        completedTrips: dp.completed_trips,
+        tripsLast30Days: dp.trips_last_30_days,
+        totalRevenue: dp.total_revenue,
+        lastTripDate: dp.last_trip_date,
+        completionRate: dp.completion_rate,
+      })),
+      vehicleUtilization: vehicleUtilization.map((vu) => ({
+        id: vu.vehicle_id,
+        name: vu.vehicle_name,
+        type: vu.vehicle_type,
+        licensePlate: vu.license_plate,
+        capacity: vu.capacity,
+        totalTrips: vu.total_trips,
+        tripsLast30Days: vu.trips_last_30_days,
+        totalRevenue: vu.total_revenue,
+        lastTripDate: vu.last_trip_date,
+        daysSinceLastTrip: vu.days_since_last_trip,
       })),
       stats: {
         totalMembers: members.length,

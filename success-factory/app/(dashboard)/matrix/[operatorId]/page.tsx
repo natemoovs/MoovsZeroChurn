@@ -2430,6 +2430,31 @@ interface MembersApiResponse {
     capacity: number | null
     createdAt: string | null
   }>
+  driverPerformance: Array<{
+    id: string
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+    status: string
+    totalTrips: number
+    completedTrips: number
+    tripsLast30Days: number
+    totalRevenue: number | null
+    lastTripDate: string | null
+    completionRate: number | null
+  }>
+  vehicleUtilization: Array<{
+    id: string
+    name: string | null
+    type: string | null
+    licensePlate: string | null
+    capacity: number | null
+    totalTrips: number
+    tripsLast30Days: number
+    totalRevenue: number | null
+    lastTripDate: string | null
+    daysSinceLastTrip: number | null
+  }>
   stats: {
     totalMembers: number
     totalDrivers: number
@@ -3581,7 +3606,7 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
           </div>
         )}
 
-        {/* Drivers Section */}
+        {/* Drivers Section - With Performance Metrics */}
         {activeSection === "drivers" && (
           <div>
             {!data || data.drivers.length === 0 ? (
@@ -3593,48 +3618,91 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                 </p>
               </div>
             ) : (
-              <div className="divide-border-default divide-y">
-                {data.drivers.map((driver) => (
-                  <div key={driver.id} className="flex items-center gap-4 p-4">
-                    <div className="bg-success-100 dark:bg-success-900/30 text-success-600 dark:text-success-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium">
-                      {driver.firstName?.[0] || "D"}
-                      {driver.lastName?.[0] || ""}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-content-primary text-sm font-medium">
-                        {driver.firstName || driver.lastName
-                          ? `${driver.firstName || ""} ${driver.lastName || ""}`.trim()
-                          : "Unknown Driver"}
-                      </p>
-                      <div className="flex gap-3 text-xs">
-                        {driver.email && (
-                          <span className="text-content-secondary">{driver.email}</span>
-                        )}
-                        {driver.phone && (
-                          <span className="text-content-tertiary">{driver.phone}</span>
-                        )}
-                      </div>
-                    </div>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                        driver.status === "active"
-                          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
-                          : driver.status === "inactive"
-                            ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
-                            : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
-                      )}
-                    >
-                      {driver.status || "unknown"}
-                    </span>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-border-default bg-bg-secondary border-b text-left text-xs uppercase tracking-wider">
+                      <th className="text-content-secondary px-4 py-3 font-medium">Driver</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium">Status</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Total Trips</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Last 30 Days</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Completion</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Revenue</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium">Last Active</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-border-default divide-y">
+                    {(data.driverPerformance?.length ? data.driverPerformance : data.drivers.map(d => ({ ...d, totalTrips: 0, tripsLast30Days: 0, completionRate: null, totalRevenue: null, lastTripDate: null }))).map((driver) => (
+                      <tr key={driver.id} className="hover:bg-surface-hover transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-success-100 dark:bg-success-900/30 text-success-600 dark:text-success-400 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium">
+                              {driver.firstName?.[0] || "D"}
+                              {(driver as { lastName?: string | null }).lastName?.[0] || ""}
+                            </div>
+                            <div>
+                              <p className="text-content-primary text-sm font-medium">
+                                {driver.firstName || (driver as { lastName?: string | null }).lastName
+                                  ? `${driver.firstName || ""} ${(driver as { lastName?: string | null }).lastName || ""}`.trim()
+                                  : "Unknown Driver"}
+                              </p>
+                              {driver.email && (
+                                <p className="text-content-tertiary text-xs">{driver.email}</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                              driver.status === "active"
+                                ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                : driver.status === "inactive"
+                                  ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                  : "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                            )}
+                          >
+                            {driver.status || "unknown"}
+                          </span>
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                          {(driver as { totalTrips?: number }).totalTrips ?? "—"}
+                        </td>
+                        <td className="text-content-secondary px-4 py-3 text-right text-sm">
+                          {(driver as { tripsLast30Days?: number }).tripsLast30Days ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm">
+                          {(driver as { completionRate?: number | null }).completionRate !== null && (driver as { completionRate?: number | null }).completionRate !== undefined ? (
+                            <span className={cn(
+                              "font-medium",
+                              (driver as { completionRate?: number }).completionRate! >= 90 ? "text-success-600" :
+                              (driver as { completionRate?: number }).completionRate! >= 70 ? "text-warning-600" : "text-error-600"
+                            )}>
+                              {(driver as { completionRate?: number }).completionRate}%
+                            </span>
+                          ) : "—"}
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm">
+                          {(driver as { totalRevenue?: number | null }).totalRevenue
+                            ? `$${(driver as { totalRevenue?: number }).totalRevenue!.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                            : "—"}
+                        </td>
+                        <td className="text-content-tertiary px-4 py-3 text-sm">
+                          {(driver as { lastTripDate?: string | null }).lastTripDate
+                            ? new Date((driver as { lastTripDate?: string }).lastTripDate!).toLocaleDateString()
+                            : "Never"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
         )}
 
-        {/* Vehicles Section */}
+        {/* Vehicles Section - With Utilization Stats */}
         {activeSection === "vehicles" && (
           <div>
             {!data || data.vehicles.length === 0 ? (
@@ -3646,37 +3714,87 @@ function FeaturesTab({ operator }: { operator: OperatorData }) {
                 </p>
               </div>
             ) : (
-              <div className="divide-border-default divide-y">
-                {data.vehicles.map((vehicle) => (
-                  <div key={vehicle.id} className="flex items-center gap-4 p-4">
-                    <div className="bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                      <Car className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-content-primary text-sm font-medium">
-                        {vehicle.name || vehicle.type || "Unknown Vehicle"}
-                      </p>
-                      <div className="flex gap-3 text-xs">
-                        {vehicle.type && (
-                          <span className="text-content-secondary capitalize">{vehicle.type}</span>
-                        )}
-                        {vehicle.color && (
-                          <span className="text-content-tertiary capitalize">{vehicle.color}</span>
-                        )}
-                        {vehicle.licensePlate && (
-                          <span className="text-content-tertiary font-mono">
-                            {vehicle.licensePlate}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {vehicle.capacity && (
-                      <span className="text-content-secondary text-sm">
-                        {vehicle.capacity} seats
-                      </span>
-                    )}
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-border-default bg-bg-secondary border-b text-left text-xs uppercase tracking-wider">
+                      <th className="text-content-secondary px-4 py-3 font-medium">Vehicle</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium">Type</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Capacity</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Total Trips</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Last 30 Days</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium text-right">Revenue</th>
+                      <th className="text-content-secondary px-4 py-3 font-medium">Last Used</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-border-default divide-y">
+                    {(data.vehicleUtilization?.length ? data.vehicleUtilization : data.vehicles.map(v => ({ ...v, totalTrips: 0, tripsLast30Days: 0, totalRevenue: null, lastTripDate: null, daysSinceLastTrip: null }))).map((vehicle) => (
+                      <tr key={vehicle.id} className="hover:bg-surface-hover transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                              <Car className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-content-primary text-sm font-medium">
+                                {vehicle.name || vehicle.type || "Unknown Vehicle"}
+                              </p>
+                              {(vehicle as { licensePlate?: string | null }).licensePlate && (
+                                <p className="text-content-tertiary font-mono text-xs">
+                                  {(vehicle as { licensePlate?: string }).licensePlate}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {vehicle.type ? (
+                            <span className="bg-bg-tertiary text-content-secondary rounded px-2 py-0.5 text-xs capitalize">
+                              {vehicle.type}
+                            </span>
+                          ) : (
+                            <span className="text-content-tertiary text-sm">—</span>
+                          )}
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm">
+                          {vehicle.capacity ? `${vehicle.capacity}` : "—"}
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm font-medium">
+                          {(vehicle as { totalTrips?: number }).totalTrips ?? "—"}
+                        </td>
+                        <td className="text-content-secondary px-4 py-3 text-right text-sm">
+                          {(vehicle as { tripsLast30Days?: number }).tripsLast30Days ?? "—"}
+                        </td>
+                        <td className="text-content-primary px-4 py-3 text-right text-sm">
+                          {(vehicle as { totalRevenue?: number | null }).totalRevenue
+                            ? `$${(vehicle as { totalRevenue?: number }).totalRevenue!.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {(vehicle as { lastTripDate?: string | null }).lastTripDate ? (
+                            <div>
+                              <p className="text-content-secondary">
+                                {new Date((vehicle as { lastTripDate?: string }).lastTripDate!).toLocaleDateString()}
+                              </p>
+                              {(vehicle as { daysSinceLastTrip?: number | null }).daysSinceLastTrip !== null && (
+                                <p className={cn(
+                                  "text-xs",
+                                  (vehicle as { daysSinceLastTrip?: number }).daysSinceLastTrip! > 30
+                                    ? "text-warning-600"
+                                    : "text-content-tertiary"
+                                )}>
+                                  {(vehicle as { daysSinceLastTrip?: number }).daysSinceLastTrip} days ago
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-content-tertiary">Never</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

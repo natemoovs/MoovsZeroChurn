@@ -656,6 +656,132 @@ async function getOperatorVehicles(operatorId: string): Promise<OperatorVehicle[
   return result.rows
 }
 
+// ============================================================================
+// Driver Performance & Vehicle Utilization
+// ============================================================================
+
+export interface DriverPerformance {
+  driver_id: string
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  status: string
+  total_trips: number
+  completed_trips: number
+  trips_last_30_days: number
+  total_revenue: number | null
+  last_trip_date: string | null
+  completion_rate: number | null
+}
+
+/**
+ * Get driver performance metrics for an operator
+ */
+async function getDriverPerformance(operatorId: string): Promise<DriverPerformance[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    WITH driver_stats AS (
+      SELECT
+        d.driver_id,
+        d.first_name,
+        d.last_name,
+        d.email,
+        CASE
+          WHEN d.removed_at IS NOT NULL THEN 'removed'
+          WHEN d.deactivated_at IS NOT NULL THEN 'inactive'
+          ELSE 'active'
+        END as status,
+        COUNT(t.trip_id) as total_trips,
+        COUNT(CASE WHEN t.status = 'completed' THEN 1 END) as completed_trips,
+        COUNT(CASE WHEN t.created_at >= DATEADD('day', -30, CURRENT_DATE) THEN 1 END) as trips_last_30_days,
+        SUM(r.total_amount) as total_revenue,
+        MAX(t.completed_at) as last_trip_date
+      FROM POSTGRES_SWOOP.DRIVER d
+      LEFT JOIN SWOOP.TRIP t ON d.driver_id = t.driver_id
+      LEFT JOIN SWOOP.REQUEST r ON t.request_id = r.request_id AND r.operator_id = d.operator_id
+      WHERE d.operator_id = '${escapedId}'
+      GROUP BY d.driver_id, d.first_name, d.last_name, d.email, d.removed_at, d.deactivated_at
+    )
+    SELECT
+      driver_id,
+      first_name,
+      last_name,
+      email,
+      status,
+      total_trips,
+      completed_trips,
+      trips_last_30_days,
+      total_revenue,
+      last_trip_date,
+      CASE WHEN total_trips > 0 THEN ROUND((completed_trips::FLOAT / total_trips) * 100, 1) ELSE NULL END as completion_rate
+    FROM driver_stats
+    ORDER BY total_trips DESC, last_trip_date DESC
+    LIMIT 100
+  `
+
+  const result = await executeQuery<DriverPerformance>(sql)
+  return result.rows
+}
+
+export interface VehicleUtilization {
+  vehicle_id: string
+  vehicle_name: string | null
+  vehicle_type: string | null
+  license_plate: string | null
+  capacity: number | null
+  total_trips: number
+  trips_last_30_days: number
+  total_revenue: number | null
+  last_trip_date: string | null
+  days_since_last_trip: number | null
+}
+
+/**
+ * Get vehicle utilization stats for an operator
+ */
+async function getVehicleUtilization(operatorId: string): Promise<VehicleUtilization[]> {
+  const escapedId = operatorId.replace(/'/g, "''")
+
+  const sql = `
+    WITH vehicle_stats AS (
+      SELECT
+        v.vehicle_id,
+        v.name as vehicle_name,
+        v.vehicle_type,
+        v.license_plate,
+        v.capacity,
+        COUNT(t.trip_id) as total_trips,
+        COUNT(CASE WHEN t.created_at >= DATEADD('day', -30, CURRENT_DATE) THEN 1 END) as trips_last_30_days,
+        SUM(r.total_amount) as total_revenue,
+        MAX(t.completed_at) as last_trip_date
+      FROM SWOOP.VEHICLE v
+      LEFT JOIN SWOOP.TRIP t ON v.vehicle_id = t.vehicle_id
+      LEFT JOIN SWOOP.REQUEST r ON t.request_id = r.request_id AND r.operator_id = v.operator_id
+      WHERE v.operator_id = '${escapedId}'
+        AND v.removed_at IS NULL
+      GROUP BY v.vehicle_id, v.name, v.vehicle_type, v.license_plate, v.capacity
+    )
+    SELECT
+      vehicle_id,
+      vehicle_name,
+      vehicle_type,
+      license_plate,
+      capacity,
+      total_trips,
+      trips_last_30_days,
+      total_revenue,
+      last_trip_date,
+      DATEDIFF('day', last_trip_date, CURRENT_DATE) as days_since_last_trip
+    FROM vehicle_stats
+    ORDER BY total_trips DESC, last_trip_date DESC NULLS LAST
+    LIMIT 100
+  `
+
+  const result = await executeQuery<VehicleUtilization>(sql)
+  return result.rows
+}
+
 /**
  * Get email log for an operator
  */
@@ -1592,6 +1718,8 @@ export const snowflakeClient = {
   getOperatorMembers,
   getOperatorDrivers,
   getOperatorVehicles,
+  getDriverPerformance,
+  getVehicleUtilization,
   getOperatorEmailLog,
 
   // Additional platform data
