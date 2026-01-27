@@ -54,6 +54,9 @@ export interface LagoSubscription {
   terminated_at?: string
   created_at: string
   billing_time: "calendar" | "anniversary"
+  // Billing period info - shows when the current period ends (renewal date)
+  current_billing_period_started_at?: string
+  current_billing_period_ending_at?: string
   plan: LagoPlan
   // Plan overrides - custom pricing for this specific subscription
   plan_overrides?: {
@@ -136,6 +139,70 @@ export interface LagoError {
   error: string
   code?: string
   error_details?: Record<string, string[]>
+}
+
+export interface LagoCoupon {
+  lago_id: string
+  name: string
+  code: string
+  description?: string
+  coupon_type: "fixed_amount" | "percentage"
+  amount_cents?: number
+  amount_currency?: string
+  percentage_rate?: number
+  frequency: "once" | "recurring" | "forever"
+  frequency_duration?: number
+  reusable: boolean
+  limited_plans: boolean
+  plan_codes?: string[]
+  limited_billable_metrics: boolean
+  billable_metric_codes?: string[]
+  expiration: "no_expiration" | "time_limit"
+  expiration_at?: string
+  created_at: string
+  terminated_at?: string
+}
+
+export interface LagoAppliedCoupon {
+  lago_id: string
+  lago_coupon_id: string
+  coupon_code: string
+  coupon_name: string
+  external_customer_id: string
+  lago_customer_id: string
+  status: "active" | "terminated"
+  amount_cents?: number
+  amount_cents_remaining?: number
+  amount_currency?: string
+  percentage_rate?: number
+  frequency: "once" | "recurring" | "forever"
+  frequency_duration?: number
+  frequency_duration_remaining?: number
+  created_at: string
+  terminated_at?: string
+}
+
+export interface LagoAddOn {
+  lago_id: string
+  name: string
+  code: string
+  invoice_display_name?: string
+  description?: string
+  amount_cents: number
+  amount_currency: string
+  created_at: string
+}
+
+export interface LagoAppliedAddOn {
+  lago_id: string
+  lago_add_on_id: string
+  add_on_code: string
+  external_customer_id: string
+  lago_customer_id: string
+  amount_cents: number
+  amount_currency: string
+  created_at: string
+  invoice?: LagoInvoice
 }
 
 // ============================================================================
@@ -531,6 +598,9 @@ export interface UpdateSubscriptionInput {
   subscriptionExternalId: string
   planCode: string
   name?: string
+  // Optional price override - if set, this amount will be used instead of the plan's default
+  overrideAmountCents?: number
+  overrideAmountCurrency?: string
 }
 
 /**
@@ -545,15 +615,26 @@ export async function updateSubscription(
   }
 
   try {
+    // Build subscription payload
+    const subscriptionPayload: Record<string, unknown> = {
+      plan_code: input.planCode,
+      name: input.name,
+    }
+
+    // Add plan overrides if a custom price is specified
+    if (input.overrideAmountCents !== undefined) {
+      subscriptionPayload.plan_overrides = {
+        amount_cents: input.overrideAmountCents,
+        amount_currency: input.overrideAmountCurrency || "USD",
+      }
+    }
+
     const result = await lagoFetch<{ subscription: LagoSubscription }>(
       `/subscriptions/${input.subscriptionExternalId}`,
       {
         method: "PUT",
         body: JSON.stringify({
-          subscription: {
-            plan_code: input.planCode,
-            name: input.name,
-          },
+          subscription: subscriptionPayload,
         }),
       }
     )
@@ -570,6 +651,9 @@ export interface CreateSubscriptionInput {
   externalId?: string
   name?: string
   billingTime?: "calendar" | "anniversary"
+  // Optional price override - if set, this amount will be used instead of the plan's default
+  overrideAmountCents?: number
+  overrideAmountCurrency?: string
 }
 
 /**
@@ -583,16 +667,27 @@ export async function createSubscription(
   }
 
   try {
+    // Build subscription payload
+    const subscriptionPayload: Record<string, unknown> = {
+      external_customer_id: input.externalCustomerId,
+      plan_code: input.planCode,
+      external_id: input.externalId || `sub_${input.externalCustomerId}_${Date.now()}`,
+      name: input.name,
+      billing_time: input.billingTime || "calendar",
+    }
+
+    // Add plan overrides if a custom price is specified
+    if (input.overrideAmountCents !== undefined) {
+      subscriptionPayload.plan_overrides = {
+        amount_cents: input.overrideAmountCents,
+        amount_currency: input.overrideAmountCurrency || "USD",
+      }
+    }
+
     const result = await lagoFetch<{ subscription: LagoSubscription }>("/subscriptions", {
       method: "POST",
       body: JSON.stringify({
-        subscription: {
-          external_customer_id: input.externalCustomerId,
-          plan_code: input.planCode,
-          external_id: input.externalId || `sub_${input.externalCustomerId}_${Date.now()}`,
-          name: input.name,
-          billing_time: input.billingTime || "calendar",
-        },
+        subscription: subscriptionPayload,
       }),
     })
     return result.subscription
@@ -634,6 +729,236 @@ export function isConfigured(): boolean {
 }
 
 // ============================================================================
+// Customer Management
+// ============================================================================
+
+export interface CreateCustomerInput {
+  externalId: string
+  name: string
+  email?: string
+  currency?: string
+  timezone?: string
+  stripeCustomerId?: string
+}
+
+/**
+ * Create a new customer in Lago
+ */
+export async function createCustomer(input: CreateCustomerInput): Promise<LagoCustomer | null> {
+  if (!LAGO_API_KEY) {
+    throw new Error("LAGO_API_KEY is not configured")
+  }
+
+  try {
+    const customerPayload: Record<string, unknown> = {
+      external_id: input.externalId,
+      name: input.name,
+      email: input.email,
+      currency: input.currency || "USD",
+      timezone: input.timezone || "America/New_York",
+    }
+
+    // Add Stripe integration if provider ID is provided
+    if (input.stripeCustomerId) {
+      customerPayload.billing_configuration = {
+        payment_provider: "stripe",
+        provider_customer_id: input.stripeCustomerId,
+        sync_with_provider: true,
+      }
+    }
+
+    const result = await lagoFetch<{ customer: LagoCustomer }>("/customers", {
+      method: "POST",
+      body: JSON.stringify({
+        customer: customerPayload,
+      }),
+    })
+    return result.customer
+  } catch (err) {
+    console.error(`Failed to create customer:`, err)
+    throw err
+  }
+}
+
+// ============================================================================
+// Coupon Management
+// ============================================================================
+
+/**
+ * List all available coupons
+ */
+export async function listCoupons(
+  page = 1,
+  perPage = 100
+): Promise<{
+  coupons: LagoCoupon[]
+  meta: { current_page: number; total_pages: number; total_count: number }
+}> {
+  if (!LAGO_API_KEY) {
+    return { coupons: [], meta: { current_page: 1, total_pages: 0, total_count: 0 } }
+  }
+
+  const result = await lagoFetch<{
+    coupons: LagoCoupon[]
+    meta: { current_page: number; total_pages: number; total_count: number }
+  }>(`/coupons?page=${page}&per_page=${perPage}`)
+
+  return result
+}
+
+/**
+ * Get a specific coupon by code
+ */
+export async function getCoupon(couponCode: string): Promise<LagoCoupon | null> {
+  if (!LAGO_API_KEY) {
+    return null
+  }
+
+  try {
+    const result = await lagoFetch<{ coupon: LagoCoupon }>(`/coupons/${couponCode}`)
+    return result.coupon
+  } catch (err) {
+    console.log(`Failed to get Lago coupon ${couponCode}:`, err)
+    return null
+  }
+}
+
+export interface ApplyCouponInput {
+  externalCustomerId: string
+  couponCode: string
+  // For fixed amount coupons, you can override the amount
+  amountCents?: number
+  amountCurrency?: string
+  // Number of billing cycles the coupon applies to (for recurring coupons)
+  frequencyDuration?: number
+}
+
+/**
+ * Apply a coupon to a customer
+ */
+export async function applyCoupon(input: ApplyCouponInput): Promise<LagoAppliedCoupon | null> {
+  if (!LAGO_API_KEY) {
+    throw new Error("LAGO_API_KEY is not configured")
+  }
+
+  try {
+    const appliedCouponPayload: Record<string, unknown> = {
+      external_customer_id: input.externalCustomerId,
+      coupon_code: input.couponCode,
+    }
+
+    // Optional amount override for fixed amount coupons
+    if (input.amountCents !== undefined) {
+      appliedCouponPayload.amount_cents = input.amountCents
+      appliedCouponPayload.amount_currency = input.amountCurrency || "USD"
+    }
+
+    // Optional frequency duration for recurring coupons
+    if (input.frequencyDuration !== undefined) {
+      appliedCouponPayload.frequency_duration = input.frequencyDuration
+    }
+
+    const result = await lagoFetch<{ applied_coupon: LagoAppliedCoupon }>("/applied_coupons", {
+      method: "POST",
+      body: JSON.stringify({
+        applied_coupon: appliedCouponPayload,
+      }),
+    })
+    return result.applied_coupon
+  } catch (err) {
+    console.error(`Failed to apply coupon:`, err)
+    throw err
+  }
+}
+
+/**
+ * Get applied coupons for a customer
+ */
+export async function getAppliedCoupons(operatorId: string): Promise<{
+  applied_coupons: LagoAppliedCoupon[]
+  meta: { current_page: number; total_pages: number; total_count: number }
+}> {
+  if (!LAGO_API_KEY) {
+    return { applied_coupons: [], meta: { current_page: 1, total_pages: 0, total_count: 0 } }
+  }
+
+  const result = await lagoFetch<{
+    applied_coupons: LagoAppliedCoupon[]
+    meta: { current_page: number; total_pages: number; total_count: number }
+  }>(`/applied_coupons?external_customer_id=${operatorId}`)
+
+  return result
+}
+
+// ============================================================================
+// Add-on Management (for setup fees and one-time charges)
+// ============================================================================
+
+/**
+ * List all available add-ons
+ */
+export async function listAddOns(
+  page = 1,
+  perPage = 100
+): Promise<{
+  add_ons: LagoAddOn[]
+  meta: { current_page: number; total_pages: number; total_count: number }
+}> {
+  if (!LAGO_API_KEY) {
+    return { add_ons: [], meta: { current_page: 1, total_pages: 0, total_count: 0 } }
+  }
+
+  const result = await lagoFetch<{
+    add_ons: LagoAddOn[]
+    meta: { current_page: number; total_pages: number; total_count: number }
+  }>(`/add_ons?page=${page}&per_page=${perPage}`)
+
+  return result
+}
+
+export interface ApplyAddOnInput {
+  externalCustomerId: string
+  addOnCode: string
+  // Optional amount override
+  amountCents?: number
+  amountCurrency?: string
+}
+
+/**
+ * Apply an add-on to a customer (creates a one-time charge)
+ * Commonly used for setup fees
+ */
+export async function applyAddOn(input: ApplyAddOnInput): Promise<LagoAppliedAddOn | null> {
+  if (!LAGO_API_KEY) {
+    throw new Error("LAGO_API_KEY is not configured")
+  }
+
+  try {
+    const appliedAddOnPayload: Record<string, unknown> = {
+      external_customer_id: input.externalCustomerId,
+      add_on_code: input.addOnCode,
+    }
+
+    // Optional amount override
+    if (input.amountCents !== undefined) {
+      appliedAddOnPayload.amount_cents = input.amountCents
+      appliedAddOnPayload.amount_currency = input.amountCurrency || "USD"
+    }
+
+    const result = await lagoFetch<{ applied_add_on: LagoAppliedAddOn }>("/applied_add_ons", {
+      method: "POST",
+      body: JSON.stringify({
+        applied_add_on: appliedAddOnPayload,
+      }),
+    })
+    return result.applied_add_on
+  } catch (err) {
+    console.error(`Failed to apply add-on:`, err)
+    throw err
+  }
+}
+
+// ============================================================================
 // Export Client Object
 // ============================================================================
 
@@ -644,6 +969,7 @@ export const lago = {
   // Customers
   getCustomer,
   listCustomers,
+  createCustomer,
 
   // Invoices
   getInvoices,
@@ -660,6 +986,16 @@ export const lago = {
   // Plans
   listPlans,
   getPlan,
+
+  // Coupons
+  listCoupons,
+  getCoupon,
+  applyCoupon,
+  getAppliedCoupons,
+
+  // Add-ons (setup fees)
+  listAddOns,
+  applyAddOn,
 
   // Analysis
   getBillingHealth,

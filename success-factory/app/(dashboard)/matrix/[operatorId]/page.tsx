@@ -3908,6 +3908,9 @@ interface SubscriptionData {
     interval: string | null
     hasOverride: boolean
     originalAmountCents: number | null
+    // Billing period dates (for renewal info)
+    billingPeriodStartedAt: string | null
+    billingPeriodEndingAt: string | null
   }>
   availablePlans: Array<{
     code: string
@@ -3915,6 +3918,33 @@ interface SubscriptionData {
     interval: string
     amountCents: number
     currency: string
+  }>
+  availableCoupons: Array<{
+    code: string
+    name: string
+    description?: string
+    couponType: "fixed_amount" | "percentage"
+    amountCents?: number
+    amountCurrency?: string
+    percentageRate?: number
+    frequency: "once" | "recurring" | "forever"
+    frequencyDuration?: number
+  }>
+  availableAddOns: Array<{
+    code: string
+    name: string
+    description?: string
+    amountCents: number
+    amountCurrency: string
+  }>
+  appliedCoupons: Array<{
+    couponCode: string
+    couponName: string
+    amountCents?: number
+    amountCentsRemaining?: number
+    percentageRate?: number
+    frequency: "once" | "recurring" | "forever"
+    frequencyDurationRemaining?: number
   }>
 }
 
@@ -3938,14 +3968,29 @@ function ChangePlanModal({
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<SubscriptionData | null>(null)
   const [selectedPlans, setSelectedPlans] = useState<
-    Array<{ code: string; startDate: string; endDate: string }>
+    Array<{
+      code: string
+      startDate: string
+      endDate: string
+      overridePrice: string // Store as string for input, convert to cents when submitting
+    }>
   >([])
+  // Coupon and setup fee state (for new subscriptions only)
+  const [selectedCoupon, setSelectedCoupon] = useState<string>("")
+  const [couponAmount, setCouponAmount] = useState<string>("")
+  const [couponCycles, setCouponCycles] = useState<string>("")
+  const [selectedSetupFee, setSelectedSetupFee] = useState<string>("")
 
   useEffect(() => {
     if (isOpen && operatorId) {
       setLoading(true)
       setError(null)
       setSelectedPlans([])
+      // Reset coupon and setup fee selections
+      setSelectedCoupon("")
+      setCouponAmount("")
+      setCouponCycles("")
+      setSelectedSetupFee("")
       fetch(`/api/operator-hub/${operatorId}/subscription`)
         .then((res) => {
           if (!res.ok) throw new Error("Failed to load subscription data")
@@ -3963,6 +4008,8 @@ function ChangePlanModal({
                   endingAt: string | null
                   canceledAt: string | null
                   terminatedAt: string | null
+                  amountCents: number | null
+                  hasOverride: boolean
                 }) => {
                   // Get the effective end date from available fields
                   const effectiveEndDate = sub.endingAt || sub.canceledAt || sub.terminatedAt
@@ -3972,6 +4019,9 @@ function ChangePlanModal({
                     startDate: sub.startedAt ? sub.startedAt.split("T")[0] : "",
                     // Use effective end date if subscription has ended
                     endDate: effectiveEndDate ? effectiveEndDate.split("T")[0] : "",
+                    // Include override price if one exists (convert cents to dollars for display)
+                    overridePrice:
+                      sub.hasOverride && sub.amountCents ? (sub.amountCents / 100).toFixed(2) : "",
                   }
                 }
               )
@@ -3992,11 +4042,15 @@ function ChangePlanModal({
       if (exists) {
         return prev.filter((p) => p.code !== planCode)
       }
-      return [...prev, { code: planCode, startDate: "", endDate: "" }]
+      return [...prev, { code: planCode, startDate: "", endDate: "", overridePrice: "" }]
     })
   }
 
-  const updatePlanDates = (planCode: string, field: "startDate" | "endDate", value: string) => {
+  const updatePlanField = (
+    planCode: string,
+    field: "startDate" | "endDate" | "overridePrice",
+    value: string
+  ) => {
     setSelectedPlans((prev) =>
       prev.map((p) => (p.code === planCode ? { ...p, [field]: value } : p))
     )
@@ -4009,12 +4063,21 @@ function ChangePlanModal({
     setError(null)
 
     try {
+      // Get the primary plan (first selected)
+      const primaryPlan = selectedPlans[0]
+      // Convert override price from dollars to cents
+      const overrideAmountCents = primaryPlan.overridePrice
+        ? Math.round(parseFloat(primaryPlan.overridePrice) * 100)
+        : undefined
+
       const response = await fetch(`/api/operator-hub/${operatorId}/subscription`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subscriptionId: data.currentSubscription.id,
-          plans: selectedPlans,
+          planCode: primaryPlan.code,
+          overrideAmountCents,
+          overrideAmountCurrency: "USD",
         }),
       })
 
@@ -4040,11 +4103,31 @@ function ChangePlanModal({
     setError(null)
 
     try {
+      // Get the primary plan (first selected)
+      const primaryPlan = selectedPlans[0]
+      // Convert override price from dollars to cents
+      const overrideAmountCents = primaryPlan.overridePrice
+        ? Math.round(parseFloat(primaryPlan.overridePrice) * 100)
+        : undefined
+
+      // Convert coupon amount from dollars to cents
+      const couponAmountCents = couponAmount
+        ? Math.round(parseFloat(couponAmount) * 100)
+        : undefined
+
       const response = await fetch(`/api/operator-hub/${operatorId}/subscription`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          plans: selectedPlans,
+          planCode: primaryPlan.code,
+          overrideAmountCents,
+          overrideAmountCurrency: "USD",
+          // Coupon options
+          couponCode: selectedCoupon || undefined,
+          couponAmountCents,
+          couponFrequencyDuration: couponCycles ? Number(couponCycles) : undefined,
+          // Setup fee add-on
+          setupFeeAddOnCode: selectedSetupFee || undefined,
         }),
       })
 
@@ -4169,6 +4252,13 @@ function ChangePlanModal({
                                     </>
                                   )}
                                 </p>
+                                {/* Show renewal date for active subscriptions */}
+                                {sub.status === "active" && sub.billingPeriodEndingAt && (
+                                  <p className="text-primary-600 dark:text-primary-400">
+                                    Renews:{" "}
+                                    {new Date(sub.billingPeriodEndingAt).toLocaleDateString()}
+                                  </p>
+                                )}
                               </div>
                             </div>
                             <span
@@ -4256,32 +4346,60 @@ function ChangePlanModal({
                             </div>
                           </label>
                           {isSelected && (
-                            <div className="border-border-default mt-3 grid grid-cols-2 gap-3 border-t pt-3">
-                              <div>
-                                <label className="text-content-secondary mb-1 block text-xs">
-                                  Start Date
-                                </label>
-                                <input
-                                  type="date"
-                                  value={selectedPlanData?.startDate || ""}
-                                  onChange={(e) =>
-                                    updatePlanDates(plan.code, "startDate", e.target.value)
-                                  }
-                                  className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-2 py-1 text-sm"
-                                />
+                            <div className="border-border-default mt-3 space-y-3 border-t pt-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-content-secondary mb-1 block text-xs">
+                                    Start Date
+                                  </label>
+                                  <input
+                                    type="date"
+                                    value={selectedPlanData?.startDate || ""}
+                                    onChange={(e) =>
+                                      updatePlanField(plan.code, "startDate", e.target.value)
+                                    }
+                                    className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-2 py-1 text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-content-secondary mb-1 block text-xs">
+                                    End Date
+                                  </label>
+                                  <input
+                                    type="date"
+                                    value={selectedPlanData?.endDate || ""}
+                                    onChange={(e) =>
+                                      updatePlanField(plan.code, "endDate", e.target.value)
+                                    }
+                                    className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-2 py-1 text-sm"
+                                  />
+                                </div>
                               </div>
                               <div>
-                                <label className="text-content-secondary mb-1 block text-xs">
-                                  End Date
+                                <label className="text-content-secondary mb-1 flex items-center gap-1.5 text-xs">
+                                  <span>Custom Price Override</span>
+                                  <span className="text-content-tertiary">(optional)</span>
                                 </label>
-                                <input
-                                  type="date"
-                                  value={selectedPlanData?.endDate || ""}
-                                  onChange={(e) =>
-                                    updatePlanDates(plan.code, "endDate", e.target.value)
-                                  }
-                                  className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-2 py-1 text-sm"
-                                />
+                                <div className="relative">
+                                  <span className="text-content-secondary absolute top-1/2 left-2 -translate-y-1/2 text-sm">
+                                    $
+                                  </span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder={`${(plan.amountCents / 100).toFixed(2)}`}
+                                    value={selectedPlanData?.overridePrice || ""}
+                                    onChange={(e) =>
+                                      updatePlanField(plan.code, "overridePrice", e.target.value)
+                                    }
+                                    className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border py-1 pr-2 pl-6 text-sm"
+                                  />
+                                </div>
+                                <p className="text-content-tertiary mt-1 text-[10px]">
+                                  Leave blank to use plan default:{" "}
+                                  {formatPrice(plan.amountCents, plan.currency)}/{plan.interval}
+                                </p>
                               </div>
                             </div>
                           )}
@@ -4293,6 +4411,116 @@ function ChangePlanModal({
                   <p className="text-content-tertiary text-sm">No plans available</p>
                 )}
               </div>
+
+              {/* Coupon & Setup Fee section - only show for new subscriptions */}
+              {!data?.currentSubscription && (
+                <div className="border-border-default mt-4 space-y-4 border-t pt-4">
+                  {/* Coupon Selection */}
+                  {data?.availableCoupons && data.availableCoupons.length > 0 && (
+                    <div>
+                      <label className="text-content-primary mb-2 block text-sm font-medium">
+                        Apply Coupon{" "}
+                        <span className="text-content-tertiary font-normal">(optional)</span>
+                      </label>
+                      <select
+                        value={selectedCoupon}
+                        onChange={(e) => setSelectedCoupon(e.target.value)}
+                        className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-3 py-2 text-sm"
+                      >
+                        <option value="">No coupon</option>
+                        {data.availableCoupons.map((coupon) => (
+                          <option key={coupon.code} value={coupon.code}>
+                            {coupon.name} (
+                            {coupon.couponType === "percentage"
+                              ? `${coupon.percentageRate}%`
+                              : formatPrice(
+                                  coupon.amountCents || 0,
+                                  coupon.amountCurrency || "USD"
+                                )}
+                            {coupon.frequency !== "once" &&
+                              ` - ${coupon.frequency}${coupon.frequencyDuration ? ` for ${coupon.frequencyDuration} cycles` : ""}`}
+                            )
+                          </option>
+                        ))}
+                      </select>
+                      {selectedCoupon && (
+                        <div className="mt-2 grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-content-secondary mb-1 block text-xs">
+                              Amount Override ($)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="Use coupon default"
+                              value={couponAmount}
+                              onChange={(e) => setCouponAmount(e.target.value)}
+                              className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-2 py-1 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-content-secondary mb-1 block text-xs">
+                              Billing Cycles
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              placeholder="Use coupon default"
+                              value={couponCycles}
+                              onChange={(e) => setCouponCycles(e.target.value)}
+                              className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-2 py-1 text-sm"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Setup Fee Selection */}
+                  {data?.availableAddOns && data.availableAddOns.length > 0 && (
+                    <div>
+                      <label className="text-content-primary mb-2 block text-sm font-medium">
+                        Add Setup Fee{" "}
+                        <span className="text-content-tertiary font-normal">(optional)</span>
+                      </label>
+                      <select
+                        value={selectedSetupFee}
+                        onChange={(e) => setSelectedSetupFee(e.target.value)}
+                        className="bg-bg-primary border-border-default text-content-primary w-full rounded-md border px-3 py-2 text-sm"
+                      >
+                        <option value="">No setup fee</option>
+                        {data.availableAddOns.map((addOn) => (
+                          <option key={addOn.code} value={addOn.code}>
+                            {addOn.name} - {formatPrice(addOn.amountCents, addOn.amountCurrency)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Applied Coupons Display */}
+                  {data?.appliedCoupons && data.appliedCoupons.length > 0 && (
+                    <div className="bg-info-50 dark:bg-info-900/20 rounded-md p-3">
+                      <p className="text-info-700 dark:text-info-400 text-xs font-medium">
+                        Active Coupons
+                      </p>
+                      {data.appliedCoupons.map((coupon) => (
+                        <p
+                          key={coupon.couponCode}
+                          className="text-info-600 dark:text-info-300 text-xs"
+                        >
+                          {coupon.couponName}
+                          {coupon.amountCentsRemaining !== undefined &&
+                            ` - ${formatPrice(coupon.amountCentsRemaining, "USD")} remaining`}
+                          {coupon.frequencyDurationRemaining !== undefined &&
+                            ` - ${coupon.frequencyDurationRemaining} cycles remaining`}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
