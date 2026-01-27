@@ -2,6 +2,19 @@
 
 Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub (Next.js app).
 
+**Last verified: 2026-01-27**
+
+---
+
+## VERIFIED STATUS SUMMARY
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Twilio SMS Integration | ❌ MISSING | No chat history viewing |
+| SendGrid Suppression Management | ✅ EXISTS | Full API at `/api/sendgrid/suppressions` |
+| Customer Contact Drill-Down (SMS+Email) | ❌ MISSING | Only charges, no communication history |
+| Risk/Disputes Charts | ✅ EXISTS | LineChart + BarChart in RiskTab UI |
+
 ---
 
 ## CRITICAL MISSING FEATURES
@@ -17,22 +30,28 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
   - Pricing information
   - Combined operator messages view (`combineOperatorMessages.data.messages`)
 
-**Operator Hub status:** No SMS/Twilio integration exists
+**Operator Hub status:** Only has n8n webhook for receiving SMS events (`/api/webhooks/n8n/quo`). No Twilio API integration for viewing SMS chat history.
+
+**API Route Needed:** `/api/operator-hub/[operatorId]/sms` - Twilio SMS history
 
 ---
 
-### 2. SendGrid Email Suppression Management - NOT IMPLEMENTED
+### 2. Customer/Contact Drill-Down with SMS+Email History - NOT IMPLEMENTED
 
 **Moovs Matrix has:**
-- `sendgridEmailOverview` page with:
-  - Bounce list (`getBounces`) with ability to **remove bounces**
-  - Invalid email list (`getInvalidEmailAddress`)
-  - Blocked email list (`getBlocks`) with ability to **remove blocks**
-  - Spam reports (`getSpamReports`)
-  - Search by email across all suppression lists
-  - Actions to remove emails from suppression lists
+- Customer frame (`customerFrame.rsx`) with:
+  - Contact selection from operator contacts
+  - SMS history for specific contacts (to/from)
+  - SendGrid email activity for specific contacts (`getEmailActivityForContact`)
+  - Booking and passenger reservation lookup
+  - Combined communication view
 
-**Operator Hub status:** Only has email logs from Snowflake (`getOperatorEmailLog`), no direct SendGrid API integration for suppression management
+**Operator Hub status:**
+- Has contacts in overview
+- Customer API (`/api/operator-hub/[operatorId]/customer/[customerId]`) only returns charges and summary
+- No individual contact drill-down with combined SMS+email history
+
+**API Route Needed:** `/api/operator-hub/[operatorId]/customer/[customerId]/communications` - Combined SMS+email for contact
 
 ---
 
@@ -62,49 +81,7 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 ---
 
-### 5. Customer/Contact Drill-Down with SMS+Email History - PARTIALLY IMPLEMENTED
-
-**Moovs Matrix has:**
-- Customer frame (`customerFrame.rsx`) with:
-  - Contact selection from operator contacts
-  - SMS history for specific contacts (to/from)
-  - SendGrid email activity for specific contacts (`getEmailActivityForContact`)
-  - Booking and passenger reservation lookup
-  - Combined communication view
-
-**Operator Hub status:** Has contacts in overview, but no individual contact drill-down with combined SMS+email history
-
----
-
-## PARTIAL IMPLEMENTATIONS / GAPS
-
-### 6. Risk/Fraud Monitoring Charts - PARTIALLY IMPLEMENTED
-
-**Moovs Matrix has:**
-- `accountOverviewBankAccountInfo` with:
-  - Disputes summary pie chart by status
-  - Disputes by risk level distribution
-  - Disputes over time line chart
-  - Alert type breakdown from Notion tickets
-
-**Operator Hub status:** Has disputes API (`/disputes`) with summary data, but UI charts not confirmed
-
----
-
-### 7. Platform Charges Week-over-Week Comparison - NOT CONFIRMED
-
-**Moovs Matrix has:**
-- `moovsPayments` page with:
-  - Current week vs previous week platform charges
-  - Percentage change indicators (up/down arrows)
-  - Risk score display per operator
-  - Charts showing succeeded/failed charges by operator
-
-**Operator Hub status:** Has charges API (`/charges`) but week-over-week comparison UI not confirmed
-
----
-
-### 8. Bank Account Balance via Plaid/Stripe Financial Connections - NOT IMPLEMENTED
+### 5. Bank Account Balance via Plaid/Stripe Financial Connections - NOT IMPLEMENTED
 
 **Moovs Matrix has:**
 - Bank account balance display
@@ -115,14 +92,26 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 ---
 
-### 9. Notion Tickets with Alert Type Breakdown - PARTIALLY IMPLEMENTED
+## FEATURES ALREADY IMPLEMENTED (VERIFIED)
 
-**Moovs Matrix has:**
-- Notion integration with ticket categories
-- Alert type breakdown (pie chart)
-- Create/edit ticket modals (`ticketModalFrame`, `taskModalFrame`)
+### SendGrid Suppression Management ✅
 
-**Operator Hub status:** Has tickets API but alert type breakdown charts not confirmed
+**Location:** `/api/sendgrid/suppressions/route.ts`
+
+**Capabilities:**
+- GET: Fetches bounces, blocks, invalid emails, spam reports
+- DELETE: Removes emails from suppression lists (admin only)
+- Search by email across all suppression lists
+- Summary counts for all suppression types
+
+### Risk/Disputes Charts ✅
+
+**Location:** `app/(dashboard)/matrix/[operatorId]/page.tsx` - RiskTab component (lines 2558-2960)
+
+**Charts implemented:**
+- **Disputes Over Time** - LineChart showing dispute trend over time
+- **Disputes by Risk Level** - BarChart showing distribution by risk level
+- **Disputes Analytics** - StatCards for total disputes, disputed amount, won/lost rates
 
 ---
 
@@ -130,45 +119,45 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 | Feature | Matrix | Operator Hub |
 |---------|--------|--------------|
-| Operator search/selection | Yes | Yes |
-| Stripe connected account balance | Yes | Yes |
-| Disputes list | Yes | Yes |
-| Risk score display | Yes | Yes |
-| Risk score/limits update | Yes | Yes |
-| Invoices | Yes | Yes |
-| Reservations/Trips | Yes | Yes |
-| Quotes | Yes | Yes |
-| Team members | Yes | Yes |
-| Features/toggles | Yes | Yes |
-| Customer feedback | Yes | Yes |
-| Subscription/plan info | Yes | Yes |
-| HubSpot integration | Yes | Yes |
-| History tracking | Yes | Yes |
+| Operator search/selection | ✅ | ✅ |
+| Stripe connected account balance | ✅ | ✅ |
+| Disputes list | ✅ | ✅ |
+| Risk score display | ✅ | ✅ |
+| Risk score/limits update | ✅ | ✅ |
+| Risk/Disputes charts | ✅ | ✅ |
+| SendGrid suppression management | ✅ | ✅ |
+| Invoices | ✅ | ✅ |
+| Reservations/Trips | ✅ | ✅ |
+| Quotes | ✅ | ✅ |
+| Team members | ✅ | ✅ |
+| Features/toggles | ✅ | ✅ |
+| Customer feedback | ✅ | ✅ |
+| Subscription/plan info | ✅ | ✅ |
+| HubSpot integration | ✅ | ✅ |
+| History tracking | ✅ | ✅ |
 
 ---
 
-## SUMMARY - PRIORITY ITEMS TO ADD TO OPERATOR HUB
+## UPDATED PRIORITY LIST - ITEMS TO ADD
 
-| Priority | Feature | Effort |
-|----------|---------|--------|
-| **P0** | Twilio SMS Integration (view chat history) | Medium |
-| **P0** | SendGrid Suppression Management (remove bounces/blocks) | Medium |
-| **P1** | Customer contact drill-down with SMS+email combined view | Medium |
-| **P1** | Risk/Disputes visualization charts | Small |
-| **P2** | AI Sales Tools (call summary generator) | Medium |
-| **P2** | Marketing Analytics (Google Analytics integration) | Large |
-| **P3** | Bank account balance via Plaid | Medium |
-| **P3** | Week-over-week charges comparison UI | Small |
+| Priority | Feature | Effort | Status |
+|----------|---------|--------|--------|
+| **P0** | Twilio SMS Integration (view chat history) | Medium | ❌ Missing |
+| **P1** | Customer contact drill-down with SMS+email combined view | Medium | ❌ Missing |
+| **P2** | AI Sales Tools (call summary generator) | Medium | ❌ Missing |
+| **P2** | Marketing Analytics (Google Analytics integration) | Large | ❌ Missing |
+| **P3** | Bank account balance via Plaid | Medium | ❌ Missing |
+| ~~P0~~ | ~~SendGrid Suppression Management~~ | ~~Medium~~ | ✅ Exists |
+| ~~P1~~ | ~~Risk/Disputes visualization charts~~ | ~~Small~~ | ✅ Exists |
 
 ---
 
 ## API ROUTES NEEDED
 
-1. **`/api/operator-hub/[operatorId]/sms`** - Twilio SMS history
-2. **`/api/operator-hub/[operatorId]/sendgrid/suppressions`** - SendGrid bounce/block management
-3. **`/api/operator-hub/[operatorId]/customer/[customerId]/communications`** - Combined SMS+email for contact
-4. **`/api/operator-hub/[operatorId]/marketing`** - Google Analytics data
-5. **`/api/operator-hub/[operatorId]/ai/call-summary`** - AI call summarization
+1. **`/api/operator-hub/[operatorId]/sms`** - Twilio SMS history for operator
+2. **`/api/operator-hub/[operatorId]/customer/[customerId]/communications`** - Combined SMS+email for specific contact
+3. **`/api/operator-hub/[operatorId]/marketing`** - Google Analytics data
+4. **`/api/operator-hub/[operatorId]/ai/call-summary`** - AI call summarization
 
 ---
 
@@ -196,3 +185,4 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 ---
 
 *Audit generated: 2026-01-27*
+*Verified: 2026-01-27*
