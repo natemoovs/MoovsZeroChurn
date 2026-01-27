@@ -10,7 +10,7 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Twilio SMS Integration | ❌ MISSING | No chat history viewing |
+| Twilio SMS Integration | ✅ IMPLEMENTED | New SMS tab in matrix page |
 | SendGrid Suppression Management | ✅ EXISTS | Full API at `/api/sendgrid/suppressions` |
 | Customer Contact Drill-Down (SMS+Email) | ❌ MISSING | Only charges, no communication history |
 | Risk/Disputes Charts | ✅ EXISTS | LineChart + BarChart in RiskTab UI |
@@ -19,24 +19,7 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 ## CRITICAL MISSING FEATURES
 
-### 1. Twilio SMS Integration - NOT IMPLEMENTED
-
-**Moovs Matrix has:**
-- `getContactTextsTo` - SMS messages sent TO contacts
-- `getContactsTextFrom` - SMS messages FROM contacts
-- `SMSHistoryDrawerFrame` - Full SMS chat history drawer with:
-  - Message body, direction, status, timestamps
-  - Error codes and messages
-  - Pricing information
-  - Combined operator messages view (`combineOperatorMessages.data.messages`)
-
-**Operator Hub status:** Only has n8n webhook for receiving SMS events (`/api/webhooks/n8n/quo`). No Twilio API integration for viewing SMS chat history.
-
-**API Route Needed:** `/api/operator-hub/[operatorId]/sms` - Twilio SMS history
-
----
-
-### 2. Customer/Contact Drill-Down with SMS+Email History - NOT IMPLEMENTED
+### 1. Customer/Contact Drill-Down with SMS+Email History - NOT IMPLEMENTED
 
 **Moovs Matrix has:**
 - Customer frame (`customerFrame.rsx`) with:
@@ -55,7 +38,7 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 ---
 
-### 3. Marketing Services / Google Analytics Analysis - NOT IMPLEMENTED
+### 2. Marketing Services / Google Analytics Analysis - NOT IMPLEMENTED
 
 **Moovs Matrix has:**
 - `moovsMarketingServicesPage` with:
@@ -67,7 +50,7 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 ---
 
-### 4. AI Sales Tools - NOT IMPLEMENTED
+### 3. AI Sales Tools - NOT IMPLEMENTED
 
 **Moovs Matrix has:**
 - `salesTools` page with:
@@ -81,7 +64,7 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 ---
 
-### 5. Bank Account Balance via Plaid/Stripe Financial Connections - NOT IMPLEMENTED
+### 4. Bank Account Balance via Plaid/Stripe Financial Connections - NOT IMPLEMENTED
 
 **Moovs Matrix has:**
 - Bank account balance display
@@ -93,6 +76,28 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 ---
 
 ## FEATURES ALREADY IMPLEMENTED (VERIFIED)
+
+### Twilio SMS Integration ✅ (NEW)
+
+**Location:**
+- API: `/api/operator-hub/[operatorId]/sms/route.ts`
+- Integration: `lib/integrations/twilio.ts`
+- UI: SMS tab in matrix page
+
+**Capabilities:**
+- Fetch SMS messages to/from a phone number via Twilio API
+- Quick select contacts from operator's contact list
+- Manual phone number search
+- Combined message history (incoming + outgoing) sorted by date
+- Message stats: total, incoming, outgoing, cost
+- Status indicators: delivered, failed, etc.
+- Error message display for failed messages
+
+**Environment Variables:**
+- `TWILIO_ACCOUNT_SID` - Twilio Account SID
+- `TWILIO_AUTH_TOKEN` - Twilio Auth Token
+
+---
 
 ### SendGrid Suppression Management ✅
 
@@ -126,6 +131,7 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 | Risk score/limits update | ✅ | ✅ |
 | Risk/Disputes charts | ✅ | ✅ |
 | SendGrid suppression management | ✅ | ✅ |
+| Twilio SMS history | ✅ | ✅ (NEW) |
 | Invoices | ✅ | ✅ |
 | Reservations/Trips | ✅ | ✅ |
 | Quotes | ✅ | ✅ |
@@ -142,11 +148,11 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 | Priority | Feature | Effort | Status |
 |----------|---------|--------|--------|
-| **P0** | Twilio SMS Integration (view chat history) | Medium | ❌ Missing |
 | **P1** | Customer contact drill-down with SMS+email combined view | Medium | ❌ Missing |
 | **P2** | AI Sales Tools (call summary generator) | Medium | ❌ Missing |
 | **P2** | Marketing Analytics (Google Analytics integration) | Large | ❌ Missing |
 | **P3** | Bank account balance via Plaid | Medium | ❌ Missing |
+| ~~P0~~ | ~~Twilio SMS Integration (view chat history)~~ | ~~Medium~~ | ✅ Implemented |
 | ~~P0~~ | ~~SendGrid Suppression Management~~ | ~~Medium~~ | ✅ Exists |
 | ~~P1~~ | ~~Risk/Disputes visualization charts~~ | ~~Small~~ | ✅ Exists |
 
@@ -154,10 +160,13 @@ Based on complete analysis of the Moovs Matrix (Retool app) and the Operator Hub
 
 ## API ROUTES NEEDED
 
-1. **`/api/operator-hub/[operatorId]/sms`** - Twilio SMS history for operator
-2. **`/api/operator-hub/[operatorId]/customer/[customerId]/communications`** - Combined SMS+email for specific contact
-3. **`/api/operator-hub/[operatorId]/marketing`** - Google Analytics data
-4. **`/api/operator-hub/[operatorId]/ai/call-summary`** - AI call summarization
+1. **`/api/operator-hub/[operatorId]/customer/[customerId]/communications`** - Combined SMS+email for specific contact
+2. **`/api/operator-hub/[operatorId]/marketing`** - Google Analytics data
+3. **`/api/operator-hub/[operatorId]/ai/call-summary`** - AI call summarization
+
+## API ROUTES IMPLEMENTED
+
+1. ✅ **`/api/operator-hub/[operatorId]/sms`** - Twilio SMS history for operator
 
 ---
 
