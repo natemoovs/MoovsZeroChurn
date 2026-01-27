@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { snowflake } from "@/lib/integrations"
-import { requireAdmin } from "@/lib/auth/api-middleware"
+import { requireAdmin, requireAuth } from "@/lib/auth/api-middleware"
 
 /**
  * GET /api/operator-hub/[operatorId]/members
@@ -114,15 +114,17 @@ export async function GET(
  * POST /api/operator-hub/[operatorId]/members
  *
  * Add a new member to the operator's platform.
- * Requires admin role and direct Snowflake connection for write operations.
+ * Requires authentication. Non-admins can only add members with "member" role.
+ * Requires direct Snowflake connection for write operations.
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
-  // Require admin role for adding members
-  const authResult = await requireAdmin()
+  // Require authentication for adding members
+  const authResult = await requireAuth()
   if (authResult instanceof NextResponse) return authResult
+  const user = authResult
 
   try {
     const { operatorId } = await params
@@ -147,12 +149,23 @@ export async function POST(
       return NextResponse.json({ error: "Invalid email format" }, { status: 400 })
     }
 
+    // Non-admins can only add members with "member" role
+    const privilegedRoles = ["owner", "admin"]
+    const effectiveRole = user.role === "admin" ? (roleSlug || "member") : "member"
+
+    if (user.role !== "admin" && roleSlug && privilegedRoles.includes(roleSlug)) {
+      return NextResponse.json(
+        { error: "Only admins can assign owner or admin roles" },
+        { status: 403 }
+      )
+    }
+
     const result = await snowflake.addOperatorMember({
       operatorId,
       email,
       firstName,
       lastName,
-      roleSlug: roleSlug || "member",
+      roleSlug: effectiveRole,
     })
 
     return NextResponse.json({
@@ -241,14 +254,14 @@ export async function PATCH(
  * DELETE /api/operator-hub/[operatorId]/members
  *
  * Remove a member from the operator's platform (soft delete).
- * Requires admin role and direct Snowflake connection for write operations.
+ * Requires authentication and direct Snowflake connection for write operations.
  */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ operatorId: string }> }
 ) {
-  // Require admin role for removing members
-  const authResult = await requireAdmin()
+  // Require authentication for removing members
+  const authResult = await requireAuth()
   if (authResult instanceof NextResponse) return authResult
 
   try {
