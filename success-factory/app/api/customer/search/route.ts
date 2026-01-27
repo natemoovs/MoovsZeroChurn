@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
               totalTrips: null,
               location: null,
               csm: null,
-              lastSynced: null,
+              lastSynced: null as Date | null,
               matchType: sr.match_type,
               matchField: sr.match_field,
               matchValue: sr.match_value,
