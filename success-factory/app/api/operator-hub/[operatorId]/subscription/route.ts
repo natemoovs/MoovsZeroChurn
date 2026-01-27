@@ -18,11 +18,15 @@ export async function GET(
       return NextResponse.json({ error: "Lago not configured" }, { status: 503 })
     }
 
-    // Fetch subscriptions and available plans in parallel
-    const [subscriptions, plansResult] = await Promise.all([
-      lago.getSubscriptions(operatorId),
-      lago.listPlans(),
-    ])
+    // Fetch subscriptions, plans, coupons, and add-ons in parallel
+    const [subscriptions, plansResult, couponsResult, addOnsResult, appliedCouponsResult] =
+      await Promise.all([
+        lago.getSubscriptions(operatorId),
+        lago.listPlans(),
+        lago.listCoupons(),
+        lago.listAddOns(),
+        lago.getAppliedCoupons(operatorId),
+      ])
 
     // Create a map of plans for quick lookup
     const planMap = new Map(plansResult.plans.map((p) => [p.code, p]))
@@ -114,6 +118,13 @@ export async function GET(
           hasOverride,
           // Original plan price for reference when overridden
           originalAmountCents: hasOverride ? (plan?.amount_cents ?? null) : null,
+          // Billing period info - renewal dates
+          billingPeriodStartedAt:
+            detail?.current_billing_period_started_at ||
+            s.current_billing_period_started_at ||
+            null,
+          billingPeriodEndingAt:
+            detail?.current_billing_period_ending_at || s.current_billing_period_ending_at || null,
         }
       }),
       availablePlans: plansResult.plans.map((p) => ({
@@ -123,6 +134,40 @@ export async function GET(
         amountCents: p.amount_cents,
         currency: p.amount_currency,
       })),
+      // Available coupons for new subscriptions
+      availableCoupons: couponsResult.coupons
+        .filter((c) => !c.terminated_at) // Only active coupons
+        .map((c) => ({
+          code: c.code,
+          name: c.name,
+          description: c.description,
+          couponType: c.coupon_type,
+          amountCents: c.amount_cents,
+          amountCurrency: c.amount_currency,
+          percentageRate: c.percentage_rate,
+          frequency: c.frequency,
+          frequencyDuration: c.frequency_duration,
+        })),
+      // Available add-ons (setup fees)
+      availableAddOns: addOnsResult.add_ons.map((a) => ({
+        code: a.code,
+        name: a.name,
+        description: a.description,
+        amountCents: a.amount_cents,
+        amountCurrency: a.amount_currency,
+      })),
+      // Currently applied coupons for this customer
+      appliedCoupons: appliedCouponsResult.applied_coupons
+        .filter((c) => c.status === "active")
+        .map((c) => ({
+          couponCode: c.coupon_code,
+          couponName: c.coupon_name,
+          amountCents: c.amount_cents,
+          amountCentsRemaining: c.amount_cents_remaining,
+          percentageRate: c.percentage_rate,
+          frequency: c.frequency,
+          frequencyDurationRemaining: c.frequency_duration_remaining,
+        })),
     })
   } catch (error) {
     console.error("Failed to fetch subscription:", error)
@@ -158,18 +203,65 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { planCode, name, billingTime } = body
+    const {
+      planCode,
+      name,
+      billingTime,
+      overrideAmountCents,
+      overrideAmountCurrency,
+      // Coupon options
+      couponCode,
+      couponAmountCents,
+      couponFrequencyDuration,
+      // Setup fee add-on
+      setupFeeAddOnCode,
+    } = body
 
     if (!planCode) {
       return NextResponse.json({ error: "planCode is required" }, { status: 400 })
     }
 
+    // Create the subscription
     const subscription = await lago.createSubscription({
       externalCustomerId: operatorId,
       planCode,
       name,
       billingTime,
+      // Allow admins to set a custom price override
+      overrideAmountCents:
+        overrideAmountCents !== undefined ? Number(overrideAmountCents) : undefined,
+      overrideAmountCurrency,
     })
+
+    // Apply coupon if provided
+    let appliedCoupon = null
+    if (couponCode) {
+      try {
+        appliedCoupon = await lago.applyCoupon({
+          externalCustomerId: operatorId,
+          couponCode,
+          amountCents: couponAmountCents ? Number(couponAmountCents) : undefined,
+          frequencyDuration: couponFrequencyDuration ? Number(couponFrequencyDuration) : undefined,
+        })
+      } catch (couponError) {
+        console.error("Failed to apply coupon:", couponError)
+        // Don't fail the whole operation if coupon fails
+      }
+    }
+
+    // Apply setup fee add-on if provided
+    let appliedAddOn = null
+    if (setupFeeAddOnCode) {
+      try {
+        appliedAddOn = await lago.applyAddOn({
+          externalCustomerId: operatorId,
+          addOnCode: setupFeeAddOnCode,
+        })
+      } catch (addOnError) {
+        console.error("Failed to apply setup fee:", addOnError)
+        // Don't fail the whole operation if add-on fails
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -180,6 +272,18 @@ export async function POST(
             planCode: subscription.plan_code,
             planName: subscription.plan?.name,
             status: subscription.status,
+          }
+        : null,
+      appliedCoupon: appliedCoupon
+        ? {
+            couponCode: appliedCoupon.coupon_code,
+            couponName: appliedCoupon.coupon_name,
+          }
+        : null,
+      appliedSetupFee: appliedAddOn
+        ? {
+            addOnCode: appliedAddOn.add_on_code,
+            amountCents: appliedAddOn.amount_cents,
           }
         : null,
     })
@@ -217,7 +321,7 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { subscriptionId, planCode, name } = body
+    const { subscriptionId, planCode, name, overrideAmountCents, overrideAmountCurrency } = body
 
     if (!subscriptionId || !planCode) {
       return NextResponse.json(
@@ -231,6 +335,10 @@ export async function PATCH(
       subscriptionExternalId: subscriptionId,
       planCode,
       name,
+      // Allow admins to set a custom price override
+      overrideAmountCents:
+        overrideAmountCents !== undefined ? Number(overrideAmountCents) : undefined,
+      overrideAmountCurrency,
     })
 
     return NextResponse.json({
@@ -272,7 +380,8 @@ export async function DELETE(
   if (authResult instanceof NextResponse) return authResult
 
   try {
-    const { operatorId } = await params
+    // operatorId is available but not used for cancellation - subscription ID is sufficient
+    const { operatorId: _operatorId } = await params
 
     if (!lago.isConfigured()) {
       return NextResponse.json({ error: "Lago not configured" }, { status: 503 })
