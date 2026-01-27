@@ -1,68 +1,26 @@
 /**
  * Snowflake Integration Client
  *
- * Supports two modes:
- * 1. Direct connection via snowflake-sdk (preferred when SNOWFLAKE_* env vars are set)
- * 2. Via Metabase custom SQL (fallback when only METABASE_* env vars are set)
+ * All Snowflake operations are now routed through N8N webhooks.
+ * N8N handles the actual database connections using securely stored credentials.
  *
- * Direct connection env vars:
- *   - SNOWFLAKE_ACCOUNT
- *   - SNOWFLAKE_USERNAME
- *   - SNOWFLAKE_PASSWORD
- *   - SNOWFLAKE_DATABASE (default: MOZART_NEW)
- *   - SNOWFLAKE_WAREHOUSE (default: COMPUTE_WH)
+ * Uses 9 consolidated N8N workflows instead of 44 separate endpoints:
+ * 1. operator-search - Search operations
+ * 2. operator-data - Core operator data
+ * 3. financial - Financial/charges data
+ * 4. risk - Risk & disputes
+ * 5. team - Team management
+ * 6. fleet - Drivers & vehicles
+ * 7. bookings - Trips & quotes
+ * 8. platform - Misc platform data
+ * 9. subscriptions - Subscription & analytics
  *
- * Metabase fallback env vars:
- *   - METABASE_URL
- *   - METABASE_API_KEY
- *   - SNOWFLAKE_DATABASE_ID (default: 2)
+ * Environment variables:
+ *   - N8N_WEBHOOK_BASE_URL: Base URL for N8N webhooks
+ *   - N8N_WEBHOOK_SECRET: Optional secret for authenticating requests
  */
 
-import { metabase } from "./metabase"
-
-// Snowflake database ID in Metabase (different from customer master view db=3)
-const SNOWFLAKE_DATABASE_ID = parseInt(process.env.SNOWFLAKE_DATABASE_ID || "2")
-
-// Check if direct Snowflake connection is configured
-const isDirectConfigured = !!(
-  process.env.SNOWFLAKE_ACCOUNT &&
-  process.env.SNOWFLAKE_USERNAME &&
-  process.env.SNOWFLAKE_PASSWORD
-)
-
-// Dynamic import for snowflake-sdk to avoid Turbopack bundling issues
-let snowflakeConnection: import("snowflake-sdk").Connection | null = null
-
-async function getDirectConnection(): Promise<import("snowflake-sdk").Connection> {
-  if (snowflakeConnection) {
-    return snowflakeConnection
-  }
-
-  // Dynamic import to avoid Turbopack issues
-  const snowflake = await import("snowflake-sdk")
-
-  return new Promise((resolve, reject) => {
-    const connection = snowflake.createConnection({
-      account: process.env.SNOWFLAKE_ACCOUNT!,
-      username: process.env.SNOWFLAKE_USERNAME!,
-      password: process.env.SNOWFLAKE_PASSWORD!,
-      database: process.env.SNOWFLAKE_DATABASE || "MOZART_NEW",
-      warehouse: process.env.SNOWFLAKE_WAREHOUSE || "COMPUTE_WH",
-      clientSessionKeepAlive: true,
-    })
-
-    connection.connect((err, conn) => {
-      if (err) {
-        console.error("Failed to connect to Snowflake:", err.message)
-        reject(err)
-      } else {
-        console.log("Successfully connected to Snowflake directly")
-        snowflakeConnection = conn
-        resolve(conn)
-      }
-    })
-  })
-}
+import { n8nClient, N8N_WORKFLOWS, N8NWebhookResponse } from "./n8n"
 
 // ============================================================================
 // Types
@@ -104,7 +62,6 @@ export interface PlatformCharge {
   net_amount: number
   description: string | null
   customer_email: string | null
-  // Extended fields for Retool parity
   customer_id: string | null
   total_dollars_refunded: number | null
   billing_detail_name: string | null
@@ -146,533 +103,6 @@ export interface MonthlySummary {
   charge_count: number
 }
 
-// ============================================================================
-// Configuration Check
-// ============================================================================
-
-function isConfigured(): boolean {
-  // Check if direct Snowflake or Metabase fallback is configured
-  return isDirectConfigured || !!(process.env.METABASE_URL && process.env.METABASE_API_KEY)
-}
-
-// ============================================================================
-// Query Execution (Direct or via Metabase)
-// ============================================================================
-
-async function executeQuery<T = Record<string, unknown>>(
-  sql: string
-): Promise<SnowflakeQueryResult<T>> {
-  const startTime = Date.now()
-
-  // Try direct connection first if configured
-  if (isDirectConfigured) {
-    try {
-      const connection = await getDirectConnection()
-
-      return new Promise((resolve, reject) => {
-        connection.execute({
-          sqlText: sql,
-          complete: (err, stmt, rows) => {
-            if (err) {
-              console.error("Snowflake direct query error:", err.message)
-              reject(err)
-            } else {
-              const stmtColumns = stmt.getColumns()
-              const columns = stmtColumns ? stmtColumns.map((col) => col.getName()) : []
-              // Snowflake returns rows with column names in UPPERCASE
-              // Normalize to lowercase to match expected interface
-              const normalizedRows = (rows || []).map((row) => {
-                const normalized: Record<string, unknown> = {}
-                for (const [key, value] of Object.entries(row as Record<string, unknown>)) {
-                  normalized[key.toLowerCase()] = value
-                }
-                return normalized as T
-              })
-              resolve({
-                rows: normalizedRows,
-                columns: columns.map((c) => c.toLowerCase()),
-                rowCount: normalizedRows.length,
-                executionTime: Date.now() - startTime,
-              })
-            }
-          },
-        })
-      })
-    } catch (error) {
-      console.error("Direct Snowflake connection failed, falling back to Metabase:", error)
-      // Fall through to Metabase
-    }
-  }
-
-  // Fallback to Metabase
-  const result = await metabase.runCustomQuery(SNOWFLAKE_DATABASE_ID, sql)
-  const rows = metabase.rowsToObjects<T>(result)
-  const columns = metabase.getColumnNames(result)
-
-  return {
-    rows,
-    columns,
-    rowCount: rows.length,
-    executionTime: Date.now() - startTime,
-  }
-}
-
-// ============================================================================
-// Operator Queries (from Retool export)
-// ============================================================================
-
-/**
- * Search operators by various fields (replaces Retool's search functionality)
- */
-async function searchOperators(searchTerm: string, limit = 50): Promise<OperatorDetails[]> {
-  const searchPattern = `%${searchTerm.replace(/'/g, "''")}%`
-  const escapedTerm = searchTerm.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
-      P_COMPANY_NAME as company_name,
-      HS_C_PROPERTY_NAME as hubspot_company_name,
-      LAGO_EXTERNAL_CUSTOMER_ID as lago_external_id,
-      STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
-      LAGO_PLAN_NAME as plan,
-      CALCULATED_MRR as mrr,
-      R_TOTAL_RESERVATIONS_COUNT as total_reservations,
-      R_LAST_30_DAYS_RESERVATIONS_COUNT as last_30_days_reservations,
-      DA_DAYS_SINCE_LAST_ASSIGNMENT as days_since_last_assignment,
-      DA_ENGAGEMENT_STATUS as engagement_status,
-      P_VEHICLES_TOTAL as vehicles_total,
-      P_TOTAL_MEMBERS as members_count,
-      P_DRIVERS_COUNT as drivers_count,
-      P_SETUP_SCORE as setup_score
-    FROM MOOVS.CSM_MOOVS
-    WHERE
-      LOWER(P_COMPANY_NAME) LIKE LOWER('${searchPattern}')
-      OR LOWER(HS_C_PROPERTY_NAME) LIKE LOWER('${searchPattern}')
-      OR LAGO_EXTERNAL_CUSTOMER_ID = '${escapedTerm}'
-      OR STRIPE_CONNECT_ACCOUNT_ID = '${escapedTerm}'
-    ORDER BY CALCULATED_MRR DESC NULLS LAST
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<OperatorDetails>(sql)
-  return result.rows
-}
-
-/**
- * Search result with source information
- */
-export interface ExpandedSearchResult {
-  operator_id: string
-  company_name: string
-  stripe_account_id: string | null
-  mrr: number | null
-  match_type: "operator" | "trip" | "quote" | "charge" | "customer"
-  match_field: string
-  match_value: string
-  additional_info?: string
-}
-
-/**
- * Expanded search across operators, trips, quotes, charges, and customers
- * Returns operator info with match context
- */
-async function expandedSearch(searchTerm: string, limit = 50): Promise<ExpandedSearchResult[]> {
-  const escapedTerm = searchTerm.replace(/'/g, "''")
-  const searchPattern = `%${escapedTerm}%`
-
-  // Search across multiple sources with UNION ALL
-  const sql = `
-    WITH search_results AS (
-      -- Search operators by name/ID
-      SELECT DISTINCT
-        LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
-        P_COMPANY_NAME as company_name,
-        STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
-        CALCULATED_MRR as mrr,
-        'operator' as match_type,
-        CASE
-          WHEN LAGO_EXTERNAL_CUSTOMER_ID = '${escapedTerm}' THEN 'operator_id'
-          WHEN STRIPE_CONNECT_ACCOUNT_ID = '${escapedTerm}' THEN 'stripe_account_id'
-          ELSE 'company_name'
-        END as match_field,
-        COALESCE(LAGO_EXTERNAL_CUSTOMER_ID, STRIPE_CONNECT_ACCOUNT_ID, P_COMPANY_NAME) as match_value,
-        NULL as additional_info
-      FROM MOOVS.CSM_MOOVS
-      WHERE
-        LOWER(P_COMPANY_NAME) LIKE LOWER('${searchPattern}')
-        OR LAGO_EXTERNAL_CUSTOMER_ID = '${escapedTerm}'
-        OR STRIPE_CONNECT_ACCOUNT_ID = '${escapedTerm}'
-
-      UNION ALL
-
-      -- Search by trip_id or request_id (format: XXXX-XX)
-      SELECT DISTINCT
-        m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
-        m.P_COMPANY_NAME as company_name,
-        m.STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
-        m.CALCULATED_MRR as mrr,
-        'trip' as match_type,
-        CASE
-          WHEN t.TRIP_ID LIKE '${searchPattern}' THEN 'trip_id'
-          ELSE 'request_id'
-        END as match_field,
-        COALESCE(t.TRIP_ID, r.REQUEST_ID) as match_value,
-        CONCAT('Trip Status: ', COALESCE(t.STATUS, 'N/A')) as additional_info
-      FROM SWOOP.TRIP t
-      JOIN SWOOP.REQUEST r ON t.REQUEST_ID = r.REQUEST_ID
-      JOIN MOOVS.CSM_MOOVS m ON r.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
-      WHERE
-        t.TRIP_ID LIKE '${searchPattern}'
-        OR r.REQUEST_ID LIKE '${searchPattern}'
-
-      UNION ALL
-
-      -- Search by quote/request order_number (format: XXXX-XX)
-      SELECT DISTINCT
-        m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
-        m.P_COMPANY_NAME as company_name,
-        m.STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
-        m.CALCULATED_MRR as mrr,
-        'quote' as match_type,
-        CASE
-          WHEN r.ORDER_NUMBER LIKE '${searchPattern}' THEN 'order_number'
-          ELSE 'request_id'
-        END as match_field,
-        COALESCE(r.ORDER_NUMBER, r.REQUEST_ID) as match_value,
-        CONCAT('Stage: ', COALESCE(r.STAGE, 'N/A')) as additional_info
-      FROM SWOOP.REQUEST r
-      JOIN MOOVS.CSM_MOOVS m ON r.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
-      WHERE
-        r.ORDER_NUMBER LIKE '${searchPattern}'
-        OR r.REQUEST_ID LIKE '${searchPattern}'
-
-      UNION ALL
-
-      -- Search by customer email or phone
-      SELECT DISTINCT
-        m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
-        m.P_COMPANY_NAME as company_name,
-        m.STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
-        m.CALCULATED_MRR as mrr,
-        'customer' as match_type,
-        CASE
-          WHEN LOWER(c.EMAIL) LIKE LOWER('${searchPattern}') THEN 'email'
-          ELSE 'phone'
-        END as match_field,
-        COALESCE(c.EMAIL, c.PHONE) as match_value,
-        CONCAT(COALESCE(c.FIRST_NAME, ''), ' ', COALESCE(c.LAST_NAME, '')) as additional_info
-      FROM SWOOP.CONTACT c
-      JOIN MOOVS.CSM_MOOVS m ON c.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
-      WHERE
-        LOWER(c.EMAIL) LIKE LOWER('${searchPattern}')
-        OR c.PHONE LIKE '${searchPattern}'
-
-      UNION ALL
-
-      -- Search by Stripe charge ID
-      SELECT DISTINCT
-        m.LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
-        m.P_COMPANY_NAME as company_name,
-        m.STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
-        m.CALCULATED_MRR as mrr,
-        'charge' as match_type,
-        'charge_id' as match_field,
-        pc.ID as match_value,
-        CONCAT('Amount: $', ROUND(pc.TOTAL_DOLLARS_CHARGED, 2), ' - ', COALESCE(pc.STATUS, 'N/A')) as additional_info
-      FROM MOOVS.PLATFORM_CHARGES pc
-      JOIN MOOVS.CSM_MOOVS m ON pc.OPERATOR_ID = m.LAGO_EXTERNAL_CUSTOMER_ID
-      WHERE
-        pc.ID = '${escapedTerm}'
-        OR pc.PAYMENT_INTENT_ID = '${escapedTerm}'
-    )
-    SELECT *
-    FROM search_results
-    ORDER BY mrr DESC NULLS LAST
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<ExpandedSearchResult>(sql)
-  return result.rows
-}
-
-/**
- * Get detailed operator info by operator ID
- */
-async function getOperatorById(operatorId: string): Promise<OperatorDetails | null> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
-      P_COMPANY_NAME as company_name,
-      HS_C_PROPERTY_NAME as hubspot_company_name,
-      LAGO_EXTERNAL_CUSTOMER_ID as lago_external_id,
-      STRIPE_CONNECT_ACCOUNT_ID as stripe_account_id,
-      LAGO_PLAN_NAME as plan,
-      CALCULATED_MRR as mrr,
-      R_TOTAL_RESERVATIONS_COUNT as total_reservations,
-      R_LAST_30_DAYS_RESERVATIONS_COUNT as last_30_days_reservations,
-      DA_DAYS_SINCE_LAST_ASSIGNMENT as days_since_last_assignment,
-      DA_ENGAGEMENT_STATUS as engagement_status,
-      P_VEHICLES_TOTAL as vehicles_total,
-      P_TOTAL_MEMBERS as members_count,
-      P_DRIVERS_COUNT as drivers_count,
-      P_SETUP_SCORE as setup_score
-    FROM MOOVS.CSM_MOOVS
-    WHERE LAGO_EXTERNAL_CUSTOMER_ID = '${escapedId}'
-    LIMIT 1
-  `
-
-  const result = await executeQuery<OperatorDetails>(sql)
-  return result.rows[0] || null
-}
-
-/**
- * Get platform charges for an operator (replaces Retool's charges view)
- * Includes extended fields for Retool parity (risk scores, disputes, refunds, etc.)
- */
-async function getOperatorPlatformCharges(
-  operatorId: string,
-  limit = 100
-): Promise<PlatformCharge[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      CHARGE_ID as charge_id,
-      OPERATOR_ID as operator_id,
-      OPERATOR_NAME as operator_name,
-      CREATED_DATE as created_date,
-      STATUS as status,
-      TOTAL_DOLLARS_CHARGED as total_dollars_charged,
-      COALESCE(FEE_AMOUNT, 0) as fee_amount,
-      COALESCE(NET_AMOUNT, 0) as net_amount,
-      DESCRIPTION as description,
-      CUSTOMER_EMAIL as customer_email,
-      CUSTOMER_ID as customer_id,
-      TOTAL_DOLLARS_REFUNDED as total_dollars_refunded,
-      BILLING_DETAIL_NAME as billing_detail_name,
-      OUTCOME_NETWORK_STATUS as outcome_network_status,
-      OUTCOME_REASON as outcome_reason,
-      OUTCOME_SELLER_MESSAGE as outcome_seller_message,
-      OUTCOME_RISK_LEVEL as outcome_risk_level,
-      OUTCOME_RISK_SCORE as outcome_risk_score,
-      CARD_ID as card_id,
-      CALCULATED_STATEMENT_DESCRIPTOR as calculated_statement_descriptor,
-      DISPUTE_ID as dispute_id,
-      DISPUTE_STATUS as dispute_status,
-      DISPUTED_AMOUNT as disputed_amount,
-      DISPUTE_REASON as dispute_reason,
-      DISPUTE_DATE as dispute_date
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE OPERATOR_ID = '${escapedId}'
-    ORDER BY CREATED_DATE DESC
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<PlatformCharge>(sql)
-  return result.rows
-}
-
-/**
- * Get monthly platform charges summary
- */
-async function getMonthlyChargesSummary(operatorId: string): Promise<MonthlySummary[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      TO_VARCHAR(DATE_TRUNC('month', CREATED_DATE), 'YYYY-MM') as charge_month,
-      STATUS as status,
-      SUM(TOTAL_DOLLARS_CHARGED) as total_charges,
-      COUNT(*) as charge_count
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE OPERATOR_ID = '${escapedId}'
-    GROUP BY DATE_TRUNC('month', CREATED_DATE), STATUS
-    ORDER BY charge_month DESC, STATUS
-    LIMIT 24
-  `
-
-  const result = await executeQuery<MonthlySummary>(sql)
-  return result.rows
-}
-
-/**
- * Get reservations overview for an operator
- */
-async function getReservationsOverview(operatorId: string): Promise<ReservationOverview[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      OPERATOR_ID as operator_id,
-      OPERATOR_NAME as operator_name,
-      TO_VARCHAR(DATE_TRUNC('month', CREATED_AT), 'YYYY-MM') AS created_month,
-      COUNT(*) AS total_trips,
-      SUM(TOTAL_AMOUNT) AS total_amount
-    FROM MOZART_NEW.RESERVATIONS
-    WHERE OPERATOR_ID = '${escapedId}'
-    GROUP BY OPERATOR_ID, OPERATOR_NAME, DATE_TRUNC('month', CREATED_AT)
-    ORDER BY created_month DESC
-    LIMIT 24
-  `
-
-  const result = await executeQuery<ReservationOverview>(sql)
-  return result.rows
-}
-
-/**
- * Get risk overview for an operator
- */
-async function getRiskOverview(operatorId: string): Promise<RiskOverview | null> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      OPERATOR_ID as operator_id,
-      AVG(RISK_SCORE) as risk_score,
-      COUNT(CASE WHEN STATUS = 'failed' THEN 1 END) as failed_payments_count,
-      COUNT(CASE WHEN IS_DISPUTED = TRUE THEN 1 END) as dispute_count,
-      AVG(TOTAL_DOLLARS_CHARGED) as avg_transaction_amount,
-      MAX(CASE WHEN STATUS = 'failed' THEN CREATED_DATE END) as last_failed_payment_date
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE OPERATOR_ID = '${escapedId}'
-    GROUP BY OPERATOR_ID
-  `
-
-  const result = await executeQuery<RiskOverview>(sql)
-  return result.rows[0] || null
-}
-
-/**
- * Get top operators by revenue (for leaderboard/dashboard)
- */
-async function getTopOperatorsByRevenue(
-  limit = 10,
-  period: "week" | "month" | "year" = "month"
-): Promise<
-  {
-    operator_id: string
-    operator_name: string
-    total_charged: number
-    total_trips: number
-  }[]
-> {
-  const periodFilter =
-    period === "week"
-      ? "DATE_TRUNC('week', CREATED_DATE) = DATE_TRUNC('week', CURRENT_DATE)"
-      : period === "month"
-        ? "DATE_TRUNC('month', CREATED_DATE) = DATE_TRUNC('month', CURRENT_DATE)"
-        : "DATE_TRUNC('year', CREATED_DATE) = DATE_TRUNC('year', CURRENT_DATE)"
-
-  const sql = `
-    SELECT
-      OPERATOR_ID as operator_id,
-      OPERATOR_NAME as operator_name,
-      SUM(TOTAL_DOLLARS_CHARGED) AS total_charged,
-      COUNT(*) AS total_trips
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE ${periodFilter}
-    GROUP BY OPERATOR_ID, OPERATOR_NAME
-    ORDER BY total_charged DESC
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<{
-    operator_id: string
-    operator_name: string
-    total_charged: number
-    total_trips: number
-  }>(sql)
-
-  return result.rows
-}
-
-/**
- * Get failed invoices across all operators (for alerts)
- */
-async function getFailedInvoices(limit = 50): Promise<
-  {
-    operator_id: string
-    operator_name: string
-    charge_id: string
-    amount: number
-    failed_at: string
-    failure_reason: string | null
-  }[]
-> {
-  const sql = `
-    SELECT
-      OPERATOR_ID as operator_id,
-      OPERATOR_NAME as operator_name,
-      CHARGE_ID as charge_id,
-      TOTAL_DOLLARS_CHARGED as amount,
-      CREATED_DATE as failed_at,
-      FAILURE_MESSAGE as failure_reason
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE STATUS = 'failed'
-    ORDER BY CREATED_DATE DESC
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<{
-    operator_id: string
-    operator_name: string
-    charge_id: string
-    amount: number
-    failed_at: string
-    failure_reason: string | null
-  }>(sql)
-
-  return result.rows
-}
-
-/**
- * Get inactive accounts (operators with no recent activity)
- */
-async function getInactiveAccounts(
-  daysSinceLastActivity = 30,
-  limit = 50
-): Promise<
-  {
-    operator_id: string
-    company_name: string
-    last_activity_date: string | null
-    days_inactive: number
-    mrr: number | null
-  }[]
-> {
-  const sql = `
-    SELECT
-      LAGO_EXTERNAL_CUSTOMER_ID as operator_id,
-      P_COMPANY_NAME as company_name,
-      R_LAST_TRIP_CREATED_AT as last_activity_date,
-      DATEDIFF('day', R_LAST_TRIP_CREATED_AT, CURRENT_DATE) as days_inactive,
-      CALCULATED_MRR as mrr
-    FROM MOOVS.CSM_MOOVS
-    WHERE
-      DATEDIFF('day', R_LAST_TRIP_CREATED_AT, CURRENT_DATE) > ${daysSinceLastActivity}
-      AND LAGO_STATUS = 'active'
-    ORDER BY CALCULATED_MRR DESC NULLS LAST
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<{
-    operator_id: string
-    company_name: string
-    last_activity_date: string | null
-    days_inactive: number
-    mrr: number | null
-  }>(sql)
-
-  return result.rows
-}
-
-// ============================================================================
-// Operator Portal Data (from POSTGRES_SWOOP schema)
-// ============================================================================
-
 export interface OperatorMember {
   user_id: string
   first_name: string | null
@@ -712,91 +142,6 @@ export interface OperatorEmailLog {
   status: string | null
 }
 
-/**
- * Get members/users for an operator (from their platform)
- */
-async function getOperatorMembers(operatorId: string): Promise<OperatorMember[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      user_id,
-      first_name,
-      last_name,
-      email,
-      role_slug,
-      created_at,
-      last_login_at
-    FROM POSTGRES_SWOOP.USER
-    WHERE operator_id = '${escapedId}'
-      AND removed_at IS NULL
-    ORDER BY last_name, first_name
-    LIMIT 100
-  `
-
-  const result = await executeQuery<OperatorMember>(sql)
-  return result.rows
-}
-
-/**
- * Get drivers for an operator
- */
-async function getOperatorDrivers(operatorId: string): Promise<OperatorDriver[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      d.driver_id,
-      d.first_name,
-      d.last_name,
-      d.email,
-      d.phone,
-      d.created_at,
-      CASE
-        WHEN d.removed_at IS NOT NULL THEN 'removed'
-        WHEN d.deactivated_at IS NOT NULL THEN 'inactive'
-        ELSE 'active'
-      END as status
-    FROM POSTGRES_SWOOP.DRIVER d
-    WHERE d.operator_id = '${escapedId}'
-    ORDER BY d.created_at DESC
-    LIMIT 100
-  `
-
-  const result = await executeQuery<OperatorDriver>(sql)
-  return result.rows
-}
-
-/**
- * Get vehicles for an operator
- */
-async function getOperatorVehicles(operatorId: string): Promise<OperatorVehicle[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      vehicle_id,
-      name as vehicle_name,
-      vehicle_type,
-      license_plate,
-      exterior_color as color,
-      capacity,
-      created_at
-    FROM SWOOP.VEHICLE
-    WHERE operator_id = '${escapedId}'
-      AND removed_at IS NULL
-    ORDER BY created_at DESC
-    LIMIT 100
-  `
-
-  const result = await executeQuery<OperatorVehicle>(sql)
-  return result.rows
-}
-
-// ============================================================================
-// Driver Performance & Vehicle Utilization
-// ============================================================================
-
 export interface DriverPerformance {
   driver_id: string
   first_name: string | null
@@ -811,56 +156,6 @@ export interface DriverPerformance {
   completion_rate: number | null
 }
 
-/**
- * Get driver performance metrics for an operator
- */
-async function getDriverPerformance(operatorId: string): Promise<DriverPerformance[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    WITH driver_stats AS (
-      SELECT
-        d.driver_id,
-        d.first_name,
-        d.last_name,
-        d.email,
-        CASE
-          WHEN d.removed_at IS NOT NULL THEN 'removed'
-          WHEN d.deactivated_at IS NOT NULL THEN 'inactive'
-          ELSE 'active'
-        END as status,
-        COUNT(t.trip_id) as total_trips,
-        COUNT(CASE WHEN t.status = 'completed' THEN 1 END) as completed_trips,
-        COUNT(CASE WHEN t.created_at >= DATEADD('day', -30, CURRENT_DATE) THEN 1 END) as trips_last_30_days,
-        SUM(r.total_amount) as total_revenue,
-        MAX(t.completed_at) as last_trip_date
-      FROM POSTGRES_SWOOP.DRIVER d
-      LEFT JOIN SWOOP.TRIP t ON d.driver_id = t.driver_id
-      LEFT JOIN SWOOP.REQUEST r ON t.request_id = r.request_id AND r.operator_id = d.operator_id
-      WHERE d.operator_id = '${escapedId}'
-      GROUP BY d.driver_id, d.first_name, d.last_name, d.email, d.removed_at, d.deactivated_at
-    )
-    SELECT
-      driver_id,
-      first_name,
-      last_name,
-      email,
-      status,
-      total_trips,
-      completed_trips,
-      trips_last_30_days,
-      total_revenue,
-      last_trip_date,
-      CASE WHEN total_trips > 0 THEN ROUND((completed_trips::FLOAT / total_trips) * 100, 1) ELSE NULL END as completion_rate
-    FROM driver_stats
-    ORDER BY total_trips DESC, last_trip_date DESC
-    LIMIT 100
-  `
-
-  const result = await executeQuery<DriverPerformance>(sql)
-  return result.rows
-}
-
 export interface VehicleUtilization {
   vehicle_id: string
   vehicle_name: string | null
@@ -873,79 +168,6 @@ export interface VehicleUtilization {
   last_trip_date: string | null
   days_since_last_trip: number | null
 }
-
-/**
- * Get vehicle utilization stats for an operator
- */
-async function getVehicleUtilization(operatorId: string): Promise<VehicleUtilization[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    WITH vehicle_stats AS (
-      SELECT
-        v.vehicle_id,
-        v.name as vehicle_name,
-        v.vehicle_type,
-        v.license_plate,
-        v.capacity,
-        COUNT(t.trip_id) as total_trips,
-        COUNT(CASE WHEN t.created_at >= DATEADD('day', -30, CURRENT_DATE) THEN 1 END) as trips_last_30_days,
-        SUM(r.total_amount) as total_revenue,
-        MAX(t.completed_at) as last_trip_date
-      FROM SWOOP.VEHICLE v
-      LEFT JOIN SWOOP.TRIP t ON v.vehicle_id = t.vehicle_id
-      LEFT JOIN SWOOP.REQUEST r ON t.request_id = r.request_id AND r.operator_id = v.operator_id
-      WHERE v.operator_id = '${escapedId}'
-        AND v.removed_at IS NULL
-      GROUP BY v.vehicle_id, v.name, v.vehicle_type, v.license_plate, v.capacity
-    )
-    SELECT
-      vehicle_id,
-      vehicle_name,
-      vehicle_type,
-      license_plate,
-      capacity,
-      total_trips,
-      trips_last_30_days,
-      total_revenue,
-      last_trip_date,
-      DATEDIFF('day', last_trip_date, CURRENT_DATE) as days_since_last_trip
-    FROM vehicle_stats
-    ORDER BY total_trips DESC, last_trip_date DESC NULLS LAST
-    LIMIT 100
-  `
-
-  const result = await executeQuery<VehicleUtilization>(sql)
-  return result.rows
-}
-
-/**
- * Get email log for an operator
- */
-async function getOperatorEmailLog(operatorId: string, limit = 50): Promise<OperatorEmailLog[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      email_log_id,
-      to_email,
-      subject,
-      template_name,
-      created_at as sent_at,
-      status
-    FROM POSTGRES_SWOOP.EMAIL_LOG
-    WHERE operator_id = '${escapedId}'
-    ORDER BY created_at DESC
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<OperatorEmailLog>(sql)
-  return result.rows
-}
-
-// ============================================================================
-// Additional Platform Data (Promo Codes, Zones, Rules)
-// ============================================================================
 
 export interface PromoCode {
   promo_code_id: string
@@ -983,109 +205,6 @@ export interface BusinessRule {
   created_at: string | null
 }
 
-/**
- * Get promo codes for an operator
- */
-async function getOperatorPromoCodes(operatorId: string): Promise<PromoCode[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      promo_code_id,
-      code,
-      promo_label as description,
-      promo_type as discount_type,
-      promo_value as discount_value,
-      valid_start as valid_from,
-      valid_end as valid_until,
-      total_usage_limit as usage_limit,
-      current_usage_count as times_used,
-      CASE WHEN removed_at IS NULL THEN TRUE ELSE FALSE END as is_active,
-      created_at
-    FROM SWOOP.PROMO_CODE
-    WHERE operator_id = '${escapedId}'
-    ORDER BY created_at DESC
-    LIMIT 100
-  `
-
-  const result = await executeQuery<PromoCode>(sql)
-  return result.rows
-}
-
-/**
- * Get price zones for an operator
- */
-async function getOperatorPriceZones(operatorId: string): Promise<PriceZone[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      price_zone_id as zone_id,
-      name,
-      zone_type,
-      base_fare,
-      per_mile_rate,
-      per_minute_rate,
-      minimum_fare,
-      created_at
-    FROM SWOOP.PRICE_ZONE
-    WHERE operator_id = '${escapedId}'
-      AND removed_at IS NULL
-    ORDER BY name
-    LIMIT 100
-  `
-
-  const result = await executeQuery<PriceZone>(sql)
-  return result.rows
-}
-
-/**
- * Get business rules for an operator
- */
-async function getOperatorRules(operatorId: string): Promise<BusinessRule[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      rule_id,
-      name,
-      rule_type,
-      conditions,
-      actions,
-      CASE WHEN removed_at IS NULL THEN TRUE ELSE FALSE END as is_active,
-      priority,
-      created_at
-    FROM SWOOP.RULE
-    WHERE operator_id = '${escapedId}'
-    ORDER BY priority, name
-    LIMIT 100
-  `
-
-  const result = await executeQuery<BusinessRule>(sql)
-  return result.rows
-}
-
-/**
- * Get operator settings
- */
-async function getOperatorSettings(operatorId: string): Promise<Record<string, unknown> | null> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT *
-    FROM POSTGRES_SWOOP.OPERATOR_SETTINGS
-    WHERE operator_id = '${escapedId}'
-    LIMIT 1
-  `
-
-  const result = await executeQuery<Record<string, unknown>>(sql)
-  return result.rows[0] || null
-}
-
-// ============================================================================
-// Additional Data: Contacts, Bank Accounts, Subscription History
-// ============================================================================
-
 export interface PlatformContact {
   contact_id: string
   first_name: string | null
@@ -1117,87 +236,6 @@ export interface SubscriptionLogEntry {
   notes: string | null
 }
 
-/**
- * Get platform contacts for an operator (distinct from HubSpot contacts)
- */
-async function getOperatorContacts(operatorId: string): Promise<PlatformContact[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      contact_id,
-      first_name,
-      last_name,
-      email,
-      phone,
-      company_name,
-      notes,
-      created_at
-    FROM SWOOP.CONTACT
-    WHERE operator_id = '${escapedId}'
-      AND removed_at IS NULL
-    ORDER BY created_at DESC
-    LIMIT 100
-  `
-
-  const result = await executeQuery<PlatformContact>(sql)
-  return result.rows
-}
-
-/**
- * Get bank accounts (Stripe Financial Connections) for an operator
- */
-async function getOperatorBankAccounts(operatorId: string): Promise<BankAccount[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      stripe_financial_connections_account_id as account_id,
-      institution_name,
-      display_name as account_name,
-      subcategory as account_type,
-      last4 as last_four,
-      status,
-      created_at
-    FROM SWOOP.STRIPE_FINANCIAL_CONNECTIONS_ACCOUNT
-    WHERE operator_id = '${escapedId}'
-    ORDER BY created_at DESC
-    LIMIT 20
-  `
-
-  const result = await executeQuery<BankAccount>(sql)
-  return result.rows
-}
-
-/**
- * Get subscription history/log for an operator
- */
-async function getOperatorSubscriptionLog(operatorId: string): Promise<SubscriptionLogEntry[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      subscription_log_id as log_id,
-      event_type,
-      plan_name,
-      previous_plan_name as previous_plan,
-      amount,
-      created_at as event_date,
-      notes
-    FROM POSTGRES_SWOOP.SUBSCRIPTION_LOG
-    WHERE operator_id = '${escapedId}'
-    ORDER BY created_at DESC
-    LIMIT 50
-  `
-
-  const result = await executeQuery<SubscriptionLogEntry>(sql)
-  return result.rows
-}
-
-// ============================================================================
-// Additional Data Queries (for Retool parity)
-// ============================================================================
-
 export interface CustomerFeedback {
   feedback_id: string
   title: string | null
@@ -1208,34 +246,6 @@ export interface CustomerFeedback {
   user_first_name: string | null
   user_last_name: string | null
   user_email: string | null
-}
-
-/**
- * Get customer feedback for an operator
- */
-async function getOperatorFeedback(operatorId: string): Promise<CustomerFeedback[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      cf.customer_feedback_id as feedback_id,
-      cf.title,
-      cf.description,
-      cf.product_type,
-      cf.path,
-      cf.created_at,
-      u.first_name as user_first_name,
-      u.last_name as user_last_name,
-      u.email as user_email
-    FROM SWOOP.CUSTOMER_FEEDBACK cf
-    LEFT JOIN SWOOP.USER u ON cf.user_id = u.user_id
-    WHERE cf.operator_id = '${escapedId}'
-    ORDER BY cf.created_at DESC
-    LIMIT 50
-  `
-
-  const result = await executeQuery<CustomerFeedback>(sql)
-  return result.rows
 }
 
 export interface BankTransaction {
@@ -1249,34 +259,6 @@ export interface BankTransaction {
   posted_at: string | null
 }
 
-/**
- * Get bank transactions for an operator
- */
-async function getOperatorBankTransactions(operatorId: string): Promise<BankTransaction[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      t.stripe_financial_connections_transaction_id as transaction_id,
-      t.account_id,
-      t.amount,
-      t.currency,
-      t.description,
-      t.status,
-      t.transacted_at,
-      t.posted_at
-    FROM SWOOP.STRIPE_FINANCIAL_CONNECTIONS_TRANSACTION t
-    JOIN SWOOP.STRIPE_FINANCIAL_CONNECTIONS_ACCOUNT a
-      ON t.account_id = a.stripe_financial_connections_account_id
-    WHERE a.operator_id = '${escapedId}'
-    ORDER BY t.transacted_at DESC
-    LIMIT 100
-  `
-
-  const result = await executeQuery<BankTransaction>(sql)
-  return result.rows
-}
-
 export interface DriverAppUser {
   driver_id: string
   app_user_id: string | null
@@ -1286,57 +268,10 @@ export interface DriverAppUser {
   push_enabled: boolean | null
 }
 
-/**
- * Get driver app usage data
- */
-async function getOperatorDriverAppUsers(operatorId: string): Promise<DriverAppUser[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      d.driver_id,
-      dau.id as app_user_id,
-      dau.app_version,
-      dau.device_type,
-      dau.last_active_at,
-      dau.push_notifications_enabled as push_enabled
-    FROM POSTGRES_SWOOP.DRIVER d
-    LEFT JOIN MOZART_NEW.DRIVERAPP_USERS dau ON d.driver_id = dau.id
-    WHERE d.operator_id = '${escapedId}'
-    AND dau.id IS NOT NULL
-    ORDER BY dau.last_active_at DESC NULLS LAST
-  `
-
-  const result = await executeQuery<DriverAppUser>(sql)
-  return result.rows
-}
-
 export interface UserPermission {
   user_id: string
   permission_id: string
   permission_name: string | null
-}
-
-/**
- * Get user permissions for an operator's members
- */
-async function getOperatorUserPermissions(operatorId: string): Promise<UserPermission[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      uap.user_id,
-      uap.access_permission_id as permission_id,
-      ap.name as permission_name
-    FROM SWOOP.USER_ACCESS_PERMISSION uap
-    JOIN SWOOP.ACCESS_PERMISSION ap ON uap.access_permission_id = ap.access_permission_id
-    JOIN SWOOP.USER u ON uap.user_id = u.user_id
-    WHERE u.operator_id = '${escapedId}'
-    AND u.removed_at IS NULL
-  `
-
-  const result = await executeQuery<UserPermission>(sql)
-  return result.rows
 }
 
 export interface RequestAnalytics {
@@ -1345,30 +280,6 @@ export interface RequestAnalytics {
   completed_requests: number
   cancelled_requests: number
   total_revenue: number
-}
-
-/**
- * Get request/trip analytics for an operator
- */
-async function getOperatorRequestAnalytics(operatorId: string): Promise<RequestAnalytics[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      TO_VARCHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') as month,
-      COUNT(*) as total_requests,
-      SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_requests,
-      SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_requests,
-      COALESCE(SUM(total_amount), 0) as total_revenue
-    FROM SWOOP.REQUEST
-    WHERE operator_id = '${escapedId}'
-    GROUP BY DATE_TRUNC('month', created_at)
-    ORDER BY month DESC
-    LIMIT 12
-  `
-
-  const result = await executeQuery<RequestAnalytics>(sql)
-  return result.rows
 }
 
 export interface TripSummary {
@@ -1384,320 +295,16 @@ export interface TripSummary {
   total_amount: number | null
 }
 
-/**
- * Get recent trips for an operator
- */
-async function getOperatorTrips(operatorId: string, limit = 50): Promise<TripSummary[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      t.trip_id,
-      t.request_id,
-      t.status,
-      ps.address as pickup_location,
-      ds.address as dropoff_location,
-      r.pickup_date_time as scheduled_at,
-      t.completed_at,
-      CONCAT(d.first_name, ' ', d.last_name) as driver_name,
-      CONCAT(u.first_name, ' ', u.last_name) as passenger_name,
-      r.total_amount
-    FROM SWOOP.TRIP t
-    JOIN SWOOP.REQUEST r ON t.request_id = r.request_id
-    LEFT JOIN SWOOP.STOP ps ON r.pickup_stop_id = ps.stop_id
-    LEFT JOIN SWOOP.STOP ds ON r.dropoff_stop_id = ds.stop_id
-    LEFT JOIN POSTGRES_SWOOP.DRIVER d ON t.driver_id = d.driver_id
-    LEFT JOIN SWOOP.USER u ON r.user_id = u.user_id
-    WHERE r.operator_id = '${escapedId}'
-    ORDER BY r.pickup_date_time DESC
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<TripSummary>(sql)
-  return result.rows
-}
-
-// ============================================================================
-// Write Operations (CRUD) - Requires Direct Connection
-// ============================================================================
-
-export interface AddMemberInput {
-  operatorId: string
-  email: string
-  firstName?: string
-  lastName?: string
-  roleSlug?: string
-}
-
-export interface AddMemberResult {
-  userId: string
-  success: boolean
-}
-
-/**
- * Check if write operations are available (requires direct Snowflake connection)
- */
-function isWriteEnabled(): boolean {
-  return isDirectConfigured
-}
-
-/**
- * Execute a write query with parameterized binds (direct connection only)
- */
-async function executeWriteQuery(
-  sql: string,
-  binds: (string | number | boolean | null)[] = []
-): Promise<{ rowCount: number; success: boolean }> {
-  if (!isDirectConfigured) {
-    throw new Error("Write operations require direct Snowflake connection")
-  }
-
-  const connection = await getDirectConnection()
-
-  return new Promise((resolve, reject) => {
-    connection.execute({
-      sqlText: sql,
-      binds,
-      complete: (err, _stmt, rows) => {
-        if (err) {
-          console.error("Snowflake write query error:", err.message)
-          console.error("SQL:", sql)
-          reject(err)
-        } else {
-          resolve({
-            rowCount: rows?.length || 0,
-            success: true,
-          })
-        }
-      },
-    })
-  })
-}
-
-/**
- * Add a new member/user to an operator
- */
-async function addOperatorMember(input: AddMemberInput): Promise<AddMemberResult> {
-  const userId = crypto.randomUUID()
-
-  const sql = `
-    INSERT INTO POSTGRES_SWOOP.USER (
-      USER_ID,
-      OPERATOR_ID,
-      EMAIL,
-      FIRST_NAME,
-      LAST_NAME,
-      ROLE_SLUG,
-      CREATED_AT,
-      UPDATED_AT
-    ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())
-  `
-
-  await executeWriteQuery(sql, [
-    userId,
-    input.operatorId,
-    input.email,
-    input.firstName || null,
-    input.lastName || null,
-    input.roleSlug || "member",
-  ])
-
-  return { userId, success: true }
-}
-
-export interface UpdateMemberRoleInput {
-  userId: string
-  operatorId: string
-  roleSlug: string
-}
-
-/**
- * Update a member's role
- */
-async function updateMemberRole(input: UpdateMemberRoleInput): Promise<boolean> {
-  const sql = `
-    UPDATE POSTGRES_SWOOP.USER
-    SET ROLE_SLUG = ?,
-        UPDATED_AT = CURRENT_TIMESTAMP()
-    WHERE USER_ID = ?
-      AND OPERATOR_ID = ?
-      AND REMOVED_AT IS NULL
-  `
-
-  const result = await executeWriteQuery(sql, [input.roleSlug, input.userId, input.operatorId])
-
-  return result.success
-}
-
-/**
- * Remove a member (soft delete)
- */
-async function removeMember(userId: string, operatorId: string): Promise<boolean> {
-  const sql = `
-    UPDATE POSTGRES_SWOOP.USER
-    SET REMOVED_AT = CURRENT_TIMESTAMP(),
-        UPDATED_AT = CURRENT_TIMESTAMP()
-    WHERE USER_ID = ?
-      AND OPERATOR_ID = ?
-      AND REMOVED_AT IS NULL
-  `
-
-  const result = await executeWriteQuery(sql, [userId, operatorId])
-  return result.success
-}
-
-// ============================================================================
-// Risk Management Write Operations
-// ============================================================================
-
-export interface UpdateRiskFieldResult {
-  success: boolean
-  operatorId: string
-  field: string
-  newValue: number
-}
-
-/**
- * Update an operator's instant payout limit (in cents)
- */
-async function updateOperatorInstantPayoutLimit(
-  operatorId: string,
-  limitCents: number
-): Promise<UpdateRiskFieldResult> {
-  const sql = `
-    UPDATE POSTGRES_SWOOP.OPERATOR
-    SET INSTANT_PAYOUT_LIMIT_CENTS = ?,
-        UPDATED_AT = CURRENT_TIMESTAMP()
-    WHERE OPERATOR_ID = ?
-  `
-
-  await executeWriteQuery(sql, [limitCents, operatorId])
-
-  return {
-    success: true,
-    operatorId,
-    field: "instant_payout_limit_cents",
-    newValue: limitCents,
-  }
-}
-
-/**
- * Update an operator's daily payment limit (in cents)
- */
-async function updateOperatorDailyPaymentLimit(
-  operatorId: string,
-  limitCents: number
-): Promise<UpdateRiskFieldResult> {
-  const sql = `
-    UPDATE POSTGRES_SWOOP.OPERATOR
-    SET DAILY_PAYMENT_LIMIT_CENTS = ?,
-        UPDATED_AT = CURRENT_TIMESTAMP()
-    WHERE OPERATOR_ID = ?
-  `
-
-  await executeWriteQuery(sql, [limitCents, operatorId])
-
-  return {
-    success: true,
-    operatorId,
-    field: "daily_payment_limit_cents",
-    newValue: limitCents,
-  }
-}
-
-/**
- * Update an operator's internal risk score
- */
-async function updateOperatorRiskScore(
-  operatorId: string,
-  riskScore: number
-): Promise<UpdateRiskFieldResult> {
-  const sql = `
-    UPDATE POSTGRES_SWOOP.OPERATOR
-    SET RISK_SCORE = ?,
-        UPDATED_AT = CURRENT_TIMESTAMP()
-    WHERE OPERATOR_ID = ?
-  `
-
-  await executeWriteQuery(sql, [riskScore, operatorId])
-
-  return {
-    success: true,
-    operatorId,
-    field: "risk_score",
-    newValue: riskScore,
-  }
-}
-
-export interface OperatorRiskDetails {
+export interface ExpandedSearchResult {
   operator_id: string
-  instant_payout_limit_cents: number | null
-  daily_payment_limit_cents: number | null
-  risk_score: number | null
+  company_name: string
+  stripe_account_id: string | null
+  mrr: number | null
+  match_type: "operator" | "trip" | "quote" | "charge" | "customer"
+  match_field: string
+  match_value: string
+  additional_info?: string
 }
-
-export interface OperatorCoreInfo {
-  operator_id: string
-  name: string | null
-  name_slug: string | null
-  email: string | null
-  phone: string | null
-  general_email: string | null
-  terms_and_conditions_url: string | null
-  website_url: string | null
-  company_logo_url: string | null
-}
-
-/**
- * Get operator risk management details (payout limits, risk score)
- */
-async function getOperatorRiskDetails(operatorId: string): Promise<OperatorRiskDetails | null> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      OPERATOR_ID as operator_id,
-      INSTANT_PAYOUT_LIMIT_CENTS as instant_payout_limit_cents,
-      DAILY_PAYMENT_LIMIT_CENTS as daily_payment_limit_cents,
-      RISK_SCORE as risk_score
-    FROM POSTGRES_SWOOP.OPERATOR
-    WHERE OPERATOR_ID = '${escapedId}'
-    LIMIT 1
-  `
-
-  const result = await executeQuery<OperatorRiskDetails>(sql)
-  return result.rows[0] || null
-}
-
-/**
- * Get operator core info including name_slug for booking portal URL
- */
-async function getOperatorCoreInfo(operatorId: string): Promise<OperatorCoreInfo | null> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      OPERATOR_ID as operator_id,
-      NAME as name,
-      NAME_SLUG as name_slug,
-      EMAIL as email,
-      PHONE as phone,
-      GENERAL_EMAIL as general_email,
-      TERMS_AND_CONDITIONS_URL as terms_and_conditions_url,
-      WEBSITE_URL as website_url,
-      COMPANY_LOGO_URL as company_logo_url
-    FROM POSTGRES_SWOOP.OPERATOR
-    WHERE OPERATOR_ID = '${escapedId}'
-    LIMIT 1
-  `
-
-  const result = await executeQuery<OperatorCoreInfo>(sql)
-  return result.rows[0] || null
-}
-
-// ============================================================================
-// Disputes Data (for Risk tab analytics)
-// ============================================================================
 
 export interface DisputeRecord {
   dispute_id: string
@@ -1723,128 +330,6 @@ export interface DisputesSummary {
   disputes_over_time: { date: string; count: number }[]
 }
 
-/**
- * Get all disputed charges for an operator (by Stripe account ID)
- */
-async function getOperatorDisputes(stripeAccountId: string): Promise<DisputeRecord[]> {
-  const escapedId = stripeAccountId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      DISPUTE_ID as dispute_id,
-      CHARGE_ID as charge_id,
-      STRIPE_ACCOUNT_ID as stripe_account_id,
-      DISPUTE_STATUS as dispute_status,
-      DISPUTE_REASON as dispute_reason,
-      DISPUTED_AMOUNT as disputed_amount,
-      DISPUTE_DATE as dispute_date,
-      CREATED_DATE as created_date,
-      OUTCOME_RISK_LEVEL as outcome_risk_level,
-      OUTCOME_RISK_SCORE as outcome_risk_score,
-      CUSTOMER_ID as customer_id,
-      BILLING_DETAIL_NAME as billing_detail_name
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
-      AND DISPUTE_ID IS NOT NULL
-    ORDER BY DISPUTE_DATE DESC NULLS LAST, CREATED_DATE DESC
-    LIMIT 200
-  `
-
-  const result = await executeQuery<DisputeRecord>(sql)
-  return result.rows
-}
-
-/**
- * Get disputes summary with aggregated data for charts
- */
-async function getOperatorDisputesSummary(stripeAccountId: string): Promise<DisputesSummary> {
-  const escapedId = stripeAccountId.replace(/'/g, "''")
-
-  // Get total counts
-  const totalsSql = `
-    SELECT
-      COUNT(DISTINCT DISPUTE_ID) as total_disputes,
-      COALESCE(SUM(DISPUTED_AMOUNT), 0) as total_disputed_amount
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
-      AND DISPUTE_ID IS NOT NULL
-  `
-
-  // Get disputes by status
-  const byStatusSql = `
-    SELECT
-      COALESCE(DISPUTE_STATUS, 'unknown') as status,
-      COUNT(DISTINCT DISPUTE_ID) as count
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
-      AND DISPUTE_ID IS NOT NULL
-    GROUP BY DISPUTE_STATUS
-    ORDER BY count DESC
-  `
-
-  // Get disputes by reason
-  const byReasonSql = `
-    SELECT
-      COALESCE(DISPUTE_REASON, 'unknown') as reason,
-      COUNT(DISTINCT DISPUTE_ID) as count
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
-      AND DISPUTE_ID IS NOT NULL
-    GROUP BY DISPUTE_REASON
-    ORDER BY count DESC
-  `
-
-  // Get disputes by risk level
-  const byRiskSql = `
-    SELECT
-      COALESCE(OUTCOME_RISK_LEVEL, 'unknown') as risk_level,
-      COUNT(DISTINCT DISPUTE_ID) as count
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
-      AND DISPUTE_ID IS NOT NULL
-    GROUP BY OUTCOME_RISK_LEVEL
-    ORDER BY count DESC
-  `
-
-  // Get disputes over time (last 12 months)
-  const overTimeSql = `
-    SELECT
-      TO_VARCHAR(DATE_TRUNC('month', COALESCE(DISPUTE_DATE, CREATED_DATE)), 'YYYY-MM') as date,
-      COUNT(DISTINCT DISPUTE_ID) as count
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE STRIPE_ACCOUNT_ID = '${escapedId}'
-      AND DISPUTE_ID IS NOT NULL
-      AND COALESCE(DISPUTE_DATE, CREATED_DATE) >= DATEADD(month, -12, CURRENT_DATE())
-    GROUP BY DATE_TRUNC('month', COALESCE(DISPUTE_DATE, CREATED_DATE))
-    ORDER BY date ASC
-  `
-
-  // Execute all queries in parallel
-  const [totalsResult, byStatusResult, byReasonResult, byRiskResult, overTimeResult] =
-    await Promise.all([
-      executeQuery<{ total_disputes: number; total_disputed_amount: number }>(totalsSql),
-      executeQuery<{ status: string; count: number }>(byStatusSql),
-      executeQuery<{ reason: string; count: number }>(byReasonSql),
-      executeQuery<{ risk_level: string; count: number }>(byRiskSql),
-      executeQuery<{ date: string; count: number }>(overTimeSql),
-    ])
-
-  const totals = totalsResult.rows[0] || { total_disputes: 0, total_disputed_amount: 0 }
-
-  return {
-    total_disputes: totals.total_disputes,
-    total_disputed_amount: totals.total_disputed_amount,
-    disputes_by_status: byStatusResult.rows,
-    disputes_by_reason: byReasonResult.rows,
-    disputes_by_risk_level: byRiskResult.rows,
-    disputes_over_time: overTimeResult.rows,
-  }
-}
-
-// ============================================================================
-// Quotes Data (for Quotes section)
-// ============================================================================
-
 export interface QuoteRecord {
   request_id: string
   order_number: string | null
@@ -1868,126 +353,6 @@ export interface QuotesSummary {
   conversion_rate: number
   quotes_by_month: Array<{ month: string; quotes: number; reservations: number; amount: number }>
 }
-
-/**
- * Get quotes and reservations for an operator
- */
-async function getOperatorQuotes(operatorId: string, limit = 100): Promise<QuoteRecord[]> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      r.REQUEST_ID as request_id,
-      r.ORDER_NUMBER as order_number,
-      r.STAGE as stage,
-      r.ORDER_TYPE as order_type,
-      (COALESCE(rt.PRICE, 0) +
-       COALESCE(rt.DRIVER_GRATUITY, 0) +
-       COALESCE(rt.TAX_AMT, 0) +
-       COALESCE(rt.TOLLS_AMT, 0) +
-       COALESCE(rt.BASE_RATE_AMT, 0) -
-       COALESCE(rt.PROMO_DISCOUNT_AMT, 0)) / 100 as total_amount,
-      r.CREATED_AT as created_at,
-      t.PICKUP_DATE_TIME as pickup_date,
-      CONCAT(c.FIRST_NAME, ' ', c.LAST_NAME) as customer_name,
-      c.EMAIL as customer_email,
-      ps.ADDRESS as pickup_address,
-      ds.ADDRESS as dropoff_address,
-      v.VEHICLE_TYPE as vehicle_type
-    FROM SWOOP.REQUEST r
-    LEFT JOIN SWOOP.TRIP t ON r.REQUEST_ID = t.REQUEST_ID
-    LEFT JOIN SWOOP.ROUTE rt ON t.TRIP_ID = rt.TRIP_ID
-    LEFT JOIN SWOOP.CONTACT c ON r.BOOKER_ID = c.CONTACT_ID
-    LEFT JOIN SWOOP.STOP ps ON r.PICKUP_STOP_ID = ps.STOP_ID
-    LEFT JOIN SWOOP.STOP ds ON r.DROPOFF_STOP_ID = ds.STOP_ID
-    LEFT JOIN SWOOP.VEHICLE v ON t.VEHICLE_ID = v.VEHICLE_ID
-    WHERE r.OPERATOR_ID = '${escapedId}'
-      AND r.REMOVED_AT IS NULL
-      AND (LOWER(r.STAGE) LIKE '%quote%' OR LOWER(r.STAGE) LIKE '%reservation%')
-    ORDER BY r.CREATED_AT DESC
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<QuoteRecord>(sql)
-  return result.rows
-}
-
-/**
- * Get quotes summary with conversion metrics
- */
-async function getOperatorQuotesSummary(operatorId: string): Promise<QuotesSummary> {
-  const escapedId = operatorId.replace(/'/g, "''")
-
-  // Get total counts and amounts
-  const totalsSql = `
-    SELECT
-      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%quote%' THEN 1 END) as total_quotes,
-      COALESCE(SUM(CASE WHEN LOWER(r.STAGE) LIKE '%quote%'
-        THEN (COALESCE(rt.PRICE, 0) + COALESCE(rt.BASE_RATE_AMT, 0)) / 100 END), 0) as total_quotes_amount,
-      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%reservation%' THEN 1 END) as total_reservations,
-      COALESCE(SUM(CASE WHEN LOWER(r.STAGE) LIKE '%reservation%'
-        THEN (COALESCE(rt.PRICE, 0) + COALESCE(rt.BASE_RATE_AMT, 0)) / 100 END), 0) as total_reservations_amount
-    FROM SWOOP.REQUEST r
-    LEFT JOIN SWOOP.TRIP t ON r.REQUEST_ID = t.REQUEST_ID
-    LEFT JOIN SWOOP.ROUTE rt ON t.TRIP_ID = rt.TRIP_ID
-    WHERE r.OPERATOR_ID = '${escapedId}'
-      AND r.REMOVED_AT IS NULL
-      AND (LOWER(r.STAGE) LIKE '%quote%' OR LOWER(r.STAGE) LIKE '%reservation%')
-  `
-
-  // Get monthly breakdown
-  const monthlySQL = `
-    SELECT
-      TO_VARCHAR(DATE_TRUNC('month', r.CREATED_AT), 'YYYY-MM') as month,
-      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%quote%' THEN 1 END) as quotes,
-      COUNT(CASE WHEN LOWER(r.STAGE) LIKE '%reservation%' THEN 1 END) as reservations,
-      COALESCE(SUM((COALESCE(rt.PRICE, 0) + COALESCE(rt.BASE_RATE_AMT, 0)) / 100), 0) as amount
-    FROM SWOOP.REQUEST r
-    LEFT JOIN SWOOP.TRIP t ON r.REQUEST_ID = t.REQUEST_ID
-    LEFT JOIN SWOOP.ROUTE rt ON t.TRIP_ID = rt.TRIP_ID
-    WHERE r.OPERATOR_ID = '${escapedId}'
-      AND r.REMOVED_AT IS NULL
-      AND (LOWER(r.STAGE) LIKE '%quote%' OR LOWER(r.STAGE) LIKE '%reservation%')
-      AND r.CREATED_AT >= DATEADD(month, -12, CURRENT_DATE())
-    GROUP BY DATE_TRUNC('month', r.CREATED_AT)
-    ORDER BY month DESC
-  `
-
-  const [totalsResult, monthlyResult] = await Promise.all([
-    executeQuery<{
-      total_quotes: number
-      total_quotes_amount: number
-      total_reservations: number
-      total_reservations_amount: number
-    }>(totalsSql),
-    executeQuery<{ month: string; quotes: number; reservations: number; amount: number }>(
-      monthlySQL
-    ),
-  ])
-
-  const totals = totalsResult.rows[0] || {
-    total_quotes: 0,
-    total_quotes_amount: 0,
-    total_reservations: 0,
-    total_reservations_amount: 0,
-  }
-
-  const conversionRate =
-    totals.total_quotes > 0 ? (totals.total_reservations / totals.total_quotes) * 100 : 0
-
-  return {
-    total_quotes: totals.total_quotes,
-    total_quotes_amount: totals.total_quotes_amount,
-    total_reservations: totals.total_reservations,
-    total_reservations_amount: totals.total_reservations_amount,
-    conversion_rate: Math.round(conversionRate * 10) / 10,
-    quotes_by_month: monthlyResult.rows,
-  }
-}
-
-// ============================================================================
-// Customer Charges Data (for customer drill-down from charges)
-// ============================================================================
 
 export interface CustomerCharge {
   charge_id: string
@@ -2013,73 +378,50 @@ export interface CustomerSummary {
   last_charge_date: string | null
 }
 
-/**
- * Get all charges for a specific customer within an operator's account
- */
-async function getCustomerCharges(
-  customerId: string,
-  operatorId: string,
-  limit = 100
-): Promise<CustomerCharge[]> {
-  const escapedCustomerId = customerId.replace(/'/g, "''")
-  const escapedOperatorId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      CHARGE_ID as charge_id,
-      CREATED_DATE as created_date,
-      STATUS as status,
-      TOTAL_DOLLARS_CHARGED as total_dollars_charged,
-      DESCRIPTION as description,
-      TOTAL_DOLLARS_REFUNDED as total_dollars_refunded,
-      DISPUTE_ID as dispute_id,
-      DISPUTE_STATUS as dispute_status,
-      OUTCOME_RISK_LEVEL as outcome_risk_level
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE CUSTOMER_ID = '${escapedCustomerId}'
-      AND OPERATOR_ID = '${escapedOperatorId}'
-    ORDER BY CREATED_DATE DESC
-    LIMIT ${limit}
-  `
-
-  const result = await executeQuery<CustomerCharge>(sql)
-  return result.rows
-}
-
-/**
- * Get summary statistics for a customer within an operator's account
- */
-async function getCustomerSummary(
-  customerId: string,
+export interface AddMemberInput {
   operatorId: string
-): Promise<CustomerSummary | null> {
-  const escapedCustomerId = customerId.replace(/'/g, "''")
-  const escapedOperatorId = operatorId.replace(/'/g, "''")
-
-  const sql = `
-    SELECT
-      CUSTOMER_ID as customer_id,
-      MAX(CUSTOMER_EMAIL) as customer_email,
-      MAX(BILLING_DETAIL_NAME) as customer_name,
-      COUNT(*) as total_charges,
-      COALESCE(SUM(TOTAL_DOLLARS_CHARGED), 0) as total_amount,
-      COALESCE(SUM(TOTAL_DOLLARS_REFUNDED), 0) as total_refunded,
-      COUNT(DISTINCT DISPUTE_ID) as total_disputes,
-      MIN(CREATED_DATE) as first_charge_date,
-      MAX(CREATED_DATE) as last_charge_date
-    FROM MOZART_NEW.MOOVS_PLATFORM_CHARGES
-    WHERE CUSTOMER_ID = '${escapedCustomerId}'
-      AND OPERATOR_ID = '${escapedOperatorId}'
-    GROUP BY CUSTOMER_ID
-  `
-
-  const result = await executeQuery<CustomerSummary>(sql)
-  return result.rows[0] || null
+  email: string
+  firstName?: string
+  lastName?: string
+  roleSlug?: string
 }
 
-// ============================================================================
-// Subscription Management Write Operations
-// ============================================================================
+export interface AddMemberResult {
+  userId: string
+  success: boolean
+}
+
+export interface UpdateMemberRoleInput {
+  userId: string
+  operatorId: string
+  roleSlug: string
+}
+
+export interface UpdateRiskFieldResult {
+  success: boolean
+  operatorId: string
+  field: string
+  newValue: number
+}
+
+export interface OperatorRiskDetails {
+  operator_id: string
+  instant_payout_limit_cents: number | null
+  daily_payment_limit_cents: number | null
+  risk_score: number | null
+}
+
+export interface OperatorCoreInfo {
+  operator_id: string
+  name: string | null
+  name_slug: string | null
+  email: string | null
+  phone: string | null
+  general_email: string | null
+  terms_and_conditions_url: string | null
+  website_url: string | null
+  company_logo_url: string | null
+}
 
 export interface AddSubscriptionLogInput {
   operatorId: string
@@ -2093,70 +435,9 @@ export interface AddSubscriptionLogResult {
   success: boolean
 }
 
-/**
- * Add a new subscription log entry when creating or changing subscriptions
- * This mirrors what Retool does: INSERT INTO subscription_log(operator_id, lago_plan_code, started_at, created_at)
- */
-async function addSubscriptionLogEntry(
-  input: AddSubscriptionLogInput
-): Promise<AddSubscriptionLogResult> {
-  const subscriptionLogId = crypto.randomUUID()
-  const startedAt = input.startedAt || new Date()
-
-  const sql = `
-    INSERT INTO POSTGRES_SWOOP.SUBSCRIPTION_LOG (
-      SUBSCRIPTION_LOG_ID,
-      OPERATOR_ID,
-      LAGO_PLAN_CODE,
-      STARTED_AT,
-      CREATED_AT,
-      NOTES
-    ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP(), ?)
-  `
-
-  await executeWriteQuery(sql, [
-    subscriptionLogId,
-    input.operatorId,
-    input.lagoPlanCode,
-    startedAt.toISOString(),
-    input.notes || null,
-  ])
-
-  return { subscriptionLogId, success: true }
-}
-
-/**
- * Remove/cancel a subscription log entry (soft delete by setting removed_at)
- * Used when cancelling or changing subscriptions
- */
-async function removeSubscriptionLogEntry(
-  operatorId: string,
-  lagoPlanCode?: string
-): Promise<boolean> {
-  // If plan code provided, remove just that subscription, otherwise remove all active
-  const sql = lagoPlanCode
-    ? `
-      UPDATE POSTGRES_SWOOP.SUBSCRIPTION_LOG
-      SET REMOVED_AT = CURRENT_TIMESTAMP()
-      WHERE OPERATOR_ID = ?
-        AND LAGO_PLAN_CODE = ?
-        AND REMOVED_AT IS NULL
-    `
-    : `
-      UPDATE POSTGRES_SWOOP.SUBSCRIPTION_LOG
-      SET REMOVED_AT = CURRENT_TIMESTAMP()
-      WHERE OPERATOR_ID = ?
-        AND REMOVED_AT IS NULL
-    `
-
-  const binds = lagoPlanCode ? [operatorId, lagoPlanCode] : [operatorId]
-  const result = await executeWriteQuery(sql, binds)
-  return result.success
-}
-
 export interface UpdateOperatorPlanInput {
   operatorId: string
-  plan: string // 'free', 'standard', 'pro', 'enterprise'
+  plan: string
   activeForAnalytics?: boolean
 }
 
@@ -2164,44 +445,6 @@ export interface UpdateOperatorPlanResult {
   success: boolean
   operatorId: string
   plan: string
-}
-
-/**
- * Update the operator's plan field in the operator table
- * This mirrors what Retool does: UPDATE operator SET plan = ?, active_for_analytics = true
- */
-async function updateOperatorPlan(
-  input: UpdateOperatorPlanInput
-): Promise<UpdateOperatorPlanResult> {
-  const activeForAnalytics = input.activeForAnalytics ?? true
-
-  const sql = `
-    UPDATE POSTGRES_SWOOP.OPERATOR
-    SET PLAN = ?,
-        ACTIVE_FOR_ANALYTICS = ?,
-        UPDATED_AT = CURRENT_TIMESTAMP()
-    WHERE OPERATOR_ID = ?
-  `
-
-  await executeWriteQuery(sql, [input.plan, activeForAnalytics, input.operatorId])
-
-  return {
-    success: true,
-    operatorId: input.operatorId,
-    plan: input.plan,
-  }
-}
-
-/**
- * Helper to extract base plan name from Lago plan code
- * e.g., 'pro-annual' -> 'pro', 'enterprise-monthly' -> 'enterprise'
- */
-function extractPlanFromCode(lagoPlanCode: string): string {
-  const code = lagoPlanCode.toLowerCase()
-  if (code.includes("enterprise")) return "enterprise"
-  if (code.includes("pro")) return "pro"
-  if (code.includes("standard")) return "standard"
-  return "free"
 }
 
 export interface SubscriptionChangeInput {
@@ -2212,77 +455,542 @@ export interface SubscriptionChangeInput {
   notes?: string
 }
 
-/**
- * Complete subscription change operation that updates both:
- * 1. subscription_log table (close old, add new)
- * 2. operator.plan field
- *
- * This replicates the full Retool workflow in a single function
- */
-async function handleSubscriptionChange(
-  input: SubscriptionChangeInput
-): Promise<{ success: boolean; subscriptionLogId: string; plan: string }> {
-  // 1. Close any existing active subscription log entries
-  if (input.previousPlanCode) {
-    await removeSubscriptionLogEntry(input.operatorId, input.previousPlanCode)
-  } else {
-    // Close all active subscriptions for this operator
-    await removeSubscriptionLogEntry(input.operatorId)
-  }
+// ============================================================================
+// Configuration Check
+// ============================================================================
 
-  // 2. Add new subscription log entry
-  const logResult = await addSubscriptionLogEntry({
-    operatorId: input.operatorId,
-    lagoPlanCode: input.newPlanCode,
-    startedAt: input.startedAt,
-    notes: input.notes,
-  })
+function isConfigured(): boolean {
+  return n8nClient.isConfigured()
+}
 
-  // 3. Update operator.plan field
-  const newPlan = extractPlanFromCode(input.newPlanCode)
-  await updateOperatorPlan({
-    operatorId: input.operatorId,
-    plan: newPlan,
-    activeForAnalytics: true,
+function isWriteEnabled(): boolean {
+  return n8nClient.isConfigured()
+}
+
+// ============================================================================
+// Operator Search (Workflow: operator-search)
+// ============================================================================
+
+async function searchOperators(searchTerm: string, limit = 50): Promise<OperatorDetails[]> {
+  return n8nClient.workflowGetArray<OperatorDetails>(N8N_WORKFLOWS.OPERATOR_SEARCH, "search", {
+    searchTerm,
+    limit,
   })
+}
+
+async function expandedSearch(searchTerm: string, limit = 50): Promise<ExpandedSearchResult[]> {
+  return n8nClient.workflowGetArray<ExpandedSearchResult>(
+    N8N_WORKFLOWS.OPERATOR_SEARCH,
+    "expanded",
+    {
+      searchTerm,
+      limit,
+    }
+  )
+}
+
+// ============================================================================
+// Operator Data (Workflow: operator-data)
+// ============================================================================
+
+async function getOperatorById(operatorId: string): Promise<OperatorDetails | null> {
+  return n8nClient.workflowGet<OperatorDetails>(N8N_WORKFLOWS.OPERATOR_DATA, "details", {
+    operatorId,
+  })
+}
+
+async function getOperatorCoreInfo(operatorId: string): Promise<OperatorCoreInfo | null> {
+  return n8nClient.workflowGet<OperatorCoreInfo>(N8N_WORKFLOWS.OPERATOR_DATA, "core-info", {
+    operatorId,
+  })
+}
+
+async function getOperatorSettings(operatorId: string): Promise<Record<string, unknown> | null> {
+  return n8nClient.workflowGet<Record<string, unknown>>(N8N_WORKFLOWS.OPERATOR_DATA, "settings", {
+    operatorId,
+  })
+}
+
+async function getOperatorRiskDetails(operatorId: string): Promise<OperatorRiskDetails | null> {
+  return n8nClient.workflowGet<OperatorRiskDetails>(N8N_WORKFLOWS.OPERATOR_DATA, "risk-details", {
+    operatorId,
+  })
+}
+
+async function getRiskOverview(operatorId: string): Promise<RiskOverview | null> {
+  return n8nClient.workflowGet<RiskOverview>(N8N_WORKFLOWS.OPERATOR_DATA, "risk-overview", {
+    operatorId,
+  })
+}
+
+// ============================================================================
+// Financial Data (Workflow: financial)
+// ============================================================================
+
+async function getOperatorPlatformCharges(
+  operatorId: string,
+  limit = 100
+): Promise<PlatformCharge[]> {
+  return n8nClient.workflowGetArray<PlatformCharge>(N8N_WORKFLOWS.FINANCIAL, "charges", {
+    operatorId,
+    limit,
+  })
+}
+
+async function getMonthlyChargesSummary(operatorId: string): Promise<MonthlySummary[]> {
+  return n8nClient.workflowGetArray<MonthlySummary>(N8N_WORKFLOWS.FINANCIAL, "monthly-summary", {
+    operatorId,
+  })
+}
+
+async function getReservationsOverview(operatorId: string): Promise<ReservationOverview[]> {
+  return n8nClient.workflowGetArray<ReservationOverview>(N8N_WORKFLOWS.FINANCIAL, "reservations", {
+    operatorId,
+  })
+}
+
+async function getCustomerCharges(
+  customerId: string,
+  operatorId: string,
+  limit = 100
+): Promise<CustomerCharge[]> {
+  return n8nClient.workflowGetArray<CustomerCharge>(N8N_WORKFLOWS.FINANCIAL, "customer-charges", {
+    customerId,
+    operatorId,
+    limit,
+  })
+}
+
+async function getCustomerSummary(
+  customerId: string,
+  operatorId: string
+): Promise<CustomerSummary | null> {
+  return n8nClient.workflowGet<CustomerSummary>(N8N_WORKFLOWS.FINANCIAL, "customer-summary", {
+    customerId,
+    operatorId,
+  })
+}
+
+async function getOperatorBankAccounts(operatorId: string): Promise<BankAccount[]> {
+  return n8nClient.workflowGetArray<BankAccount>(N8N_WORKFLOWS.FINANCIAL, "bank-accounts", {
+    operatorId,
+  })
+}
+
+async function getOperatorBankTransactions(operatorId: string): Promise<BankTransaction[]> {
+  return n8nClient.workflowGetArray<BankTransaction>(N8N_WORKFLOWS.FINANCIAL, "bank-transactions", {
+    operatorId,
+  })
+}
+
+// ============================================================================
+// Risk & Disputes (Workflow: risk)
+// ============================================================================
+
+async function getOperatorDisputes(stripeAccountId: string): Promise<DisputeRecord[]> {
+  return n8nClient.workflowGetArray<DisputeRecord>(N8N_WORKFLOWS.RISK, "disputes", {
+    stripeAccountId,
+  })
+}
+
+async function getOperatorDisputesSummary(stripeAccountId: string): Promise<DisputesSummary> {
+  const result = await n8nClient.workflowGet<DisputesSummary>(
+    N8N_WORKFLOWS.RISK,
+    "disputes-summary",
+    { stripeAccountId }
+  )
+  return (
+    result || {
+      total_disputes: 0,
+      total_disputed_amount: 0,
+      disputes_by_status: [],
+      disputes_by_reason: [],
+      disputes_by_risk_level: [],
+      disputes_over_time: [],
+    }
+  )
+}
+
+async function getFailedInvoices(limit = 50): Promise<
+  {
+    operator_id: string
+    operator_name: string
+    charge_id: string
+    amount: number
+    failed_at: string
+    failure_reason: string | null
+  }[]
+> {
+  return n8nClient.workflowGetArray(N8N_WORKFLOWS.RISK, "failed-invoices", { limit })
+}
+
+async function updateOperatorInstantPayoutLimit(
+  operatorId: string,
+  limitCents: number
+): Promise<UpdateRiskFieldResult> {
+  const response = await n8nClient.workflowPost<UpdateRiskFieldResult>(
+    N8N_WORKFLOWS.RISK,
+    "update-risk",
+    {
+      operatorId,
+      field: "instant_payout_limit_cents",
+      value: limitCents,
+    }
+  )
 
   return {
-    success: true,
-    subscriptionLogId: logResult.subscriptionLogId,
-    plan: newPlan,
+    success: response.success,
+    operatorId,
+    field: "instant_payout_limit_cents",
+    newValue: limitCents,
   }
 }
 
-/**
- * Handle subscription cancellation - close subscription log and update operator plan to 'free'
- */
+async function updateOperatorDailyPaymentLimit(
+  operatorId: string,
+  limitCents: number
+): Promise<UpdateRiskFieldResult> {
+  const response = await n8nClient.workflowPost<UpdateRiskFieldResult>(
+    N8N_WORKFLOWS.RISK,
+    "update-risk",
+    {
+      operatorId,
+      field: "daily_payment_limit_cents",
+      value: limitCents,
+    }
+  )
+
+  return {
+    success: response.success,
+    operatorId,
+    field: "daily_payment_limit_cents",
+    newValue: limitCents,
+  }
+}
+
+async function updateOperatorRiskScore(
+  operatorId: string,
+  riskScore: number
+): Promise<UpdateRiskFieldResult> {
+  const response = await n8nClient.workflowPost<UpdateRiskFieldResult>(
+    N8N_WORKFLOWS.RISK,
+    "update-risk",
+    {
+      operatorId,
+      field: "risk_score",
+      value: riskScore,
+    }
+  )
+
+  return {
+    success: response.success,
+    operatorId,
+    field: "risk_score",
+    newValue: riskScore,
+  }
+}
+
+// ============================================================================
+// Team Management (Workflow: team)
+// ============================================================================
+
+async function getOperatorMembers(operatorId: string): Promise<OperatorMember[]> {
+  return n8nClient.workflowGetArray<OperatorMember>(N8N_WORKFLOWS.TEAM, "members", { operatorId })
+}
+
+async function getOperatorUserPermissions(operatorId: string): Promise<UserPermission[]> {
+  return n8nClient.workflowGetArray<UserPermission>(N8N_WORKFLOWS.TEAM, "permissions", {
+    operatorId,
+  })
+}
+
+async function addOperatorMember(input: AddMemberInput): Promise<AddMemberResult> {
+  const response = await n8nClient.workflowPost<AddMemberResult>(N8N_WORKFLOWS.TEAM, "add-member", {
+    operatorId: input.operatorId,
+    email: input.email,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    roleSlug: input.roleSlug || "member",
+  })
+
+  return {
+    userId: response.data?.userId || "",
+    success: response.success,
+  }
+}
+
+async function updateMemberRole(input: UpdateMemberRoleInput): Promise<boolean> {
+  const response = await n8nClient.workflowPost(N8N_WORKFLOWS.TEAM, "update-role", {
+    userId: input.userId,
+    operatorId: input.operatorId,
+    roleSlug: input.roleSlug,
+  })
+
+  return response.success
+}
+
+async function removeMember(userId: string, operatorId: string): Promise<boolean> {
+  const response = await n8nClient.workflowPost(N8N_WORKFLOWS.TEAM, "remove-member", {
+    userId,
+    operatorId,
+  })
+
+  return response.success
+}
+
+// ============================================================================
+// Fleet Management (Workflow: fleet)
+// ============================================================================
+
+async function getOperatorDrivers(operatorId: string): Promise<OperatorDriver[]> {
+  return n8nClient.workflowGetArray<OperatorDriver>(N8N_WORKFLOWS.FLEET, "drivers", { operatorId })
+}
+
+async function getDriverPerformance(operatorId: string): Promise<DriverPerformance[]> {
+  return n8nClient.workflowGetArray<DriverPerformance>(N8N_WORKFLOWS.FLEET, "driver-performance", {
+    operatorId,
+  })
+}
+
+async function getOperatorDriverAppUsers(operatorId: string): Promise<DriverAppUser[]> {
+  return n8nClient.workflowGetArray<DriverAppUser>(N8N_WORKFLOWS.FLEET, "driver-app-users", {
+    operatorId,
+  })
+}
+
+async function getOperatorVehicles(operatorId: string): Promise<OperatorVehicle[]> {
+  return n8nClient.workflowGetArray<OperatorVehicle>(N8N_WORKFLOWS.FLEET, "vehicles", {
+    operatorId,
+  })
+}
+
+async function getVehicleUtilization(operatorId: string): Promise<VehicleUtilization[]> {
+  return n8nClient.workflowGetArray<VehicleUtilization>(
+    N8N_WORKFLOWS.FLEET,
+    "vehicle-utilization",
+    {
+      operatorId,
+    }
+  )
+}
+
+// ============================================================================
+// Bookings - Trips & Quotes (Workflow: bookings)
+// ============================================================================
+
+async function getOperatorTrips(operatorId: string, limit = 50): Promise<TripSummary[]> {
+  return n8nClient.workflowGetArray<TripSummary>(N8N_WORKFLOWS.BOOKINGS, "trips", {
+    operatorId,
+    limit,
+  })
+}
+
+async function getOperatorQuotes(operatorId: string, limit = 100): Promise<QuoteRecord[]> {
+  return n8nClient.workflowGetArray<QuoteRecord>(N8N_WORKFLOWS.BOOKINGS, "quotes", {
+    operatorId,
+    limit,
+  })
+}
+
+async function getOperatorQuotesSummary(operatorId: string): Promise<QuotesSummary> {
+  const result = await n8nClient.workflowGet<QuotesSummary>(
+    N8N_WORKFLOWS.BOOKINGS,
+    "quotes-summary",
+    { operatorId }
+  )
+  return (
+    result || {
+      total_quotes: 0,
+      total_quotes_amount: 0,
+      total_reservations: 0,
+      total_reservations_amount: 0,
+      conversion_rate: 0,
+      quotes_by_month: [],
+    }
+  )
+}
+
+async function getOperatorRequestAnalytics(operatorId: string): Promise<RequestAnalytics[]> {
+  return n8nClient.workflowGetArray<RequestAnalytics>(N8N_WORKFLOWS.BOOKINGS, "request-analytics", {
+    operatorId,
+  })
+}
+
+// ============================================================================
+// Platform Data (Workflow: platform)
+// ============================================================================
+
+async function getOperatorContacts(operatorId: string): Promise<PlatformContact[]> {
+  return n8nClient.workflowGetArray<PlatformContact>(N8N_WORKFLOWS.PLATFORM, "contacts", {
+    operatorId,
+  })
+}
+
+async function getOperatorEmailLog(operatorId: string, limit = 50): Promise<OperatorEmailLog[]> {
+  return n8nClient.workflowGetArray<OperatorEmailLog>(N8N_WORKFLOWS.PLATFORM, "email-log", {
+    operatorId,
+    limit,
+  })
+}
+
+async function getOperatorPromoCodes(operatorId: string): Promise<PromoCode[]> {
+  return n8nClient.workflowGetArray<PromoCode>(N8N_WORKFLOWS.PLATFORM, "promo-codes", {
+    operatorId,
+  })
+}
+
+async function getOperatorPriceZones(operatorId: string): Promise<PriceZone[]> {
+  return n8nClient.workflowGetArray<PriceZone>(N8N_WORKFLOWS.PLATFORM, "price-zones", {
+    operatorId,
+  })
+}
+
+async function getOperatorRules(operatorId: string): Promise<BusinessRule[]> {
+  return n8nClient.workflowGetArray<BusinessRule>(N8N_WORKFLOWS.PLATFORM, "rules", { operatorId })
+}
+
+async function getOperatorFeedback(operatorId: string): Promise<CustomerFeedback[]> {
+  return n8nClient.workflowGetArray<CustomerFeedback>(N8N_WORKFLOWS.PLATFORM, "feedback", {
+    operatorId,
+  })
+}
+
+// ============================================================================
+// Subscriptions & Analytics (Workflow: subscriptions)
+// ============================================================================
+
+async function getOperatorSubscriptionLog(operatorId: string): Promise<SubscriptionLogEntry[]> {
+  return n8nClient.workflowGetArray<SubscriptionLogEntry>(N8N_WORKFLOWS.SUBSCRIPTIONS, "log", {
+    operatorId,
+  })
+}
+
+async function addSubscriptionLogEntry(
+  input: AddSubscriptionLogInput
+): Promise<AddSubscriptionLogResult> {
+  const response = await n8nClient.workflowPost<AddSubscriptionLogResult>(
+    N8N_WORKFLOWS.SUBSCRIPTIONS,
+    "add-log",
+    {
+      operatorId: input.operatorId,
+      lagoPlanCode: input.lagoPlanCode,
+      startedAt: input.startedAt?.toISOString(),
+      notes: input.notes,
+    }
+  )
+
+  return {
+    subscriptionLogId: response.data?.subscriptionLogId || "",
+    success: response.success,
+  }
+}
+
+async function removeSubscriptionLogEntry(
+  operatorId: string,
+  lagoPlanCode?: string
+): Promise<boolean> {
+  const response = await n8nClient.workflowPost(N8N_WORKFLOWS.SUBSCRIPTIONS, "remove-log", {
+    operatorId,
+    lagoPlanCode,
+  })
+
+  return response.success
+}
+
+async function updateOperatorPlan(
+  input: UpdateOperatorPlanInput
+): Promise<UpdateOperatorPlanResult> {
+  const response = await n8nClient.workflowPost<UpdateOperatorPlanResult>(
+    N8N_WORKFLOWS.SUBSCRIPTIONS,
+    "update-plan",
+    {
+      operatorId: input.operatorId,
+      plan: input.plan,
+      activeForAnalytics: input.activeForAnalytics ?? true,
+    }
+  )
+
+  return {
+    success: response.success,
+    operatorId: input.operatorId,
+    plan: input.plan,
+  }
+}
+
+async function getTopOperatorsByRevenue(
+  limit = 10,
+  period: "week" | "month" | "year" = "month"
+): Promise<
+  {
+    operator_id: string
+    operator_name: string
+    total_charged: number
+    total_trips: number
+  }[]
+> {
+  return n8nClient.workflowGetArray(N8N_WORKFLOWS.SUBSCRIPTIONS, "top-operators", { limit, period })
+}
+
+async function getInactiveAccounts(
+  daysSinceLastActivity = 30,
+  limit = 50
+): Promise<
+  {
+    operator_id: string
+    company_name: string
+    last_activity_date: string | null
+    days_inactive: number
+    mrr: number | null
+  }[]
+> {
+  return n8nClient.workflowGetArray(N8N_WORKFLOWS.SUBSCRIPTIONS, "inactive-accounts", {
+    daysSinceLastActivity,
+    limit,
+  })
+}
+
+// ============================================================================
+// Subscription Change Handlers (Uses existing subscription-sync workflow)
+// ============================================================================
+
+function extractPlanFromCode(lagoPlanCode: string): string {
+  const code = lagoPlanCode.toLowerCase()
+  if (code.includes("enterprise")) return "enterprise"
+  if (code.includes("pro")) return "pro"
+  if (code.includes("standard")) return "standard"
+  return "free"
+}
+
+async function handleSubscriptionChange(
+  input: SubscriptionChangeInput
+): Promise<{ success: boolean; subscriptionLogId: string; plan: string }> {
+  // Use the N8N subscription sync webhook which handles the full workflow
+  const response = await n8nClient.syncSubscriptionChange({
+    operatorId: input.operatorId,
+    newPlanCode: input.newPlanCode,
+    previousPlanCode: input.previousPlanCode,
+    notes: input.notes,
+  })
+
+  return {
+    success: response.success,
+    subscriptionLogId: "", // N8N handles this internally
+    plan: extractPlanFromCode(input.newPlanCode),
+  }
+}
+
 async function handleSubscriptionCancellation(
   operatorId: string,
   planCode?: string,
   notes?: string
 ): Promise<{ success: boolean }> {
-  // 1. Close the subscription log entry
-  await removeSubscriptionLogEntry(operatorId, planCode)
-
-  // 2. Update operator plan to 'free'
-  await updateOperatorPlan({
+  const response = await n8nClient.syncSubscriptionCancel({
     operatorId,
-    plan: "free",
-    activeForAnalytics: true,
+    planCode,
+    notes,
   })
 
-  // 3. Optionally add a cancellation log entry for audit trail
-  if (notes) {
-    await addSubscriptionLogEntry({
-      operatorId,
-      lagoPlanCode: "cancelled",
-      notes,
-    })
-    // Immediately close it
-    await removeSubscriptionLogEntry(operatorId, "cancelled")
-  }
-
-  return { success: true }
+  return { success: response.success }
 }
 
 // ============================================================================
@@ -2292,80 +1000,73 @@ async function handleSubscriptionCancellation(
 export const snowflakeClient = {
   // Core
   isConfigured,
-  executeQuery,
 
-  // Operator queries
+  // Search (operator-search workflow)
   searchOperators,
   expandedSearch,
+
+  // Operator data (operator-data workflow)
   getOperatorById,
+  getOperatorCoreInfo,
+  getOperatorSettings,
+  getOperatorRiskDetails,
+  getRiskOverview,
+
+  // Financial data (financial workflow)
   getOperatorPlatformCharges,
   getMonthlyChargesSummary,
   getReservationsOverview,
-  getRiskOverview,
-
-  // Operator portal data
-  getOperatorMembers,
-  getOperatorDrivers,
-  getOperatorVehicles,
-  getDriverPerformance,
-  getVehicleUtilization,
-  getOperatorEmailLog,
-
-  // Additional platform data
-  getOperatorPromoCodes,
-  getOperatorPriceZones,
-  getOperatorRules,
-  getOperatorSettings,
-
-  // More platform data
-  getOperatorContacts,
-  getOperatorBankAccounts,
-  getOperatorSubscriptionLog,
-
-  // Additional data (Retool parity)
-  getOperatorFeedback,
-  getOperatorBankTransactions,
-  getOperatorDriverAppUsers,
-  getOperatorUserPermissions,
-  getOperatorRequestAnalytics,
-  getOperatorTrips,
-
-  // Dashboard/analytics queries
-  getTopOperatorsByRevenue,
-  getFailedInvoices,
-  getInactiveAccounts,
-
-  // Disputes data
-  getOperatorDisputes,
-  getOperatorDisputesSummary,
-
-  // Quotes data
-  getOperatorQuotes,
-  getOperatorQuotesSummary,
-
-  // Customer data (drill-down)
   getCustomerCharges,
   getCustomerSummary,
+  getOperatorBankAccounts,
+  getOperatorBankTransactions,
 
-  // Write operations (CRUD)
-  isWriteEnabled,
-  addOperatorMember,
-  updateMemberRole,
-  removeMember,
-
-  // Risk management write operations
+  // Risk & disputes (risk workflow)
+  getOperatorDisputes,
+  getOperatorDisputesSummary,
+  getFailedInvoices,
   updateOperatorInstantPayoutLimit,
   updateOperatorDailyPaymentLimit,
   updateOperatorRiskScore,
-  getOperatorRiskDetails,
 
-  // Operator core info (for booking portal URL)
-  getOperatorCoreInfo,
+  // Team management (team workflow)
+  getOperatorMembers,
+  getOperatorUserPermissions,
+  addOperatorMember,
+  updateMemberRole,
+  removeMember,
+  isWriteEnabled,
 
-  // Subscription management write operations
+  // Fleet management (fleet workflow)
+  getOperatorDrivers,
+  getDriverPerformance,
+  getOperatorDriverAppUsers,
+  getOperatorVehicles,
+  getVehicleUtilization,
+
+  // Bookings (bookings workflow)
+  getOperatorTrips,
+  getOperatorQuotes,
+  getOperatorQuotesSummary,
+  getOperatorRequestAnalytics,
+
+  // Platform data (platform workflow)
+  getOperatorContacts,
+  getOperatorEmailLog,
+  getOperatorPromoCodes,
+  getOperatorPriceZones,
+  getOperatorRules,
+  getOperatorFeedback,
+
+  // Subscriptions & analytics (subscriptions workflow)
+  getOperatorSubscriptionLog,
   addSubscriptionLogEntry,
   removeSubscriptionLogEntry,
   updateOperatorPlan,
+  getTopOperatorsByRevenue,
+  getInactiveAccounts,
+
+  // Subscription change handlers (uses subscription-sync workflow)
   handleSubscriptionChange,
   handleSubscriptionCancellation,
   extractPlanFromCode,
