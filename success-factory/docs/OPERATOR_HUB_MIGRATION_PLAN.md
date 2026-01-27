@@ -218,7 +218,11 @@ app/
 │           ├── tickets/route.ts     # ✅ Notion tickets
 │           ├── emails/route.ts      # ✅ HubSpot activity
 │           ├── email-logs/route.ts  # ✅ Platform email logs
-│           └── platform-data/route.ts # ✅ Promos/Zones/Rules/Contacts/Bank/History
+│           ├── platform-data/route.ts # ✅ Promos/Zones/Rules/Contacts/Bank/History
+│           ├── invoices/route.ts    # ✅ Lago invoices
+│           ├── history/route.ts     # ✅ Change history
+│           ├── stripe/route.ts      # ✅ Stripe live data
+│           └── subscription/route.ts # ✅ Lago subscription management
 lib/
 └── integrations/
     ├── snowflake.ts                 # ✅ Direct + Metabase fallback
@@ -299,12 +303,14 @@ lib/
 - [x] Update Risk Details (links to HubSpot notes)
 - [x] Update Postgres Plan (Lago API integration with modal UI)
 
-### Phase 5: Polish & Enhancements ✅ MOSTLY COMPLETE
+### Phase 5: Polish & Enhancements ✅ COMPLETE
 
-- [ ] Matrix History view (change log)
+- [x] Matrix History view (change log) - History tab with subscription events
 - [x] Enhanced email search (search across all communications)
 - [x] Stripe live data integration (balance, payouts, charges)
-- [ ] Bulk operations
+- [x] Lago invoices integration in PaymentsTab
+- [x] Prioritize Stripe/Lago for financial data (removed Metabase dependency)
+- [ ] Bulk operations (optional future enhancement)
 
 ---
 
@@ -342,6 +348,18 @@ lib/
 - Added "Add Risk Note" quick action (links to HubSpot)
 - Phase 4 now COMPLETE
 
+### 2026-01-27 (Update 5)
+- Added History tab with subscription change log
+- Added Lago invoices to PaymentsTab:
+  - /api/operator-hub/[operatorId]/invoices endpoint
+  - Invoice table with status, amounts, dates
+  - Summary stats (invoiced, paid, pending, overdue)
+- Prioritized Stripe/Lago for financial data:
+  - Charges API now tries Stripe first
+  - Removed Metabase dependency for financial data
+  - Use Stripe/Lago as source of truth for payments
+- Phase 5 now COMPLETE
+
 ### 2026-01-26 (Update 4)
 - Added Stripe live data integration:
   - StripeLiveDataCard component with expandable UI
@@ -367,4 +385,4 @@ lib/
 
 ---
 
-Last Updated: 2026-01-26
+Last Updated: 2026-01-27
