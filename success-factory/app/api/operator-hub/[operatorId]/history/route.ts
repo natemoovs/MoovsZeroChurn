@@ -27,7 +27,7 @@ export async function GET(
       type: mapEventType(entry.event_type),
       title: formatEventTitle(entry.event_type, entry.plan_name, entry.previous_plan),
       description: formatEventDescription(entry),
-      timestamp: entry.event_date,
+      timestamp: entry.event_date || new Date().toISOString(),
       metadata: {
         eventType: entry.event_type,
         planName: entry.plan_name,
