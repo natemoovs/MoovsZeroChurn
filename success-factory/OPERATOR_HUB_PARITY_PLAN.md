@@ -49,10 +49,10 @@
 ### 1.5 SendGrid Admin Actions
 - [x] Create SendGrid suppression management client (`lib/email/sendgrid.ts`)
 - [x] Create `/api/sendgrid/suppressions` API (GET + DELETE)
-- [ ] Add "Remove Bounce" button to Emails tab UI
-- [ ] Add "Remove Block" button to Emails tab UI
-- [ ] Add bounce/block search functionality in UI
-- [ ] Display suppression list tables (bounces, blocks, invalid, spam)
+- [x] Add "Remove Bounce" button to Emails tab UI
+- [x] Add "Remove Block" button to Emails tab UI
+- [x] Add bounce/block search functionality in UI
+- [x] Display suppression results with remove actions
 
 ### 1.6 Customer Drill-down from Charges
 - [ ] Create `/api/operator-hub/[operatorId]/customer/[customerId]/route.ts` API

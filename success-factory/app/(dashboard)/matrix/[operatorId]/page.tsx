@@ -4715,12 +4715,96 @@ interface EmailsApiResponse {
   }
 }
 
+interface SuppressionResult {
+  email: string
+  type: "bounce" | "block" | "invalid" | "spam"
+  reason?: string
+  created: number
+}
+
 function EmailsTab({ operator }: { operator: OperatorData }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<EmailsApiResponse | null>(null)
   const [filter, setFilter] = useState<"all" | "emails" | "calls" | "meetings" | "notes">("all")
   const [searchQuery, setSearchQuery] = useState("")
+
+  // SendGrid suppression management state
+  const [suppressionEmail, setSuppressionEmail] = useState("")
+  const [suppressionLoading, setSuppressionLoading] = useState(false)
+  const [suppressionResults, setSuppressionResults] = useState<SuppressionResult[]>([])
+  const [suppressionError, setSuppressionError] = useState<string | null>(null)
+  const [removingEmail, setRemovingEmail] = useState<string | null>(null)
+
+  const searchSuppression = async () => {
+    if (!suppressionEmail.trim()) return
+
+    setSuppressionLoading(true)
+    setSuppressionError(null)
+    setSuppressionResults([])
+
+    try {
+      const response = await fetch(`/api/sendgrid/suppressions?email=${encodeURIComponent(suppressionEmail.trim())}`)
+      if (!response.ok) {
+        throw new Error("Failed to search suppressions")
+      }
+      const data = await response.json()
+
+      const results: SuppressionResult[] = []
+
+      // Add bounces
+      if (data.bounces?.length) {
+        data.bounces.forEach((b: { email: string; reason: string; created: number }) => {
+          results.push({ email: b.email, type: "bounce", reason: b.reason, created: b.created })
+        })
+      }
+
+      // Add blocks
+      if (data.blocks?.length) {
+        data.blocks.forEach((b: { email: string; reason: string; created: number }) => {
+          results.push({ email: b.email, type: "block", reason: b.reason, created: b.created })
+        })
+      }
+
+      // Add invalid emails
+      if (data.invalidEmails?.length) {
+        data.invalidEmails.forEach((i: { email: string; reason: string; created: number }) => {
+          results.push({ email: i.email, type: "invalid", reason: i.reason, created: i.created })
+        })
+      }
+
+      // Add spam reports
+      if (data.spamReports?.length) {
+        data.spamReports.forEach((s: { email: string; created: number }) => {
+          results.push({ email: s.email, type: "spam", created: s.created })
+        })
+      }
+
+      setSuppressionResults(results)
+    } catch (err) {
+      setSuppressionError(err instanceof Error ? err.message : "Failed to search")
+    } finally {
+      setSuppressionLoading(false)
+    }
+  }
+
+  const removeSuppression = async (email: string, type: "bounce" | "block" | "invalid" | "spam") => {
+    setRemovingEmail(`${email}-${type}`)
+    try {
+      const response = await fetch(`/api/sendgrid/suppressions?email=${encodeURIComponent(email)}&type=${type}`, {
+        method: "DELETE",
+      })
+      if (!response.ok) {
+        throw new Error("Failed to remove suppression")
+      }
+      // Remove from results
+      setSuppressionResults((prev) => prev.filter((r) => !(r.email === email && r.type === type)))
+    } catch (err) {
+      setSuppressionError(err instanceof Error ? err.message : "Failed to remove")
+    } finally {
+      setRemovingEmail(null)
+    }
+  }
 
   useEffect(() => {
     // Use HubSpot ID for the API call
@@ -5020,6 +5104,135 @@ function EmailsTab({ operator }: { operator: OperatorData }) {
             </p>
           </div>
         )}
+      </div>
+
+      {/* SendGrid Email Deliverability */}
+      <div className="card-sf overflow-hidden">
+        <div className="border-border-default border-b px-4 py-3">
+          <h3 className="text-content-primary font-semibold">Email Deliverability</h3>
+          <p className="text-content-secondary mt-1 text-sm">
+            Check if an email address is on SendGrid suppression lists (bounces, blocks, spam reports)
+          </p>
+        </div>
+
+        <div className="p-4">
+          {/* Search Input */}
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="Enter email address to check..."
+              value={suppressionEmail}
+              onChange={(e) => setSuppressionEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && searchSuppression()}
+              className="input-sf flex-1 py-2"
+            />
+            <button
+              onClick={searchSuppression}
+              disabled={suppressionLoading || !suppressionEmail.trim()}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                suppressionLoading || !suppressionEmail.trim()
+                  ? "cursor-not-allowed bg-bg-tertiary text-content-tertiary"
+                  : "bg-primary-600 hover:bg-primary-700 text-white"
+              )}
+            >
+              {suppressionLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              )}
+              Check
+            </button>
+          </div>
+
+          {/* Error Message */}
+          {suppressionError && (
+            <div className="bg-error-50 dark:bg-error-950/30 border-error-200 dark:border-error-800 mt-3 rounded-lg border p-3">
+              <p className="text-error-700 dark:text-error-400 text-sm">{suppressionError}</p>
+            </div>
+          )}
+
+          {/* Results */}
+          {suppressionResults.length > 0 && (
+            <div className="mt-4 space-y-3">
+              <p className="text-content-secondary text-sm font-medium">
+                Found {suppressionResults.length} suppression{suppressionResults.length !== 1 ? "s" : ""}:
+              </p>
+              <div className="divide-border-default divide-y rounded-lg border">
+                {suppressionResults.map((result) => (
+                  <div
+                    key={`${result.email}-${result.type}`}
+                    className="flex items-center justify-between gap-4 p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "rounded px-2 py-0.5 text-xs font-medium uppercase",
+                            result.type === "bounce"
+                              ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                              : result.type === "block"
+                                ? "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                                : result.type === "spam"
+                                  ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                  : "bg-bg-tertiary text-content-secondary"
+                          )}
+                        >
+                          {result.type}
+                        </span>
+                        <span className="text-content-primary text-sm font-medium">
+                          {result.email}
+                        </span>
+                      </div>
+                      {result.reason && (
+                        <p className="text-content-tertiary mt-1 truncate text-xs">
+                          {result.reason}
+                        </p>
+                      )}
+                      <p className="text-content-tertiary mt-0.5 text-xs">
+                        Added: {new Date(result.created * 1000).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeSuppression(result.email, result.type)}
+                      disabled={removingEmail === `${result.email}-${result.type}`}
+                      className={cn(
+                        "flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                        removingEmail === `${result.email}-${result.type}`
+                          ? "cursor-not-allowed bg-bg-tertiary text-content-tertiary"
+                          : "bg-error-100 text-error-700 hover:bg-error-200 dark:bg-error-900/30 dark:text-error-400 dark:hover:bg-error-900/50"
+                      )}
+                    >
+                      {removingEmail === `${result.email}-${result.type}` ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No results message */}
+          {suppressionResults.length === 0 && suppressionEmail && !suppressionLoading && !suppressionError && (
+            <div className="bg-success-50 dark:bg-success-950/30 mt-4 rounded-lg p-4 text-center">
+              <Check className="text-success-600 dark:text-success-400 mx-auto mb-2 h-8 w-8" />
+              <p className="text-success-700 dark:text-success-400 text-sm font-medium">
+                Email not found on any suppression list
+              </p>
+              <p className="text-success-600 dark:text-success-500 mt-1 text-xs">
+                {suppressionEmail} can receive emails normally
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
