@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { HubSpotActions } from "@/components/hubspot-actions"
+import { useBusinessSegment } from "@/components/business-segment-provider"
 
 interface PipelineSummary {
   totalDeals: number
@@ -167,11 +168,6 @@ interface DealAnalytics {
 
 type Period = "30d" | "90d" | "180d" | "365d" | "all"
 
-interface Pipeline {
-  id: string
-  name: string
-}
-
 function formatCurrency(value: number | null): string {
   if (value === null) return "-"
   return new Intl.NumberFormat("en-US", {
@@ -199,32 +195,17 @@ export default function PipelinePage() {
   const [stageDealsLoading, setStageDealsLoading] = useState(false)
   const [stalledView, setStalledView] = useState<"list" | "stage" | "owner">("list")
   const [lossView, setLossView] = useState<"reasons" | "stage" | "owner" | "trend">("reasons")
-  const [pipelines, setPipelines] = useState<Pipeline[]>([])
-  const [selectedPipeline, setSelectedPipeline] = useState<string>("all")
-
-  useEffect(() => {
-    fetchPipelines()
-  }, [])
+  const { segment } = useBusinessSegment()
 
   useEffect(() => {
     fetchAnalytics()
-  }, [period, selectedPipeline])
-
-  async function fetchPipelines() {
-    try {
-      const res = await fetch("/api/pipelines")
-      const data = await res.json()
-      setPipelines(data.pipelines || [])
-    } catch (error) {
-      console.error("Failed to fetch pipelines:", error)
-    }
-  }
+  }, [period, segment])
 
   async function fetchAnalytics() {
     try {
       setLoading(true)
-      const pipelineParam = selectedPipeline !== "all" ? `&pipelineId=${selectedPipeline}` : ""
-      const res = await fetch(`/api/analytics/deals?period=${period}${pipelineParam}`)
+      const segmentParam = segment !== "all" ? `&pipelineId=${segment}` : ""
+      const res = await fetch(`/api/analytics/deals?period=${period}${segmentParam}`)
       const data = await res.json()
 
       // Transform API response to match UI interface
@@ -437,20 +418,6 @@ export default function PipelinePage() {
           </div>
           <div className="flex items-center gap-3">
             <HubSpotActions entityType="deals" />
-            <select
-              value={selectedPipeline}
-              onChange={(e) => setSelectedPipeline(e.target.value)}
-              className="border-border-default bg-bg-elevated text-content-primary focus:border-primary-500 focus:ring-primary-500/20 h-9 rounded-lg border px-3 text-sm outline-none focus:ring-2"
-            >
-              <option value="all">All Pipelines</option>
-              <option value="moovs">Moovs Only</option>
-              <option value="swoop">Swoop Only</option>
-              {pipelines.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value as Period)}

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/components/auth-provider"
+import { BusinessSegmentProvider } from "@/components/business-segment-provider"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { ServiceWorkerRegister } from "@/components/service-worker-register"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -48,7 +49,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <BusinessSegmentProvider>{children}</BusinessSegmentProvider>
+            </AuthProvider>
             <Toaster
               position="bottom-right"
               toastOptions={{

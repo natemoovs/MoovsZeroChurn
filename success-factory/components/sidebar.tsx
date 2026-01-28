@@ -12,6 +12,7 @@ import {
   CheckSquare,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   UsersRound,
   Zap,
   Settings,
@@ -26,8 +27,11 @@ import {
   RotateCcw,
   GitBranch,
   Swords,
+  Building2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useBusinessSegment, BusinessSegment } from "./business-segment-provider"
+import { useState, useRef, useEffect } from "react"
 
 interface NavItem {
   href: string
@@ -95,8 +99,28 @@ interface SidebarProps {
   onToggleCollapse: () => void
 }
 
+const segmentOptions: { value: BusinessSegment; label: string; color: string }[] = [
+  { value: "all", label: "All Segments", color: "bg-content-tertiary" },
+  { value: "moovs", label: "Moovs", color: "bg-primary-500" },
+  { value: "swoop", label: "Swoop", color: "bg-accent-500" },
+]
+
 export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname()
+  const { segment, setSegment, segmentLabel } = useBusinessSegment()
+  const [segmentDropdownOpen, setSegmentDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setSegmentDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   return (
     <>
@@ -136,6 +160,55 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
           >
             <X className="h-5 w-5" />
           </button>
+        </div>
+
+        {/* Business Segment Selector */}
+        <div className="border-border-default border-b p-3" ref={dropdownRef}>
+          <div className="relative">
+            <button
+              onClick={() => setSegmentDropdownOpen(!segmentDropdownOpen)}
+              className={cn(
+                "bg-bg-secondary hover:bg-bg-tertiary border-border-default flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                collapsed && "justify-center px-2"
+              )}
+            >
+              <Building2 className="h-4 w-4 flex-shrink-0" />
+              {!collapsed && (
+                <>
+                  <span className="text-content-primary flex-1 text-left">{segmentLabel}</span>
+                  <ChevronDown
+                    className={cn(
+                      "text-content-tertiary h-4 w-4 transition-transform",
+                      segmentDropdownOpen && "rotate-180"
+                    )}
+                  />
+                </>
+              )}
+            </button>
+
+            {segmentDropdownOpen && (
+              <div className="bg-bg-elevated border-border-default absolute top-full left-0 z-50 mt-1 w-full min-w-[160px] overflow-hidden rounded-lg border shadow-lg">
+                {segmentOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setSegment(option.value)
+                      setSegmentDropdownOpen(false)
+                    }}
+                    className={cn(
+                      "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors",
+                      segment === option.value
+                        ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                        : "text-content-secondary hover:bg-bg-secondary hover:text-content-primary"
+                    )}
+                  >
+                    <span className={cn("h-2 w-2 rounded-full", option.color)} />
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Navigation */}
