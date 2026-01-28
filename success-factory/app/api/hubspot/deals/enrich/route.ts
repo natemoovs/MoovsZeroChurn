@@ -21,6 +21,7 @@ const BASE_URL = "https://api.hubapi.com"
 
 interface EnrichRequest {
   dealIds?: string[] // HubSpot deal IDs - if not provided, sync all
+  pipelineId?: string // Filter by pipeline: specific ID, "moovs", "swoop", or undefined for all
   includeMultiThreading?: boolean
   includeCompetitor?: boolean
   includeRiskFlags?: boolean
@@ -95,14 +96,42 @@ export async function POST(request: NextRequest) {
     const body: EnrichRequest = await request.json()
     const {
       dealIds,
+      pipelineId,
       includeMultiThreading = true,
       includeCompetitor = true,
       includeRiskFlags = true,
     } = body
 
+    // Build pipeline filter
+    let pipelineFilter: { pipelineId?: string | { in: string[] } } = {}
+    if (pipelineId === "moovs") {
+      // Get all Moovs pipeline IDs
+      const moovsPipelines = await prisma.pipeline.findMany({
+        where: { name: { contains: "Moovs", mode: "insensitive" } },
+        select: { id: true },
+      })
+      if (moovsPipelines.length > 0) {
+        pipelineFilter = { pipelineId: { in: moovsPipelines.map((p) => p.id) } }
+      }
+    } else if (pipelineId === "swoop") {
+      // Get all Swoop pipeline IDs
+      const swoopPipelines = await prisma.pipeline.findMany({
+        where: { name: { contains: "Swoop", mode: "insensitive" } },
+        select: { id: true },
+      })
+      if (swoopPipelines.length > 0) {
+        pipelineFilter = { pipelineId: { in: swoopPipelines.map((p) => p.id) } }
+      }
+    } else if (pipelineId && pipelineId !== "all") {
+      pipelineFilter = { pipelineId }
+    }
+
     // Get deals from our database
     const deals = await prisma.deal.findMany({
-      where: dealIds?.length ? { hubspotId: { in: dealIds } } : { isClosed: false },
+      where: {
+        ...(dealIds?.length ? { hubspotId: { in: dealIds } } : { isClosed: false }),
+        ...pipelineFilter,
+      },
       select: {
         id: true,
         hubspotId: true,

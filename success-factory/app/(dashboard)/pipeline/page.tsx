@@ -13,6 +13,9 @@ import {
   RefreshCw,
   BarChart3,
   Filter,
+  X,
+  ExternalLink,
+  Building2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { HubSpotActions } from "@/components/hubspot-actions"
@@ -69,6 +72,17 @@ interface LossReason {
   percentage: number
 }
 
+interface StageDeal {
+  id: string
+  hubspotId: string
+  name: string
+  companyName: string | null
+  amount: number | null
+  ownerName: string | null
+  daysInCurrentStage: number | null
+  createDate: string | null
+}
+
 interface DealAnalytics {
   period: string
   summary: PipelineSummary
@@ -102,6 +116,9 @@ export default function PipelinePage() {
   const [syncing, setSyncing] = useState(false)
   const [period, setPeriod] = useState<Period>("90d")
   const [activeTab, setActiveTab] = useState<"funnel" | "stalled" | "reps" | "losses">("funnel")
+  const [selectedStage, setSelectedStage] = useState<StageData | null>(null)
+  const [stageDeals, setStageDeals] = useState<StageDeal[]>([])
+  const [stageDealsLoading, setStageDealsLoading] = useState(false)
 
   useEffect(() => {
     fetchAnalytics()
@@ -227,6 +244,26 @@ export default function PipelinePage() {
     } finally {
       setSyncing(false)
     }
+  }
+
+  async function fetchStageDeals(stage: StageData) {
+    setSelectedStage(stage)
+    setStageDealsLoading(true)
+    setStageDeals([])
+    try {
+      const res = await fetch(`/api/analytics/deals/by-stage?stageId=${stage.id}&period=${period}`)
+      const data = await res.json()
+      setStageDeals(data.deals || [])
+    } catch (error) {
+      console.error("Failed to fetch stage deals:", error)
+    } finally {
+      setStageDealsLoading(false)
+    }
+  }
+
+  function closeStageModal() {
+    setSelectedStage(null)
+    setStageDeals([])
   }
 
   const periodOptions: { value: Period; label: string }[] = [
@@ -394,10 +431,16 @@ export default function PipelinePage() {
                       const widthPercent = maxDeals > 0 ? (stage.dealCount / maxDeals) * 100 : 0
 
                       return (
-                        <div key={stage.id} className="group">
+                        <button
+                          key={stage.id}
+                          onClick={() => fetchStageDeals(stage)}
+                          className="group block w-full text-left"
+                        >
                           <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="text-content-primary font-medium">{stage.name}</span>
+                              <span className="text-content-primary group-hover:text-primary-600 dark:group-hover:text-primary-400 font-medium transition-colors">
+                                {stage.name}
+                              </span>
                               <span className="bg-bg-secondary text-content-tertiary rounded px-1.5 py-0.5 text-xs">
                                 {stage.dealCount} deals
                               </span>
@@ -437,7 +480,7 @@ export default function PipelinePage() {
                               )}
                             </div>
                           </div>
-                        </div>
+                        </button>
                       )
                     })}
                 </div>
@@ -644,6 +687,106 @@ export default function PipelinePage() {
           </>
         ) : null}
       </div>
+
+      {/* Stage Deals Modal */}
+      {selectedStage && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 pt-10 pb-10">
+          <div className="bg-bg-primary border-border-default m-4 w-full max-w-3xl rounded-xl border shadow-xl">
+            {/* Header */}
+            <div className="border-border-default flex items-center justify-between border-b p-4">
+              <div>
+                <h3 className="text-content-primary text-lg font-semibold">{selectedStage.name}</h3>
+                <p className="text-content-secondary text-sm">
+                  {selectedStage.dealCount} deals &middot; {formatCompact(selectedStage.totalValue)}{" "}
+                  total value
+                </p>
+              </div>
+              <button
+                onClick={closeStageModal}
+                className="text-content-tertiary hover:text-content-primary"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="max-h-[60vh] overflow-y-auto">
+              {stageDealsLoading ? (
+                <div className="space-y-3 p-4">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="shimmer h-16 rounded-lg" />
+                  ))}
+                </div>
+              ) : stageDeals.length === 0 ? (
+                <div className="p-8 text-center">
+                  <p className="text-content-secondary">No deals found in this stage</p>
+                </div>
+              ) : (
+                <div className="divide-border-default divide-y">
+                  {stageDeals.map((deal) => (
+                    <div
+                      key={deal.id}
+                      className="hover:bg-bg-secondary flex items-center justify-between gap-4 p-4 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-content-primary truncate font-medium">{deal.name}</h4>
+                          {deal.hubspotId && (
+                            <a
+                              href={`https://app.hubspot.com/contacts/deals/${deal.hubspotId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-content-tertiary hover:text-primary-500 flex-shrink-0"
+                              title="Open in HubSpot"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                        </div>
+                        <div className="text-content-secondary mt-1 flex items-center gap-3 text-sm">
+                          {deal.companyName && (
+                            <span className="flex items-center gap-1">
+                              <Building2 className="h-3.5 w-3.5" />
+                              {deal.companyName}
+                            </span>
+                          )}
+                          {deal.ownerName && <span>{deal.ownerName}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-right">
+                        <div>
+                          <p className="text-content-primary font-medium">
+                            {formatCurrency(deal.amount)}
+                          </p>
+                          {deal.daysInCurrentStage !== null && (
+                            <p
+                              className={cn(
+                                "text-xs",
+                                deal.daysInCurrentStage > 14
+                                  ? "text-warning-600 dark:text-warning-400"
+                                  : "text-content-tertiary"
+                              )}
+                            >
+                              {deal.daysInCurrentStage}d in stage
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-border-default flex justify-end border-t p-4">
+              <button onClick={closeStageModal} className="btn-secondary">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   )
 }

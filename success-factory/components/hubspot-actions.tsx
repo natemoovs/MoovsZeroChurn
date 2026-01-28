@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Upload, ListPlus, RefreshCw, CheckCircle, AlertCircle, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -16,12 +16,40 @@ interface ActionResult {
   details?: string
 }
 
+interface Pipeline {
+  id: string
+  name: string
+}
+
 export function HubSpotActions({ selectedIds = [], entityType, onComplete }: HubSpotActionsProps) {
   const [showModal, setShowModal] = useState(false)
   const [action, setAction] = useState<"list" | "sync" | "enrich" | null>(null)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ActionResult | null>(null)
   const [listName, setListName] = useState("")
+  const [pipelines, setPipelines] = useState<Pipeline[]>([])
+  const [selectedPipeline, setSelectedPipeline] = useState<string>("all")
+  const [pipelinesLoading, setPipelinesLoading] = useState(false)
+
+  // Fetch pipelines when modal opens for deals
+  useEffect(() => {
+    if (showModal && entityType === "deals" && pipelines.length === 0) {
+      fetchPipelines()
+    }
+  }, [showModal, entityType, pipelines.length])
+
+  async function fetchPipelines() {
+    setPipelinesLoading(true)
+    try {
+      const res = await fetch("/api/pipelines")
+      const data = await res.json()
+      setPipelines(data.pipelines || [])
+    } catch (error) {
+      console.error("Failed to fetch pipelines:", error)
+    } finally {
+      setPipelinesLoading(false)
+    }
+  }
 
   const handleAction = async () => {
     if (!action) return
@@ -87,6 +115,7 @@ export function HubSpotActions({ selectedIds = [], entityType, onComplete }: Hub
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               dealIds: selectedIds.length > 0 ? selectedIds : undefined,
+              pipelineId: selectedPipeline !== "all" ? selectedPipeline : undefined,
             }),
           })
           data = await response.json()
@@ -118,6 +147,7 @@ export function HubSpotActions({ selectedIds = [], entityType, onComplete }: Hub
     setAction(null)
     setResult(null)
     setListName("")
+    setSelectedPipeline("all")
   }
 
   return (
@@ -267,10 +297,28 @@ export function HubSpotActions({ selectedIds = [], entityType, onComplete }: Hub
                     <div className="space-y-4">
                       <p className="text-content-secondary text-sm">
                         Push multi-threading scores, competitor info, and risk flags to HubSpot
-                        deals for{" "}
-                        {selectedIds.length > 0 ? `${selectedIds.length} selected` : "all open"}{" "}
                         deals.
                       </p>
+                      <div>
+                        <label className="text-content-secondary mb-1 block text-sm">
+                          Pipeline Filter
+                        </label>
+                        <select
+                          value={selectedPipeline}
+                          onChange={(e) => setSelectedPipeline(e.target.value)}
+                          disabled={pipelinesLoading}
+                          className="border-border-default bg-bg-elevated text-content-primary focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+                        >
+                          <option value="all">All Pipelines</option>
+                          <option value="moovs">Moovs Only</option>
+                          <option value="swoop">Swoop Only</option>
+                          {pipelines.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                       <div className="bg-bg-secondary rounded-lg p-3 text-sm">
                         <p className="text-content-primary font-medium">Properties enriched:</p>
                         <ul className="text-content-secondary mt-2 list-inside list-disc space-y-1">
