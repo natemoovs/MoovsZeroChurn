@@ -61,33 +61,74 @@ export async function GET(request: NextRequest) {
     const days = periodDays[period] || 90
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
-    // Build pipeline filter (supports "moovs", "swoop", specific ID, or "all")
+    // Build pipeline filter (supports "moovs", "swoop", tier filters, specific ID, or "all")
+    const tierParam = searchParams.get("tier") // smb, mid-market, enterprise, shuttle
     let pipelineFilter: { pipelineId?: string | { in: string[] } } = {}
     let stageFilter: { pipelineId?: string | { in: string[] } } = {}
 
+    // First get base pipelines by segment (moovs/swoop)
+    let basePipelines: { id: string; name: string }[] | null = null
+
     if (pipelineIdParam === "moovs") {
-      const moovsPipelines = await prisma.pipeline.findMany({
+      basePipelines = await prisma.pipeline.findMany({
         where: { name: { contains: "Moovs", mode: "insensitive" } },
-        select: { id: true },
+        select: { id: true, name: true },
       })
-      if (moovsPipelines.length > 0) {
-        const ids = moovsPipelines.map((p) => p.id)
-        pipelineFilter = { pipelineId: { in: ids } }
-        stageFilter = { pipelineId: { in: ids } }
-      }
     } else if (pipelineIdParam === "swoop") {
-      const swoopPipelines = await prisma.pipeline.findMany({
+      basePipelines = await prisma.pipeline.findMany({
         where: { name: { contains: "Swoop", mode: "insensitive" } },
-        select: { id: true },
+        select: { id: true, name: true },
       })
-      if (swoopPipelines.length > 0) {
-        const ids = swoopPipelines.map((p) => p.id)
-        pipelineFilter = { pipelineId: { in: ids } }
-        stageFilter = { pipelineId: { in: ids } }
-      }
     } else if (pipelineIdParam && pipelineIdParam !== "all") {
+      // Specific pipeline ID
       pipelineFilter = { pipelineId: pipelineIdParam }
       stageFilter = { pipelineId: pipelineIdParam }
+    }
+
+    // Apply tier filter on top of segment filter
+    if (basePipelines || (!pipelineIdParam || pipelineIdParam === "all")) {
+      // If no segment filter, get all pipelines for tier filtering
+      if (!basePipelines) {
+        basePipelines = await prisma.pipeline.findMany({
+          select: { id: true, name: true },
+        })
+      }
+
+      if (tierParam && tierParam !== "all") {
+        let filteredPipelines: typeof basePipelines = []
+
+        if (tierParam === "smb") {
+          filteredPipelines = basePipelines.filter((p) =>
+            p.name.toLowerCase().includes("smb")
+          )
+        } else if (tierParam === "mid-market") {
+          filteredPipelines = basePipelines.filter((p) =>
+            p.name.toLowerCase().includes("mid-market") ||
+            p.name.toLowerCase().includes("mid market")
+          )
+        } else if (tierParam === "enterprise") {
+          // Enterprise but NOT Shuttle
+          filteredPipelines = basePipelines.filter((p) =>
+            p.name.toLowerCase().includes("enterprise") &&
+            !p.name.toLowerCase().includes("shuttle")
+          )
+        } else if (tierParam === "shuttle") {
+          filteredPipelines = basePipelines.filter((p) =>
+            p.name.toLowerCase().includes("shuttle")
+          )
+        }
+
+        if (filteredPipelines.length > 0) {
+          const ids = filteredPipelines.map((p) => p.id)
+          pipelineFilter = { pipelineId: { in: ids } }
+          stageFilter = { pipelineId: { in: ids } }
+        }
+      } else if (basePipelines.length > 0 && (pipelineIdParam === "moovs" || pipelineIdParam === "swoop")) {
+        // Apply segment filter without tier
+        const ids = basePipelines.map((p) => p.id)
+        pipelineFilter = { pipelineId: { in: ids } }
+        stageFilter = { pipelineId: { in: ids } }
+      }
     }
 
     // Build filters
