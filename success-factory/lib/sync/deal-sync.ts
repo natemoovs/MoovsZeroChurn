@@ -515,6 +515,26 @@ async function syncDeal(
     })
   }
 
+  // Always recalculate daysInCurrentStage from last stage history entry
+  // (for existing deals that didn't change stage)
+  if (!stageChanged) {
+    const lastStageEntry = await prisma.dealStageHistory.findFirst({
+      where: { dealId: deal.id },
+      orderBy: { changedAt: "desc" },
+    })
+
+    if (lastStageEntry) {
+      const daysInCurrentStage = Math.floor(
+        (Date.now() - lastStageEntry.changedAt.getTime()) / (1000 * 60 * 60 * 24)
+      )
+
+      await prisma.deal.update({
+        where: { id: deal.id },
+        data: { daysInCurrentStage },
+      })
+    }
+  }
+
   return false
 }
 
