@@ -59,8 +59,13 @@ export function BusinessSegmentProvider({ children }: { children: ReactNode }) {
 
 export function useBusinessSegment() {
   const context = useContext(BusinessSegmentContext)
+  // Return default values if used outside provider (e.g., during static generation)
   if (context === undefined) {
-    throw new Error("useBusinessSegment must be used within a BusinessSegmentProvider")
+    return {
+      segment: "all" as BusinessSegment,
+      setSegment: () => {},
+      segmentLabel: "All Segments",
+    }
   }
   return context
 }
