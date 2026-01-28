@@ -572,6 +572,267 @@ model ExpansionOpportunity {
 }
 
 // ============================================================================
+// Sales Pipeline & Deal Tracking
+// ============================================================================
+
+model Pipeline {
+  id          String   @id @default(cuid())
+  hubspotId   String   @unique // HubSpot pipeline ID
+  name        String
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stages      PipelineStage[]
+  deals       Deal[]
+
+  @@index([hubspotId])
+}
+
+model PipelineStage {
+  id           String   @id @default(cuid())
+  hubspotId    String   @unique // HubSpot stage ID
+  pipelineId   String
+  pipeline     Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  label        String   // Display name
+  displayOrder Int      @default(0)
+  probability  Float?   // Win probability at this stage (0-1)
+  isClosed     Boolean  @default(false) // Is this a closed stage (won/lost)
+  isWon        Boolean  @default(false) // If closed, is it won?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  deals        Deal[]
+  stageHistoryFrom DealStageHistory[] @relation("FromStage")
+  stageHistoryTo   DealStageHistory[] @relation("ToStage")
+
+  @@index([pipelineId])
+  @@index([hubspotId])
+}
+
+model Deal {
+  id              String    @id @default(cuid())
+  hubspotId       String    @unique // HubSpot deal ID
+  name            String
+  amount          Float?    // Deal value
+
+  // Pipeline position
+  pipelineId      String?
+  pipeline        Pipeline? @relation(fields: [pipelineId], references: [id])
+  stageId         String?
+  stage           PipelineStage? @relation(fields: [stageId], references: [id])
+  stageName       String?   // Denormalized for quick access
+
+  // Dates
+  createDate      DateTime?
+  closeDate       DateTime? // Expected or actual close date
+  actualCloseDate DateTime? // When it actually closed
+
+  // Ownership
+  ownerId         String?   // HubSpot owner ID
+  ownerName       String?
+  ownerEmail      String?
+
+  // Company association
+  companyId       String?   // FK to HubSpotCompany.id
+  companyHubspotId String?  // HubSpot company ID for reference
+  companyName     String?
+
+  // Deal properties
+  dealType        String?   // new_business, expansion, renewal
+  priority        String?   // high, medium, low
+  source          String?   // Lead source
+
+  // Competitive intel
+  competitorId    String?   // FK to Competitor if competitive deal
+  competitor      Competitor? @relation(fields: [competitorId], references: [id])
+  competitorNames String[]  // Multiple competitors in deal
+
+  // Outcomes
+  isClosed        Boolean   @default(false)
+  isWon           Boolean   @default(false)
+  lostReason      String?   // If lost, categorized reason
+  lostReasonDetail String?  // Detailed explanation
+
+  // Velocity metrics (computed)
+  daysInPipeline  Int?      // Total days from create to now/close
+  daysInCurrentStage Int?   // Days in current stage
+  stageCount      Int       @default(0) // Number of stage changes
+
+  // Multi-threading (computed from contacts)
+  contactCount    Int       @default(0) // Number of contacts engaged
+  hasChampion     Boolean   @default(false)
+  hasDecisionMaker Boolean  @default(false)
+  hasExecutiveSponsor Boolean @default(false)
+  multiThreadingScore Int?  // 0-100 score
+
+  // Metadata
+  hubspotCreatedAt DateTime?
+  hubspotUpdatedAt DateTime?
+  lastSyncedAt    DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  stageHistory    DealStageHistory[]
+  contacts        DealContact[]
+
+  @@index([hubspotId])
+  @@index([pipelineId])
+  @@index([stageId])
+  @@index([ownerId])
+  @@index([companyId])
+  @@index([isClosed])
+  @@index([isWon])
+  @@index([closeDate])
+  @@index([createDate])
+  @@index([competitorId])
+}
+
+model DealStageHistory {
+  id            String   @id @default(cuid())
+  dealId        String
+  deal          Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  fromStageId   String?
+  fromStage     PipelineStage? @relation(fields: [fromStageId], references: [id], name: "FromStage")
+  fromStageName String?
+
+  toStageId     String
+  toStage       PipelineStage  @relation(fields: [toStageId], references: [id], name: "ToStage")
+  toStageName   String
+
+  daysInPreviousStage Int? // How long was it in the previous stage
+  changedAt     DateTime @default(now())
+  source        String   @default("sync") // sync, manual, api
+
+  @@index([dealId])
+  @@index([toStageId])
+  @@index([fromStageId])
+  @@index([changedAt])
+}
+
+model DealContact {
+  id              String   @id @default(cuid())
+  dealId          String
+  deal            Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  hubspotContactId String?
+  name            String
+  email           String?
+  title           String?
+  role            String?  // champion, decision_maker, influencer, user, blocker, executive_sponsor
+  engagement      String   @default("active") // active, passive, disengaged
+  lastContactAt   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([dealId, email])
+  @@index([dealId])
+  @@index([role])
+}
+
+// ============================================================================
+// Competitive Intelligence
+// ============================================================================
+
+model Competitor {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  website         String?
+  description     String?
+  strengths       String[] // What they're good at
+  weaknesses      String[] // Where we beat them
+  battlecardUrl   String?  // Link to internal battlecard
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  deals           Deal[]
+  intel           CompetitiveIntel[]
+
+  @@index([name])
+}
+
+model CompetitiveIntel {
+  id              String   @id @default(cuid())
+  competitorId    String
+  competitor      Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  // Win/Loss tracking
+  dealId          String?  // Optional link to deal
+  companyId       String?  // HubSpot company ID
+  companyName     String?
+  outcome         String   // won, lost, no_decision
+  dealAmount      Float?
+
+  // Intel details
+  intelType       String   // win_loss, feature_comparison, pricing, objection
+  title           String
+  details         String?
+
+  // What happened
+  winReasons      String[] // Why we won (if won)
+  lossReasons     String[] // Why we lost (if lost)
+  featureGaps     String[] // Features they had that we didn't
+  pricingNotes    String?  // Pricing comparison notes
+
+  // Source
+  source          String?  // csm_reported, customer_feedback, exit_interview
+  reportedBy      String?  // Email of person who reported
+  reportedAt      DateTime @default(now())
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([competitorId])
+  @@index([outcome])
+  @@index([companyId])
+}
+
+// ============================================================================
+// Expansion Propensity Scoring
+// ============================================================================
+
+model ExpansionPropensityScore {
+  id              String   @id @default(cuid())
+  companyId       String   // HubSpot company ID
+  companyName     String
+
+  // Overall score
+  propensityScore Int      // 0-100 likelihood to expand
+  propensityLevel String   // high, medium, low
+
+  // Component scores (0-100 each)
+  usageScore      Int?     // Based on usage growth and velocity
+  engagementScore Int?     // Based on engagement patterns
+  healthScore     Int?     // Based on customer health
+  tenureScore     Int?     // Based on customer tenure and loyalty
+  fitScore        Int?     // Based on ICP fit and segment
+
+  // Signals that drove the score
+  positiveSignals String[] // Evidence for expansion
+  negativeSignals String[] // Factors reducing likelihood
+
+  // Recommendations
+  recommendedAction String? // What to do next
+  recommendedProducts String[] // Which products/add-ons to pitch
+  estimatedValue  Float?   // Estimated expansion MRR
+
+  // Timing
+  optimalTiming   String?  // When to reach out
+  urgency         String   @default("normal") // urgent, normal, low
+
+  calculatedAt    DateTime @default(now())
+  expiresAt       DateTime // Score validity (recalculate after)
+
+  @@unique([companyId])
+  @@index([companyId])
+  @@index([propensityScore])
+  @@index([propensityLevel])
+  @@index([calculatedAt])
+}
+
+// ============================================================================
 // Cohort - Track customer cohorts for analysis
 // ============================================================================
 
