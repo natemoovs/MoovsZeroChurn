@@ -64,12 +64,31 @@ Copy-paste these prompts into N8N AI to create each workflow.
 
 ---
 
+## ⚠️ CRITICAL: Webhook Response Configuration
+
+After creating each workflow, you MUST configure the Webhook Trigger node:
+
+1. Click on the **Webhook Trigger** node
+2. Find the **Respond** setting (under "Options" or main settings)
+3. Set it to: **"When Last Node Finishes"**
+4. Delete any standalone "Respond to Webhook" nodes that are not connected
+
+This ensures the webhook returns the output from the last executed node (your Snowflake query results).
+
+**Alternative approach:** If you prefer using a "Respond to Webhook" node:
+
+- Set Webhook Trigger > Respond to: **"Using 'Respond to Webhook' Node"**
+- Make sure every branch in your Switch node ends with a connected "Respond to Webhook" node
+
+---
+
 ### Workflow 1: Operator Search
 
 ```
 Create a workflow that:
 
 1. Triggers on webhook: POST to /snowflake/operator-search
+   - Set Respond to: "When Last Node Finishes"
 
 2. Expects body:
    - action (string, required): 'search' | 'expanded'
@@ -116,9 +135,9 @@ Create a workflow that:
 
      Return: operator_id, company_name, stripe_account_id, mrr, match_type, match_field, match_value
 
-5. Return JSON array wrapped in { success: true, data: [...] }
+5. Each branch should end with a "Set" node that formats: { success: true, data: [...] }
 
-Use Webhook Trigger, IF node for validation, Switch node, multiple Snowflake nodes, and Respond to Webhook.
+Use Webhook Trigger (Respond: When Last Node Finishes), IF node for validation, Switch node, Snowflake nodes, and Set node for response formatting.
 ```
 
 ---
@@ -129,6 +148,7 @@ Use Webhook Trigger, IF node for validation, Switch node, multiple Snowflake nod
 Create a workflow that:
 
 1. Triggers on webhook: POST to /snowflake/operator-data
+   - Set Respond to: "When Last Node Finishes"
 
 2. Expects body:
    - action (string, required): 'details' | 'core-info' | 'settings' | 'risk-details' | 'risk-overview'
@@ -181,9 +201,9 @@ Create a workflow that:
      WHERE OPERATOR_ID = {{operatorId}}
      GROUP BY OPERATOR_ID
 
-5. Return single object for all cases: { success: true, data: {...} }
+5. Each branch should end with a "Set" node that formats: { success: true, data: {...} }
 
-Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
+Use Webhook Trigger (Respond: When Last Node Finishes), Switch node, Snowflake nodes, and Set node for response formatting.
 ```
 
 ---
@@ -194,6 +214,7 @@ Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
 Create a workflow that:
 
 1. Triggers on webhook: POST to /snowflake/financial
+   - Set Respond to: "When Last Node Finishes"
 
 2. Expects body:
    - action (string, required): 'charges' | 'monthly-summary' | 'reservations' | 'customer-charges' | 'customer-summary' | 'bank-accounts' | 'bank-transactions'
@@ -239,9 +260,9 @@ Create a workflow that:
      SELECT from SWOOP.STRIPE_FINANCIAL_CONNECTIONS_TRANSACTION
      WHERE OPERATOR_ID = {{operatorId}}
 
-5. Return { success: true, data: [...] } for array results
+5. Each branch should end with a "Set" node that formats: { success: true, data: [...] }
 
-Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
+Use Webhook Trigger (Respond: When Last Node Finishes), Switch node, Snowflake nodes, and Set node for response formatting.
 ```
 
 ---
@@ -252,6 +273,7 @@ Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
 Create a workflow that:
 
 1. Triggers on webhook: POST to /snowflake/risk
+   - Set Respond to: "When Last Node Finishes"
 
 2. Expects body:
    - action (string, required): 'disputes' | 'disputes-summary' | 'failed-invoices' | 'update-risk'
@@ -290,9 +312,9 @@ Create a workflow that:
      - SET RISK_SCORE = {{value}} (if field = 'risk_score')
      WHERE OPERATOR_ID = {{operatorId}}
 
-5. Return appropriate response format
+5. Each branch should end with a "Set" node that formats the response appropriately
 
-Use Webhook Trigger, Switch node, Snowflake nodes (read and write), and Respond to Webhook.
+Use Webhook Trigger (Respond: When Last Node Finishes), Switch node, Snowflake nodes (read and write), and Set node for response formatting.
 ```
 
 ---
@@ -303,6 +325,7 @@ Use Webhook Trigger, Switch node, Snowflake nodes (read and write), and Respond 
 Create a workflow that:
 
 1. Triggers on webhook: POST to /snowflake/team
+   - Set Respond to: "When Last Node Finishes"
 
 2. Expects body:
    - action (string, required): 'members' | 'permissions' | 'add-member' | 'update-role' | 'remove-member'
@@ -345,9 +368,9 @@ Create a workflow that:
      SET REMOVED_AT = CURRENT_TIMESTAMP(), UPDATED_AT = CURRENT_TIMESTAMP()
      WHERE USER_ID = {{userId}} AND OPERATOR_ID = {{operatorId}} AND REMOVED_AT IS NULL
 
-5. Return { success: true, data: [...] } or { success: true, userId: ... }
+5. Each branch should end with a "Set" node that formats: { success: true, data: [...] } or { success: true, userId: ... }
 
-Use Webhook Trigger, Switch node, Code node (for UUID), Snowflake nodes, and Respond to Webhook.
+Use Webhook Trigger (Respond: When Last Node Finishes), Switch node, Code node (for UUID), Snowflake nodes, and Set node for response formatting.
 ```
 
 ---
@@ -358,6 +381,7 @@ Use Webhook Trigger, Switch node, Code node (for UUID), Snowflake nodes, and Res
 Create a workflow that:
 
 1. Triggers on webhook: POST to /snowflake/fleet
+   - Set Respond to: "When Last Node Finishes"
 
 2. Expects body:
    - action (string, required): 'drivers' | 'driver-performance' | 'driver-app-users' | 'vehicles' | 'vehicle-utilization'
@@ -408,9 +432,9 @@ Create a workflow that:
    Case 'vehicle-utilization':
      Aggregate trips per vehicle with utilization metrics
 
-5. Return { success: true, data: [...] }
+5. Each branch should end with a "Set" node that formats: { success: true, data: [...] }
 
-Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
+Use Webhook Trigger (Respond: When Last Node Finishes), Switch node, Snowflake nodes, and Set node for response formatting.
 ```
 
 ---
@@ -421,6 +445,7 @@ Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
 Create a workflow that:
 
 1. Triggers on webhook: POST to /snowflake/bookings
+   - Set Respond to: "When Last Node Finishes"
 
 2. Expects body:
    - action (string, required): 'trips' | 'quotes' | 'quotes-summary' | 'request-analytics'
@@ -471,9 +496,9 @@ Create a workflow that:
      GROUP BY DATE_TRUNC('month', created_at)
      ORDER BY month DESC
 
-5. Return { success: true, data: [...] }
+5. Each branch should end with a "Set" node that formats: { success: true, data: [...] }
 
-Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
+Use Webhook Trigger (Respond: When Last Node Finishes), Switch node, Snowflake nodes, and Set node for response formatting.
 ```
 
 ---
@@ -484,6 +509,7 @@ Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
 Create a workflow that:
 
 1. Triggers on webhook: POST to /snowflake/platform
+   - Set Respond to: "When Last Node Finishes"
 
 2. Expects body:
    - action (string, required): 'contacts' | 'email-log' | 'promo-codes' | 'price-zones' | 'rules' | 'feedback'
@@ -530,9 +556,9 @@ Create a workflow that:
      WHERE f.OPERATOR_ID = {{operatorId}}
      ORDER BY f.created_at DESC
 
-5. Return { success: true, data: [...] }
+5. Each branch should end with a "Set" node that formats: { success: true, data: [...] }
 
-Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
+Use Webhook Trigger (Respond: When Last Node Finishes), Switch node, Snowflake nodes, and Set node for response formatting.
 ```
 
 ---
@@ -543,6 +569,7 @@ Use Webhook Trigger, Switch node, Snowflake nodes, and Respond to Webhook.
 Create a workflow that:
 
 1. Triggers on webhook: POST to /snowflake/subscriptions
+   - Set Respond to: "When Last Node Finishes"
 
 2. Expects body:
    - action (string, required): 'log' | 'add-log' | 'remove-log' | 'update-plan' | 'top-operators' | 'inactive-accounts'
@@ -600,9 +627,9 @@ Create a workflow that:
      WHERE DA_DAYS_SINCE_LAST_ASSIGNMENT > {{daysSinceLastActivity}}
      ORDER BY mrr DESC NULLS LAST LIMIT {{limit}}
 
-5. Return appropriate response format
+5. Each branch should end with a "Set" node that formats the response appropriately
 
-Use Webhook Trigger, Switch node, Code node (for UUID), Snowflake nodes, and Respond to Webhook.
+Use Webhook Trigger (Respond: When Last Node Finishes), Switch node, Code node (for UUID), Snowflake nodes, and Set node for response formatting.
 ```
 
 ---
