@@ -46,7 +46,7 @@ interface LossReasonGroup {
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const pipelineId = searchParams.get("pipeline")
+    const pipelineIdParam = searchParams.get("pipeline") || searchParams.get("pipelineId")
     const ownerId = searchParams.get("owner")
     const period = searchParams.get("period") || "90d"
 
@@ -61,16 +61,45 @@ export async function GET(request: NextRequest) {
     const days = periodDays[period] || 90
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
+    // Build pipeline filter (supports "moovs", "swoop", specific ID, or "all")
+    let pipelineFilter: { pipelineId?: string | { in: string[] } } = {}
+    let stageFilter: { pipelineId?: string | { in: string[] } } = {}
+
+    if (pipelineIdParam === "moovs") {
+      const moovsPipelines = await prisma.pipeline.findMany({
+        where: { name: { contains: "Moovs", mode: "insensitive" } },
+        select: { id: true },
+      })
+      if (moovsPipelines.length > 0) {
+        const ids = moovsPipelines.map((p) => p.id)
+        pipelineFilter = { pipelineId: { in: ids } }
+        stageFilter = { pipelineId: { in: ids } }
+      }
+    } else if (pipelineIdParam === "swoop") {
+      const swoopPipelines = await prisma.pipeline.findMany({
+        where: { name: { contains: "Swoop", mode: "insensitive" } },
+        select: { id: true },
+      })
+      if (swoopPipelines.length > 0) {
+        const ids = swoopPipelines.map((p) => p.id)
+        pipelineFilter = { pipelineId: { in: ids } }
+        stageFilter = { pipelineId: { in: ids } }
+      }
+    } else if (pipelineIdParam && pipelineIdParam !== "all") {
+      pipelineFilter = { pipelineId: pipelineIdParam }
+      stageFilter = { pipelineId: pipelineIdParam }
+    }
+
     // Build filters
     const dealFilters: Record<string, unknown> = {
       createDate: { gte: startDate },
+      ...pipelineFilter,
     }
-    if (pipelineId) dealFilters.pipelineId = pipelineId
     if (ownerId) dealFilters.ownerId = ownerId
 
     // Get pipeline stages for ordering
     const stages = await prisma.pipelineStage.findMany({
-      where: pipelineId ? { pipelineId } : undefined,
+      where: stageFilter.pipelineId ? stageFilter : undefined,
       orderBy: { displayOrder: "asc" },
       include: { pipeline: true },
     })
@@ -91,7 +120,7 @@ export async function GET(request: NextRequest) {
     const stageHistory = await prisma.dealStageHistory.findMany({
       where: {
         changedAt: { gte: startDate },
-        deal: pipelineId ? { pipelineId } : undefined,
+        deal: pipelineFilter.pipelineId ? pipelineFilter : undefined,
       },
       include: {
         deal: { select: { isWon: true, isClosed: true, amount: true } },

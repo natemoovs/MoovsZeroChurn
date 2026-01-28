@@ -94,6 +94,11 @@ interface DealAnalytics {
 
 type Period = "30d" | "90d" | "180d" | "365d" | "all"
 
+interface Pipeline {
+  id: string
+  name: string
+}
+
 function formatCurrency(value: number | null): string {
   if (value === null) return "-"
   return new Intl.NumberFormat("en-US", {
@@ -119,15 +124,32 @@ export default function PipelinePage() {
   const [selectedStage, setSelectedStage] = useState<StageData | null>(null)
   const [stageDeals, setStageDeals] = useState<StageDeal[]>([])
   const [stageDealsLoading, setStageDealsLoading] = useState(false)
+  const [pipelines, setPipelines] = useState<Pipeline[]>([])
+  const [selectedPipeline, setSelectedPipeline] = useState<string>("all")
+
+  useEffect(() => {
+    fetchPipelines()
+  }, [])
 
   useEffect(() => {
     fetchAnalytics()
-  }, [period])
+  }, [period, selectedPipeline])
+
+  async function fetchPipelines() {
+    try {
+      const res = await fetch("/api/pipelines")
+      const data = await res.json()
+      setPipelines(data.pipelines || [])
+    } catch (error) {
+      console.error("Failed to fetch pipelines:", error)
+    }
+  }
 
   async function fetchAnalytics() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/analytics/deals?period=${period}`)
+      const pipelineParam = selectedPipeline !== "all" ? `&pipelineId=${selectedPipeline}` : ""
+      const res = await fetch(`/api/analytics/deals?period=${period}${pipelineParam}`)
       const data = await res.json()
 
       // Transform API response to match UI interface
@@ -292,6 +314,20 @@ export default function PipelinePage() {
           </div>
           <div className="flex items-center gap-3">
             <HubSpotActions entityType="deals" />
+            <select
+              value={selectedPipeline}
+              onChange={(e) => setSelectedPipeline(e.target.value)}
+              className="border-border-default bg-bg-elevated text-content-primary focus:border-primary-500 focus:ring-primary-500/20 h-9 rounded-lg border px-3 text-sm outline-none focus:ring-2"
+            >
+              <option value="all">All Pipelines</option>
+              <option value="moovs">Moovs Only</option>
+              <option value="swoop">Swoop Only</option>
+              {pipelines.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value as Period)}
