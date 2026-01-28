@@ -24,6 +24,8 @@ import {
   LayoutGrid,
   HelpCircle,
   RotateCcw,
+  GitBranch,
+  Swords,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -31,6 +33,8 @@ const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/accounts", icon: Users, label: "Accounts" },
   { href: "/matrix", icon: LayoutGrid, label: "Operator Hub" },
+  { href: "/pipeline", icon: GitBranch, label: "Sales Pipeline" },
+  { href: "/competitive", icon: Swords, label: "Competitive Intel" },
   { href: "/predictions", icon: Brain, label: "Predictions" },
   { href: "/benchmarks", icon: Activity, label: "Benchmarks" },
   { href: "/engagement", icon: Zap, label: "Engagement" },
