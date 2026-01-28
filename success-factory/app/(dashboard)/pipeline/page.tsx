@@ -46,12 +46,46 @@ interface StageData {
 
 interface StalledDeal {
   id: string
+  hubspotId: string
   name: string
   companyName: string | null
   amount: number | null
+  stageId: string | null
   stageName: string
   daysInStage: number
+  daysInPipeline: number | null
   ownerName: string | null
+  ownerId: string | null
+  contactCount: number
+  hasChampion: boolean
+  hasDecisionMaker: boolean
+  hasExecutiveSponsor: boolean
+  multiThreadingScore: number | null
+  competitorNames: string[]
+}
+
+interface StalledSummary {
+  totalCount: number
+  totalValue: number
+  agingBuckets: {
+    "14-30": { count: number; value: number }
+    "30-60": { count: number; value: number }
+    "60+": { count: number; value: number }
+  }
+  byStage: Array<{
+    stageId: string
+    stageName: string
+    count: number
+    value: number
+    avgDays: number
+  }>
+  byOwner: Array<{
+    ownerId: string
+    ownerName: string
+    count: number
+    value: number
+    avgDays: number
+  }>
 }
 
 interface OwnerStat {
@@ -69,7 +103,44 @@ interface OwnerStat {
 interface LossReason {
   reason: string
   count: number
+  lostValue: number
   percentage: number
+}
+
+interface LossAnalysis {
+  totalLostValue: number
+  totalLostDeals: number
+  avgLossSize: number
+  avgDaysToLoss: number
+  stageOfLoss: {
+    early: { count: number; value: number; percentage: number; stageNames: string[] }
+    mid: { count: number; value: number; percentage: number; stageNames: string[] }
+    late: { count: number; value: number; percentage: number; stageNames: string[] }
+  }
+  competitorLosses: Array<{
+    competitor: string
+    count: number
+    value: number
+  }>
+  byOwner: Array<{
+    ownerId: string
+    ownerName: string
+    count: number
+    value: number
+    totalDeals: number
+    lossRate: number
+  }>
+  timeToLoss: {
+    under30: { count: number; value: number; topReason: string }
+    days30to60: { count: number; value: number; topReason: string }
+    days60to90: { count: number; value: number; topReason: string }
+    over90: { count: number; value: number; topReason: string }
+  }
+  trend: Array<{
+    week: string
+    count: number
+    value: number
+  }>
 }
 
 interface StageDeal {
@@ -88,8 +159,10 @@ interface DealAnalytics {
   summary: PipelineSummary
   stageConversion: StageData[]
   stalledDeals: StalledDeal[]
+  stalledSummary: StalledSummary
   ownerPerformance: OwnerStat[]
   lossReasons: LossReason[]
+  lossAnalysis: LossAnalysis
 }
 
 type Period = "30d" | "90d" | "180d" | "365d" | "all"
@@ -124,6 +197,8 @@ export default function PipelinePage() {
   const [selectedStage, setSelectedStage] = useState<StageData | null>(null)
   const [stageDeals, setStageDeals] = useState<StageDeal[]>([])
   const [stageDealsLoading, setStageDealsLoading] = useState(false)
+  const [stalledView, setStalledView] = useState<"list" | "stage" | "owner">("list")
+  const [lossView, setLossView] = useState<"reasons" | "stage" | "owner" | "trend">("reasons")
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [selectedPipeline, setSelectedPipeline] = useState<string>("all")
 
@@ -203,22 +278,49 @@ export default function PipelinePage() {
         stalledDeals: (data.stalledDeals || []).map(
           (deal: {
             id: string
+            hubspotId: string
             name: string
             companyName: string | null
             amount: number | null
+            stageId: string | null
             stageName: string
             daysInCurrentStage: number
+            daysInPipeline: number | null
             ownerName: string | null
+            ownerId: string | null
+            contactCount: number
+            hasChampion: boolean
+            hasDecisionMaker: boolean
+            hasExecutiveSponsor: boolean
+            multiThreadingScore: number | null
+            competitorNames: string[]
           }) => ({
             id: deal.id,
+            hubspotId: deal.hubspotId,
             name: deal.name,
             companyName: deal.companyName,
             amount: deal.amount,
-            stageName: deal.stageName,
+            stageId: deal.stageId,
+            stageName: deal.stageName || "Unknown",
             daysInStage: deal.daysInCurrentStage,
+            daysInPipeline: deal.daysInPipeline,
             ownerName: deal.ownerName,
+            ownerId: deal.ownerId,
+            contactCount: deal.contactCount,
+            hasChampion: deal.hasChampion,
+            hasDecisionMaker: deal.hasDecisionMaker,
+            hasExecutiveSponsor: deal.hasExecutiveSponsor,
+            multiThreadingScore: deal.multiThreadingScore,
+            competitorNames: deal.competitorNames || [],
           })
         ),
+        stalledSummary: data.stalledSummary || {
+          totalCount: 0,
+          totalValue: 0,
+          agingBuckets: { "14-30": { count: 0, value: 0 }, "30-60": { count: 0, value: 0 }, "60+": { count: 0, value: 0 } },
+          byStage: [],
+          byOwner: [],
+        },
         ownerPerformance: (data.ownerPerformance || []).map(
           (rep: {
             ownerId: string
@@ -240,12 +342,33 @@ export default function PipelinePage() {
           })
         ),
         lossReasons: (data.lossReasons || []).map(
-          (reason: { reason: string; count: number; lostValue: number }) => ({
+          (reason: { reason: string; count: number; lostValue: number; percentage: number }) => ({
             reason: reason.reason,
             count: reason.count,
-            percentage: totalLostDeals > 0 ? Math.round((reason.count / totalLostDeals) * 100) : 0,
+            lostValue: reason.lostValue || 0,
+            percentage: reason.percentage || 0,
           })
         ),
+        lossAnalysis: data.lossAnalysis || {
+          totalLostValue: 0,
+          totalLostDeals: 0,
+          avgLossSize: 0,
+          avgDaysToLoss: 0,
+          stageOfLoss: {
+            early: { count: 0, value: 0, percentage: 0, stageNames: [] },
+            mid: { count: 0, value: 0, percentage: 0, stageNames: [] },
+            late: { count: 0, value: 0, percentage: 0, stageNames: [] },
+          },
+          competitorLosses: [],
+          byOwner: [],
+          timeToLoss: {
+            under30: { count: 0, value: 0, topReason: "" },
+            days30to60: { count: 0, value: 0, topReason: "" },
+            days60to90: { count: 0, value: 0, topReason: "" },
+            over90: { count: 0, value: 0, topReason: "" },
+          },
+          trend: [],
+        },
       }
 
       setAnalytics(transformed)
@@ -525,60 +648,205 @@ export default function PipelinePage() {
 
             {/* Stalled Deals */}
             {activeTab === "stalled" && (
-              <div className="card-sf">
-                <div className="border-border-default flex items-center justify-between border-b px-6 py-4">
-                  <h2 className="text-content-primary text-lg font-semibold">
-                    Stalled Deals ({analytics.stalledDeals.length})
-                  </h2>
-                  <p className="text-content-tertiary text-sm">Deals stuck in stage 14+ days</p>
-                </div>
-                {analytics.stalledDeals.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <div className="bg-success-100 dark:bg-success-900/30 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                      <TrendingUp className="text-success-600 dark:text-success-400 h-6 w-6" />
-                    </div>
-                    <h3 className="text-content-primary text-lg font-medium">No stalled deals</h3>
-                    <p className="text-content-secondary mt-1">All deals are progressing well</p>
-                  </div>
-                ) : (
-                  <div className="divide-border-default divide-y">
-                    {analytics.stalledDeals.map((deal) => (
-                      <div
-                        key={deal.id}
-                        className="hover:bg-bg-secondary flex items-center justify-between px-6 py-4 transition-colors"
-                      >
-                        <div>
-                          <h3 className="text-content-primary font-medium">{deal.name}</h3>
-                          <p className="text-content-secondary text-sm">
-                            {deal.companyName || "Unknown company"}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
-                            <p className="text-content-primary font-medium">
-                              {formatCurrency(deal.amount)}
-                            </p>
-                            <p className="text-content-tertiary text-xs">{deal.stageName}</p>
-                          </div>
-                          <div
-                            className={cn(
-                              "flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
-                              deal.daysInStage > 30
-                                ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
-                                : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
-                            )}
-                          >
-                            <Clock className="h-3 w-3" />
-                            {deal.daysInStage}d stuck
-                          </div>
-                          <div className="text-content-tertiary text-sm">
-                            {deal.ownerName || "Unassigned"}
-                          </div>
-                        </div>
+              <div className="space-y-4">
+                {/* Summary Cards */}
+                <div className="grid gap-4 sm:grid-cols-4">
+                  <div className="card-sf p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-error-100 dark:bg-error-900/30 flex h-10 w-10 items-center justify-center rounded-lg">
+                        <AlertTriangle className="text-error-600 dark:text-error-400 h-5 w-5" />
                       </div>
-                    ))}
+                      <div>
+                        <p className="text-content-secondary text-sm">Value at Risk</p>
+                        <p className="text-content-primary text-xl font-bold">
+                          {formatCompact(analytics.stalledSummary.totalValue)}
+                        </p>
+                        <p className="text-content-tertiary text-xs">
+                          {analytics.stalledSummary.totalCount} deals
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                )}
+                  <div className="card-sf p-4">
+                    <p className="text-content-secondary mb-1 text-xs">14-30 days</p>
+                    <p className="text-warning-600 dark:text-warning-400 text-lg font-bold">
+                      {formatCompact(analytics.stalledSummary.agingBuckets["14-30"].value)}
+                    </p>
+                    <p className="text-content-tertiary text-xs">
+                      {analytics.stalledSummary.agingBuckets["14-30"].count} deals
+                    </p>
+                  </div>
+                  <div className="card-sf p-4">
+                    <p className="text-content-secondary mb-1 text-xs">30-60 days</p>
+                    <p className="text-orange-600 dark:text-orange-400 text-lg font-bold">
+                      {formatCompact(analytics.stalledSummary.agingBuckets["30-60"].value)}
+                    </p>
+                    <p className="text-content-tertiary text-xs">
+                      {analytics.stalledSummary.agingBuckets["30-60"].count} deals
+                    </p>
+                  </div>
+                  <div className="card-sf p-4">
+                    <p className="text-content-secondary mb-1 text-xs">60+ days</p>
+                    <p className="text-error-600 dark:text-error-400 text-lg font-bold">
+                      {formatCompact(analytics.stalledSummary.agingBuckets["60+"].value)}
+                    </p>
+                    <p className="text-content-tertiary text-xs">
+                      {analytics.stalledSummary.agingBuckets["60+"].count} deals
+                    </p>
+                  </div>
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex gap-2">
+                  {[
+                    { id: "list" as const, label: "All Deals" },
+                    { id: "stage" as const, label: "By Stage" },
+                    { id: "owner" as const, label: "By Owner" },
+                  ].map((view) => (
+                    <button
+                      key={view.id}
+                      onClick={() => setStalledView(view.id)}
+                      className={cn(
+                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                        stalledView === view.id
+                          ? "bg-content-primary text-bg-primary"
+                          : "bg-bg-secondary text-content-secondary hover:bg-bg-tertiary"
+                      )}
+                    >
+                      {view.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="card-sf">
+                  {analytics.stalledDeals.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <div className="bg-success-100 dark:bg-success-900/30 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+                        <TrendingUp className="text-success-600 dark:text-success-400 h-6 w-6" />
+                      </div>
+                      <h3 className="text-content-primary text-lg font-medium">No stalled deals</h3>
+                      <p className="text-content-secondary mt-1">All deals are progressing well</p>
+                    </div>
+                  ) : stalledView === "stage" ? (
+                    <div className="divide-border-default divide-y">
+                      {analytics.stalledSummary.byStage.map((stage) => (
+                        <div key={stage.stageId} className="p-4">
+                          <div className="mb-2 flex items-center justify-between">
+                            <div>
+                              <span className="text-content-primary font-medium">{stage.stageName}</span>
+                              <span className="text-content-tertiary ml-2 text-sm">
+                                {stage.count} deals &middot; avg {stage.avgDays}d stuck
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-content-primary font-bold">{formatCompact(stage.value)}</p>
+                              <p className="text-content-tertiary text-xs">value at risk</p>
+                            </div>
+                          </div>
+                          <div className="bg-bg-secondary h-2 overflow-hidden rounded-full">
+                            <div
+                              className="bg-error-500 h-full rounded-full"
+                              style={{
+                                width: `${Math.min((stage.value / analytics.stalledSummary.totalValue) * 100, 100)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : stalledView === "owner" ? (
+                    <div className="divide-border-default divide-y">
+                      {analytics.stalledSummary.byOwner.map((owner) => (
+                        <div key={owner.ownerId} className="p-4">
+                          <div className="mb-2 flex items-center justify-between">
+                            <div>
+                              <span className="text-content-primary font-medium">{owner.ownerName}</span>
+                              <span className="text-content-tertiary ml-2 text-sm">
+                                {owner.count} deals &middot; avg {owner.avgDays}d stuck
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-content-primary font-bold">{formatCompact(owner.value)}</p>
+                              <p className="text-content-tertiary text-xs">value at risk</p>
+                            </div>
+                          </div>
+                          <div className="bg-bg-secondary h-2 overflow-hidden rounded-full">
+                            <div
+                              className="bg-error-500 h-full rounded-full"
+                              style={{
+                                width: `${Math.min((owner.value / analytics.stalledSummary.totalValue) * 100, 100)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="divide-border-default divide-y">
+                      {analytics.stalledDeals.map((deal) => (
+                        <div
+                          key={deal.id}
+                          className="hover:bg-bg-secondary flex items-center justify-between px-4 py-3 transition-colors"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-content-primary truncate font-medium">{deal.name}</h3>
+                              {deal.hubspotId && (
+                                <a
+                                  href={`https://app.hubspot.com/contacts/deals/${deal.hubspotId}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-content-tertiary hover:text-primary-500 flex-shrink-0"
+                                  title="Open in HubSpot"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-content-secondary text-sm">
+                              {deal.companyName || "Unknown"} &middot; {deal.stageName}
+                            </p>
+                            <div className="mt-1 flex items-center gap-2">
+                              {deal.contactCount <= 1 && (
+                                <span className="bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400 rounded px-1.5 py-0.5 text-xs">
+                                  Single-threaded
+                                </span>
+                              )}
+                              {deal.competitorNames.length > 0 && (
+                                <span className="bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400 rounded px-1.5 py-0.5 text-xs">
+                                  Competitive
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <p className="text-content-primary font-medium">
+                                {formatCurrency(deal.amount)}
+                              </p>
+                              <p className="text-content-tertiary text-xs">
+                                {deal.ownerName || "Unassigned"}
+                              </p>
+                            </div>
+                            <div
+                              className={cn(
+                                "flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
+                                deal.daysInStage >= 60
+                                  ? "bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400"
+                                  : deal.daysInStage >= 30
+                                    ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                    : "bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400"
+                              )}
+                            >
+                              <Clock className="h-3 w-3" />
+                              {deal.daysInStage}d
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -683,41 +951,270 @@ export default function PipelinePage() {
 
             {/* Loss Analysis */}
             {activeTab === "losses" && (
-              <div className="card-sf p-6">
-                <h2 className="text-content-primary mb-4 text-lg font-semibold">
-                  Top Loss Reasons
-                </h2>
-                {analytics.lossReasons.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <p className="text-content-secondary">No loss data available</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {analytics.lossReasons.map((reason, idx) => (
-                      <div key={reason.reason}>
-                        <div className="mb-1 flex items-center justify-between">
-                          <span className="text-content-primary font-medium">{reason.reason}</span>
-                          <span className="text-content-secondary text-sm">
-                            {reason.count} deals ({reason.percentage}%)
-                          </span>
-                        </div>
-                        <div className="bg-bg-secondary h-3 overflow-hidden rounded-full">
-                          <div
-                            className={cn(
-                              "h-full rounded-full transition-all",
-                              idx === 0
-                                ? "bg-error-500"
-                                : idx === 1
-                                  ? "bg-error-400"
-                                  : "bg-error-300"
-                            )}
-                            style={{ width: `${reason.percentage}%` }}
-                          />
-                        </div>
+              <div className="space-y-4">
+                {/* Summary Cards */}
+                <div className="grid gap-4 sm:grid-cols-4">
+                  <div className="card-sf p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-error-100 dark:bg-error-900/30 flex h-10 w-10 items-center justify-center rounded-lg">
+                        <DollarSign className="text-error-600 dark:text-error-400 h-5 w-5" />
                       </div>
-                    ))}
+                      <div>
+                        <p className="text-content-secondary text-sm">Lost Value</p>
+                        <p className="text-error-600 dark:text-error-400 text-xl font-bold">
+                          {formatCompact(analytics.lossAnalysis.totalLostValue)}
+                        </p>
+                        <p className="text-content-tertiary text-xs">
+                          {analytics.lossAnalysis.totalLostDeals} deals
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                )}
+                  <div className="card-sf p-4">
+                    <p className="text-content-secondary mb-1 text-sm">Avg Loss Size</p>
+                    <p className="text-content-primary text-lg font-bold">
+                      {formatCompact(analytics.lossAnalysis.avgLossSize)}
+                    </p>
+                  </div>
+                  <div className="card-sf p-4">
+                    <p className="text-content-secondary mb-1 text-sm">Loss Rate</p>
+                    <p className="text-content-primary text-lg font-bold">
+                      {analytics.summary.winRate > 0 ? 100 - analytics.summary.winRate : 0}%
+                    </p>
+                  </div>
+                  <div className="card-sf p-4">
+                    <p className="text-content-secondary mb-1 text-sm">Avg Days to Loss</p>
+                    <p className="text-content-primary text-lg font-bold">
+                      {analytics.lossAnalysis.avgDaysToLoss}d
+                    </p>
+                  </div>
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex gap-2">
+                  {[
+                    { id: "reasons" as const, label: "By Reason" },
+                    { id: "stage" as const, label: "By Stage" },
+                    { id: "owner" as const, label: "By Owner" },
+                    { id: "trend" as const, label: "Trend" },
+                  ].map((view) => (
+                    <button
+                      key={view.id}
+                      onClick={() => setLossView(view.id)}
+                      className={cn(
+                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                        lossView === view.id
+                          ? "bg-content-primary text-bg-primary"
+                          : "bg-bg-secondary text-content-secondary hover:bg-bg-tertiary"
+                      )}
+                    >
+                      {view.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="card-sf">
+                  {analytics.lossReasons.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p className="text-content-secondary">No loss data available</p>
+                    </div>
+                  ) : lossView === "reasons" ? (
+                    <div className="p-6">
+                      <h3 className="text-content-primary mb-4 font-semibold">Loss Reasons (by value)</h3>
+                      <div className="space-y-4">
+                        {analytics.lossReasons.map((reason) => (
+                          <div key={reason.reason}>
+                            <div className="mb-1 flex items-center justify-between">
+                              <span className="text-content-primary font-medium">{reason.reason}</span>
+                              <div className="text-right">
+                                <span className="text-error-600 dark:text-error-400 font-medium">
+                                  {formatCompact(reason.lostValue)}
+                                </span>
+                                <span className="text-content-tertiary ml-2 text-sm">
+                                  ({reason.count} deals, {reason.percentage}%)
+                                </span>
+                              </div>
+                            </div>
+                            <div className="bg-bg-secondary h-3 overflow-hidden rounded-full">
+                              <div
+                                className="bg-error-500 h-full rounded-full transition-all"
+                                style={{ width: `${reason.percentage}%` }}
+                              />
+                            </div>
+                            {reason.reason.toLowerCase().includes("competitor") &&
+                              analytics.lossAnalysis.competitorLosses.length > 0 && (
+                                <div className="border-border-default mt-2 ml-4 border-l-2 pl-3">
+                                  {analytics.lossAnalysis.competitorLosses.slice(0, 3).map((comp) => (
+                                    <div
+                                      key={comp.competitor}
+                                      className="text-content-secondary flex items-center justify-between text-sm"
+                                    >
+                                      <span>{comp.competitor}</span>
+                                      <span>
+                                        {formatCompact(comp.value)} ({comp.count})
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : lossView === "stage" ? (
+                    <div className="p-6">
+                      <h3 className="text-content-primary mb-4 font-semibold">Stage of Loss</h3>
+                      <div className="space-y-6">
+                        {[
+                          { key: "early" as const, label: "Early Stage", hint: "Likely qualification issues" },
+                          { key: "mid" as const, label: "Mid Stage", hint: "Likely pricing/value issues" },
+                          { key: "late" as const, label: "Late Stage", hint: "Likely competitive/champion issues" },
+                        ].map(({ key, label, hint }) => {
+                          const data = analytics.lossAnalysis.stageOfLoss[key]
+                          return (
+                            <div key={key}>
+                              <div className="mb-2 flex items-center justify-between">
+                                <div>
+                                  <span className="text-content-primary font-medium">{label}</span>
+                                  <p className="text-content-tertiary text-xs">
+                                    {data.stageNames.slice(0, 3).join(", ") || "No stages"}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-error-600 dark:text-error-400 font-bold">
+                                    {formatCompact(data.value)}
+                                  </p>
+                                  <p className="text-content-tertiary text-xs">
+                                    {data.count} deals ({data.percentage}%)
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="bg-bg-secondary h-3 overflow-hidden rounded-full">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full",
+                                    key === "early"
+                                      ? "bg-warning-500"
+                                      : key === "mid"
+                                        ? "bg-orange-500"
+                                        : "bg-error-500"
+                                  )}
+                                  style={{ width: `${data.percentage}%` }}
+                                />
+                              </div>
+                              <p className="text-content-tertiary mt-1 text-xs italic">{hint}</p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : lossView === "owner" ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-border-default border-b">
+                            <th className="text-content-secondary px-6 py-3 text-left text-sm font-medium">
+                              Owner
+                            </th>
+                            <th className="text-content-secondary px-4 py-3 text-right text-sm font-medium">
+                              Lost Deals
+                            </th>
+                            <th className="text-content-secondary px-4 py-3 text-right text-sm font-medium">
+                              Lost Value
+                            </th>
+                            <th className="text-content-secondary px-4 py-3 text-right text-sm font-medium">
+                              Total Deals
+                            </th>
+                            <th className="text-content-secondary px-4 py-3 text-right text-sm font-medium">
+                              Loss Rate
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-border-default divide-y">
+                          {analytics.lossAnalysis.byOwner.map((owner) => (
+                            <tr key={owner.ownerId} className="hover:bg-bg-secondary">
+                              <td className="text-content-primary px-6 py-3 font-medium">
+                                {owner.ownerName}
+                              </td>
+                              <td className="text-content-secondary px-4 py-3 text-right">
+                                {owner.count}
+                              </td>
+                              <td className="text-error-600 dark:text-error-400 px-4 py-3 text-right font-medium">
+                                {formatCompact(owner.value)}
+                              </td>
+                              <td className="text-content-secondary px-4 py-3 text-right">
+                                {owner.totalDeals}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span
+                                  className={cn(
+                                    "font-medium",
+                                    owner.lossRate > 50
+                                      ? "text-error-600 dark:text-error-400"
+                                      : owner.lossRate > 35
+                                        ? "text-warning-600 dark:text-warning-400"
+                                        : "text-success-600 dark:text-success-400"
+                                  )}
+                                >
+                                  {owner.lossRate}%
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="p-6">
+                      <h3 className="text-content-primary mb-4 font-semibold">Loss Trend (12 Weeks)</h3>
+                      {analytics.lossAnalysis.trend.length > 0 ? (
+                        <div className="space-y-4">
+                          <div className="flex h-40 items-end gap-1">
+                            {analytics.lossAnalysis.trend.map((week) => {
+                              const maxValue = Math.max(
+                                ...analytics.lossAnalysis.trend.map((w) => w.value),
+                                1
+                              )
+                              const height = (week.value / maxValue) * 100
+                              return (
+                                <div
+                                  key={week.week}
+                                  className="group relative flex flex-1 flex-col items-center"
+                                >
+                                  <div className="absolute -top-8 hidden text-xs group-hover:block">
+                                    <div className="bg-bg-tertiary text-content-primary rounded px-2 py-1">
+                                      {formatCompact(week.value)}
+                                    </div>
+                                  </div>
+                                  <div
+                                    className="bg-error-500 hover:bg-error-600 w-full rounded-t transition-all"
+                                    style={{ height: `${Math.max(height, 4)}%` }}
+                                  />
+                                  <span className="text-content-tertiary mt-1 text-xs">{week.week}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                          <div className="border-border-default border-t pt-4">
+                            <p className="text-content-secondary text-sm">
+                              4-week average:{" "}
+                              <span className="text-content-primary font-medium">
+                                {formatCompact(
+                                  analytics.lossAnalysis.trend
+                                    .slice(-4)
+                                    .reduce((sum, w) => sum + w.value, 0) / 4
+                                )}
+                                /week
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-content-secondary text-center">No trend data available</p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </>

@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { DashboardLayout } from "@/components/dashboard-layout"
 
 interface ChurnedAccount {
   id: string
@@ -124,14 +125,17 @@ export default function WinbackPage() {
 
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="border-content-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
-      </div>
+      <DashboardLayout>
+        <div className="flex h-96 items-center justify-center">
+          <div className="border-content-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
+        </div>
+      </DashboardLayout>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-content-primary text-2xl font-bold">Win-Back Campaigns</h1>
@@ -418,5 +422,6 @@ export default function WinbackPage() {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   )
 }
