@@ -29,27 +29,63 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const navItems = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/accounts", icon: Users, label: "Accounts" },
-  { href: "/matrix", icon: LayoutGrid, label: "Operator Hub" },
-  { href: "/pipeline", icon: GitBranch, label: "Sales Pipeline" },
-  { href: "/competitive", icon: Swords, label: "Competitive Intel" },
-  { href: "/predictions", icon: Brain, label: "Predictions" },
-  { href: "/benchmarks", icon: Activity, label: "Benchmarks" },
-  { href: "/engagement", icon: Zap, label: "Engagement" },
-  { href: "/expansion", icon: TrendingUp, label: "Expansion" },
-  { href: "/cohorts", icon: BarChart3, label: "Cohorts" },
-  { href: "/roi", icon: PieChart, label: "ROI Dashboard" },
-  { href: "/team", icon: UsersRound, label: "CSM Workload" },
-  { href: "/tasks", icon: CheckSquare, label: "Tasks" },
-  { href: "/playbooks", icon: Zap, label: "Playbooks" },
-  { href: "/renewals", icon: CalendarClock, label: "Renewals" },
-  { href: "/winback", icon: RotateCcw, label: "Win-Back" },
-  { href: "/skills", icon: Sparkles, label: "Skills" },
-  { href: "/history", icon: History, label: "History" },
-  { href: "/settings", icon: Settings, label: "Settings" },
-  { href: "/help", icon: HelpCircle, label: "Help" },
+interface NavItem {
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+}
+
+interface NavSection {
+  title: string | null
+  items: NavItem[]
+}
+
+const navSections: NavSection[] = [
+  {
+    title: null,
+    items: [
+      { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+    ],
+  },
+  {
+    title: "Sales",
+    items: [
+      { href: "/pipeline", icon: GitBranch, label: "Pipeline" },
+      { href: "/competitive", icon: Swords, label: "Competitive Intel" },
+      { href: "/winback", icon: RotateCcw, label: "Win-Back" },
+    ],
+  },
+  {
+    title: "Customer Success",
+    items: [
+      { href: "/accounts", icon: Users, label: "Accounts" },
+      { href: "/matrix", icon: LayoutGrid, label: "Operator Hub" },
+      { href: "/predictions", icon: Brain, label: "Predictions" },
+      { href: "/benchmarks", icon: Activity, label: "Benchmarks" },
+      { href: "/engagement", icon: Zap, label: "Engagement" },
+      { href: "/expansion", icon: TrendingUp, label: "Expansion" },
+      { href: "/cohorts", icon: BarChart3, label: "Cohorts" },
+      { href: "/roi", icon: PieChart, label: "ROI Dashboard" },
+      { href: "/team", icon: UsersRound, label: "CSM Workload" },
+      { href: "/renewals", icon: CalendarClock, label: "Renewals" },
+    ],
+  },
+  {
+    title: "Operations",
+    items: [
+      { href: "/tasks", icon: CheckSquare, label: "Tasks" },
+      { href: "/playbooks", icon: Zap, label: "Playbooks" },
+    ],
+  },
+  {
+    title: null,
+    items: [
+      { href: "/skills", icon: Sparkles, label: "Skills" },
+      { href: "/history", icon: History, label: "History" },
+      { href: "/settings", icon: Settings, label: "Settings" },
+      { href: "/help", icon: HelpCircle, label: "Help" },
+    ],
+  },
 ]
 
 interface SidebarProps {
@@ -103,33 +139,45 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {navItems.map((item) => {
-            const isActive =
-              pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+        <nav className="flex-1 space-y-4 overflow-y-auto p-3">
+          {navSections.map((section, sectionIndex) => (
+            <div key={sectionIndex}>
+              {section.title && !collapsed && (
+                <h3 className="text-content-tertiary mb-2 px-3 text-xs font-semibold uppercase tracking-wider">
+                  {section.title}
+                </h3>
+              )}
+              {section.title && collapsed && <div className="border-border-default mx-2 my-2 border-t" />}
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const isActive =
+                    pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  "transition-all-smooth flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
-                  isActive
-                    ? "bg-primary-100 text-primary-700 glow-sm dark:bg-primary-50 dark:text-primary-500"
-                    : "text-content-secondary hover:bg-surface-hover hover:text-content-primary"
-                )}
-              >
-                <item.icon
-                  className={cn(
-                    "h-5 w-5 flex-shrink-0",
-                    isActive && "text-primary-600 dark:text-primary-500"
-                  )}
-                />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
-            )
-          })}
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onClose}
+                      className={cn(
+                        "transition-all-smooth flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
+                        isActive
+                          ? "bg-primary-100 text-primary-700 glow-sm dark:bg-primary-50 dark:text-primary-500"
+                          : "text-content-secondary hover:bg-surface-hover hover:text-content-primary"
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          "h-5 w-5 flex-shrink-0",
+                          isActive && "text-primary-600 dark:text-primary-500"
+                        )}
+                      />
+                      {!collapsed && <span>{item.label}</span>}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Collapse Toggle - desktop only */}
