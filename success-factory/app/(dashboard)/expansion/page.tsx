@@ -16,6 +16,7 @@ import {
   Building2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { HubSpotActions } from "@/components/hubspot-actions"
 
 interface ExpansionOpportunity {
   id: string
@@ -262,6 +263,7 @@ export default function ExpansionPage() {
             <p className="text-content-secondary mt-1">Track upsell and cross-sell opportunities</p>
           </div>
           <div className="flex items-center gap-2">
+            <HubSpotActions entityType="accounts" />
             {activeTab === "propensity" && (
               <button
                 onClick={recalculatePropensity}
