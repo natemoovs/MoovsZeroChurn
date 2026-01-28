@@ -118,6 +118,13 @@ interface HubSpotOwner {
   lastName: string
 }
 
+interface HubSpotUser {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+}
+
 // ============================================================================
 // Pipeline & Stage Sync
 // ============================================================================
@@ -195,9 +202,41 @@ export async function syncPipelines(): Promise<{ pipelines: number; stages: numb
 // ============================================================================
 
 /**
- * Get HubSpot owner details
+ * Fetch all HubSpot users (settings API - different scope than owners)
  */
-async function getOwner(ownerId: string): Promise<HubSpotOwner | null> {
+async function fetchAllUsers(): Promise<Map<string, HubSpotUser>> {
+  const userMap = new Map<string, HubSpotUser>()
+  try {
+    const response = await hubspotFetch<{ results: HubSpotUser[] }>("/settings/v3/users")
+    for (const user of response.results) {
+      userMap.set(user.id, user)
+    }
+    console.log(`Fetched ${userMap.size} HubSpot users for owner lookup`)
+  } catch (error) {
+    console.warn("Could not fetch users from settings API:", error)
+  }
+  return userMap
+}
+
+/**
+ * Get HubSpot owner details - tries owners API first, falls back to cached users
+ */
+async function getOwner(
+  ownerId: string,
+  userCache: Map<string, HubSpotUser>
+): Promise<HubSpotOwner | null> {
+  // First try cached users (from settings API)
+  const cachedUser = userCache.get(ownerId)
+  if (cachedUser) {
+    return {
+      id: cachedUser.id,
+      email: cachedUser.email,
+      firstName: cachedUser.firstName,
+      lastName: cachedUser.lastName,
+    }
+  }
+
+  // Fall back to owners API (may fail due to missing scope)
   try {
     return await hubspotFetch<HubSpotOwner>(`/crm/v3/owners/${ownerId}`)
   } catch {
@@ -224,7 +263,10 @@ export async function syncDeals(options?: {
   const stageMap = new Map(stages.map((s) => [s.hubspotId, s]))
   const pipelineMap = new Map(stages.map((s) => [s.pipeline.hubspotId, s.pipeline]))
 
-  // Owner cache
+  // Fetch all users first for owner lookup (uses settings API which has different permissions)
+  const userCache = await fetchAllUsers()
+
+  // Owner cache for resolved lookups
   const ownerCache = new Map<string, HubSpotOwner | null>()
 
   const properties = [
@@ -286,7 +328,7 @@ export async function syncDeals(options?: {
 
     for (const hsDeal of result.results) {
       try {
-        const stageChange = await syncDeal(hsDeal, stageMap, pipelineMap, ownerCache)
+        const stageChange = await syncDeal(hsDeal, stageMap, pipelineMap, ownerCache, userCache)
         synced++
         if (stageChange) stageChanges++
       } catch (error) {
@@ -311,7 +353,8 @@ async function syncDeal(
   hsDeal: HubSpotDeal,
   stageMap: Map<string, Awaited<ReturnType<typeof prisma.pipelineStage.findFirst>>>,
   pipelineMap: Map<string, Awaited<ReturnType<typeof prisma.pipeline.findFirst>>>,
-  ownerCache: Map<string, HubSpotOwner | null>
+  ownerCache: Map<string, HubSpotOwner | null>,
+  userCache: Map<string, HubSpotUser>
 ): Promise<boolean> {
   const props = hsDeal.properties
 
@@ -324,7 +367,7 @@ async function syncDeal(
   let ownerEmail: string | undefined
   if (props.hubspot_owner_id) {
     if (!ownerCache.has(props.hubspot_owner_id)) {
-      ownerCache.set(props.hubspot_owner_id, await getOwner(props.hubspot_owner_id))
+      ownerCache.set(props.hubspot_owner_id, await getOwner(props.hubspot_owner_id, userCache))
     }
     const owner = ownerCache.get(props.hubspot_owner_id)
     if (owner) {
