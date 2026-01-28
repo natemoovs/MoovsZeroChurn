@@ -15,6 +15,7 @@ import {
   Filter,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { HubSpotActions } from "@/components/hubspot-actions"
 
 interface PipelineSummary {
   totalDeals: number
@@ -253,6 +254,7 @@ export default function PipelinePage() {
             <p className="text-content-secondary mt-1">Deal velocity and conversion analytics</p>
           </div>
           <div className="flex items-center gap-3">
+            <HubSpotActions entityType="deals" />
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value as Period)}

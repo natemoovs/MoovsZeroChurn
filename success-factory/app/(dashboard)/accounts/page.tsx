@@ -7,6 +7,7 @@ import { AccountCard, AccountCardSkeleton } from "@/components/account-card"
 import { HealthBar } from "@/components/health-chart"
 import { Search, Filter } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { HubSpotActions } from "@/components/hubspot-actions"
 
 type HealthFilter = "all" | "at-risk" | "monitor" | "healthy"
 
@@ -87,6 +88,7 @@ function AccountsContent() {
             {accounts.length} total accounts in your portfolio
           </p>
         </div>
+        <HubSpotActions entityType="accounts" />
       </div>
 
       {/* Health Overview Bar */}
