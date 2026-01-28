@@ -793,7 +793,7 @@ export default function PipelinePage() {
                               <h3 className="text-content-primary truncate font-medium">{deal.name}</h3>
                               {deal.hubspotId && (
                                 <a
-                                  href={`https://app.hubspot.com/contacts/deals/${deal.hubspotId}`}
+                                  href={`https://app.hubspot.com/contacts/8796840/deal/${deal.hubspotId}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-content-tertiary hover:text-primary-500 flex-shrink-0"
@@ -1266,7 +1266,7 @@ export default function PipelinePage() {
                           <h4 className="text-content-primary truncate font-medium">{deal.name}</h4>
                           {deal.hubspotId && (
                             <a
-                              href={`https://app.hubspot.com/contacts/deals/${deal.hubspotId}`}
+                              href={`https://app.hubspot.com/contacts/8796840/deal/${deal.hubspotId}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-content-tertiary hover:text-primary-500 flex-shrink-0"
