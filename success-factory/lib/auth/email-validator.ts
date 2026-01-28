@@ -1,5 +1,5 @@
 // Allowed email domains for registration and login
-export const ALLOWED_EMAIL_DOMAINS = ["moovsapp.com", "swoop.com"]
+export const ALLOWED_EMAIL_DOMAINS = ["moovsapp.com", "swoop.com", "swoopapp.com"]
 
 /**
  * Check if an email address is from an allowed domain
