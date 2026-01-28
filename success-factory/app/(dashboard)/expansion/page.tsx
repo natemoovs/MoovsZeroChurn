@@ -59,6 +59,20 @@ interface PropensityData {
   summary: { avgScore: number; highPropensityCount: number; totalScored: number }
 }
 
+interface ApiPropensityResult {
+  companyId: string
+  name: string
+  segment: string | null
+  score: number
+  usageScore: number
+  engagementScore: number
+  healthScore: number
+  tenureScore: number
+  fitScore: number
+  optimalTiming: string
+  positiveSignals: string[]
+}
+
 const typeLabels: Record<string, string> = {
   upsell: "Upsell",
   cross_sell: "Cross-sell",
@@ -131,7 +145,52 @@ export default function ExpansionPage() {
       setPropensityLoading(true)
       const res = await fetch("/api/analytics/expansion-propensity")
       const data = await res.json()
-      setPropensityData(data)
+
+      // Transform API response to match UI interface
+      const transformed: PropensityData = {
+        summary: {
+          avgScore: data.summary?.avgScore || 0,
+          highPropensityCount: data.summary?.high || 0,
+          totalScored: data.summary?.total || 0,
+        },
+        scores: (data.results || []).map((result: ApiPropensityResult) => ({
+          companyId: result.companyId,
+          companyName: result.name,
+          segment: result.segment || "unknown",
+          score: result.score,
+          drivers: [
+            {
+              factor: "Usage",
+              contribution: Math.round(result.usageScore * 0.25),
+              value: result.usageScore,
+            },
+            {
+              factor: "Engagement",
+              contribution: Math.round(result.engagementScore * 0.2),
+              value: result.engagementScore,
+            },
+            {
+              factor: "Health",
+              contribution: Math.round(result.healthScore * 0.2),
+              value: result.healthScore,
+            },
+            {
+              factor: "Tenure",
+              contribution: Math.round(result.tenureScore * 0.1),
+              value: result.tenureScore,
+            },
+            {
+              factor: "Fit",
+              contribution: Math.round(result.fitScore * 0.25),
+              value: result.fitScore,
+            },
+          ].sort((a, b) => b.contribution - a.contribution),
+          recommendation:
+            result.optimalTiming || (result.positiveSignals && result.positiveSignals[0]) || "",
+        })),
+      }
+
+      setPropensityData(transformed)
     } catch (error) {
       console.error("Failed to fetch propensity scores:", error)
     } finally {
