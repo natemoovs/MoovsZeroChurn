@@ -66,6 +66,46 @@ When working on GTM tasks (blog posts, emails, landing pages, release notes):
 - Reference actual product capabilities from @knowledge/product/platform-overview.md
 - Be practical over promotional - lead with what helps operators, not marketing speak
 
+## Success Factory Codebase
+
+Success Factory is the internal CS/Sales analytics dashboard. Key patterns:
+
+### Business Segment Context
+
+Users can select their business segment (Moovs vs Swoop) from the sidebar dropdown. This preference persists in localStorage.
+
+**To use in components:**
+
+```tsx
+import { useBusinessSegment } from "@/components/business-segment-provider"
+
+const { segment, setSegment, segmentLabel } = useBusinessSegment()
+// segment: "all" | "moovs" | "swoop"
+```
+
+**To filter API calls by segment:**
+
+```tsx
+const { segment } = useBusinessSegment()
+const segmentParam = segment !== "all" ? `&pipelineId=${segment}` : ""
+const res = await fetch(`/api/analytics/deals?period=${period}${segmentParam}`)
+```
+
+The deals API supports `pipelineId=moovs` and `pipelineId=swoop` to filter by business segment.
+
+### Sidebar Navigation
+
+Navigation is organized into sections in `components/sidebar.tsx`:
+- **Sales**: Pipeline, Competitive Intel, Win-Back
+- **Customer Success**: Accounts, Operator Hub, Predictions, etc.
+- **Operations**: Tasks, Playbooks
+
+### HubSpot Integration
+
+- Portal ID: `8796840`
+- Deal URLs: `https://app.hubspot.com/contacts/8796840/deal/{hubspotId}`
+- Company URLs: `https://app.hubspot.com/contacts/8796840/company/{hubspotId}`
+
 ## Output
 
 Your output should be markdown files:
