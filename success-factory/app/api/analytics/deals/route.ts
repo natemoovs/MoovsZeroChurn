@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
     )
 
     // Calculate stage-to-stage conversion rates
-    const stageConversion = stages
+    const rawStageConversion = stages
       .filter((s: StageWithPipeline) => !s.isClosed)
       .map((stage: StageWithPipeline, index: number, arr: StageWithPipeline[]) => {
         const reached = stageReached.get(stage.id) || 0
@@ -182,6 +182,28 @@ export async function GET(request: NextRequest) {
           winRate: reached > 0 ? Math.round(((stageWon.get(stage.id) || 0) / reached) * 100) : 0,
         }
       })
+
+    // Deduplicate stages by name (aggregate values for same-named stages across pipelines)
+    // and filter out stages with zero deals
+    const stageByName = new Map<string, typeof rawStageConversion[0]>()
+    for (const stage of rawStageConversion) {
+      const existing = stageByName.get(stage.stageName)
+      if (existing) {
+        // Aggregate values
+        existing.dealCount += stage.dealCount
+        existing.totalValue += stage.totalValue
+        existing.dealsReached += stage.dealsReached
+        // Keep lower display order for sorting
+        existing.displayOrder = Math.min(existing.displayOrder, stage.displayOrder)
+      } else {
+        stageByName.set(stage.stageName, { ...stage })
+      }
+    }
+
+    // Filter out zero-deal stages and sort by display order
+    const stageConversion = Array.from(stageByName.values())
+      .filter((s) => s.dealCount > 0 || s.dealsReached > 0)
+      .sort((a, b) => a.displayOrder - b.displayOrder)
 
     // === 3. Time-in-Stage Analysis ===
     const timeInStage = await prisma.dealStageHistory.groupBy({
@@ -225,11 +247,15 @@ export async function GET(request: NextRequest) {
     })
 
     // === 5. Stalled Deals (in stage > 14 days) ===
+    // Also include deals where daysInCurrentStage is null but they've been open a while
     const stalledDeals = await prisma.deal.findMany({
       where: {
         ...dealFilters,
         isClosed: false,
-        daysInCurrentStage: { gte: 14 },
+        OR: [
+          { daysInCurrentStage: { gte: 14 } },
+          { daysInCurrentStage: null, daysInPipeline: { gte: 14 } },
+        ],
       },
       orderBy: { daysInCurrentStage: "desc" },
       select: {
@@ -261,7 +287,8 @@ export async function GET(request: NextRequest) {
     }
 
     for (const deal of stalledDeals) {
-      const days = deal.daysInCurrentStage || 0
+      // Use daysInCurrentStage, fallback to daysInPipeline if null
+      const days = deal.daysInCurrentStage ?? deal.daysInPipeline ?? 0
       const amount = deal.amount || 0
       if (days >= 60) {
         stalledAgingBuckets.bucket60plus.count++
@@ -278,15 +305,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Group stalled deals by stage
+    // Group stalled deals by stage NAME (not ID) to merge across pipelines
     const stalledByStage = new Map<string, { stageName: string; count: number; value: number; avgDays: number }>()
     for (const deal of stalledDeals) {
-      const stageId = deal.stageId || "unknown"
-      const existing = stalledByStage.get(stageId) || { stageName: deal.stageName || "Unknown", count: 0, value: 0, avgDays: 0 }
+      const stageName = deal.stageName || "Unknown"
+      const days = deal.daysInCurrentStage ?? deal.daysInPipeline ?? 0
+      const existing = stalledByStage.get(stageName) || { stageName, count: 0, value: 0, avgDays: 0 }
       existing.count++
       existing.value += deal.amount || 0
-      existing.avgDays = ((existing.avgDays * (existing.count - 1)) + (deal.daysInCurrentStage || 0)) / existing.count
-      stalledByStage.set(stageId, existing)
+      existing.avgDays = ((existing.avgDays * (existing.count - 1)) + days) / existing.count
+      stalledByStage.set(stageName, existing)
     }
 
     // Group stalled deals by owner
@@ -554,8 +582,8 @@ export async function GET(request: NextRequest) {
           "60+": { count: stalledAgingBuckets.bucket60plus.count, value: stalledAgingBuckets.bucket60plus.value },
         },
         byStage: Array.from(stalledByStage.entries())
-          .map(([stageId, data]) => ({
-            stageId,
+          .map(([stageName, data]) => ({
+            stageId: stageName, // Using stage name as ID for cross-pipeline grouping
             ...data,
             avgDays: Math.round(data.avgDays),
           }))
