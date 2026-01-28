@@ -94,27 +94,50 @@ export async function GET(request: NextRequest) {
         deal: pipelineId ? { pipelineId } : undefined,
       },
       include: {
-        deal: { select: { isWon: true, isClosed: true } },
+        deal: { select: { isWon: true, isClosed: true, amount: true } },
       },
     })
 
-    // Count deals that reached each stage
+    // Count deals that reached each stage and sum their values
     const stageReached = new Map<string, number>()
     const stageWon = new Map<string, number>()
+    const stageValue = new Map<string, number>()
     for (const entry of stageHistory) {
       const current = stageReached.get(entry.toStageId) || 0
       stageReached.set(entry.toStageId, current + 1)
+      const currentValue = stageValue.get(entry.toStageId) || 0
+      stageValue.set(entry.toStageId, currentValue + (entry.deal.amount || 0))
       if (entry.deal.isWon) {
         const wonCurrent = stageWon.get(entry.toStageId) || 0
         stageWon.set(entry.toStageId, wonCurrent + 1)
       }
     }
 
+    // Get current deals per stage for more accurate counts
+    const currentDealsPerStage = await prisma.deal.groupBy({
+      by: ["stageId"],
+      where: { ...dealFilters, isClosed: false },
+      _count: { id: true },
+      _sum: { amount: true },
+    })
+    const currentStageMap = new Map(
+      currentDealsPerStage.map((s) => [
+        s.stageId,
+        { count: s._count.id, value: s._sum.amount || 0 },
+      ])
+    )
+
     // Calculate stage-to-stage conversion rates
     const stageConversion = stages
       .filter((s: StageWithPipeline) => !s.isClosed)
       .map((stage: StageWithPipeline, index: number, arr: StageWithPipeline[]) => {
         const reached = stageReached.get(stage.id) || 0
+        const current = currentStageMap.get(stage.id)
+        const currentCount = current?.count || 0
+        const currentValue = current?.value || 0
+        // Use current deals if available, otherwise use reached
+        const dealCount = currentCount > 0 ? currentCount : reached
+        const totalValue = currentCount > 0 ? currentValue : stageValue.get(stage.id) || 0
         const nextStage = arr[index + 1]
         const movedToNext = nextStage ? stageReached.get(nextStage.id) || 0 : 0
         const conversionRate = reached > 0 ? (movedToNext / reached) * 100 : 0
@@ -124,6 +147,8 @@ export async function GET(request: NextRequest) {
           stageName: stage.label,
           displayOrder: stage.displayOrder,
           dealsReached: reached,
+          dealCount,
+          totalValue,
           conversionToNext: nextStage ? Math.round(conversionRate) : null,
           winRate: reached > 0 ? Math.round(((stageWon.get(stage.id) || 0) / reached) * 100) : 0,
         }

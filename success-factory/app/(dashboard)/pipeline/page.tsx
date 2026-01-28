@@ -111,7 +111,104 @@ export default function PipelinePage() {
       setLoading(true)
       const res = await fetch(`/api/analytics/deals?period=${period}`)
       const data = await res.json()
-      setAnalytics(data)
+
+      // Transform API response to match UI interface
+      const stageVelocityMap = new Map(
+        (data.stageVelocity || []).map((sv: { stageId: string; avgDays: number }) => [
+          sv.stageId,
+          sv.avgDays,
+        ])
+      )
+
+      // Calculate total lost deals for percentage calculations
+      const totalLostDeals = data.summary?.lostDeals || 0
+
+      const transformed: DealAnalytics = {
+        period: data.period,
+        summary: {
+          totalDeals: data.summary?.totalDeals || 0,
+          totalValue: data.summary?.totalPipelineValue || 0,
+          openDeals: data.summary?.openDeals || 0,
+          openValue: data.summary?.totalPipelineValue || 0,
+          wonDeals: data.summary?.wonDeals || 0,
+          wonValue: data.summary?.wonValue || 0,
+          lostDeals: data.summary?.lostDeals || 0,
+          lostValue: (data.summary?.totalPipelineValue || 0) - (data.summary?.wonValue || 0),
+          winRate: data.summary?.winRate || 0,
+          avgDealSize:
+            data.summary?.totalDeals > 0
+              ? Math.round((data.summary?.totalPipelineValue || 0) / data.summary.totalDeals)
+              : 0,
+          avgDaysToClose: data.velocity?.avgDaysToClose || 0,
+        },
+        stageConversion: (data.stageConversion || []).map(
+          (stage: {
+            stageId: string
+            stageName: string
+            displayOrder: number
+            dealsReached: number
+            dealCount: number
+            totalValue: number
+            conversionToNext: number | null
+          }) => ({
+            id: stage.stageId,
+            name: stage.stageName || "Unknown Stage",
+            displayOrder: stage.displayOrder,
+            dealCount: stage.dealCount || stage.dealsReached || 0,
+            totalValue: stage.totalValue || 0,
+            conversionRate: stage.conversionToNext || 0,
+            avgTimeInStage: stageVelocityMap.get(stage.stageId) || 0,
+          })
+        ),
+        stalledDeals: (data.stalledDeals || []).map(
+          (deal: {
+            id: string
+            name: string
+            companyName: string | null
+            amount: number | null
+            stageName: string
+            daysInCurrentStage: number
+            ownerName: string | null
+          }) => ({
+            id: deal.id,
+            name: deal.name,
+            companyName: deal.companyName,
+            amount: deal.amount,
+            stageName: deal.stageName,
+            daysInStage: deal.daysInCurrentStage,
+            ownerName: deal.ownerName,
+          })
+        ),
+        ownerPerformance: (data.ownerPerformance || []).map(
+          (rep: {
+            ownerId: string
+            ownerName: string
+            totalDeals: number
+            wonDeals: number
+            wonValue: number
+            winRate: number
+          }) => ({
+            ownerId: rep.ownerId,
+            ownerName: rep.ownerName,
+            totalDeals: rep.totalDeals,
+            wonDeals: rep.wonDeals,
+            lostDeals: rep.totalDeals - rep.wonDeals,
+            openDeals: 0, // Not available from current API
+            winRate: rep.winRate,
+            totalValue: rep.wonValue,
+            avgDaysToClose: data.velocity?.avgDaysToClose || 0,
+          })
+        ),
+        lossReasons: (data.lossReasons || []).map(
+          (reason: { reason: string; count: number; lostValue: number }) => ({
+            reason: reason.reason,
+            count: reason.count,
+            percentage: totalLostDeals > 0 ? Math.round((reason.count / totalLostDeals) * 100) : 0,
+          })
+        ),
+      }
+
+      setAnalytics(transformed)
     } catch (error) {
       console.error("Failed to fetch pipeline analytics:", error)
     } finally {
