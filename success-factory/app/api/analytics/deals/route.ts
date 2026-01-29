@@ -107,14 +107,23 @@ export async function GET(request: NextRequest) {
             p.name.toLowerCase().includes("mid market")
           )
         } else if (tierParam === "enterprise") {
-          // Enterprise but NOT Shuttle
           filteredPipelines = basePipelines.filter((p) =>
-            p.name.toLowerCase().includes("enterprise") &&
-            !p.name.toLowerCase().includes("shuttle")
+            p.name.toLowerCase().includes("enterprise")
           )
-        } else if (tierParam === "shuttle") {
+        } else if (tierParam === "expansion") {
           filteredPipelines = basePipelines.filter((p) =>
-            p.name.toLowerCase().includes("shuttle")
+            p.name.toLowerCase().includes("expansion")
+          )
+        } else if (tierParam === "marketplace") {
+          // Swoop Marketplace/Ride
+          filteredPipelines = basePipelines.filter((p) =>
+            p.name.toLowerCase().includes("marketplace") ||
+            p.name.toLowerCase().includes("ride")
+          )
+        } else if (tierParam === "recurring") {
+          // Swoop Recurring
+          filteredPipelines = basePipelines.filter((p) =>
+            p.name.toLowerCase().includes("recurring")
           )
         }
 

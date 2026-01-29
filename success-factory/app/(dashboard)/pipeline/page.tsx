@@ -195,7 +195,7 @@ export default function PipelinePage() {
   const [stageDealsLoading, setStageDealsLoading] = useState(false)
   const [stalledView, setStalledView] = useState<"list" | "stage" | "owner">("list")
   const [lossView, setLossView] = useState<"reasons" | "stage" | "owner" | "trend">("reasons")
-  const [tier, setTier] = useState<"all" | "smb" | "mid-market" | "enterprise" | "shuttle">("all")
+  const [tier, setTier] = useState<"all" | "smb" | "mid-market" | "enterprise" | "expansion" | "marketplace" | "recurring">("all")
   const { segment } = useBusinessSegment()
 
   useEffect(() => {
@@ -425,11 +425,17 @@ export default function PipelinePage() {
               onChange={(e) => setTier(e.target.value as typeof tier)}
               className="border-border-default bg-bg-elevated text-content-primary focus:border-primary-500 focus:ring-primary-500/20 h-9 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             >
-              <option value="all">All Tiers</option>
-              <option value="smb">SMB</option>
-              <option value="mid-market">Mid-Market</option>
-              <option value="enterprise">Enterprise</option>
-              <option value="shuttle">Shuttle</option>
+              <option value="all">All Pipelines</option>
+              <optgroup label="Moovs">
+                <option value="smb">SMB</option>
+                <option value="mid-market">Mid-Market</option>
+                <option value="enterprise">Enterprise</option>
+                <option value="expansion">Expansion</option>
+              </optgroup>
+              <optgroup label="Swoop">
+                <option value="marketplace">Marketplace/Ride</option>
+                <option value="recurring">Recurring</option>
+              </optgroup>
             </select>
             <select
               value={period}
